@@ -7,10 +7,10 @@ export interface Property {
   slug?: string
 
   // títulos / textos
-  titulo?: string
-  title?: string
-  descripcion?: string
-  description?: string
+  titulo?: string          // ES
+  title?: string           // EN
+  descripcion?: string     // ES
+  description?: string     // EN
 
   // ubicación / negocio
   comuna?: string
@@ -19,29 +19,10 @@ export interface Property {
   operacion?: Operation
 
   // flags
-  destacada?: boolean // <-- necesario para PropertyCard
+  destacada?: boolean
 
-  // precios
-  precioUf?: number
-  precioClp?: number
-
-  // características
-  dormitorios?: number
-  banos?: number
-  estacionamientos?: number
-  m2?: number
-  m2Util?: number
-  m2Totales?: number
-
-  // medios
-  portadaUrl?: string
-  coverImage?: string
-  images?: string[]
-
-  createdAt?: string
-  updatedAt?: string
-}
-
-// Respuestas API típicas
-export interface ApiListResponse<T> { data: T[] }
-export interface ApiItemResponse<T> { data: T }
+  // precios (alias en ambos formatos)
+  precioUf?: number        // camelCase
+  precioUF?: number        // alias
+  precioClp?: number       // camelCase
+  precioCLP?: number
