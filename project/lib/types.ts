@@ -1,24 +1,47 @@
-// lib/types.ts
-export type Property = {
-  id: string;
-  operacion: 'venta' | 'arriendo';
-  tipo: 'casa' | 'departamento' | 'oficina' | 'terreno' | 'otros';
-  comuna: string;
-  direccion_privada?: string | null;
-  precio_uf?: number | null;
-  precio_clp?: number | null;
-  superficie_util_m2?: number | null;
-  superficie_terreno_m2?: number | null;
-  dormitorios?: number | null;
-  banos?: number | null;
-  estacionamientos?: number | null;
-  ano?: number | null;
-  gastos_comunes?: number | null;
-  estado: 'disponible' | 'reservada' | 'vendida';
-  titulo: string;
-  descripcion?: string | null;
-  imagenes: string[];
-  video_url?: string | null;
-  tour_url?: string | null;
-  created_at: string;
-};
+// project/lib/types.ts
+
+export type Operation = 'venta' | 'arriendo'
+
+export interface Property {
+  id: string
+  slug?: string
+
+  // títulos / textos
+  titulo?: string
+  title?: string
+  descripcion?: string
+  description?: string
+
+  // ubicación / negocio
+  comuna?: string
+  barrio?: string
+  direccion?: string
+  operacion?: Operation
+
+  // flags
+  destacada?: boolean // <-- necesario para PropertyCard
+
+  // precios
+  precioUf?: number
+  precioClp?: number
+
+  // características
+  dormitorios?: number
+  banos?: number
+  estacionamientos?: number
+  m2?: number
+  m2Util?: number
+  m2Totales?: number
+
+  // medios
+  portadaUrl?: string
+  coverImage?: string
+  images?: string[]
+
+  createdAt?: string
+  updatedAt?: string
+}
+
+// Respuestas API típicas
+export interface ApiListResponse<T> { data: T[] }
+export interface ApiItemResponse<T> { data: T }
