@@ -1,110 +1,78 @@
-import Link from 'next/link'
+// project/components/PropertyCard.tsx
 import Image from 'next/image'
-import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
-import { Bed, Bath, Car, Home, MapPin } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import type { Property } from '@/lib/types'
-import { formatPrice, formatArea } from '@/lib/utils/currency'
 
-interface PropertyCardProps {
-  property: Property
+type PropertyCardProps = { property: Property }
+
+/** Devuelve el arreglo de imágenes, soportando ES/EN y portada */
+function getImages(property: Property): string[] {
+  const asAny = property as Property & { imagenes?: string[] }
+  const es = Array.isArray(asAny.imagenes) ? asAny.imagenes : undefined
+  const en = Array.isArray(property.images) ? property.images : undefined
+  const cover = property.portadaUrl || property.coverImage
+
+  if (es?.length) return es
+  if (en?.length) return en
+  if (cover) return [cover]
+  return []
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
-  const mainImage = property.imagenes && property.imagenes.length > 0 
-    ? property.imagenes[0] 
-    : 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'
+  const images = getImages(property)
+  const mainImage =
+    images[0] ||
+    'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <Link href={`/propiedades/${property.id}`}>
-        <div className="relative aspect-video">
+    <Link href={`/propiedades/${property.id}`} className="block group">
+      <Card className="overflow-hidden rounded-2xl shadow-card hover:shadow-lg transition-shadow">
+        <div className="relative aspect-[4/3] w-full">
           <Image
             src={mainImage}
-            alt={property.titulo}
+            alt={property.titulo || property.title || 'Propiedad'}
             fill
-            className="object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            sizes="(max-width: 768px) 100vw, 33vw"
+            priority={false}
           />
-          <div className="absolute top-2 left-2 flex gap-2">
-            <Badge 
-              variant={property.operacion === 'venta' ? 'default' : 'secondary'}
-              className={property.operacion === 'venta' 
-                ? 'bg-blue-600 hover:bg-blue-700' 
-                : 'bg-green-600 hover:bg-green-700 text-white'
-              }
-            >
+
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex gap-2">
+            <Badge className="bg-white text-gray-800">
               {property.operacion === 'venta' ? 'Venta' : 'Arriendo'}
             </Badge>
             {property.destacada && (
-              <Badge variant="outline" className="bg-white text-yellow-600 border-yellow-600">
+              <Badge variant="outline" className="bg-white text-yellow-700 border-yellow-700">
                 Destacada
               </Badge>
             )}
           </div>
         </div>
-      </Link>
 
-      <CardContent className="p-4 space-y-3">
-        <div className="space-y-2">
-          <h3 className="font-semibold text-lg line-clamp-2 hover:text-blue-600 transition-colors">
-            <Link href={`/propiedades/${property.id}`}>
-              {property.titulo}
-            </Link>
+        <CardContent className="p-5">
+          <h3 className="text-lg font-semibold mb-1 text-[var(--gp-primary, #022555)]">
+            {property.titulo || property.title || 'Propiedad'}
           </h3>
-          
-          <div className="flex items-center text-gray-600 text-sm">
-            <MapPin className="w-4 h-4 mr-1" />
-            <span>{property.comuna}</span>
+
+          {(property.descripcion || property.description) && (
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {property.descripcion || property.description}
+            </p>
+          )}
+
+          {/* Info básica (ajústalo según tus campos reales) */}
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-700">
+            {typeof property.dormitorios === 'number' && (
+              <span>{property.dormitorios} dorm.</span>
+            )}
+            {typeof property.banos === 'number' && <span>{property.banos} baños</span>}
+            {typeof property.m2 === 'number' && <span>{property.m2} m²</span>}
           </div>
-
-          <div className="text-xl font-bold text-blue-600">
-            {formatPrice(property.precio_uf, property.precio_clp)}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-          {property.tipo && (
-            <div className="flex items-center">
-              <Home className="w-4 h-4 mr-1" />
-              <span className="capitalize">{property.tipo}</span>
-            </div>
-          )}
-          
-          {property.superficie_total && (
-            <div className="flex items-center">
-              <span className="mr-1">📐</span>
-              <span>{formatArea(property.superficie_total)}</span>
-            </div>
-          )}
-          
-          {property.dormitorios && property.dormitorios > 0 && (
-            <div className="flex items-center">
-              <Bed className="w-4 h-4 mr-1" />
-              <span>{property.dormitorios}</span>
-            </div>
-          )}
-          
-          {property.banos && property.banos > 0 && (
-            <div className="flex items-center">
-              <Bath className="w-4 h-4 mr-1" />
-              <span>{property.banos}</span>
-            </div>
-          )}
-          
-          {property.estacionamientos && property.estacionamientos > 0 && (
-            <div className="flex items-center">
-              <Car className="w-4 h-4 mr-1" />
-              <span>{property.estacionamientos}</span>
-            </div>
-          )}
-        </div>
-
-        {property.descripcion && (
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {property.descripcion}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }
