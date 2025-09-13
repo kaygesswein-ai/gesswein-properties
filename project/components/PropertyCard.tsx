@@ -9,10 +9,12 @@ type PropertyCardProps = { property: Property }
 
 /** Devuelve el arreglo de imágenes, soportando ES/EN y portada */
 function getImages(property: Property): string[] {
-  const asAny = property as Property & { imagenes?: string[] }
-  const es = Array.isArray(asAny.imagenes) ? asAny.imagenes : undefined
-  const en = Array.isArray(property.images) ? property.images : undefined
-  const cover = property.portadaUrl || property.coverImage
+  // Alias local: agregamos los campos opcionales que algunos datos traen
+  const p = property as Property & { imagenes?: string[]; images?: string[] }
+
+  const es = Array.isArray(p.imagenes) ? p.imagenes : undefined
+  const en = Array.isArray(p.images) ? p.images : undefined
+  const cover = p.portadaUrl || p.coverImage
 
   if (es?.length) return es
   if (en?.length) return en
@@ -63,7 +65,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </p>
           )}
 
-          {/* Info básica (ajústalo según tus campos reales) */}
+          {/* Info básica */}
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-700">
             {typeof property.dormitorios === 'number' && (
               <span>{property.dormitorios} dorm.</span>
@@ -76,3 +78,4 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     </Link>
   )
 }
+
