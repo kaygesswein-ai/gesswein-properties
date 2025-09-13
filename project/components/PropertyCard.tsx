@@ -15,6 +15,9 @@ function getImages(property: Property): string[] {
     images?: string[]
     portadaUrl?: string
     coverImage?: string
+    dormitorios?: number
+    banos?: number
+    m2?: number
   }
 
   const es = Array.isArray(p.imagenes) ? p.imagenes : undefined
@@ -28,6 +31,13 @@ function getImages(property: Property): string[] {
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
+  // Usamos el mismo alias para acceder a campos opcionales sin que TS se queje
+  const p = property as Property & {
+    dormitorios?: number
+    banos?: number
+    m2?: number
+  }
+
   const images = getImages(property)
   const mainImage =
     images[0] ||
@@ -72,11 +82,9 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
           {/* Info básica */}
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-700">
-            {typeof property.dormitorios === 'number' && (
-              <span>{property.dormitorios} dorm.</span>
-            )}
-            {typeof property.banos === 'number' && <span>{property.banos} baños</span>}
-            {typeof property.m2 === 'number' && <span>{property.m2} m²</span>}
+            {typeof p.dormitorios === 'number' && <span>{p.dormitorios} dorm.</span>}
+            {typeof p.banos === 'number' && <span>{p.banos} baños</span>}
+            {typeof p.m2 === 'number' && <span>{p.m2} m²</span>}
           </div>
         </CardContent>
       </Card>
