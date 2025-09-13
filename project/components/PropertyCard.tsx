@@ -9,8 +9,13 @@ type PropertyCardProps = { property: Property }
 
 /** Devuelve el arreglo de imágenes, soportando ES/EN y portada */
 function getImages(property: Property): string[] {
-  // Alias local: agregamos los campos opcionales que algunos datos traen
-  const p = property as Property & { imagenes?: string[]; images?: string[] }
+  // Alias local con todos los campos opcionales que pueden venir
+  const p = property as Property & {
+    imagenes?: string[]
+    images?: string[]
+    portadaUrl?: string
+    coverImage?: string
+  }
 
   const es = Array.isArray(p.imagenes) ? p.imagenes : undefined
   const en = Array.isArray(p.images) ? p.images : undefined
@@ -78,4 +83,3 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     </Link>
   )
 }
-
