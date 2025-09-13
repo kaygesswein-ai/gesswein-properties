@@ -1,59 +1,42 @@
-// Analytics utilities for GA4 and Meta Pixel
+// project/lib/analytics.ts
 
-declare global {
-  interface Window {
-    gtag: (...args: any[]) => void
-    fbq: (...args: any[]) => void
+/** Tipos de eventos de leads admitidos (incluye "general" para formularios genéricos) */
+type LeadType = 'contact' | 'visit' | 'referral' | 'general';
+
+/** Pequeño helper para pushear al dataLayer si existe (sin romper SSR) */
+function pushToDataLayer(eventName: string, payload: Record<string, unknown> = {}) {
+  if (typeof window !== 'undefined' && (window as any).dataLayer) {
+    (window as any).dataLayer.push({ event: eventName, ...payload });
+  }
+  if (process.env.NODE_ENV !== 'production') {
+    // Log en dev para depurar sin herramientas externas
+    // eslint-disable-next-line no-console
+    console.log(`[analytics] ${eventName}`, payload);
   }
 }
 
-export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || ''
-export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || ''
-
-// GA4 Events
-export const trackEvent = (action: string, parameters?: Record<string, any>) => {
-  if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('event', action, parameters)
-  }
+/** Click a WhatsApp desde distintos lugares (hero, cta, etc.) */
+export function trackWhatsAppClick(source: string = 'unknown') {
+  pushToDataLayer('whatsapp_click', { source });
 }
 
-// Meta Pixel Events
-export const trackPixelEvent = (event: string, parameters?: Record<string, any>) => {
-  if (typeof window !== 'undefined' && window.fbq) {
-    window.fbq('track', event, parameters)
-  }
+/**
+ * Envío de lead desde formularios.
+ * Acepta "general" y lo normaliza a "contact" para mantener consistencia.
+ */
+export function trackLeadSubmission(type: LeadType, payload: Record<string, unknown> = {}) {
+  const normalized: Exclude<LeadType, 'general'> =
+    type === 'general' ? 'contact' : (type as Exclude<LeadType, 'general'>);
+
+  pushToDataLayer('lead_submission', { lead_type: normalized, ...payload });
 }
 
-// Specific tracking functions
-export const trackPropertyView = (propertyId: string, propertyTitle: string) => {
-  trackEvent('view_item', {
-    item_id: propertyId,
-    item_name: propertyTitle,
-    item_category: 'property',
-  })
-  
-  trackPixelEvent('ViewContent', {
-    content_ids: [propertyId],
-    content_type: 'property',
-  })
+/** (Opcional) Vistas de propiedad — por si lo usas en detalle */
+export function trackPropertyView(id: string) {
+  pushToDataLayer('property_view', { id });
 }
 
-export const trackLeadSubmission = (type: 'contact' | 'visit' | 'referral') => {
-  trackEvent('generate_lead', {
-    lead_type: type,
-  })
-  
-  trackPixelEvent('Lead', {
-    content_category: type,
-  })
-}
-
-export const trackWhatsAppClick = (context: string) => {
-  trackEvent('whatsapp_click', {
-    context: context,
-  })
-  
-  trackPixelEvent('Contact', {
-    method: 'whatsapp',
-  })
+/** (Opcional) Filtros en el listado — por si lo usan tus filtros */
+export function trackFilterApplied(filters: Record<string, unknown>) {
+  pushToDataLayer('filters_applied', filters);
 }
