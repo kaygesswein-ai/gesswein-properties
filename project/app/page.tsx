@@ -34,7 +34,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* HERO (foto sunset) */}
+      {/* HERO */}
       <section className="relative isolate">
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
@@ -52,11 +52,11 @@ export default function HomePage() {
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
 
-            {/* Botón blanco corporativo, cuadrado */}
+            {/* BOTÓN BLANCO */}
             <div className="mt-8">
               <Link
                 href="/propiedades"
-                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0A2E57] font-medium hover:bg-gray-100 transition"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0A2E57] font-medium hover:bg-white/90 transition"
               >
                 Ver propiedades →
               </Link>
@@ -65,7 +65,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* DESTACADAS */}
+      {/* DESTACADAS (igual) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
