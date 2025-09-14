@@ -1,35 +1,46 @@
+'use client'
+
 import Link from 'next/link'
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white">
+      {/* HERO con imagen de fondo */}
       <section className="relative isolate">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
+        {/* Imagen de fondo: reemplaza esta URL por tu foto real (Supabase Storage o /public) */}
+        <div
+          className="absolute inset-0 -z-10 bg-center bg-cover"
+          style={{
+            backgroundImage:
+              "url('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg')",
+          }}
+          aria-hidden
+        />
+        {/* Velo para legibilidad sobre la foto */}
+        <div className="absolute inset-0 -z-0 bg-black/40" aria-hidden />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900">
-              Propiedades premium en <span className="text-blue-600">Santiago Oriente</span>
-            </h1>
-            <p className="mt-6 text-lg text-gray-600">
-              Asesoría boutique y un portafolio curado de departamentos y casas en las mejores
-              comunas. Transparencia, velocidad y servicio personalizado.
+            {/* SOLO el texto pequeño que indicaste (sin el H1 grande) */}
+            <p className="text-xl md:text-2xl leading-relaxed text-white">
+              Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
-            <div className="mt-10 flex gap-4">
+
+            {/* Único botón → Propiedades */}
+            <div className="mt-8">
               <Link
                 href="/propiedades"
-                className="inline-flex items-center rounded-lg bg-blue-600 px-5 py-3 text-white font-medium hover:bg-blue-700"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white text-gray-900 font-medium hover:bg-gray-100 transition"
               >
-                Ver propiedades
-              </Link>
-              <Link
-                href="/contacto"
-                className="inline-flex items-center rounded-lg border border-gray-300 px-5 py-3 text-gray-700 font-medium hover:bg-gray-50"
-              >
-                Contacto
+                Ver propiedades →
               </Link>
             </div>
           </div>
         </div>
       </section>
+
+      {/* (Opcional) Sección de valor diferenciador o bloques siguientes */}
+      {/* Aquí puedes mantener tus bloques inferiores / “¿Por qué elegir…?” */}
     </main>
   )
 }
