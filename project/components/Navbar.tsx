@@ -5,9 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
-// Barra DELGADA y logo grande SIN engrosar la barra
-// (la barra mide 56px y el logo ocupa 44px de alto)
-const NAV_HEIGHT = 'h-14' // 56px
+const NAV_HEIGHT = 'h-14' // barra delgada (56px)
 
 const NAV_ITEMS = [
   { name: 'Inicio', href: '/' },
@@ -32,7 +30,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-[#0A2E57] text-white border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className={`${NAV_HEIGHT} flex items-center justify-between`}>
-          {/* Logo grande pero contenido en 44px de alto */}
+          {/* LOGO: bloque para eliminar el “gap” inferior */}
           <Link href="/" aria-label="Gesswein Properties" className="flex items-center">
             <Image
               src="/logo-white.svg"
@@ -40,7 +38,7 @@ export default function Navbar() {
               width={160}
               height={44}
               priority
-              className="h-11 w-auto object-contain" // 44px alto sin engrosar la barra
+              className="h-11 w-auto object-contain block"
             />
           </Link>
 
@@ -56,7 +54,7 @@ export default function Navbar() {
 
           {/* navegación escritorio */}
           <div className="hidden md:flex items-center gap-6">
-            <ul className="flex items-center gap-6">
+            <ul className="flex items-center gap-6 leading-none">
               {NAV_ITEMS.map(item => (
                 <li key={item.href}>
                   <Link
@@ -69,7 +67,7 @@ export default function Navbar() {
               ))}
             </ul>
 
-            {/* WhatsApp verde, cuadrado con esquinas redondeadas */}
+            {/* WhatsApp verde con esquinas redondeadas */}
             <Link
               href="https://wa.me/56900000000?text=Hola%20Gesswein%20Properties,%20quiero%20asesor%C3%ADa%20inmobiliaria."
               target="_blank"
@@ -111,4 +109,3 @@ export default function Navbar() {
     </nav>
   )
 }
-
