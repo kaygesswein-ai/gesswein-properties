@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -16,18 +17,6 @@ const NAV_ITEMS = [
 const WHATSAPP_URL =
   'https://wa.me/56900000000?text=Hola%20Gesswein%20Properties,%20quiero%20asesor%C3%ADa%20inmobiliaria.'
 
-function LogoWhite() {
-  // Logo blanco inline: siempre visible, sin texto
-  return (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="white" aria-label="Gesswein Properties">
-      <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-      <rect x="6" y="7" width="3" height="10" fill="#0A2E57"></rect>
-      <rect x="11" y="5" width="3" height="12" fill="#0A2E57"></rect>
-      <rect x="16" y="9" width="3" height="8" fill="#0A2E57"></rect>
-    </svg>
-  )
-}
-
 export default function Navbar() {
   const [open, setOpen] = useState(false)
 
@@ -35,9 +24,15 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-[#0A2E57] text-white border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between">
-          {/* SOLO logo blanco (sin texto) */}
+          {/* Logo blanco (archivo real) */}
           <Link href="/" aria-label="Gesswein Properties" className="flex items-center">
-            <LogoWhite />
+            <Image
+              src="/logo-white.svg"     // coloca /project/public/logo-white.svg
+              alt="Gesswein Properties"
+              width={36}
+              height={36}
+              priority
+            />
           </Link>
 
           {/* botón móvil */}
@@ -64,7 +59,7 @@ export default function Navbar() {
                 </li>
               ))}
             </ul>
-            {/* Botón cuadrado, sin bordes redondeados */}
+            {/* Botón CUADRADO */}
             <Link
               href={WHATSAPP_URL}
               target="_blank"
@@ -104,3 +99,4 @@ export default function Navbar() {
     </nav>
   )
 }
+
