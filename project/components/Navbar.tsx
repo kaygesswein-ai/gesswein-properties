@@ -5,6 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
+// ---- ajusta este número para cambiar el tamaño del logo (en px)
+const LOGO_SIZE = 56 // prueba 56, 64 o 72
+
 const NAV_ITEMS = [
   { name: 'Inicio', href: '/' },
   { name: 'Propiedades', href: '/propiedades' },
@@ -13,7 +16,7 @@ const NAV_ITEMS = [
   { name: 'Contacto', href: '/contacto' },
 ]
 
-// Solo ícono de WhatsApp (SVG inline)
+// Ícono WhatsApp (solo icono, botón cuadrado)
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
@@ -28,13 +31,22 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-[#0A2E57] text-white border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-16 flex items-center justify-between">
-          {/* Logo blanco real (sin texto). Asegúrate de tener /project/public/logo-white.svg */}
+        {/* aumentamos la altura del nav para que quepa el logo grande */}
+        <div className="h-[72px] flex items-center justify-between">
+          {/* Logo blanco (usa /brand/logo-white.svg o cambia la ruta si lo moviste) */}
           <Link href="/" aria-label="Gesswein Properties" className="flex items-center">
-            <Image src="/logo-white.svg" alt="Gesswein Properties" width={36} height={36} priority />
+            <Image
+              src="/brand/logo-white.svg"
+              alt="Gesswein Properties"
+              width={LOGO_SIZE}
+              height={LOGO_SIZE}
+              priority
+              // si tu SVG tiene mucho margen interno, este padding lo compensa un poco
+              className="object-contain"
+            />
           </Link>
 
-          {/* Botón móvil */}
+          {/* botón móvil */}
           <button
             className="md:hidden inline-flex items-center justify-center p-2 hover:bg-white/10 transition"
             onClick={() => setOpen(v => !v)}
@@ -44,19 +56,22 @@ export default function Navbar() {
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
 
-          {/* Navegación escritorio */}
+          {/* navegación escritorio */}
           <div className="hidden md:flex items-center gap-6">
             <ul className="flex items-center gap-6">
               {NAV_ITEMS.map(item => (
                 <li key={item.href}>
-                  <Link href={item.href} className="inline-flex items-center text-white/90 hover:text-white transition">
+                  <Link
+                    href={item.href}
+                    className="inline-flex items-center text-white/90 hover:text-white transition"
+                  >
                     {item.name}
                   </Link>
                 </li>
               ))}
             </ul>
 
-            {/* Solo ícono de WhatsApp, cuadrado, sin redondeo */}
+            {/* botón de WhatsApp solo con ícono, cuadrado */}
             <Link
               href="https://wa.me/56900000000?text=Hola%20Gesswein%20Properties,%20quiero%20asesor%C3%ADa%20inmobiliaria."
               target="_blank"
@@ -69,7 +84,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Menú móvil */}
+      {/* menú móvil */}
       {open && (
         <div className="md:hidden border-t border-white/10 bg-[#0A2E57]">
           <div className="px-4 py-3 space-y-2">
