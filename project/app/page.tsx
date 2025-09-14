@@ -38,29 +38,32 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* HERO con foto genérica y solo el texto pequeño + 1 botón */}
+      {/* HERO */}
       <section className="relative isolate">
+        {/* Foto genérica (libre) */}
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
           style={{
-            // Foto genérica aspiracional (Pexels)
             backgroundImage:
-              "url('https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=1600')",
+              "url('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1600')",
           }}
           aria-hidden
         />
-        <div className="absolute inset-0 -z-0 bg-black/40" aria-hidden />
+        {/* Velo para legibilidad */}
+        <div className="absolute inset-0 -z-0 bg-black/45" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
-            <p className="text-xl md:text-2xl leading-relaxed text-white">
+            {/* TEXTO BLANCO + leve sombra para contraste */}
+            <p className="text-xl md:text-2xl leading-relaxed text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
+
             <div className="mt-8">
-              {/* Botón cuadrado */}
+              {/* Botón cuadrado, borde y texto en blanco */}
               <Link
                 href="/propiedades"
-                className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 font-medium hover:bg-gray-100 transition"
+                className="inline-flex items-center justify-center px-6 py-3 border border-white text-white font-medium hover:bg-white/10 transition"
               >
                 Ver propiedades →
               </Link>
@@ -69,7 +72,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* DESTACADAS (cards e imágenes cuadradas, sin bordes redondeados) */}
+      {/* DESTACADAS (cards sin bordes redondeados) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
@@ -94,7 +97,9 @@ export default function HomePage() {
             }
 
             const imgs = Array.isArray(p?.imagenes) ? p.imagenes : Array.isArray(p?.images) ? p.images : []
-            const img = imgs?.[0] ?? 'https://images.pexels.com/photos/259597/pexels-photo-259597.jpeg?auto=compress&cs=tinysrgb&w=1600'
+            const img =
+              imgs?.[0] ??
+              'https://images.pexels.com/photos/259597/pexels-photo-259597.jpeg?auto=compress&cs=tinysrgb&w=1600'
             const precio =
               typeof p?.precio_uf === 'number'
                 ? `${Number(p.precio_uf).toLocaleString('en-US')} UF`
@@ -133,4 +138,3 @@ export default function HomePage() {
     </main>
   )
 }
-
