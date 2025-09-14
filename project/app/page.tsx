@@ -34,7 +34,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* HERO con la foto del ejemplo (Pexels 106399) */}
+      {/* HERO (foto sunset) */}
       <section className="relative isolate">
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
@@ -44,21 +44,19 @@ export default function HomePage() {
           }}
           aria-hidden
         />
-        {/* Velo para legibilidad */}
         <div className="absolute inset-0 -z-0 bg-black/40" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
-            {/* Texto blanco con sombra sutil */}
             <p className="text-xl md:text-2xl leading-relaxed text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
 
-            {/* Botón gris, cuadrado, texto oscuro (tal cual el ejemplo) */}
+            {/* Botón blanco corporativo, cuadrado */}
             <div className="mt-8">
               <Link
                 href="/propiedades"
-                className="inline-flex items-center justify-center px-6 py-3 bg-[#E5E7EB] text-gray-900 font-medium hover:bg-[#D1D5DB] transition"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0A2E57] font-medium hover:bg-gray-100 transition"
               >
                 Ver propiedades →
               </Link>
@@ -67,7 +65,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* DESTACADAS (cards cuadradas) */}
+      {/* DESTACADAS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
