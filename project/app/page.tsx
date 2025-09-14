@@ -38,12 +38,15 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* HERO */}
+      {/* HERO con foto genérica y solo el texto pequeño + 1 botón */}
       <section className="relative isolate">
-        {/* Usa tu foto en /public/hero-camino-otonal.jpg */}
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
-          style={{ backgroundImage: "url('/hero-camino-otonal.jpg')" }}
+          style={{
+            // Foto genérica aspiracional (Pexels)
+            backgroundImage:
+              "url('https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=1600')",
+          }}
           aria-hidden
         />
         <div className="absolute inset-0 -z-0 bg-black/40" aria-hidden />
@@ -54,9 +57,10 @@ export default function HomePage() {
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
             <div className="mt-8">
+              {/* Botón cuadrado */}
               <Link
                 href="/propiedades"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white text-gray-900 font-medium hover:bg-gray-100 transition"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 font-medium hover:bg-gray-100 transition"
               >
                 Ver propiedades →
               </Link>
@@ -65,7 +69,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* DESTACADAS */}
+      {/* DESTACADAS (cards e imágenes cuadradas, sin bordes redondeados) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
@@ -78,19 +82,19 @@ export default function HomePage() {
           {(destacadas ?? Array.from({ length: 6 })).map((p: any, i: number) => {
             if (!destacadas) {
               return (
-                <div key={i} className="animate-pulse rounded-2xl border border-slate-200 overflow-hidden">
+                <div key={i} className="animate-pulse border border-slate-200">
                   <div className="h-48 bg-slate-200" />
                   <div className="p-4">
-                    <div className="h-4 w-2/3 bg-slate-200 rounded" />
-                    <div className="mt-2 h-4 w-1/2 bg-slate-200 rounded" />
-                    <div className="mt-6 h-8 w-24 bg-slate-200 rounded" />
+                    <div className="h-4 w-2/3 bg-slate-200" />
+                    <div className="mt-2 h-4 w-1/2 bg-slate-200" />
+                    <div className="mt-6 h-8 w-24 bg-slate-200" />
                   </div>
                 </div>
               )
             }
 
             const imgs = Array.isArray(p?.imagenes) ? p.imagenes : Array.isArray(p?.images) ? p.images : []
-            const img = imgs?.[0] ?? '/placeholder-prop.jpg'
+            const img = imgs?.[0] ?? 'https://images.pexels.com/photos/259597/pexels-photo-259597.jpeg?auto=compress&cs=tinysrgb&w=1600'
             const precio =
               typeof p?.precio_uf === 'number'
                 ? `${Number(p.precio_uf).toLocaleString('en-US')} UF`
@@ -102,14 +106,14 @@ export default function HomePage() {
               <Link
                 key={p.id}
                 href={`/propiedades/${p.id}`}
-                className="group rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition"
+                className="group border border-slate-200 hover:shadow-lg transition"
               >
                 <div className="aspect-[4/3] bg-slate-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={img}
                     alt={p?.titulo ?? 'Propiedad'}
-                    className="h-full w-full object-cover group-hover:scale-105 transition"
+                    className="h-full w-full object-cover"
                     loading="lazy"
                   />
                 </div>
@@ -129,3 +133,4 @@ export default function HomePage() {
     </main>
   )
 }
+
