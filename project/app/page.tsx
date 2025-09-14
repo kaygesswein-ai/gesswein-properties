@@ -23,11 +23,9 @@ export default function HomePage() {
       try {
         const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' })
         const json = await res.json()
-        if (!mounted) return
-        setDestacadas(Array.isArray(json?.data) ? json.data : [])
+        if (mounted) setDestacadas(Array.isArray(json?.data) ? json.data : [])
       } catch {
-        if (!mounted) return
-        setDestacadas([])
+        if (mounted) setDestacadas([])
       }
     }
     load()
@@ -38,15 +36,11 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* HERO */}
+      {/* HERO: usa la misma imagen de antes, ubicada en /project/public/hero-camino-otonal.jpg */}
       <section className="relative isolate">
-        {/* Foto genérica (libre) */}
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
-          style={{
-            backgroundImage:
-              "url('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1600')",
-          }}
+          style={{ backgroundImage: "url('/hero-camino-otonal.jpg')" }}
           aria-hidden
         />
         {/* Velo para legibilidad */}
@@ -54,16 +48,15 @@ export default function HomePage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
-            {/* TEXTO BLANCO + leve sombra para contraste */}
             <p className="text-xl md:text-2xl leading-relaxed text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
 
+            {/* Botón cuadrado con fondo BLANCO */}
             <div className="mt-8">
-              {/* Botón cuadrado, borde y texto en blanco */}
               <Link
                 href="/propiedades"
-                className="inline-flex items-center justify-center px-6 py-3 border border-white text-white font-medium hover:bg-white/10 transition"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 font-medium border border-white hover:bg-gray-100 transition"
               >
                 Ver propiedades →
               </Link>
@@ -72,7 +65,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* DESTACADAS (cards sin bordes redondeados) */}
+      {/* DESTACADAS (cards cuadradas) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
@@ -115,12 +108,7 @@ export default function HomePage() {
               >
                 <div className="aspect-[4/3] bg-slate-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={img}
-                    alt={p?.titulo ?? 'Propiedad'}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
+                  <img src={img} alt={p?.titulo ?? 'Propiedad'} className="h-full w-full object-cover" loading="lazy" />
                 </div>
                 <div className="p-4">
                   <h3 className="font-medium line-clamp-1">{p?.titulo ?? 'Propiedad'}</h3>
