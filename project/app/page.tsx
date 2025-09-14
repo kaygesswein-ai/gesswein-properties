@@ -1,32 +1,63 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+
+type Property = {
+  id: string
+  titulo?: string
+  comuna?: string
+  precio_uf?: number | null
+  precio_clp?: number | null
+  imagenes?: string[]
+  images?: string[]
+  destacada?: boolean
+}
 
 export default function HomePage() {
+  const [destacadas, setDestacadas] = useState<Property[] | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    async function load() {
+      try {
+        const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' })
+        const json = await res.json()
+        if (!mounted) return
+        setDestacadas(Array.isArray(json?.data) ? json.data : [])
+      } catch {
+        if (!mounted) return
+        setDestacadas([])
+      }
+    }
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
   return (
     <main className="min-h-screen bg-white">
-      {/* HERO con imagen de fondo */}
+      {/* HERO con imagen aspiracional y solo el texto pequeño + botón a Propiedades */}
       <section className="relative isolate">
-        {/* Imagen de fondo: reemplaza esta URL por tu foto real (Supabase Storage o /public) */}
+        {/* Reemplaza la URL por /hero-camino-otonal.jpg en /public si ya subiste tu foto */}
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
           style={{
             backgroundImage:
-              "url('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg')",
+              "url('/hero-camino-otonal.jpg')",
           }}
           aria-hidden
         />
-        {/* Velo para legibilidad sobre la foto */}
+        {/* Velo para legibilidad */}
         <div className="absolute inset-0 -z-0 bg-black/40" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
-            {/* SOLO el texto pequeño que indicaste (sin el H1 grande) */}
             <p className="text-xl md:text-2xl leading-relaxed text-white">
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
 
-            {/* Único botón → Propiedades */}
             <div className="mt-8">
               <Link
                 href="/propiedades"
@@ -39,8 +70,85 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* (Opcional) Sección de valor diferenciador o bloques siguientes */}
-      {/* Aquí puedes mantener tus bloques inferiores / “¿Por qué elegir…?” */}
+      {/* DESTACADAS */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="flex items-end justify-between">
+          <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
+          <Link href="/propiedades" className="text-sm text-slate-600 hover:text-slate-900">
+            Ver todas →
+          </Link>
+        </div>
+
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {(destacadas ?? Array.from({ length: 6 })).map((p: any, i: number) => {
+            if (!destacadas) {
+              // Skeletons mientras carga
+              return (
+                <div key={i} className="animate-pulse rounded-2xl border border-slate-200 overflow-hidden">
+                  <div className="h-48 bg-slate-200" />
+                  <div className="p-4">
+                    <div className="h-4 w-2/3 bg-slate-200 rounded" />
+                    <div className="mt-2 h-4 w-1/2 bg-slate-200 rounded" />
+                    <div className="mt-6 h-8 w-24 bg-slate-200 rounded" />
+                  </div>
+                </div>
+              )
+            }
+
+            const imgs = Array.isArray(p?.imagenes) ? p.imagenes : Array.isArray(p?.images) ? p.images : []
+            const img = imgs?.[0] ?? '/placeholder-prop.jpg'
+            const precio =
+              typeof p?.precio_uf === 'number'
+                ? `${Number(p.precio_uf).toLocaleString('en-US')} UF`
+                : typeof p?.precio_clp === 'number'
+                ? `$ ${Number(p.precio_clp).toLocaleString('en-US')}`
+                : 'Precio a consultar'
+
+            return (
+              <Link
+                key={p.id}
+                href={`/propiedades/${p.id}`}
+                className="group rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition"
+              >
+                <div className="aspect-[4/3] bg-slate-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img}
+                    alt={p?.titulo ?? 'Propiedad'}
+                    className="h-full w-full object-cover group-hover:scale-105 transition"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-medium line-clamp-1">{p?.titulo ?? 'Propiedad'}</h3>
+                  <p className="mt-1 text-sm text-slate-600 line-clamp-1">{p?.comuna ?? 'Santiago Oriente'}</p>
+                  <p className="mt-2 font-semibold">{precio}</p>
+                  <span className="mt-4 inline-flex items-center text-sm text-[#0A2E57] group-hover:underline">
+                    Ver detalle →
+                  </span>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* VALOR DIFERENCIADOR */}
+      <section className="bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 grid md:grid-cols-3 gap-6">
+          {[
+            ['Asesoría arquitectónica', 'Evaluamos normativa y potencial para que decidas con ventaja.'],
+            ['Curaduría premium', 'Propiedades seleccionadas con foco en ubicación, calidad y plusvalía.'],
+            ['Atención 1:1', 'Servicio boutique, seguimiento cercano y total confidencialidad.'],
+          ].map(([t, d]) => (
+            <div key={t} className="rounded-2xl bg-white border border-slate-200 p-6">
+              <h3 className="font-semibold">{t}</h3>
+              <p className="mt-2 text-slate-600 text-sm">{d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
   )
 }
+
