@@ -1,58 +1,57 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Metadata } from 'next'
-import PropertyCard from '@/components/PropertyCard'
-import PropertyFilters, { PropertyFilters as Filters } from '@/components/PropertyFilters'
-import { Button } from '@/components/ui/button'
-import { Loader2, Search } from 'lucide-react'
-import type { Property } from '@/lib/types'
+import { useState, useEffect } from 'react';
+import PropertyCard from '@/components/PropertyCard';
+import PropertyFilters, { PropertyFilters as Filters } from '@/components/PropertyFilters';
+import { Button } from '@/components/ui/button';
+import { Loader2, Search } from 'lucide-react';
+import type { Property } from '@/lib/types';
 
 export default function PropiedadesPage() {
-  const [properties, setProperties] = useState<Property[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState<Filters>({})
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<Filters>({});
 
   const fetchProperties = async (currentFilters: Filters = {}) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const params = new URLSearchParams()
-      
+      const params = new URLSearchParams();
+
       Object.entries(currentFilters).forEach(([key, value]) => {
         if (value !== undefined && value !== '') {
-          params.append(key, value.toString())
+          params.append(key, value.toString());
         }
-      })
+      });
 
-      const response = await fetch(`/api/propiedades?${params.toString()}`)
+      const response = await fetch(`/api/propiedades?${params.toString()}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch properties')
+        throw new Error('Failed to fetch properties');
       }
-      
-      const data = await response.json()
-      setProperties(data)
+
+      const data = await response.json();
+      setProperties(data);
     } catch (error) {
-      console.error('Error fetching properties:', error)
-      setProperties([])
+      console.error('Error fetching properties:', error);
+      setProperties([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchProperties()
-  }, [])
+    fetchProperties();
+  }, []);
 
   const handleFiltersChange = (newFilters: Filters) => {
-    setFilters(newFilters)
-    fetchProperties(newFilters)
-  }
+    setFilters(newFilters);
+    fetchProperties(newFilters);
+  };
 
   const handleClearFilters = () => {
-    const clearedFilters = {}
-    setFilters(clearedFilters)
-    fetchProperties(clearedFilters)
-  }
+    const clearedFilters = {};
+    setFilters(clearedFilters);
+    fetchProperties(clearedFilters as Filters);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -129,5 +128,5 @@ export default function PropiedadesPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
