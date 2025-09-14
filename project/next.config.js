@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // No redirecciones ni rewrites
-  redirects: async () => [],
-  rewrites: async () => [],
-  // ¡OJO! No pongas `output: 'export'`
+  // NADA de redirects ni rewrites aquí
+  // Si tenías `output: 'export'`, quítalo a menos que lo necesites de verdad
 };
 
 module.exports = nextConfig;
