@@ -5,8 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
-// Tamaño del logo (px). Sube/baja a gusto: 80, 96, 112...
-const LOGO_SIZE = 96
+// Barra DELGADA y logo grande SIN engrosar la barra
+// (la barra mide 56px y el logo ocupa 44px de alto)
+const NAV_HEIGHT = 'h-14' // 56px
 
 const NAV_ITEMS = [
   { name: 'Inicio', href: '/' },
@@ -16,7 +17,6 @@ const NAV_ITEMS = [
   { name: 'Contacto', href: '/contacto' },
 ]
 
-// Ícono WhatsApp blanco
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" {...props}>
@@ -31,17 +31,16 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-[#0A2E57] text-white border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* altura mayor para alojar el logo grande */}
-        <div className="h-[96px] flex items-center justify-between">
-          {/* LOGO: archivo en /public/logo-white.svg */}
+        <div className={`${NAV_HEIGHT} flex items-center justify-between`}>
+          {/* Logo grande pero contenido en 44px de alto */}
           <Link href="/" aria-label="Gesswein Properties" className="flex items-center">
             <Image
               src="/logo-white.svg"
               alt="Gesswein Properties"
-              width={LOGO_SIZE}
-              height={LOGO_SIZE}
+              width={160}
+              height={44}
               priority
-              className="object-contain"
+              className="h-11 w-auto object-contain" // 44px alto sin engrosar la barra
             />
           </Link>
 
@@ -70,7 +69,7 @@ export default function Navbar() {
               ))}
             </ul>
 
-            {/* WhatsApp: verde oficial, icono blanco, cuadrado con esquinas redondeadas */}
+            {/* WhatsApp verde, cuadrado con esquinas redondeadas */}
             <Link
               href="https://wa.me/56900000000?text=Hola%20Gesswein%20Properties,%20quiero%20asesor%C3%ADa%20inmobiliaria."
               target="_blank"
@@ -112,3 +111,4 @@ export default function Navbar() {
     </nav>
   )
 }
+
