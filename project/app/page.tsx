@@ -38,18 +38,14 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* HERO con imagen aspiracional y solo el texto pequeño + botón a Propiedades */}
+      {/* HERO */}
       <section className="relative isolate">
-        {/* Reemplaza la URL por /hero-camino-otonal.jpg en /public si ya subiste tu foto */}
+        {/* Usa tu foto en /public/hero-camino-otonal.jpg */}
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
-          style={{
-            backgroundImage:
-              "url('/hero-camino-otonal.jpg')",
-          }}
+          style={{ backgroundImage: "url('/hero-camino-otonal.jpg')" }}
           aria-hidden
         />
-        {/* Velo para legibilidad */}
         <div className="absolute inset-0 -z-0 bg-black/40" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
@@ -57,7 +53,6 @@ export default function HomePage() {
             <p className="text-xl md:text-2xl leading-relaxed text-white">
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
-
             <div className="mt-8">
               <Link
                 href="/propiedades"
@@ -82,7 +77,6 @@ export default function HomePage() {
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {(destacadas ?? Array.from({ length: 6 })).map((p: any, i: number) => {
             if (!destacadas) {
-              // Skeletons mientras carga
               return (
                 <div key={i} className="animate-pulse rounded-2xl border border-slate-200 overflow-hidden">
                   <div className="h-48 bg-slate-200" />
@@ -132,23 +126,6 @@ export default function HomePage() {
           })}
         </div>
       </section>
-
-      {/* VALOR DIFERENCIADOR */}
-      <section className="bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 grid md:grid-cols-3 gap-6">
-          {[
-            ['Asesoría arquitectónica', 'Evaluamos normativa y potencial para que decidas con ventaja.'],
-            ['Curaduría premium', 'Propiedades seleccionadas con foco en ubicación, calidad y plusvalía.'],
-            ['Atención 1:1', 'Servicio boutique, seguimiento cercano y total confidencialidad.'],
-          ].map(([t, d]) => (
-            <div key={t} className="rounded-2xl bg-white border border-slate-200 p-6">
-              <h3 className="font-semibold">{t}</h3>
-              <p className="mt-2 text-slate-600 text-sm">{d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
     </main>
   )
 }
-
