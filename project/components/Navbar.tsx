@@ -5,8 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
-// ---- ajusta este número para cambiar el tamaño del logo (en px)
-const LOGO_SIZE = 56 // prueba 56, 64 o 72
+// Ajusta este número si quieres más grande o más chico el logo (en px)
+const LOGO_SIZE = 72
 
 const NAV_ITEMS = [
   { name: 'Inicio', href: '/' },
@@ -31,17 +31,16 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-[#0A2E57] text-white border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* aumentamos la altura del nav para que quepa el logo grande */}
+        {/* altura mayor para alojar el logo grande */}
         <div className="h-[72px] flex items-center justify-between">
-          {/* Logo blanco (usa /brand/logo-white.svg o cambia la ruta si lo moviste) */}
+          {/* LOGO: el archivo está en /public/logo-white.svg */}
           <Link href="/" aria-label="Gesswein Properties" className="flex items-center">
             <Image
-              src="/brand/logo-white.svg"
+              src="/logo-white.svg"
               alt="Gesswein Properties"
               width={LOGO_SIZE}
               height={LOGO_SIZE}
               priority
-              // si tu SVG tiene mucho margen interno, este padding lo compensa un poco
               className="object-contain"
             />
           </Link>
@@ -71,7 +70,7 @@ export default function Navbar() {
               ))}
             </ul>
 
-            {/* botón de WhatsApp solo con ícono, cuadrado */}
+            {/* WhatsApp: solo ícono, cuadrado, sin bordes redondeados */}
             <Link
               href="https://wa.me/56900000000?text=Hola%20Gesswein%20Properties,%20quiero%20asesor%C3%ADa%20inmobiliaria."
               target="_blank"
