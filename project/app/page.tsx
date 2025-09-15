@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type Property = {
   id: string
@@ -15,6 +15,7 @@ type Property = {
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const [destacadas, setDestacadas] = useState<Property[] | null>(null)
 
   useEffect(() => {
@@ -52,14 +53,16 @@ export default function HomePage() {
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
 
-            {/* BOTÓN BLANCO */}
+            {/* NUEVO BOTÓN: blanco, navega con router.push */}
             <div className="mt-8">
-              <Link
-                href="/propiedades"
+              <button
+                type="button"
+                onClick={() => router.push('/propiedades')}
                 className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0A2E57] font-medium hover:bg-white/90 transition"
+                aria-label="Ver propiedades"
               >
                 Ver propiedades →
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -69,9 +72,9 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
-          <Link href="/propiedades" className="text-sm text-slate-600 hover:text-slate-900">
+          <a href="/propiedades" className="text-sm text-slate-600 hover:text-slate-900">
             Ver todas →
-          </Link>
+          </a>
         </div>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -101,7 +104,7 @@ export default function HomePage() {
                 : 'Precio a consultar'
 
             return (
-              <Link
+              <a
                 key={p.id}
                 href={`/propiedades/${p.id}`}
                 className="group border border-slate-200 hover:shadow-lg transition"
@@ -118,7 +121,7 @@ export default function HomePage() {
                     Ver detalle →
                   </span>
                 </div>
-              </Link>
+              </a>
             )
           })}
         </div>
