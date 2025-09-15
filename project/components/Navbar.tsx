@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
-const NAV_HEIGHT = 'h-14' // barra delgada (56px)
+const NAV_HEIGHT = 'h-14' // 56px
 
 const NAV_ITEMS = [
   { name: 'Inicio', href: '/' },
@@ -30,7 +30,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-[#0A2E57] text-white border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className={`${NAV_HEIGHT} flex items-center justify-between`}>
-          {/* LOGO: bloque para eliminar el “gap” inferior */}
+          {/* LOGO: bajado 3px y sin gap inferior */}
           <Link href="/" aria-label="Gesswein Properties" className="flex items-center">
             <Image
               src="/logo-white.svg"
@@ -38,7 +38,7 @@ export default function Navbar() {
               width={160}
               height={44}
               priority
-              className="h-11 w-auto object-contain block"
+              className="h-11 w-auto object-contain block translate-y-[3px]"
             />
           </Link>
 
@@ -101,7 +101,7 @@ export default function Navbar() {
               aria-label="WhatsApp"
               className="mt-2 inline-flex items-center justify-center w-full bg-[#25D366] text-white px-3 py-2 rounded-[12px] hover:brightness-110 transition"
             >
-              <WhatsAppIcon className="w-5 h-5" />
+              WhatsApp
             </Link>
           </div>
         </div>
@@ -109,3 +109,4 @@ export default function Navbar() {
     </nav>
   )
 }
+
