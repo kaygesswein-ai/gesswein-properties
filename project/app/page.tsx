@@ -1,7 +1,7 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 type Property = {
   id: string
@@ -15,7 +15,6 @@ type Property = {
 }
 
 export default function HomePage() {
-  const router = useRouter()
   const [destacadas, setDestacadas] = useState<Property[] | null>(null)
 
   useEffect(() => {
@@ -45,6 +44,7 @@ export default function HomePage() {
           }}
           aria-hidden
         />
+        {/* Velo para legibilidad */}
         <div className="absolute inset-0 -z-0 bg-black/40" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
@@ -53,28 +53,29 @@ export default function HomePage() {
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
 
-            {/* NUEVO BOTÓN: blanco, navega con router.push */}
-            <div className="mt-8">
-              <button
-                type="button"
-                onClick={() => router.push('/propiedades')}
-                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0A2E57] font-medium hover:bg-white/90 transition"
+            {/* BOTÓN BLANCO, TEXTO AZUL, SIN REDONDEO, SOBRE CUALQUIER OVERLAY */}
+            <div className="mt-8 relative z-10">
+              <Link
+                href="/propiedades"
+                prefetch
+                className="inline-flex items-center justify-center px-6 py-3 font-medium border border-white hover:opacity-95 transition rounded-none"
+                style={{ backgroundColor: '#FFFFFF', color: '#0A2E57' }}
                 aria-label="Ver propiedades"
               >
                 Ver propiedades →
-              </button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* DESTACADAS (igual) */}
+      {/* DESTACADAS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
-          <a href="/propiedades" className="text-sm text-slate-600 hover:text-slate-900">
+          <Link href="/propiedades" className="text-sm text-slate-600 hover:text-slate-900">
             Ver todas →
-          </a>
+          </Link>
         </div>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -104,7 +105,7 @@ export default function HomePage() {
                 : 'Precio a consultar'
 
             return (
-              <a
+              <Link
                 key={p.id}
                 href={`/propiedades/${p.id}`}
                 className="group border border-slate-200 hover:shadow-lg transition"
@@ -121,7 +122,7 @@ export default function HomePage() {
                     Ver detalle →
                   </span>
                 </div>
-              </a>
+              </Link>
             )
           })}
         </div>
