@@ -32,7 +32,7 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Carga de propiedades destacadas para el carrusel y la grilla
+  // Carga de destacadas (carrusel + grilla)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -46,19 +46,15 @@ export default function HomePage() {
         if (mounted) setDestacadas([]);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
-  // Auto-avance cada 4 segundos
+  // Auto-avance 4s
   useEffect(() => {
     if (!destacadas.length) return;
     timerRef.current && clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [destacadas.length]);
 
   const go = (dir: -1 | 1) => {
@@ -88,152 +84,23 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        {/* Botón fijo “Ver Propiedades” (blanco + azul corporativo) */}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 md:pt-6 flex justify-end">
-          <Link
-            href="/propiedades"
-            className="inline-flex items-center rounded-md border border-white bg-white px-4 py-2 text-sm font-semibold tracking-wide text-[#0A2E57] shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white"
-          >
-            Ver Propiedades
-          </Link>
-        </div>
-
-        {/* Alto del hero: ajusta vh para “llegar” justo antes del título de la sección siguiente */}
+        {/* Contenedor maestro del hero */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
-          <div className="w-full">
-            {/* Tarjeta resumen tipo ficha sobre la foto */}
-            <div className="max-w-xl bg-white/95 backdrop-blur rounded-2xl shadow-xl p-5 md:p-6">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                {active?.titulo ?? 'Propiedad destacada'}
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                {active?.comuna ? `${active.comuna} · ` : ''}
-                {active?.tipo ?? '—'} · {active?.operacion ?? '—'}
-              </p>
-
-              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Dormitorios</div>
-                  <div className="text-lg font-semibold">{active?.dormitorios ?? '—'}</div>
-                </div>
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Baños</div>
-                  <div className="text-lg font-semibold">{active?.banos ?? '—'}</div>
-                </div>
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Área útil (m²)</div>
-                  <div className="text-lg font-semibold">{active?.superficie_util_m2 ?? '—'}</div>
-                </div>
-              </div>
-
-              <div className="mt-5 flex items-center justify-between">
-                <div className="text-2xl font-extrabold text-[#ff6a00]">
-                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
-                </div>
-                {active?.id ? (
-                  <Link
-                    href={`/propiedades/${active.id}`}
-                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
-                  >
-                    Ver detalle
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          {/* Flechas finas (solo la “punta”) */}
-          {destacadas.length > 1 && (
-            <>
-              <button
-                aria-label="Anterior"
-                onClick={() => go(-1)}
-                className="group absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2"
-              >
-                <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
-              </button>
-              <button
-                aria-label="Siguiente"
-                onClick={() => go(1)}
-                className="group absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2"
-              >
-                <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
-              </button>
-            </>
-          )}
-
-          {/* Indicadores */}
-          {destacadas.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              {destacadas.map((_, idx) => (
-                <span
-                  key={idx}
-                  className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Espaciador mínimo para evitar solape con la sección siguiente */}
-        <div className="h-2 md:h-4" />
-      </section>
-
-      {/* PROPIEDADES DESTACADAS (se mantiene tu grilla) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="flex items-end justify-between">
-          <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
-          <Link href="/propiedades" className="text-sm text-slate-600 hover:text-slate-900">
-            Ver todas →
-          </Link>
-        </div>
-
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {(destacadas.length ? destacadas : Array.from({ length: 6 })).map((p: any, idx: number) => {
-            if (!destacadas.length) {
-              return (
-                <div key={idx} className="animate-pulse border border-slate-200">
-                  <div className="h-48 bg-slate-200" />
-                  <div className="p-4">
-                    <div className="h-4 w-2/3 bg-slate-200" />
-                    <div className="mt-2 h-4 w-1/2 bg-slate-200" />
-                    <div className="mt-6 h-8 w-24 bg-slate-200" />
-                  </div>
-                </div>
-              );
-            }
-
-            const imgs: string[] =
-              Array.isArray(p?.imagenes) ? p.imagenes : Array.isArray(p?.images) ? p.images : [];
-            const img =
-              p?.coverImage ??
-              imgs?.[0] ??
-              'https://images.pexels.com/photos/259597/pexels-photo-259597.jpeg?auto=compress&cs=tinysrgb&w=1600';
-            const precio = fmtPrecio(p?.precio_uf, p?.precio_clp);
-
-            return (
+          {/* Wrapper para alinear botón arriba-izquierda de la tarjeta */}
+          <div className="w-full relative">
+            {/* BOTÓN: arriba y alineado a la izquierda del cuadro */}
+            <div className="absolute left-0 -top-14 md:-top-16">
               <Link
-                key={p.id}
-                href={`/propiedades/${p.id}`}
-                className="group border border-slate-200 hover:shadow-lg transition"
+                href="/propiedades"
+                className="inline-flex items-center px-4 py-2 text-sm font-semibold tracking-wide text-white bg-[#0A2E57] rounded-none"
+                style={{
+                  // doble línea interna (dos bordes hacia adentro)
+                  boxShadow:
+                    'inset 0 0 0 2px rgba(255,255,255,0.95), inset 0 0 0 5px rgba(255,255,255,0.35)',
+                }}
               >
-                <div className="aspect-[4/3] bg-slate-50">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img} alt={p?.titulo ?? 'Propiedad'} className="h-full w-full object-cover" loading="lazy" />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-medium line-clamp-1">{p?.titulo ?? 'Propiedad'}</h3>
-                  <p className="mt-1 text-sm text-slate-600 line-clamp-1">{p?.comuna ?? 'Santiago Oriente'}</p>
-                  <p className="mt-2 font-semibold">{precio}</p>
-                  <span className="mt-4 inline-flex items-center text-sm text-[#0A2E57] group-hover:underline">
-                    Ver detalle →
-                  </span>
-                </div>
+                Ver Propiedades
               </Link>
-            );
-          })}
-        </div>
-      </section>
-    </main>
-  );
-}
+            </div>
+
+            {/* TARJETA RESUMEN: corrida a la derecha, sin bordes redondeados y*
