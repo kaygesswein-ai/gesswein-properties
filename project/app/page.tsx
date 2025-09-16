@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler } from 'lucide-react';
 
 type Property = {
   id: string;
@@ -32,7 +32,7 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Carga de destacadas (carrusel + grilla)
+  // Carga destacadas (carrusel + grilla)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -49,7 +49,7 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
-  // Auto-avance 4s
+  // Auto-slide cada 4s
   useEffect(() => {
     if (!destacadas.length) return;
     timerRef.current && clearInterval(timerRef.current);
@@ -67,7 +67,8 @@ export default function HomePage() {
 
   const active = destacadas[i];
   const bg = useMemo(() => {
-    if (!active) return 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
+    if (!active)
+      return 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
     const imgs = active.coverImage || active.imagenes?.[0] || active.images?.[0];
     return imgs || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
   }, [active]);
@@ -84,28 +85,27 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        {/* Contenedor maestro del hero */}
+        {/* Contenido principal del hero */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
-          {/* Wrapper para alinear botón arriba-izquierda de la tarjeta */}
-          <div className="w-full relative">
-            {/* BOTÓN: arriba y alineado a la izquierda del cuadro */}
-            <div className="absolute left-0 -top-14 md:-top-16">
-              <Link
-                href="/propiedades"
-                className="inline-flex items-center px-4 py-2 text-sm font-semibold tracking-wide text-white bg-[#0A2E57] rounded-none"
-                style={{
-                  // doble línea interna (dos bordes hacia adentro)
-                  boxShadow:
-                    'inset 0 0 0 2px rgba(255,255,255,0.95), inset 0 0 0 5px rgba(255,255,255,0.35)',
-                }}
-              >
-                Ver Propiedades
-              </Link>
-            </div>
+          {/* Colocamos botón y tarjeta en línea (misma altura) */}
+          <div className="w-full relative flex items-start gap-4">
+            {/* BOTÓN: azul corporativo, texto blanco, sin negrita, doble línea con borde externo más delgado */}
+            <Link
+              href="/propiedades"
+              className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none"
+              style={{
+                // doble línea interna: externo 1px (mitad), interno 3px
+                boxShadow:
+                  'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+              }}
+            >
+              Ver Propiedades
+            </Link>
 
-            {/* TARJETA RESUMEN: corrida a la derecha, sin bordes redondeados y más transparente */}
-            <div className="max-w-xl ml-6 md:ml-16 bg-white/75 backdrop-blur-sm shadow-xl p-5 md:p-6 rounded-none">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+            {/* TARJETA RESUMEN: misma esquina izquierda, pero tamaño ~1/2, sin bordes redondeados y más transparente.
+                La movemos un poco a la derecha para liberar la flecha izquierda del carrusel */}
+            <div className="ml-6 md:ml-10 bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-md">
+              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
               <p className="mt-1 text-sm text-gray-600">
@@ -115,27 +115,36 @@ export default function HomePage() {
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <div className="bg-gray-50/70 p-3">
-                  <div className="text-xs text-gray-500">Dormitorios</div>
-                  <div className="text-lg font-semibold">{active?.dormitorios ?? '—'}</div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                    <Bed className="h-4 w-4" />
+                    Dormitorios
+                  </div>
+                  <div className="text-base font-semibold">{active?.dormitorios ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
-                  <div className="text-xs text-gray-500">Baños</div>
-                  <div className="text-lg font-semibold">{active?.banos ?? '—'}</div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                    <ShowerHead className="h-4 w-4" />
+                    Baños
+                  </div>
+                  <div className="text-base font-semibold">{active?.banos ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
-                  <div className="text-xs text-gray-500">Área útil (m²)</div>
-                  <div className="text-lg font-semibold">{active?.superficie_util_m2 ?? '—'}</div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                    <Ruler className="h-4 w-4" />
+                    Área útil (m²)
+                  </div>
+                  <div className="text-base font-semibold">{active?.superficie_util_m2 ?? '—'}</div>
                 </div>
               </div>
 
-              <div className="mt-5 flex items-center justify-between">
-                <div className="text-2xl font-extrabold text-[#ff6a00]">
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-xl font-extrabold text-[#C1272D]">
                   {fmtPrecio(active?.precio_uf, active?.precio_clp)}
                 </div>
                 {active?.id ? (
                   <Link
                     href={`/propiedades/${active.id}`}
-                    className="inline-flex items-center border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50 rounded-none"
+                    className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none"
                   >
                     Ver detalle
                   </Link>
@@ -144,7 +153,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Flechas finas (garantizamos visibilidad moviendo la tarjeta a la derecha) */}
+          {/* Flechas finas */}
           {destacadas.length > 1 && (
             <>
               <button
@@ -181,7 +190,7 @@ export default function HomePage() {
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* PROPIEDADES DESTACADAS (grilla) */}
+      {/* PROPIEDADES DESTACADAS (grilla conserva tu implementación) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
