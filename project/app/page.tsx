@@ -34,7 +34,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* HERO */}
+      {/* HERO (sin botón) */}
       <section className="relative isolate">
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
@@ -44,7 +44,6 @@ export default function HomePage() {
           }}
           aria-hidden
         />
-        {/* Velo para legibilidad */}
         <div className="absolute inset-0 -z-0 bg-black/40" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
@@ -52,24 +51,12 @@ export default function HomePage() {
             <p className="text-xl md:text-2xl leading-relaxed text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
               Especialistas en corretaje con asesoría arquitectónica para maximizar el valor de tu inmueble.
             </p>
-
-            {/* BOTÓN BLANCO, TEXTO AZUL, SIN REDONDEO, SOBRE CUALQUIER OVERLAY */}
-            <div className="mt-8 relative z-10">
-              <Link
-                href="/propiedades"
-                prefetch
-                className="inline-flex items-center justify-center px-6 py-3 font-medium border border-white hover:opacity-95 transition rounded-none"
-                style={{ backgroundColor: '#FFFFFF', color: '#0A2E57' }}
-                aria-label="Ver propiedades"
-              >
-                Ver propiedades →
-              </Link>
-            </div>
+            {/* CTA eliminado */}
           </div>
         </div>
       </section>
 
-      {/* DESTACADAS */}
+      {/* PROPIEDADES DESTACADAS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
