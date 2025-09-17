@@ -58,8 +58,8 @@ export default function Footer() {
         {/* Separador */}
         <div className="my-8 border-t border-white/15" />
 
-        {/* Menú inferior centrado */}
-        <nav className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-[12px] tracking-[0.25em] uppercase">
+        {/* Menú inferior centrado (caps + tracking) */}
+        <nav className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-[12px] nav-caps">
           <Link href="/" className="text-white/80 hover:text-white transition">Inicio</Link>
           <Link href="/propiedades" className="text-white/80 hover:text-white transition">Propiedades</Link>
           <Link href="/servicios" className="text-white/80 hover:text-white transition">Servicios</Link>
@@ -80,4 +80,3 @@ export default function Footer() {
     </footer>
   );
 }
-
