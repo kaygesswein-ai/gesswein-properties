@@ -30,8 +30,8 @@ export default function Navbar() {
     'fixed inset-x-0 top-0 z-50 h-16 transition-colors duration-300 ' +
     (scrolled ? 'bg-[#0A2E57]/95 backdrop-blur-md border-b border-white/10' : 'bg-transparent');
 
-  const linkClasses =
-    'px-3 py-1 text-xs tracking-[0.28em] uppercase transition ' +
+  const linkBase =
+    'px-3 py-1 text-xs transition nav-caps ' +
     (scrolled
       ? 'text-white/90 hover:text-white'
       : 'text-white drop-shadow-[0_1px_6px_rgba(0,0,0,0.35)] hover:text-white');
@@ -51,7 +51,7 @@ export default function Navbar() {
     <>
       <header className={barClasses}>
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center gap-6">
-          {/* Logo alineado con los recuadros (mismo margen ml-6 md:ml-10) */}
+          {/* Logo alineado con recuadros (mismo offset del hero) */}
           <Link href="/" className="flex items-center ml-6 md:ml-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -65,27 +65,22 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* Menú alineado a la derecha */}
+          {/* Menú a la derecha */}
           <nav className="hidden md:flex flex-1 items-center justify-end">
-            <Link href="/" className={linkClasses}>Inicio</Link>
+            <Link href="/" className={linkBase}>Inicio</Link>
             <Sep />
-            <Link href="/propiedades" className={linkClasses}>Propiedades</Link>
+            <Link href="/propiedades" className={linkBase}>Propiedades</Link>
             <Sep />
-            <Link href="/servicios" className={linkClasses}>Servicios</Link>
+            <Link href="/servicios" className={linkBase}>Servicios</Link>
             <Sep />
-            <Link href="/equipo" className={linkClasses}>Equipo</Link>
+            <Link href="/equipo" className={linkBase}>Equipo</Link>
             <Sep />
-            <Link href="/contacto" className={linkClasses}>Contacto</Link>
+            <Link href="/contacto" className={linkBase}>Contacto</Link>
           </nav>
 
-          {/* Íconos redes (extremo derecho): WhatsApp real primero */}
+          {/* Íconos redes (extremo derecho) */}
           <div className="hidden md:flex items-center gap-4">
-            <a
-              href="https://wa.me/56900000000"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="WhatsApp"
-            >
+            <a href="https://wa.me/56900000000" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
               <WhatsAppIcon className={iconClasses} />
             </a>
             <a href="mailto:hola@gessweinproperties.cl" aria-label="Email">
@@ -109,3 +104,4 @@ export default function Navbar() {
     </>
   );
 }
+
