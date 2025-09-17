@@ -2,7 +2,15 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Bed,
+  ShowerHead,
+  Ruler,
+  Gift,
+  Users2,
+} from 'lucide-react';
 
 type Property = {
   id: string;
@@ -32,7 +40,7 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Carga destacadas (carrusel + grilla)
+  // Carga destacadas (carrusel)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -46,7 +54,9 @@ export default function HomePage() {
         if (mounted) setDestacadas([]);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Auto-slide cada 4s
@@ -54,7 +64,9 @@ export default function HomePage() {
     if (!destacadas.length) return;
     timerRef.current && clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, [destacadas.length]);
 
   const go = (dir: -1 | 1) => {
@@ -75,7 +87,7 @@ export default function HomePage() {
 
   return (
     <main className="bg-white">
-      {/* HERO / CARRUSEL */}
+      {/* ========== HERO / CARRUSEL ========== */}
       <section className="relative w-full overflow-hidden isolate">
         {/* Fondo */}
         <div
@@ -87,15 +99,14 @@ export default function HomePage() {
 
         {/* Contenido principal del hero */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
-          {/* CONTENEDOR: botón arriba y tarjeta debajo, alineados al mismo borde izquierdo */}
+          {/* Contenedor: botón arriba y tarjeta debajo, mismo borde izquierdo */}
           <div className="w-full relative">
-            {/* BOTÓN ARRIBA */}
+            {/* BOTÓN (arriba del cuadro) */}
             <div className="ml-6 md:ml-10 mb-3">
               <Link
                 href="/propiedades"
                 className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none"
                 style={{
-                  // doble línea interna: externo 1px (mitad), interno 3px
                   boxShadow:
                     'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
                 }}
@@ -104,7 +115,7 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* TARJETA RESUMEN (misma que tenías) */}
+            {/* TARJETA RESUMEN */}
             <div className="ml-6 md:ml-10 bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-md">
               <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
@@ -178,75 +189,175 @@ export default function HomePage() {
           {destacadas.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {destacadas.map((_, idx) => (
-                <span
-                  key={idx}
-                  className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`}
-                />
+                <span key={idx} className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`} />
               ))}
             </div>
           )}
         </div>
 
-        {/* Espaciador pequeño para no tapar la siguiente sección */}
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* PROPIEDADES DESTACADAS (grilla conserva tu implementación) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="flex items-end justify-between">
-          <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
-          <Link href="/propiedades" className="text-sm text-slate-600 hover:text-slate-900">
-            Ver todas →
-          </Link>
+      {/* ========== SEGMENTO 2: EQUIPO ========== */}
+      <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="flex items-center gap-3">
+          <Users2 className="h-6 w-6 text-[#0A2E57]" />
+          <h2 className="text-2xl md:text-3xl font-semibold">Equipo</h2>
         </div>
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {(destacadas.length ? destacadas : Array.from({ length: 6 })).map((p: any, idx: number) => {
-            if (!destacadas.length) {
-              return (
-                <div key={idx} className="animate-pulse border border-slate-200">
-                  <div className="h-48 bg-slate-200" />
-                  <div className="p-4">
-                    <div className="h-4 w-2/3 bg-slate-200" />
-                    <div className="mt-2 h-4 w-1/2 bg-slate-200" />
-                    <div className="mt-6 h-8 w-24 bg-slate-200" />
-                  </div>
-                </div>
-              );
-            }
+        <p className="mt-3 max-w-3xl text-slate-700">
+          En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
+          cada día combinamos <span className="font-semibold">criterio arquitectónico</span>,{' '}
+          <span className="font-semibold">respaldo legal</span> y{' '}
+          <span className="font-semibold">mirada financiera</span> para que cada decisión
+          inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
+        </p>
 
-            const imgs: string[] =
-              Array.isArray(p?.imagenes) ? p.imagenes : Array.isArray(p?.images) ? p.images : [];
-            const img =
-              p?.coverImage ??
-              imgs?.[0] ??
-              'https://images.pexels.com/photos/259597/pexels-photo-259597.jpeg?auto=compress&cs=tinysrgb&w=1600';
-            const precio = fmtPrecio(p?.precio_uf, p?.precio_clp);
+        {/* Fundadores: 4 columnas */}
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              nombre: 'Carolina San Martín',
+              linea1: 'Socia Fundadora',
+              linea2: 'Arquitecta',
+              img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop',
+            },
+            {
+              nombre: 'Alberto Gesswein',
+              linea1: 'Socio',
+              linea2: 'Periodista y Gestor de Proyectos',
+              img: 'https://images.unsplash.com/photo-1628157588553-5eeea00c11eb?q=80&w=800&auto=format&fit=crop',
+            },
+            {
+              nombre: 'Jan Gesswein',
+              linea1: 'Socio',
+              linea2: 'Abogado',
+              img: 'https://images.unsplash.com/photo-1559386484-97dfc0e15539?q=80&w=800&auto=format&fit=crop',
+            },
+            {
+              nombre: 'Kay Gesswein',
+              linea1: 'Socio',
+              linea2: 'Ingeniero Comercial · Magíster en Finanzas',
+              img: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=800&auto=format&fit=crop',
+            },
+          ].map((p) => (
+            <div key={p.nombre} className="border border-slate-200">
+              <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.img} alt={p.nombre} className="h-full w-full object-cover" loading="lazy" />
+              </div>
+              <div className="p-4">
+                <h3 className="text-lg font-semibold">{p.nombre}</h3>
+                <p className="text-sm text-slate-600">{p.linea1}</p>
+                <p className="mt-0.5 text-sm text-slate-700">{p.linea2}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
-            return (
-              <Link
-                key={p.id}
-                href={`/propiedades/${p.id}`}
-                className="group border border-slate-200 hover:shadow-lg transition"
+      {/* ========== SEGMENTO 3: PROGRAMA DE REFERIDOS ========== */}
+      <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="px-6 py-8 text-center">
+            <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
+              <Gift className="h-5 w-5 text-blue-600" />
+            </div>
+            <h2 className="mt-3 text-2xl md:text-3xl font-semibold">Programa de Referidos con Exclusividad</h2>
+            <p className="mt-2 text-slate-600">
+              ¿Conoces a alguien que busca propiedad? Refierelo y obtén beneficios exclusivos.
+            </p>
+          </div>
+
+          <div className="px-6 pb-8">
+            {/* Tus datos (Referente) */}
+            <h3 className="text-lg font-medium">Tus datos (Referente)</h3>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Tu nombre completo" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="tu@email.com" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
+              </div>
+            </div>
+
+            {/* Datos del referido */}
+            <h3 className="mt-8 text-lg font-medium">Datos del referido</h3>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Nombre del referido" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="email@referido.com" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Teléfono del referido</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
+              </div>
+              <div />
+            </div>
+
+            {/* Preferencias */}
+            <h3 className="mt-8 text-lg font-medium">Preferencias del referido</h3>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
+                <select className="w-full rounded-md border border-slate-300 px-3 py-2">
+                  <option>Seleccionar tipo</option>
+                  <option>Casa</option>
+                  <option>Departamento</option>
+                  <option>Oficina</option>
+                  <option>Terreno</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Comuna de interés</label>
+                <select className="w-full rounded-md border border-slate-300 px-3 py-2">
+                  <option>Seleccionar comuna</option>
+                  <option>Las Condes</option>
+                  <option>Vitacura</option>
+                  <option>Lo Barnechea</option>
+                  <option>Providencia</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (CLP)</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (CLP)</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
+                <textarea className="w-full rounded-md border border-slate-300 px-3 py-2" rows={4}
+                  placeholder="Cualquier información adicional que pueda ser útil..." />
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-neutral-900 px-4 py-3 text-white text-sm font-medium hover:bg-black"
               >
-                <div className="aspect-[4/3] bg-slate-50">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img} alt={p?.titulo ?? 'Propiedad'} className="h-full w-full object-cover" loading="lazy" />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-medium line-clamp-1">{p?.titulo ?? 'Propiedad'}</h3>
-                  <p className="mt-1 text-sm text-slate-600 line-clamp-1">{p?.comuna ?? 'Santiago Oriente'}</p>
-                  <p className="mt-2 font-semibold">{precio}</p>
-                  <span className="mt-4 inline-flex items-center text-sm text-[#0A2E57] group-hover:underline">
-                    Ver detalle →
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+                <Gift className="h-4 w-4" />
+                Enviar referido
+              </button>
+              <p className="mt-3 text-center text-xs text-slate-500">
+                Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </main>
   );
 }
-
