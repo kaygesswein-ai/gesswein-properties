@@ -187,4 +187,66 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Espaciador peq*
+        {/* Espaciador pequeño para no tapar la siguiente sección */}
+        <div className="h-2 md:h-4" />
+      </section>
+
+      {/* PROPIEDADES DESTACADAS (grilla conserva tu implementación) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="flex items-end justify-between">
+          <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
+          <Link href="/propiedades" className="text-sm text-slate-600 hover:text-slate-900">
+            Ver todas →
+          </Link>
+        </div>
+
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {(destacadas.length ? destacadas : Array.from({ length: 6 })).map((p: any, idx: number) => {
+            if (!destacadas.length) {
+              return (
+                <div key={idx} className="animate-pulse border border-slate-200">
+                  <div className="h-48 bg-slate-200" />
+                  <div className="p-4">
+                    <div className="h-4 w-2/3 bg-slate-200" />
+                    <div className="mt-2 h-4 w-1/2 bg-slate-200" />
+                    <div className="mt-6 h-8 w-24 bg-slate-200" />
+                  </div>
+                </div>
+              );
+            }
+
+            const imgs: string[] =
+              Array.isArray(p?.imagenes) ? p.imagenes : Array.isArray(p?.images) ? p.images : [];
+            const img =
+              p?.coverImage ??
+              imgs?.[0] ??
+              'https://images.pexels.com/photos/259597/pexels-photo-259597.jpeg?auto=compress&cs=tinysrgb&w=1600';
+            const precio = fmtPrecio(p?.precio_uf, p?.precio_clp);
+
+            return (
+              <Link
+                key={p.id}
+                href={`/propiedades/${p.id}`}
+                className="group border border-slate-200 hover:shadow-lg transition"
+              >
+                <div className="aspect-[4/3] bg-slate-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img} alt={p?.titulo ?? 'Propiedad'} className="h-full w-full object-cover" loading="lazy" />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-medium line-clamp-1">{p?.titulo ?? 'Propiedad'}</h3>
+                  <p className="mt-1 text-sm text-slate-600 line-clamp-1">{p?.comuna ?? 'Santiago Oriente'}</p>
+                  <p className="mt-2 font-semibold">{precio}</p>
+                  <span className="mt-4 inline-flex items-center text-sm text-[#0A2E57] group-hover:underline">
+                    Ver detalle →
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+    </main>
+  );
+}
+
