@@ -4,21 +4,28 @@ import Link from 'next/link';
 import { Mail, Phone, Facebook, Instagram, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
+  // helper para hacer fallback si el logo no está en la raíz de /public
+  const onLogoError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.src.includes('/logo-white.svg')) {
+      img.src = '/brand/logo-white.svg';
+    } else if (img.src.includes('/brand/logo-white.svg')) {
+      img.src = '/brand/logo-white.png';
+    }
+  };
+
   return (
     <footer className="bg-[#0A2E57] text-white">
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Logo centrado */}
         <div className="flex flex-col items-center">
-          <picture>
-            {/* usa SVG si existe; si no, cae a PNG */}
-            <source srcSet="/logo-gesswein-white.svg" type="image/svg+xml" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-gesswein-white.png"
-              alt="Gesswein Properties"
-              className="h-12 w-auto"
-            />
-          </picture>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-white.svg"         // <--- tu archivo existente
+            alt="Gesswein Properties"
+            className="h-12 w-auto"
+            onError={onLogoError}
+          />
 
           {/* Íconos de contacto/redes */}
           <div className="mt-6 flex items-center gap-6 text-white/80">
@@ -65,4 +72,3 @@ export default function Footer() {
     </footer>
   );
 }
-
