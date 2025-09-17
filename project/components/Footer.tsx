@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { Mail, Phone, Facebook, Instagram, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
-  // helper para hacer fallback si el logo no está en la raíz de /public
   const onLogoError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     if (img.src.includes('/logo-white.svg')) {
@@ -21,14 +20,17 @@ export default function Footer() {
         <div className="flex flex-col items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-white.svg"         // <--- tu archivo existente
+            src="/logo-white.svg"
             alt="Gesswein Properties"
             className="h-12 w-auto"
             onError={onLogoError}
           />
 
-          {/* Íconos de contacto/redes */}
+          {/* Íconos (WhatsApp primero) */}
           <div className="mt-6 flex items-center gap-6 text-white/80">
+            <a href="https://wa.me/56900000000" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="hover:text-white transition">
+              <MessageCircle className="h-5 w-5" />
+            </a>
             <a href="mailto:hola@gessweinproperties.cl" aria-label="Email" className="hover:text-white transition">
               <Mail className="h-5 w-5" />
             </a>
@@ -40,9 +42,6 @@ export default function Footer() {
             </a>
             <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-white transition">
               <Instagram className="h-5 w-5" />
-            </a>
-            <a href="https://wa.me/56900000000" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="hover:text-white transition">
-              <MessageCircle className="h-5 w-5" />
             </a>
           </div>
         </div>
