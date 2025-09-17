@@ -77,12 +77,14 @@ export default function HomePage() {
     <main className="bg-white">
       {/* ========= HERO / CARRUSEL ========= */}
       <section className="relative w-full overflow-hidden isolate">
+        {/* Fondo */}
         <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
+        {/* Contenido del hero (altura casi pantalla completa) */}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[92vh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* BOTÓN: azul corporativo, texto blanco, sin negrita (forzado a Montserrat con font-sans) */}
+            {/* BOTÓN CTA */}
             <div className="ml-6 md:ml-10 mb-3">
               <Link
                 href="/propiedades"
@@ -142,6 +144,7 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Flechas */}
           {destacadas.length > 1 && (
             <>
               <button
@@ -161,6 +164,7 @@ export default function HomePage() {
             </>
           )}
 
+          {/* Indicadores */}
           {destacadas.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {destacadas.map((_, idx) => (
@@ -172,8 +176,7 @@ export default function HomePage() {
             </div>
           )}
         </div>
-
-        <div className="h-2 md:h-4" />
+        {/* (Quitamos el espaciador para que no asome "Equipo" en el primer pantallazo) */}
       </section>
 
       {/* ========= EQUIPO ========= */}
@@ -206,7 +209,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay */}
+              {/* Overlay al hover */}
               <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0 group-hover:bg-[#0A2E57]/90 transition duration-300" />
               <div className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition duration-300">
                 <div className="w-full p-4 text-white">
@@ -297,7 +300,7 @@ export default function HomePage() {
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (CLP)</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
+                <input className="W-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
