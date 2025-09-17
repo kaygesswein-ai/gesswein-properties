@@ -54,3 +54,9 @@ textarea::placeholder {
   font-weight: 600;
   letter-spacing: .02em;
 }
+/* Forzar Montserrat en el CTA del héroe */
+.hero-cta {
+  font-family: var(--font-sans) !important;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
