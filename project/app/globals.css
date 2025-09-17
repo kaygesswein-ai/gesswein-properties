@@ -2,24 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-/* === Tipografías (coinciden con variables definidas en layout) === */
+/* Familias tipográficas expuestas por next/font en layout */
 :root {
   --font-sans: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   --font-serif: 'Cinzel', Georgia, 'Times New Roman', serif;
 }
 
-/* Montserrat por defecto en todo el sitio */
+/* Montserrat por defecto en todo */
 html, body {
   font-family: var(--font-sans);
 }
 
-/* Usa Cinzel en títulos grandes o donde agregues .heading-serif */
-h1, h2, .heading-serif {
+/* Cinzel en títulos y acentos tipo Signature */
+h1, h2, h3, .heading-serif {
   font-family: var(--font-serif);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
-/* Estilo de navegación en caps con tracking amplio (si quieres aplicarlo) */
+/* Utilidad para navegación en mayúsculas con tracking amplio */
 .nav-caps {
   text-transform: uppercase;
   letter-spacing: 0.28em;
