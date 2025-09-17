@@ -195,7 +195,7 @@ export default function HomePage() {
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* ========== SEGMENTO 2: EQUIPO (estilo tarjetas como el ejemplo) ========== */}
+      {/* ========== SEGMENTO 2: EQUIPO (tarjetas formales con silueta fuera del panel) ========== */}
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
@@ -210,57 +210,51 @@ export default function HomePage() {
           inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
         </p>
 
-        {/* Tarjetas estilo mock: panel superior degradado + foto + bloque inferior oscuro */}
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
               nombre: 'Carolina San Martín',
               linea1: 'Socia Fundadora',
               linea2: 'Arquitecta',
-              foto:
-                'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=900&auto=format&fit=crop',
+              foto: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=900&auto=format&fit=crop',
             },
             {
               nombre: 'Alberto Gesswein',
               linea1: 'Socio',
               linea2: 'Periodista y Gestor de Proyectos',
-              foto:
-                'https://images.unsplash.com/photo-1628157588553-5eeea00c11eb?q=80&w=900&auto=format&fit=crop',
+              foto: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=900&auto=format&fit=crop',
             },
             {
               nombre: 'Jan Gesswein',
               linea1: 'Socio',
               linea2: 'Abogado',
-              foto:
-                'https://images.unsplash.com/photo-1559386484-97dfc0e15539?q=80&w=900&auto=format&fit=crop',
+              foto: 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=900&auto=format&fit=crop',
             },
             {
               nombre: 'Kay Gesswein',
               linea1: 'Socio',
               linea2: 'Ingeniero Comercial · Magíster en Finanzas',
-              foto:
-                'https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=900&auto=format&fit=crop',
+              foto: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=900&auto=format&fit=crop',
             },
           ].map((m) => (
             <article
               key={m.nombre}
-              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg"
+              className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg"
             >
-              {/* Panel superior con degradado + retrato */}
-              <div className="relative bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 p-3">
-                <div className="aspect-[3/4] rounded-xl bg-white/0 flex items-end justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={m.foto}
-                    alt={m.nombre}
-                    className="h-[260px] w-auto object-cover object-top drop-shadow-xl -mb-8"
-                    loading="lazy"
-                  />
-                </div>
+              {/* Panel pequeño con degradado; permitimos overflow visible */}
+              <div className="relative h-28 rounded-t-2xl bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 overflow-visible">
+                {/* Retrato: sobresale del panel por abajo y ligeramente por arriba */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={m.foto}
+                  alt={m.nombre}
+                  className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-auto object-cover object-top drop-shadow-xl"
+                  loading="lazy"
+                />
               </div>
 
-              {/* Bloque inferior oscuro con textos */}
-              <div className="bg-[#0A2E57] text-white px-4 pt-10 pb-4">
+              {/* Bloque inferior oscuro */}
+              <div className="bg-[#0A2E57] text-white px-4 pt-12 pb-4 rounded-b-2xl">
                 <h3 className="text-lg font-semibold">{m.nombre}</h3>
                 <p className="text-xs uppercase tracking-widest/relaxed opacity-90">{m.linea1}</p>
                 <p className="mt-1 text-sm text-white/90">{m.linea2}</p>
