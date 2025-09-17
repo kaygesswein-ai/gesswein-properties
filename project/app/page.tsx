@@ -54,9 +54,7 @@ export default function HomePage() {
         if (mounted) setDestacadas([]);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   // Auto-slide cada 4s
@@ -64,9 +62,7 @@ export default function HomePage() {
     if (!destacadas.length) return;
     timerRef.current && clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [destacadas.length]);
 
   const go = (dir: -1 | 1) => {
@@ -99,7 +95,7 @@ export default function HomePage() {
 
         {/* Contenido principal del hero */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
-          {/* Contenedor: botón arriba y tarjeta debajo, mismo borde izquierdo */}
+          {/* Botón arriba + tarjeta debajo (mismo borde izquierdo) */}
           <div className="w-full relative">
             {/* BOTÓN (arriba del cuadro) */}
             <div className="ml-6 md:ml-10 mb-3">
@@ -107,6 +103,7 @@ export default function HomePage() {
                 href="/propiedades"
                 className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none"
                 style={{
+                  // doble línea interna (externa más delgada)
                   boxShadow:
                     'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
                 }}
@@ -198,7 +195,7 @@ export default function HomePage() {
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* ========== SEGMENTO 2: EQUIPO ========== */}
+      {/* ========== SEGMENTO 2: EQUIPO (estilo tarjetas como el ejemplo) ========== */}
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
@@ -213,45 +210,62 @@ export default function HomePage() {
           inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
         </p>
 
-        {/* Fundadores: 4 columnas */}
+        {/* Tarjetas estilo mock: panel superior degradado + foto + bloque inferior oscuro */}
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
               nombre: 'Carolina San Martín',
               linea1: 'Socia Fundadora',
               linea2: 'Arquitecta',
-              img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop',
+              foto:
+                'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=900&auto=format&fit=crop',
             },
             {
               nombre: 'Alberto Gesswein',
               linea1: 'Socio',
               linea2: 'Periodista y Gestor de Proyectos',
-              img: 'https://images.unsplash.com/photo-1628157588553-5eeea00c11eb?q=80&w=800&auto=format&fit=crop',
+              foto:
+                'https://images.unsplash.com/photo-1628157588553-5eeea00c11eb?q=80&w=900&auto=format&fit=crop',
             },
             {
               nombre: 'Jan Gesswein',
               linea1: 'Socio',
               linea2: 'Abogado',
-              img: 'https://images.unsplash.com/photo-1559386484-97dfc0e15539?q=80&w=800&auto=format&fit=crop',
+              foto:
+                'https://images.unsplash.com/photo-1559386484-97dfc0e15539?q=80&w=900&auto=format&fit=crop',
             },
             {
               nombre: 'Kay Gesswein',
               linea1: 'Socio',
               linea2: 'Ingeniero Comercial · Magíster en Finanzas',
-              img: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=800&auto=format&fit=crop',
+              foto:
+                'https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=900&auto=format&fit=crop',
             },
-          ].map((p) => (
-            <div key={p.nombre} className="border border-slate-200">
-              <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.img} alt={p.nombre} className="h-full w-full object-cover" loading="lazy" />
+          ].map((m) => (
+            <article
+              key={m.nombre}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg"
+            >
+              {/* Panel superior con degradado + retrato */}
+              <div className="relative bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 p-3">
+                <div className="aspect-[3/4] rounded-xl bg-white/0 flex items-end justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={m.foto}
+                    alt={m.nombre}
+                    className="h-[260px] w-auto object-cover object-top drop-shadow-xl -mb-8"
+                    loading="lazy"
+                  />
+                </div>
               </div>
-              <div className="p-4">
-                <h3 className="text-lg font-semibold">{p.nombre}</h3>
-                <p className="text-sm text-slate-600">{p.linea1}</p>
-                <p className="mt-0.5 text-sm text-slate-700">{p.linea2}</p>
+
+              {/* Bloque inferior oscuro con textos */}
+              <div className="bg-[#0A2E57] text-white px-4 pt-10 pb-4">
+                <h3 className="text-lg font-semibold">{m.nombre}</h3>
+                <p className="text-xs uppercase tracking-widest/relaxed opacity-90">{m.linea1}</p>
+                <p className="mt-1 text-sm text-white/90">{m.linea2}</p>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </section>
@@ -338,8 +352,11 @@ export default function HomePage() {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
-                <textarea className="w-full rounded-md border border-slate-300 px-3 py-2" rows={4}
-                  placeholder="Cualquier información adicional que pueda ser útil..." />
+                <textarea
+                  className="w-full rounded-md border border-slate-300 px-3 py-2"
+                  rows={4}
+                  placeholder="Cualquier información adicional que pueda ser útil..."
+                />
               </div>
             </div>
 
