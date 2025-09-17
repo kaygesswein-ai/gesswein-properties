@@ -32,7 +32,6 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Carga destacadas (carrusel)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -49,10 +48,9 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
-  // Auto-slide 4s
   useEffect(() => {
     if (!destacadas.length) return;
-    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current && clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [destacadas.length]);
@@ -73,7 +71,6 @@ export default function HomePage() {
     return imgs || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
   }, [active]);
 
-  /* ------------------------------ PAGE ------------------------------ */
   return (
     <main className="bg-white">
       {/* ========= HERO / CARRUSEL ========= */}
@@ -96,7 +93,9 @@ export default function HomePage() {
 
             {/* Tarjeta resumen */}
             <div className="ml-6 md:ml-10 bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-md">
-              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">{active?.titulo ?? 'Propiedad destacada'}</h1>
+              <h1 className="heading-serif text-[1.4rem] md:text-2xl font-semibold text-gray-900">
+                {active?.titulo ?? 'Propiedad destacada'}
+              </h1>
               <p className="mt-1 text-sm text-gray-600">
                 {active?.comuna ? `${active.comuna} · ` : ''}{active?.tipo ?? '—'} · {active?.operacion ?? '—'}
               </p>
@@ -150,11 +149,11 @@ export default function HomePage() {
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* ========= SEGMENTO 2: EQUIPO (rectángulo + overlay al hover) ========= */}
+      {/* ========= SEGMENTO 2: EQUIPO (cards con overlay) ========= */}
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
-          <h2 className="text-2xl md:text-3xl font-semibold">Equipo</h2>
+          <h2 className="heading-serif text-2xl md:text-3xl font-semibold">Equipo</h2>
         </div>
 
         <p className="mt-3 max-w-4xl text-slate-700">
@@ -162,8 +161,6 @@ export default function HomePage() {
           cada día combinamos <span className="font-semibold">criterio arquitectónico</span>, <span className="font-semibold">respaldo legal</span> y <span className="font-semibold">mirada financiera</span> para que cada decisión inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
         </p>
 
-        {/* Ajustes base del card */}
-        {/* Card: contenedor fijo (no se sale nada), imagen contenida; overlay en hover */}
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { nombre: 'Carolina San Martín', cargo: 'SOCIA FUNDADORA', profesion: 'Arquitecta', foto: '/team/carolina-san-martin.png' },
@@ -172,7 +169,6 @@ export default function HomePage() {
             { nombre: 'Kay Gesswein', cargo: 'SOCIO', profesion: 'Ingeniero Comercial · Magíster en Finanzas', foto: '/team/kay-gesswein.png' },
           ].map((m) => (
             <article key={m.nombre} className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-lg transition">
-              {/* Marco/rectángulo para la foto */}
               <div className="aspect-[3/4] w-full bg-slate-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -183,13 +179,11 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay al hover */}
+              {/* Overlay */}
               <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0 group-hover:bg-[#0A2E57]/90 transition duration-300" />
-
-              {/* Texto sobre el overlay (aparece al hover) */}
               <div className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition duration-300">
                 <div className="w-full p-4 text-white">
-                  <h3 className="text-lg font-semibold leading-snug">{m.nombre}</h3>
+                  <h3 className="heading-serif text-lg font-semibold leading-snug">{m.nombre}</h3>
                   <p className="text-xs font-semibold uppercase tracking-wider mt-1">{m.cargo}</p>
                   <p className="mt-1 text-sm text-white/90">{m.profesion}</p>
                 </div>
@@ -206,19 +200,19 @@ export default function HomePage() {
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="mt-3 text-2xl md:text-3xl font-semibold">Programa de Referidos con Exclusividad</h2>
+            <h2 className="heading-serif mt-3 text-2xl md:text-3xl font-semibold">Programa de Referidos con Exclusividad</h2>
             <p className="mt-2 text-slate-600">¿Conoces a alguien que busca propiedad? Refierelo y obtén beneficios exclusivos.</p>
           </div>
 
           <div className="px-6 pb-8">
-            <h3 className="text-lg font-medium">Tus datos (Referente)</h3>
+            <h3 className="heading-serif text-lg font-semibold">Tus datos (Referente)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div><label className="block text-sm text-slate-700 mb-1">Nombre completo *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Tu nombre completo" /></div>
               <div><label className="block text-sm text-slate-700 mb-1">Email *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="tu@email.com" /></div>
               <div className="md:col-span-2"><label className="block text-sm text-slate-700 mb-1">Teléfono</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" /></div>
             </div>
 
-            <h3 className="mt-8 text-lg font-medium">Datos del referido</h3>
+            <h3 className="heading-serif mt-8 text-lg font-semibold">Datos del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div><label className="block text-sm text-slate-700 mb-1">Nombre completo *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Nombre del referido" /></div>
               <div><label className="block text-sm text-slate-700 mb-1">Email *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="email@referido.com" /></div>
@@ -226,7 +220,7 @@ export default function HomePage() {
               <div />
             </div>
 
-            <h3 className="mt-8 text-lg font-medium">Preferencias del referido</h3>
+            <h3 className="heading-serif mt-8 text-lg font-semibold">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div><label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label><select className="w-full rounded-md border border-slate-300 px-3 py-2"><option>Seleccionar tipo</option><option>Casa</option><option>Departamento</option><option>Oficina</option><option>Terreno</option></select></div>
               <div><label className="block text-sm text-slate-700 mb-1">Comuna de interés</label><select className="w-full rounded-md border border-slate-300 px-3 py-2"><option>Seleccionar comuna</option><option>Las Condes</option><option>Vitacura</option><option>Lo Barnechea</option><option>Providencia</option></select></div>
@@ -247,3 +241,4 @@ export default function HomePage() {
     </main>
   );
 }
+
