@@ -216,25 +216,25 @@ export default function HomePage() {
               nombre: 'Carolina San Martín',
               linea1: 'Socia Fundadora',
               linea2: 'Arquitecta',
-              foto: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=900&auto=format&fit=crop',
+              foto: '/team/carolina-san-martin.png',
             },
             {
               nombre: 'Alberto Gesswein',
               linea1: 'Socio',
               linea2: 'Periodista y Gestor de Proyectos',
-              foto: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=900&auto=format&fit=crop',
+              foto: '/team/alberto-gesswein.png',
             },
             {
               nombre: 'Jan Gesswein',
               linea1: 'Socio',
               linea2: 'Abogado',
-              foto: 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=900&auto=format&fit=crop',
+              foto: '/team/jan-gesswein.png',
             },
             {
               nombre: 'Kay Gesswein',
               linea1: 'Socio',
               linea2: 'Ingeniero Comercial · Magíster en Finanzas',
-              foto: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=900&auto=format&fit=crop',
+              foto: '/team/kay-gesswein.png',
             },
           ].map((m) => (
             <article
@@ -243,12 +243,12 @@ export default function HomePage() {
             >
               {/* Panel pequeño con degradado; permitimos overflow visible */}
               <div className="relative h-28 rounded-t-2xl bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 overflow-visible">
-                {/* Retrato: sobresale del panel por abajo y ligeramente por arriba */}
+                {/* Retrato: PNG con transparencia sobresaliendo del panel */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={m.foto}
                   alt={m.nombre}
-                  className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-auto object-cover object-top drop-shadow-xl"
+                  className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-auto object-contain object-top drop-shadow-xl"
                   loading="lazy"
                 />
               </div>
