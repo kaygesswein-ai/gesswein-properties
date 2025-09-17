@@ -3,9 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { Menu, X, Mail, Phone, Instagram, Facebook, Linkedin } from 'lucide-react';
+import { Mail, Phone, Instagram, Facebook, Linkedin, Menu, X } from 'lucide-react';
 
-// WhatsApp oficial (SVG)
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 256 256" aria-hidden="true" {...props}>
@@ -16,6 +15,9 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+/** Separador vertical fino (idéntico al anterior) */
+const Sep = () => <span className="sigSep mx-6" aria-hidden="true" />;
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -36,70 +38,69 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const navClasses =
-    'fixed top-0 inset-x-0 z-50 transition-colors duration-300 ' +
-    ((scrolled || open) ? 'bg-[#0A2E57]/95 backdrop-blur text-white' : 'bg-transparent text-white');
+  const bgClass = scrolled || open ? 'bg-[#0A2E57] text-white' : 'bg-transparent text-white';
 
   return (
-    <header className={navClasses}>
+    <header className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${bgClass}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* grid para mantener el menú CENTRADO en desktop */}
-        <div className="h-16 md:h-20 grid grid-cols-3 items-center">
-          {/* Izquierda: logo (alineado con el contenido de la página) */}
-          <div className="flex items-center justify-start">
-            <Link href="/" className="flex items-center">
+        {/* 3 columnas para forzar: logo izq / menú CENTRADO / redes dcha */}
+        <div className="h-16 md:h-[84px] grid grid-cols-[auto_1fr_auto] items-center">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link href="/" aria-label="Inicio" className="block">
               <Image
                 src="/logo-white.svg"
                 alt="Gesswein Properties"
-                width={150}
-                height={32}
+                width={160}
+                height={34}
                 priority
               />
             </Link>
           </div>
 
-          {/* Centro: menú desktop con separadores “|” */}
-          <nav className="hidden md:flex items-center justify-center text-[0.95rem] tracking-[0.25em]">
-            <Link href="/" className="hover:opacity-90">INICIO</Link>
-            <span className="mx-4 opacity-60">|</span>
-            <Link href="/propiedades" className="hover:opacity-90">PROPIEDADES</Link>
-            <span className="mx-4 opacity-60">|</span>
-            <Link href="/servicios" className="hover:opacity-90">SERVICIOS</Link>
-            <span className="mx-4 opacity-60">|</span>
-            <Link href="/#equipo" className="hover:opacity-90">EQUIPO</Link>
-            <span className="mx-4 opacity-60">|</span>
-            <Link href="/contacto" className="hover:opacity-90">CONTACTO</Link>
+          {/* Menú desktop EXACTAMENTE centrado */}
+          <nav className="hidden md:flex items-center justify-center">
+            <ul className="sigMenu flex items-center">
+              <li><Link href="/" className="sigItem">INICIO</Link></li>
+              <Sep />
+              <li><Link href="/propiedades" className="sigItem">PROPIEDADES</Link></li>
+              <Sep />
+              <li><Link href="/servicios" className="sigItem">SERVICIOS</Link></li>
+              <Sep />
+              <li><Link href="/#equipo" className="sigItem">EQUIPO</Link></li>
+              <Sep />
+              <li><Link href="/contacto" className="sigItem">CONTACTO</Link></li>
+            </ul>
           </nav>
 
-          {/* Derecha: redes en desktop + hamburguesa en móvil */}
-          <div className="flex items-center justify-end gap-4">
-            {/* Redes (sólo desktop) */}
-            <div className="hidden md:flex items-center gap-5">
+          {/* Redes (desktop) + Hamburguesa (móvil) */}
+          <div className="flex items-center justify-end gap-6">
+            <div className="hidden md:flex items-center gap-6">
               <Link href="https://wa.me/56900000000" aria-label="WhatsApp" className="hover:opacity-90">
-                <WhatsAppIcon className="h-5 w-5" />
+                <WhatsAppIcon className="h-[22px] w-[22px]" />
               </Link>
               <Link href="mailto:hola@gessweinproperties.cl" aria-label="Email" className="hover:opacity-90">
-                <Mail className="h-5 w-5" />
+                <Mail className="h-[22px] w-[22px]" />
               </Link>
               <Link href="tel:+56900000000" aria-label="Teléfono" className="hover:opacity-90">
-                <Phone className="h-5 w-5" />
+                <Phone className="h-[22px] w-[22px]" />
               </Link>
               <Link href="https://instagram.com" aria-label="Instagram" className="hover:opacity-90">
-                <Instagram className="h-5 w-5" />
+                <Instagram className="h-[22px] w-[22px]" />
               </Link>
               <Link href="https://facebook.com" aria-label="Facebook" className="hover:opacity-90">
-                <Facebook className="h-5 w-5" />
+                <Facebook className="h-[22px] w-[22px]" />
               </Link>
               <Link href="https://linkedin.com" aria-label="LinkedIn" className="hover:opacity-90">
-                <Linkedin className="h-5 w-5" />
+                <Linkedin className="h-[22px] w-[22px]" />
               </Link>
             </div>
 
-            {/* Botón hamburguesa (sólo móvil) */}
+            {/* Móvil */}
             <button
-              className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded active:opacity-80"
-              aria-label="Abrir menú"
+              className="md:hidden inline-flex h-10 w-10 items-center justify-center"
               onClick={() => setOpen((v) => !v)}
+              aria-label="Abrir menú"
             >
               {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -107,17 +108,17 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Menú móvil (dropdown) — no afecta estética desktop */}
+      {/* Menú móvil (dropdown) */}
       {open && (
-        <div className="md:hidden border-t border-white/15 bg-[#0A2E57]/98 text-white">
+        <div className="md:hidden bg-[#0A2E57] text-white border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4">
-            <Link href="/" onClick={() => setOpen(false)} className="py-1">INICIO</Link>
-            <Link href="/propiedades" onClick={() => setOpen(false)} className="py-1">PROPIEDADES</Link>
-            <Link href="/servicios" onClick={() => setOpen(false)} className="py-1">SERVICIOS</Link>
-            <Link href="/#equipo" onClick={() => setOpen(false)} className="py-1">EQUIPO</Link>
-            <Link href="/contacto" onClick={() => setOpen(false)} className="py-1">CONTACTO</Link>
+            <Link href="/" onClick={() => setOpen(false)} className="sigItem">INICIO</Link>
+            <Link href="/propiedades" onClick={() => setOpen(false)} className="sigItem">PROPIEDADES</Link>
+            <Link href="/servicios" onClick={() => setOpen(false)} className="sigItem">SERVICIOS</Link>
+            <Link href="/#equipo" onClick={() => setOpen(false)} className="sigItem">EQUIPO</Link>
+            <Link href="/contacto" onClick={() => setOpen(false)} className="sigItem">CONTACTO</Link>
 
-            <div className="mt-2 flex items-center gap-5">
+            <div className="mt-2 flex items-center gap-6">
               <Link href="https://wa.me/56900000000" aria-label="WhatsApp"><WhatsAppIcon className="h-6 w-6" /></Link>
               <Link href="mailto:hola@gessweinproperties.cl" aria-label="Email"><Mail className="h-6 w-6" /></Link>
               <Link href="tel:+56900000000" aria-label="Teléfono"><Phone className="h-6 w-6" /></Link>
