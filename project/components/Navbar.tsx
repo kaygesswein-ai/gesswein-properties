@@ -16,8 +16,8 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-/** Separador vertical fino (idéntico al anterior) */
-const Sep = () => <span className="sigSep mx-6" aria-hidden="true" />;
+/** Separador vertical fino */
+const Sep = () => <span className="nav-sep" aria-hidden="true" />;
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -31,92 +31,86 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const onResize = () => {
-      if (window.innerWidth >= 768) setOpen(false);
-    };
+    const onResize = () => { if (window.innerWidth >= 768) setOpen(false); };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const bgClass = scrolled || open ? 'bg-[#0A2E57] text-white' : 'bg-transparent text-white';
+  const bg = scrolled || open ? 'bg-[#0A2E57]' : 'bg-transparent';
 
   return (
-    <header className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${bgClass}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 3 columnas para forzar: logo izq / menú CENTRADO / redes dcha */}
-        <div className="h-16 md:h-[84px] grid grid-cols-[auto_1fr_auto] items-center">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/" aria-label="Inicio" className="block">
-              <Image
-                src="/logo-white.svg"
-                alt="Gesswein Properties"
-                width={160}
-                height={34}
-                priority
-              />
+    <header className={`fixed top-0 inset-x-0 z-50 text-white transition-colors duration-300 ${bg}`}>
+      <div className="relative h-16 md:h-[84px]">
+        {/* LOGO (izquierda) */}
+        <div className="absolute inset-y-0 left-0 flex items-center pl-4 sm:pl-6 lg:pl-8">
+          <Link href="/" aria-label="Inicio" className="block">
+            <Image src="/logo-white.svg" alt="Gesswein Properties" width={160} height={34} priority />
+          </Link>
+        </div>
+
+        {/* MENÚ CENTRADO ABSOLUTO (idéntico a tu referencia) */}
+        <nav
+          className="
+            pointer-events-auto absolute inset-y-0 left-1/2 -translate-x-1/2
+            hidden md:flex items-center
+          "
+        >
+          <ul className="nav-center">
+            <li><Link href="/" className="nav-item">INICIO</Link></li>
+            <Sep />
+            <li><Link href="/propiedades" className="nav-item">PROPIEDADES</Link></li>
+            <Sep />
+            <li><Link href="/servicios" className="nav-item">SERVICIOS</Link></li>
+            <Sep />
+            <li><Link href="/#equipo" className="nav-item">EQUIPO</Link></li>
+            <Sep />
+            <li><Link href="/contacto" className="nav-item">CONTACTO</Link></li>
+          </ul>
+        </nav>
+
+        {/* REDES (derecha) + HAMBURGUESA (móvil) */}
+        <div className="absolute inset-y-0 right-0 flex items-center pr-4 sm:pr-6 lg:pr-8">
+          <div className="hidden md:flex items-center gap-6">
+            <Link href="https://wa.me/56900000000" aria-label="WhatsApp" className="hover:opacity-90">
+              <WhatsAppIcon className="h-[22px] w-[22px]" />
+            </Link>
+            <Link href="mailto:hola@gessweinproperties.cl" aria-label="Email" className="hover:opacity-90">
+              <Mail className="h-[22px] w-[22px]" />
+            </Link>
+            <Link href="tel:+56900000000" aria-label="Teléfono" className="hover:opacity-90">
+              <Phone className="h-[22px] w-[22px]" />
+            </Link>
+            <Link href="https://instagram.com" aria-label="Instagram" className="hover:opacity-90">
+              <Instagram className="h-[22px] w-[22px]" />
+            </Link>
+            <Link href="https://facebook.com" aria-label="Facebook" className="hover:opacity-90">
+              <Facebook className="h-[22px] w-[22px]" />
+            </Link>
+            <Link href="https://linkedin.com" aria-label="LinkedIn" className="hover:opacity-90">
+              <Linkedin className="h-[22px] w-[22px]" />
             </Link>
           </div>
 
-          {/* Menú desktop EXACTAMENTE centrado */}
-          <nav className="hidden md:flex items-center justify-center">
-            <ul className="sigMenu flex items-center">
-              <li><Link href="/" className="sigItem">INICIO</Link></li>
-              <Sep />
-              <li><Link href="/propiedades" className="sigItem">PROPIEDADES</Link></li>
-              <Sep />
-              <li><Link href="/servicios" className="sigItem">SERVICIOS</Link></li>
-              <Sep />
-              <li><Link href="/#equipo" className="sigItem">EQUIPO</Link></li>
-              <Sep />
-              <li><Link href="/contacto" className="sigItem">CONTACTO</Link></li>
-            </ul>
-          </nav>
-
-          {/* Redes (desktop) + Hamburguesa (móvil) */}
-          <div className="flex items-center justify-end gap-6">
-            <div className="hidden md:flex items-center gap-6">
-              <Link href="https://wa.me/56900000000" aria-label="WhatsApp" className="hover:opacity-90">
-                <WhatsAppIcon className="h-[22px] w-[22px]" />
-              </Link>
-              <Link href="mailto:hola@gessweinproperties.cl" aria-label="Email" className="hover:opacity-90">
-                <Mail className="h-[22px] w-[22px]" />
-              </Link>
-              <Link href="tel:+56900000000" aria-label="Teléfono" className="hover:opacity-90">
-                <Phone className="h-[22px] w-[22px]" />
-              </Link>
-              <Link href="https://instagram.com" aria-label="Instagram" className="hover:opacity-90">
-                <Instagram className="h-[22px] w-[22px]" />
-              </Link>
-              <Link href="https://facebook.com" aria-label="Facebook" className="hover:opacity-90">
-                <Facebook className="h-[22px] w-[22px]" />
-              </Link>
-              <Link href="https://linkedin.com" aria-label="LinkedIn" className="hover:opacity-90">
-                <Linkedin className="h-[22px] w-[22px]" />
-              </Link>
-            </div>
-
-            {/* Móvil */}
-            <button
-              className="md:hidden inline-flex h-10 w-10 items-center justify-center"
-              onClick={() => setOpen((v) => !v)}
-              aria-label="Abrir menú"
-            >
-              {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
+          {/* Hamburguesa móvil */}
+          <button
+            className="md:hidden inline-flex h-10 w-10 items-center justify-center"
+            onClick={() => setOpen(v => !v)}
+            aria-label="Abrir menú"
+          >
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
       </div>
 
-      {/* Menú móvil (dropdown) */}
+      {/* Menú móvil */}
       {open && (
         <div className="md:hidden bg-[#0A2E57] text-white border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4">
-            <Link href="/" onClick={() => setOpen(false)} className="sigItem">INICIO</Link>
-            <Link href="/propiedades" onClick={() => setOpen(false)} className="sigItem">PROPIEDADES</Link>
-            <Link href="/servicios" onClick={() => setOpen(false)} className="sigItem">SERVICIOS</Link>
-            <Link href="/#equipo" onClick={() => setOpen(false)} className="sigItem">EQUIPO</Link>
-            <Link href="/contacto" onClick={() => setOpen(false)} className="sigItem">CONTACTO</Link>
+          <div className="px-4 sm:px-6 py-4 flex flex-col gap-4">
+            <Link href="/" onClick={() => setOpen(false)} className="nav-item">INICIO</Link>
+            <Link href="/propiedades" onClick={() => setOpen(false)} className="nav-item">PROPIEDADES</Link>
+            <Link href="/servicios" onClick={() => setOpen(false)} className="nav-item">SERVICIOS</Link>
+            <Link href="/#equipo" onClick={() => setOpen(false)} className="nav-item">EQUIPO</Link>
+            <Link href="/contacto" onClick={() => setOpen(false)} className="nav-item">CONTACTO</Link>
 
             <div className="mt-2 flex items-center gap-6">
               <Link href="https://wa.me/56900000000" aria-label="WhatsApp"><WhatsAppIcon className="h-6 w-6" /></Link>
@@ -132,4 +126,3 @@ export default function Navbar() {
     </header>
   );
 }
-
