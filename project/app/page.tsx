@@ -1,17 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
+import Image, { ImageLoader } from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Bed,
-  ShowerHead,
-  Ruler,
-  Gift,
-  Users2,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
 
 type Property = {
   id: string;
@@ -30,6 +22,9 @@ type Property = {
   destacada?: boolean;
 };
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+const publicLoader: ImageLoader = ({ src }) => `${BASE_PATH}${src}`;
+
 function fmtPrecio(pUf?: number | null, pClp?: number | null) {
   if (typeof pUf === 'number' && pUf > 0) return `UF ${new Intl.NumberFormat('es-CL').format(pUf)}`;
   if (typeof pClp === 'number' && pClp > 0) return `$ ${new Intl.NumberFormat('es-CL').format(pClp)}`;
@@ -41,6 +36,7 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Carga destacadas (carrusel)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -57,6 +53,7 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
+  // Auto-slide 4s
   useEffect(() => {
     if (!destacadas.length) return;
     if (timerRef.current) clearInterval(timerRef.current);
@@ -84,11 +81,7 @@ export default function HomePage() {
     <main className="bg-white">
       {/* ========= HERO / CARRUSEL ========= */}
       <section className="relative w-full overflow-hidden isolate">
-        <div
-          className="absolute inset-0 -z-10 bg-center bg-cover"
-          style={{ backgroundImage: `url(${bg})` }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
@@ -106,43 +99,30 @@ export default function HomePage() {
 
             {/* Tarjeta resumen */}
             <div className="ml-6 md:ml-10 bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-md">
-              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
-                {active?.titulo ?? 'Propiedad destacada'}
-              </h1>
+              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">{active?.titulo ?? 'Propiedad destacada'}</h1>
               <p className="mt-1 text-sm text-gray-600">
                 {active?.comuna ? `${active.comuna} · ` : ''}{active?.tipo ?? '—'} · {active?.operacion ?? '—'}
               </p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                    <Bed className="h-4 w-4" /> Dormitorios
-                  </div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500"><Bed className="h-4 w-4" /> Dormitorios</div>
                   <div className="text-base font-semibold">{active?.dormitorios ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                    <ShowerHead className="h-4 w-4" /> Baños
-                  </div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500"><ShowerHead className="h-4 w-4" /> Baños</div>
                   <div className="text-base font-semibold">{active?.banos ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                    <Ruler className="h-4 w-4" /> Área útil (m²)
-                  </div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500"><Ruler className="h-4 w-4" /> Área útil (m²)</div>
                   <div className="text-base font-semibold">{active?.superficie_util_m2 ?? '—'}</div>
                 </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <div className="text-xl font-extrabold text-[#C1272D]">
-                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
-                </div>
+                <div className="text-xl font-extrabold text-[#C1272D]">{fmtPrecio(active?.precio_uf, active?.precio_clp)}</div>
                 {active?.id ? (
-                  <Link
-                    href={`/propiedades/${active.id}`}
-                    className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none"
-                  >
+                  <Link href={`/propiedades/${active.id}`} className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none">
                     Ver detalle
                   </Link>
                 ) : null}
@@ -173,7 +153,7 @@ export default function HomePage() {
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* ========= SEGMENTO 2: EQUIPO ========= */}
+      {/* ========= SEGMENTO 2: EQUIPO (usa loader para /public) ========= */}
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
@@ -181,8 +161,7 @@ export default function HomePage() {
         </div>
 
         <p className="mt-3 max-w-3xl text-slate-700">
-          En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
-          cada día combinamos <span className="font-semibold">criterio arquitectónico</span>, <span className="font-semibold">respaldo legal</span> y <span className="font-semibold">mirada financiera</span> para que cada decisión inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
+          En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar: cada día combinamos <span className="font-semibold">criterio arquitectónico</span>, <span className="font-semibold">respaldo legal</span> y <span className="font-semibold">mirada financiera</span> para que cada decisión inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
         </p>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -193,17 +172,17 @@ export default function HomePage() {
             { nombre: 'Kay Gesswein', linea1: 'Socio', linea2: 'Ingeniero Comercial · Magíster en Finanzas', foto: '/team/kay-gesswein.png' },
           ].map((m) => (
             <article key={m.nombre} className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg">
-              {/* Panel pequeño con degradado; overflow visible */}
               <div className="relative h-28 rounded-t-2xl bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 overflow-visible">
-                {/* Contenedor posicionado para que el retrato sobresalga */}
-                <div className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-[170px]">
+                {/* Contenedor del retrato (sale del panel) */}
+                <div className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-[170px] relative">
                   <Image
+                    loader={publicLoader}
                     src={m.foto}
                     alt={m.nombre}
                     fill
                     sizes="170px"
                     style={{ objectFit: 'contain', objectPosition: 'top' }}
-                    priority={false}
+                    unoptimized
                   />
                 </div>
               </div>
