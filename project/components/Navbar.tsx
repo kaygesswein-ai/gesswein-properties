@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { Menu, X, Phone, Mail, Instagram, Facebook, Linkedin } from 'lucide-react';
+import { Menu, X, Mail, Phone, Instagram, Facebook, Linkedin } from 'lucide-react';
 
-// Icono de WhatsApp (marca) como SVG inline
+// WhatsApp oficial (SVG)
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 256 256" aria-hidden="true" {...props}>
@@ -28,7 +28,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Cierra el menú al cambiar de anchura / desplazarse a desktop
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 768) setOpen(false);
@@ -39,58 +38,76 @@ export default function Navbar() {
 
   const navClasses =
     'fixed top-0 inset-x-0 z-50 transition-colors duration-300 ' +
-    (scrolled ? 'bg-[#0A2E57]/95 backdrop-blur text-white' : 'bg-transparent text-white');
+    ((scrolled || open) ? 'bg-[#0A2E57]/95 backdrop-blur text-white' : 'bg-transparent text-white');
 
   return (
     <header className={navClasses}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo-white.svg" alt="Gesswein Properties" width={150} height={32} priority />
-        </Link>
-
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-8">
-          <Link href="/" className="tracking-widest hover:opacity-90">INICIO</Link>
-          <Link href="/propiedades" className="tracking-widest hover:opacity-90">PROPIEDADES</Link>
-          <Link href="/servicios" className="tracking-widest hover:opacity-90">SERVICIOS</Link>
-          <Link href="/#equipo" className="tracking-widest hover:opacity-90">EQUIPO</Link>
-          <Link href="/contacto" className="tracking-widest hover:opacity-90">CONTACTO</Link>
-
-          {/* Redes */}
-          <div className="ml-2 flex items-center gap-4">
-            <Link href="https://wa.me/56900000000" aria-label="WhatsApp" className="hover:opacity-90">
-              <WhatsAppIcon className="h-5 w-5" />
-            </Link>
-            <Link href="mailto:hola@gessweinproperties.cl" aria-label="Email" className="hover:opacity-90">
-              <Mail className="h-5 w-5" />
-            </Link>
-            <Link href="tel:+56900000000" aria-label="Teléfono" className="hover:opacity-90">
-              <Phone className="h-5 w-5" />
-            </Link>
-            <Link href="https://instagram.com" aria-label="Instagram" className="hover:opacity-90">
-              <Instagram className="h-5 w-5" />
-            </Link>
-            <Link href="https://facebook.com" aria-label="Facebook" className="hover:opacity-90">
-              <Facebook className="h-5 w-5" />
-            </Link>
-            <Link href="https://linkedin.com" aria-label="LinkedIn" className="hover:opacity-90">
-              <Linkedin className="h-5 w-5" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* grid para mantener el menú CENTRADO en desktop */}
+        <div className="h-16 md:h-20 grid grid-cols-3 items-center">
+          {/* Izquierda: logo (alineado con el contenido de la página) */}
+          <div className="flex items-center justify-start">
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo-white.svg"
+                alt="Gesswein Properties"
+                width={150}
+                height={32}
+                priority
+              />
             </Link>
           </div>
-        </nav>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded active:opacity-80"
-          aria-label="Abrir menú"
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+          {/* Centro: menú desktop con separadores “|” */}
+          <nav className="hidden md:flex items-center justify-center text-[0.95rem] tracking-[0.25em]">
+            <Link href="/" className="hover:opacity-90">INICIO</Link>
+            <span className="mx-4 opacity-60">|</span>
+            <Link href="/propiedades" className="hover:opacity-90">PROPIEDADES</Link>
+            <span className="mx-4 opacity-60">|</span>
+            <Link href="/servicios" className="hover:opacity-90">SERVICIOS</Link>
+            <span className="mx-4 opacity-60">|</span>
+            <Link href="/#equipo" className="hover:opacity-90">EQUIPO</Link>
+            <span className="mx-4 opacity-60">|</span>
+            <Link href="/contacto" className="hover:opacity-90">CONTACTO</Link>
+          </nav>
+
+          {/* Derecha: redes en desktop + hamburguesa en móvil */}
+          <div className="flex items-center justify-end gap-4">
+            {/* Redes (sólo desktop) */}
+            <div className="hidden md:flex items-center gap-5">
+              <Link href="https://wa.me/56900000000" aria-label="WhatsApp" className="hover:opacity-90">
+                <WhatsAppIcon className="h-5 w-5" />
+              </Link>
+              <Link href="mailto:hola@gessweinproperties.cl" aria-label="Email" className="hover:opacity-90">
+                <Mail className="h-5 w-5" />
+              </Link>
+              <Link href="tel:+56900000000" aria-label="Teléfono" className="hover:opacity-90">
+                <Phone className="h-5 w-5" />
+              </Link>
+              <Link href="https://instagram.com" aria-label="Instagram" className="hover:opacity-90">
+                <Instagram className="h-5 w-5" />
+              </Link>
+              <Link href="https://facebook.com" aria-label="Facebook" className="hover:opacity-90">
+                <Facebook className="h-5 w-5" />
+              </Link>
+              <Link href="https://linkedin.com" aria-label="LinkedIn" className="hover:opacity-90">
+                <Linkedin className="h-5 w-5" />
+              </Link>
+            </div>
+
+            {/* Botón hamburguesa (sólo móvil) */}
+            <button
+              className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded active:opacity-80"
+              aria-label="Abrir menú"
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Mobile menu (dropdown) */}
+      {/* Menú móvil (dropdown) — no afecta estética desktop */}
       {open && (
         <div className="md:hidden border-t border-white/15 bg-[#0A2E57]/98 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4">
@@ -114,3 +131,4 @@ export default function Navbar() {
     </header>
   );
 }
+
