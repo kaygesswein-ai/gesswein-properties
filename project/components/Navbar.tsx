@@ -5,24 +5,26 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Mail, Phone, Instagram, Facebook, Linkedin, Menu, X } from 'lucide-react';
 
+/** Ícono WhatsApp en trazo blanco */
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 256 256" aria-hidden="true" {...props}>
       <path
         fill="currentColor"
-        d="M128.005 25.6c-56.548 0-102.403 45.855-102.403 102.404 0 18.053 4.842 35.695 14.023 51.19L24.7 231.3l53.108-14.474c14.578 7.971 31.088 12.178 48.197 12.178h.001c56.548 0 102.403-45.855 102.403-102.403 0-27.355-10.65-53.084-30.001-72.435C181.09 36.249 155.36 25.6 128.005 25.6Zm0 190.79c-15.973 0-31.511-4.251-45.08-12.298l-3.227-1.911-31.552 8.606 8.436-32.361-2.1-3.317c-8.63-13.634-13.194-29.45-13.194-45.104 0-47.89 38.899-86.79 86.79-86.79 23.188 0 44.958 9.023 61.332 25.397 16.374 16.374 25.397 38.144 25.397 61.331 0 47.89-38.9 86.79-86.802 86.79Zm49.97-64.862c-2.737-1.489-16.229-8.597-18.741-9.576-2.514-.98-4.35-1.489-6.187 1.49-1.838 2.977-7.116 9.574-8.729 11.512-1.613 1.937-3.224 2.176-5.96.686-2.735-1.49-11.559-4.262-22.03-13.59-8.14-7.257-13.64-16.23-15.255-18.98-1.615-2.75-.172-4.232 1.317-5.72 1.35-1.346 3.024-3.513 4.536-5.27 1.511-1.761 2.017-2.977 3.027-4.965 1.011-1.989.568-3.723-.144-5.213-.713-1.486-6.187-14.894-8.468-20.427-2.277-5.53-4.614-4.783-6.187-4.873-1.572-.098-3.36-.12-5.147-.12-1.79 0-4.7.675-7.156 3.365-2.456 2.69-9.374 9.156-9.374 22.33 0 13.172 9.6 25.907 10.95 27.696 1.35 1.787 18.894 28.83 45.796 40.44 26.902 11.61 26.902 7.74 31.75 7.24 4.85-.497 15.653-6.363 17.87-12.503 2.216-6.14 2.216-11.403 1.55-12.503-.667-1.102-2.438-1.79-5.176-3.28Z"
+        d="M128 24C70.7 24 24 70.7 24 128c0 18.6 4.8 36.7 14 52.8L24 232l52.5-13.9C92.5 227.6 109.9 232 128 232c57.3 0 104-46.7 104-104S185.3 24 128 24Zm0 192c-17.1 0-33.3-4.6-47.6-13.4l-3.4-2.1-31.6 8.4 8.5-31.7-2.2-3.5C43.7 161.5 40 145 40 128c0-48.5 39.5-88 88-88s88 39.5 88 88-39.5 88-88 88Zm50.8-64.2c-2.7-1.5-16.2-8.6-18.7-9.6-2.6-1-4.2-.6-6 .9-1.8 1.6-6.1 7.3-7.4 9.1-1.3 1.8-2.7 2-5 .7-2.3-1.2-9.7-3.6-18.4-11.1-6.8-5.7-11.4-12.8-12.7-15-1.3-2.1-.1-3.4 1.1-4.6 1.2-1.3 2.7-3.2 3.9-4.8 1.3-1.6 1.7-2.7 2.5-4.4.8-1.7.4-3.2-.1-4.4-.6-1.1-5.3-12.7-7.3-17.3-1.9-4.6-3.5-4-5.1-4.1-1.7-.1-3.7-.1-5.7-.1s-4.5.6-6.9 3c-2.4 2.4-9 8.6-9 21.2 0 12.7 9 25 10.2 26.7 1.2 1.7 18.3 28 44.4 39.2 26.1 11.2 26.1 7 30.7 6.5 4.6-.4 14.8-6 16.9-11.8 2.1-5.9 2.1-10.7 1.5-11.8-.7-1-2.3-1.7-5-3.2Z"
       />
     </svg>
   );
 }
 
-/** Separador vertical fino */
+/** Separador vertical (como barra fina) */
 const Sep = () => <span className="nav-sep" aria-hidden="true" />;
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
+  // Cambia a azul corporativo al scrollear
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     onScroll();
@@ -30,6 +32,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Cerrar menú al agrandar a desktop
   useEffect(() => {
     const onResize = () => { if (window.innerWidth >= 768) setOpen(false); };
     window.addEventListener('resize', onResize);
@@ -40,22 +43,21 @@ export default function Navbar() {
 
   return (
     <header className={`fixed top-0 inset-x-0 z-50 text-white transition-colors duration-300 ${bg}`}>
+      {/* CONTENEDOR ALTURA NAV */}
       <div className="relative h-16 md:h-[84px]">
-        {/* LOGO (izquierda) */}
+        {/* LOGO IZQUIERDA */}
         <div className="absolute inset-y-0 left-0 flex items-center pl-4 sm:pl-6 lg:pl-8">
           <Link href="/" aria-label="Inicio" className="block">
             <Image src="/logo-white.svg" alt="Gesswein Properties" width={160} height={34} priority />
           </Link>
         </div>
 
-        {/* MENÚ CENTRADO ABSOLUTO (idéntico a tu referencia) */}
-        <nav
-          className="
-            pointer-events-auto absolute inset-y-0 left-1/2 -translate-x-1/2
-            hidden md:flex items-center
-          "
-        >
-          <ul className="nav-center">
+        {/* MENÚ CENTRADO (desktop) */}
+        <nav className="hidden md:block absolute inset-y-0 left-1/2 -translate-x-1/2">
+          <ul
+            className="flex h-full items-center"
+            style={{ letterSpacing: '0.32em' }} /* tracking alto como el original */
+          >
             <li><Link href="/" className="nav-item">INICIO</Link></li>
             <Sep />
             <li><Link href="/propiedades" className="nav-item">PROPIEDADES</Link></li>
@@ -68,8 +70,9 @@ export default function Navbar() {
           </ul>
         </nav>
 
-        {/* REDES (derecha) + HAMBURGUESA (móvil) */}
+        {/* REDES DERECHA + HAMBURGUESA (móvil) */}
         <div className="absolute inset-y-0 right-0 flex items-center pr-4 sm:pr-6 lg:pr-8">
+          {/* Redes sólo desktop */}
           <div className="hidden md:flex items-center gap-6">
             <Link href="https://wa.me/56900000000" aria-label="WhatsApp" className="hover:opacity-90">
               <WhatsAppIcon className="h-[22px] w-[22px]" />
@@ -91,7 +94,7 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Hamburguesa móvil */}
+          {/* Botón hamburguesa en móvil */}
           <button
             className="md:hidden inline-flex h-10 w-10 items-center justify-center"
             onClick={() => setOpen(v => !v)}
@@ -102,7 +105,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Menú móvil */}
+      {/* Menú móvil (simple y funcional) */}
       {open && (
         <div className="md:hidden bg-[#0A2E57] text-white border-t border-white/10">
           <div className="px-4 sm:px-6 py-4 flex flex-col gap-4">
@@ -126,3 +129,4 @@ export default function Navbar() {
     </header>
   );
 }
+
