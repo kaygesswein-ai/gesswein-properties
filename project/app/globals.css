@@ -24,3 +24,33 @@ h1, h2, h3, .heading-serif {
   text-transform: uppercase;
   letter-spacing: 0.28em;
 }
+/* === Forzar tipografía de marca en TODOS los controles === */
+button,
+input,
+select,
+textarea,
+label,
+summary,
+a[role="button"],
+[role="button"],
+[type="button"],
+[type="submit"],
+[type="reset"] {
+  font-family: var(--font-sans) !important; /* Montserrat */
+}
+
+/* Opciones de <select> y placeholders */
+select option,
+select optgroup,
+input::placeholder,
+textarea::placeholder {
+  font-family: var(--font-sans) !important; /* Montserrat */
+}
+
+/* Extra: asegura los CTA con la sans y peso consistente */
+.btn,
+.cta {
+  font-family: var(--font-sans) !important;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
