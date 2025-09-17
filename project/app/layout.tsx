@@ -5,7 +5,7 @@ import { Inter } from 'next/font/google'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], display: 'swap' })
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 export const metadata: Metadata = {
@@ -31,6 +31,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
+      <head>
+        {/* Preload del logo blanco del footer (usa PNG si no tienes SVG) */}
+        <link rel="preload" as="image" href="/logo-gesswein-white.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" />
+      </head>
       <body className={inter.className}>
         <div className="min-h-screen flex flex-col">
           <Navbar />
@@ -41,3 +46,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
+
