@@ -192,65 +192,86 @@ export default function HomePage() {
           <h2 className="text-2xl md:text-3xl font-semibold">Equipo</h2>
         </div>
 
-        <p className="mt-3 max-w-3xl text-slate-700">
-          En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
-          cada día combinamos <span className="font-semibold">criterio arquitectónico</span>, <span className="font-semibold">respaldo legal</span> y <span className="font-semibold">mirada financiera</span> para que cada decisión inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
+        <p className="mt-3 max-w-4xl text-slate-700">
+          En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar: cada día combinamos
+          <span className="font-semibold"> criterio arquitectónico</span>,
+          <span className="font-semibold"> respaldo legal</span> y
+          <span className="font-semibold"> mirada financiera</span> para que cada decisión inmobiliaria sea
+          <span className="font-semibold"> segura y rentable</span>.
         </p>
 
-        {/* Todas las tarjetas misma altura */}
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
-          {[
+        {/*
+          === Ajustes de proporción del bloque de equipo ===
+          - PANEL_W: ancho en px del rectángulo celeste y del bloque azul marino.
+          - PHOTO_W: ancho en px del retrato; el panel es "un poco más ancho" que la foto.
+          - HEAD_H: alto del rectángulo celeste.
+          Sube o baja estos números si quieres otra proporción.
+        */}
+        {(() => {
+          const PANEL_W = 340; // ancho del rectángulo celeste y del bloque inferior
+          const PHOTO_W = 300; // ancho del retrato (Kay marca el ancho; el panel queda un poco más ancho)
+          const HEAD_H = 132;  // alto del rectángulo celeste
+
+          const miembros = [
             {
               nombre: 'Carolina San Martín',
-              cargo1: 'Socia Fundadora',
-              cargo2: 'Arquitecta',
+              rolCorto: 'Socia Fundadora',
+              rolLargo: 'Arquitecta',
               foto: '/team/carolina-san-martin.png',
             },
             {
               nombre: 'Alberto Gesswein',
-              cargo1: 'Socio',
-              cargo2: 'Periodista y Gestor de Proyectos',
+              rolCorto: 'Socio',
+              rolLargo: 'Periodista y Gestor de Proyectos',
               foto: '/team/alberto-gesswein.png',
             },
             {
               nombre: 'Jan Gesswein',
-              cargo1: 'Socio',
-              cargo2: 'Abogado',
+              rolCorto: 'Socio',
+              rolLargo: 'Abogado',
               foto: '/team/jan-gesswein.png',
             },
             {
               nombre: 'Kay Gesswein',
-              cargo1: 'Socio',
-              cargo2: 'Ingeniero Comercial · Magíster en Finanzas',
+              rolCorto: 'Socio',
+              rolLargo: 'Ingeniero Comercial · Magíster en Finanzas',
               foto: '/team/kay-gesswein.png',
             },
-          ].map((m) => (
-            <article
-              key={m.nombre}
-              className="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg h-full"
-            >
-              {/* Panel superior fijo y retrato sobresaliendo */}
-              <div className="relative h-28 rounded-t-2xl bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 overflow-visible">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={m.foto}
-                  alt={m.nombre}
-                  className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-auto object-contain object-top drop-shadow-xl"
-                  loading="lazy"
-                />
-              </div>
+          ];
 
-              {/* Bloque inferior con altura uniforme */}
-              <div className="bg-[#0A2E57] text-white px-4 pt-12 pb-4 rounded-b-2xl flex-1 flex flex-col min-h-[180px]">
-                <h3 className="text-lg font-semibold">{m.nombre}</h3>
-                <p className="text-xs uppercase tracking-widest/relaxed opacity-90">{m.cargo1}</p>
-                <p className="mt-1 text-sm text-white/90">{m.cargo2}</p>
-                {/* empuja hacia abajo para igualar alturas aunque el texto tenga más líneas */}
-                <div className="mt-auto" />
-              </div>
-            </article>
-          ))}
-        </div>
+          return (
+            <div className="mt-8 grid gap-8 lg:gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-items-center">
+              {miembros.map((m) => (
+                <article key={m.nombre} className="flex flex-col items-center">
+                  {/* Panel celeste + foto que sobresale un poco por arriba */}
+                  <div
+                    className="relative rounded-3xl bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 overflow-visible"
+                    style={{ width: PANEL_W, height: HEAD_H }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={m.foto}
+                      alt={m.nombre}
+                      style={{ width: PHOTO_W }}
+                      className="absolute left-1/2 -translate-x-1/2 -top-6 w-auto h-auto object-contain object-top drop-shadow-xl"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  {/* Bloque azul marino: mismo ancho y esquinas redondeadas; altura uniforme */}
+                  <div
+                    className="bg-[#0A2E57] text-white px-5 pt-14 pb-5 rounded-3xl w-full"
+                    style={{ width: PANEL_W, minHeight: 200 }}
+                  >
+                    <h3 className="text-lg font-semibold leading-snug">{m.nombre}</h3>
+                    <p className="text-xs uppercase font-bold tracking-wide mt-0.5 opacity-95">{m.rolCorto}</p>
+                    <p className="mt-2 text-sm text-white/90 leading-relaxed">{m.rolLargo}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          );
+        })()}
       </section>
 
       {/* ========= SEGMENTO 3: REFERIDOS ========= */}
