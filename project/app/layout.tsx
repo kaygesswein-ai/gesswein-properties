@@ -1,11 +1,24 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Montserrat, Cinzel } from 'next/font/google'
 
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' })
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['300','400','500','600','700'],
+  variable: '--font-sans',
+  display: 'swap',
+})
+
+const cinzel = Cinzel({
+  subsets: ['latin'],
+  weight: ['400','600','700'],
+  variable: '--font-serif',
+  display: 'swap',
+})
+
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 export const metadata: Metadata = {
@@ -31,12 +44,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <head>
-        {/* Preload del logo blanco existente */}
-        <link rel="preload" as="image" href="/logo-white.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body className={inter.className}>
+      <body className={`${montserrat.variable} ${cinzel.variable} font-sans`}>
         <div className="min-h-screen flex flex-col">
           <Navbar />
           <main className="flex-1">{children}</main>
