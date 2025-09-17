@@ -82,15 +82,12 @@ export default function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
           <div className="w-full relative">
-            {/* BOTÓN: ahora forzado a Montserrat */}
+            {/* BOTÓN (forzado a Montserrat) */}
             <div className="ml-6 md:ml-10 mb-3">
               <Link
                 href="/propiedades"
-                className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
-                style={{
-                  boxShadow:
-                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
-                }}
+                className="hero-cta inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none"
+                style={{ fontFamily: 'var(--font-sans)' }}
               >
                 Ver Propiedades
               </Link>
@@ -133,7 +130,8 @@ export default function HomePage() {
                 {active?.id ? (
                   <Link
                     href={`/propiedades/${active.id}`}
-                    className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none font-sans"
+                    className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none"
+                    style={{ fontFamily: 'var(--font-sans)' }}
                   >
                     Ver detalle
                   </Link>
