@@ -12,80 +12,6 @@ import {
   Users2,
 } from 'lucide-react';
 
-/* ======================= Helpers robustos para imágenes locales ======================= */
-
-// Prefijo para cuando la app vive bajo /project u otro basePath
-const ASSET_PREFIX =
-  (typeof window !== 'undefined' && (window as any).__NEXT_DATA__?.assetPrefix) ||
-  process.env.NEXT_PUBLIC_BASE_PATH ||
-  ''; // ej: '/project' o ''
-
-// Normaliza nombres: quita tildes, deja solo letras/números/espacios/guiones
-function normalizeHumanName(s: string) {
-  return s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // tildes
-    .replace(/[^\w\s-]/g, '') // signos raros
-    .trim();
-}
-
-function toSlug(s: string) {
-  return normalizeHumanName(s)
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
-
-// Genera rutas candidatas para distintos casos de nombres/extensiones
-function candidateTeamPaths(nombre: string): string[] {
-  const norm = normalizeHumanName(nombre);                // "Carolina San Martin"
-  const slug = toSlug(nombre);                            // "carolina-san-martin"
-  const withSpaces = `${ASSET_PREFIX}/team/${norm}.png`;  // "/team/Carolina San Martin.png"
-  const withSpacesPNG = `${ASSET_PREFIX}/team/${norm}.PNG`;
-  const withSpacesWebp = `${ASSET_PREFIX}/team/${norm}.webp`;
-  const withSpacesJpg = `${ASSET_PREFIX}/team/${norm}.jpg`;
-
-  const withSlug = `${ASSET_PREFIX}/team/${slug}.png`;    // "/team/carolina-san-martin.png"
-  const withSlugPNG = `${ASSET_PREFIX}/team/${slug}.PNG`;
-  const withSlugWebp = `${ASSET_PREFIX}/team/${slug}.webp`;
-  const withSlugJpg = `${ASSET_PREFIX}/team/${slug}.jpg`;
-
-  return [
-    withSlug, withSlugPNG, withSlugWebp, withSlugJpg,
-    withSpaces, withSpacesPNG, withSpacesWebp, withSpacesJpg,
-  ];
-}
-
-// Hook: prueba las rutas hasta que una cargue (silueta placeholder si ninguna)
-function useFirstExistingImage(nombre: string, fallbackUrl: string) {
-  const [src, setSrc] = useState<string>(fallbackUrl);
-  useEffect(() => {
-    let cancelled = false;
-    const candidates = candidateTeamPaths(nombre);
-    let idx = 0;
-
-    const tryNext = () => {
-      if (cancelled || idx >= candidates.length) return;
-      const url = candidates[idx++];
-      const img = new Image();
-      img.onload = () => {
-        if (!cancelled) setSrc(url);
-      };
-      img.onerror = () => {
-        tryNext(); // prueba la siguiente
-      };
-      img.src = url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now(); // bust cache
-    };
-
-    tryNext();
-    return () => { cancelled = true; };
-  }, [nombre]);
-
-  return src;
-}
-
-/* ======================= Tipos y utilidades del sitio ======================= */
-
 type Property = {
   id: string;
   titulo?: string;
@@ -109,8 +35,6 @@ function fmtPrecio(pUf?: number | null, pClp?: number | null) {
   return 'Consultar';
 }
 
-/* ================================== Página ================================== */
-
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
@@ -133,10 +57,10 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
-  // Auto-slide 4s
+  // Auto-slide cada 4s
   useEffect(() => {
     if (!destacadas.length) return;
-    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current && clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [destacadas.length]);
@@ -161,7 +85,11 @@ export default function HomePage() {
     <main className="bg-white">
       {/* ========= HERO / CARRUSEL ========= */}
       <section className="relative w-full overflow-hidden isolate">
-        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
+        <div
+          className="absolute inset-0 -z-10 bg-center bg-cover"
+          style={{ backgroundImage: `url(${bg})` }}
+          aria-hidden
+        />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
@@ -171,7 +99,10 @@ export default function HomePage() {
               <Link
                 href="/propiedades"
                 className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none"
-                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
+                style={{
+                  boxShadow:
+                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                }}
               >
                 Ver Propiedades
               </Link>
@@ -179,30 +110,43 @@ export default function HomePage() {
 
             {/* Tarjeta resumen */}
             <div className="ml-6 md:ml-10 bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-md">
-              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">{active?.titulo ?? 'Propiedad destacada'}</h1>
+              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+                {active?.titulo ?? 'Propiedad destacada'}
+              </h1>
               <p className="mt-1 text-sm text-gray-600">
                 {active?.comuna ? `${active.comuna} · ` : ''}{active?.tipo ?? '—'} · {active?.operacion ?? '—'}
               </p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500"><Bed className="h-4 w-4" /> Dormitorios</div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                    <Bed className="h-4 w-4" /> Dormitorios
+                  </div>
                   <div className="text-base font-semibold">{active?.dormitorios ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500"><ShowerHead className="h-4 w-4" /> Baños</div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                    <ShowerHead className="h-4 w-4" /> Baños
+                  </div>
                   <div className="text-base font-semibold">{active?.banos ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500"><Ruler className="h-4 w-4" /> Área útil (m²)</div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                    <Ruler className="h-4 w-4" /> Área útil (m²)
+                  </div>
                   <div className="text-base font-semibold">{active?.superficie_util_m2 ?? '—'}</div>
                 </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <div className="text-xl font-extrabold text-[#C1272D]">{fmtPrecio(active?.precio_uf, active?.precio_clp)}</div>
+                <div className="text-xl font-extrabold text-[#C1272D]">
+                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
+                </div>
                 {active?.id ? (
-                  <Link href={`/propiedades/${active.id}`} className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none">
+                  <Link
+                    href={`/propiedades/${active.id}`}
+                    className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none"
+                  >
                     Ver detalle
                   </Link>
                 ) : null}
@@ -212,10 +156,18 @@ export default function HomePage() {
 
           {destacadas.length > 1 && (
             <>
-              <button aria-label="Anterior" onClick={() => go(-1)} className="group absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2">
+              <button
+                aria-label="Anterior"
+                onClick={() => go(-1)}
+                className="group absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2"
+              >
                 <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
-              <button aria-label="Siguiente" onClick={() => go(1)} className="group absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2">
+              <button
+                aria-label="Siguiente"
+                onClick={() => go(1)}
+                className="group absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2"
+              >
                 <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
             </>
@@ -233,7 +185,7 @@ export default function HomePage() {
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* ========= SEGMENTO 2: EQUIPO (con detección automática de ruta válida) ========= */}
+      {/* ========= SEGMENTO 2: EQUIPO ========= */}
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
@@ -245,40 +197,59 @@ export default function HomePage() {
           cada día combinamos <span className="font-semibold">criterio arquitectónico</span>, <span className="font-semibold">respaldo legal</span> y <span className="font-semibold">mirada financiera</span> para que cada decisión inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
         </p>
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Todas las tarjetas misma altura */}
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
           {[
-            { nombre: 'Carolina San Martín', linea1: 'Socia Fundadora', linea2: 'Arquitecta' },
-            { nombre: 'Alberto Gesswein', linea1: 'Socio', linea2: 'Periodista y Gestor de Proyectos' },
-            { nombre: 'Jan Gesswein', linea1: 'Socio', linea2: 'Abogado' },
-            { nombre: 'Kay Gesswein', linea1: 'Socio', linea2: 'Ingeniero Comercial · Magíster en Finanzas' },
-          ].map((m) => {
-            const src = useFirstExistingImage(
-              m.nombre,
-              // placeholder de cortesía (si nada coincide)
-              'https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=400&auto=format&fit=crop'
-            );
+            {
+              nombre: 'Carolina San Martín',
+              cargo1: 'Socia Fundadora',
+              cargo2: 'Arquitecta',
+              foto: '/team/carolina-san-martin.png',
+            },
+            {
+              nombre: 'Alberto Gesswein',
+              cargo1: 'Socio',
+              cargo2: 'Periodista y Gestor de Proyectos',
+              foto: '/team/alberto-gesswein.png',
+            },
+            {
+              nombre: 'Jan Gesswein',
+              cargo1: 'Socio',
+              cargo2: 'Abogado',
+              foto: '/team/jan-gesswein.png',
+            },
+            {
+              nombre: 'Kay Gesswein',
+              cargo1: 'Socio',
+              cargo2: 'Ingeniero Comercial · Magíster en Finanzas',
+              foto: '/team/kay-gesswein.png',
+            },
+          ].map((m) => (
+            <article
+              key={m.nombre}
+              className="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg h-full"
+            >
+              {/* Panel superior fijo y retrato sobresaliendo */}
+              <div className="relative h-28 rounded-t-2xl bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 overflow-visible">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={m.foto}
+                  alt={m.nombre}
+                  className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-auto object-contain object-top drop-shadow-xl"
+                  loading="lazy"
+                />
+              </div>
 
-            return (
-              <article key={m.nombre} className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg">
-                {/* Panel superior (pequeño) y retrato sobresaliendo */}
-                <div className="relative h-28 rounded-t-2xl bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 overflow-visible">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={src}
-                    alt={m.nombre}
-                    className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-auto object-contain object-top drop-shadow-xl"
-                    loading="lazy"
-                  />
-                </div>
-
-                <div className="bg-[#0A2E57] text-white px-4 pt-12 pb-4 rounded-b-2xl">
-                  <h3 className="text-lg font-semibold">{m.nombre}</h3>
-                  <p className="text-xs uppercase tracking-widest/relaxed opacity-90">{m.linea1}</p>
-                  <p className="mt-1 text-sm text-white/90">{m.linea2}</p>
-                </div>
-              </article>
-            );
-          })}
+              {/* Bloque inferior con altura uniforme */}
+              <div className="bg-[#0A2E57] text-white px-4 pt-12 pb-4 rounded-b-2xl flex-1 flex flex-col min-h-[180px]">
+                <h3 className="text-lg font-semibold">{m.nombre}</h3>
+                <p className="text-xs uppercase tracking-widest/relaxed opacity-90">{m.cargo1}</p>
+                <p className="mt-1 text-sm text-white/90">{m.cargo2}</p>
+                {/* empuja hacia abajo para igualar alturas aunque el texto tenga más líneas */}
+                <div className="mt-auto" />
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -290,39 +261,99 @@ export default function HomePage() {
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
             <h2 className="mt-3 text-2xl md:text-3xl font-semibold">Programa de Referidos con Exclusividad</h2>
-            <p className="mt-2 text-slate-600">¿Conoces a alguien que busca propiedad? Refierelo y obtén beneficios exclusivos.</p>
+            <p className="mt-2 text-slate-600">
+              ¿Conoces a alguien que busca propiedad? Refierelo y obtén beneficios exclusivos.
+            </p>
           </div>
 
           <div className="px-6 pb-8">
+            {/* Tus datos (Referente) */}
             <h3 className="text-lg font-medium">Tus datos (Referente)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div><label className="block text-sm text-slate-700 mb-1">Nombre completo *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Tu nombre completo" /></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Email *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="tu@email.com" /></div>
-              <div className="md:col-span-2"><label className="block text-sm text-slate-700 mb-1">Teléfono</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" /></div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Tu nombre completo" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="tu@email.com" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
+              </div>
             </div>
 
+            {/* Datos del referido */}
             <h3 className="mt-8 text-lg font-medium">Datos del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div><label className="block text-sm text-slate-700 mb-1">Nombre completo *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Nombre del referido" /></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Email *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="email@referido.com" /></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Teléfono del referido</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" /></div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Nombre del referido" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="email@referido.com" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Teléfono del referido</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
+              </div>
               <div />
             </div>
 
+            {/* Preferencias */}
             <h3 className="mt-8 text-lg font-medium">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div><label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label><select className="w-full rounded-md border border-slate-300 px-3 py-2"><option>Seleccionar tipo</option><option>Casa</option><option>Departamento</option><option>Oficina</option><option>Terreno</option></select></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Comuna de interés</label><select className="w-full rounded-md border border-slate-300 px-3 py-2"><option>Seleccionar comuna</option><option>Las Condes</option><option>Vitacura</option><option>Lo Barnechea</option><option>Providencia</option></select></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (CLP)</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" /></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (CLP)</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" /></div>
-              <div className="md:col-span-2"><label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label><textarea className="w-full rounded-md border border-slate-300 px-3 py-2" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." /></div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
+                <select className="w-full rounded-md border border-slate-300 px-3 py-2">
+                  <option>Seleccionar tipo</option>
+                  <option>Casa</option>
+                  <option>Departamento</option>
+                  <option>Oficina</option>
+                  <option>Terreno</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Comuna de interés</label>
+                <select className="w-full rounded-md border border-slate-300 px-3 py-2">
+                  <option>Seleccionar comuna</option>
+                  <option>Las Condes</option>
+                  <option>Vitacura</option>
+                  <option>Lo Barnechea</option>
+                  <option>Providencia</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (CLP)</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (CLP)</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
+                <textarea
+                  className="w-full rounded-md border border-slate-300 px-3 py-2"
+                  rows={4}
+                  placeholder="Cualquier información adicional que pueda ser útil..."
+                />
+              </div>
             </div>
 
             <div className="mt-6">
-              <button type="button" className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-neutral-900 px-4 py-3 text-white text-sm font-medium hover:bg-black">
-                <Gift className="h-4 w-4" /> Enviar referido
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-neutral-900 px-4 py-3 text-white text-sm font-medium hover:bg-black"
+              >
+                <Gift className="h-4 w-4" />
+                Enviar referido
               </button>
-              <p className="mt-3 text-center text-xs text-slate-500">Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.</p>
+              <p className="mt-3 text-center text-xs text-slate-500">
+                Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
+              </p>
             </div>
           </div>
         </div>
