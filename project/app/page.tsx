@@ -32,6 +32,7 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Carga destacadas
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -48,6 +49,7 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
+  // Auto-slide
   useEffect(() => {
     if (!destacadas.length) return;
     timerRef.current && clearInterval(timerRef.current);
@@ -80,18 +82,21 @@ export default function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
           <div className="w-full relative">
-            {/* Botón arriba del cuadro */}
+            {/* BOTÓN: ahora forzado a Montserrat */}
             <div className="ml-6 md:ml-10 mb-3">
               <Link
                 href="/propiedades"
-                className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none"
-                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
+                className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
+                style={{
+                  boxShadow:
+                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                }}
               >
                 Ver Propiedades
               </Link>
             </div>
 
-            {/* Tarjeta resumen */}
+            {/* TARJETA RESUMEN */}
             <div className="ml-6 md:ml-10 bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-md">
               <h1 className="heading-serif text-[1.4rem] md:text-2xl font-semibold text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
@@ -102,23 +107,34 @@ export default function HomePage() {
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500"><Bed className="h-4 w-4" /> Dormitorios</div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                    <Bed className="h-4 w-4" /> Dormitorios
+                  </div>
                   <div className="text-base font-semibold">{active?.dormitorios ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500"><ShowerHead className="h-4 w-4" /> Baños</div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                    <ShowerHead className="h-4 w-4" /> Baños
+                  </div>
                   <div className="text-base font-semibold">{active?.banos ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500"><Ruler className="h-4 w-4" /> Área útil (m²)</div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                    <Ruler className="h-4 w-4" /> Área útil (m²)
+                  </div>
                   <div className="text-base font-semibold">{active?.superficie_util_m2 ?? '—'}</div>
                 </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <div className="text-xl font-extrabold text-[#C1272D]">{fmtPrecio(active?.precio_uf, active?.precio_clp)}</div>
+                <div className="text-xl font-extrabold text-[#C1272D]">
+                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
+                </div>
                 {active?.id ? (
-                  <Link href={`/propiedades/${active.id}`} className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none">
+                  <Link
+                    href={`/propiedades/${active.id}`}
+                    className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none font-sans"
+                  >
                     Ver detalle
                   </Link>
                 ) : null}
@@ -128,10 +144,18 @@ export default function HomePage() {
 
           {destacadas.length > 1 && (
             <>
-              <button aria-label="Anterior" onClick={() => go(-1)} className="group absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2">
+              <button
+                aria-label="Anterior"
+                onClick={() => go(-1)}
+                className="group absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2"
+              >
                 <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
-              <button aria-label="Siguiente" onClick={() => go(1)} className="group absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2">
+              <button
+                aria-label="Siguiente"
+                onClick={() => go(1)}
+                className="group absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2"
+              >
                 <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
             </>
@@ -140,7 +164,10 @@ export default function HomePage() {
           {destacadas.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {destacadas.map((_, idx) => (
-                <span key={idx} className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`} />
+                <span
+                  key={idx}
+                  className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`}
+                />
               ))}
             </div>
           )}
@@ -149,7 +176,7 @@ export default function HomePage() {
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* ========= SEGMENTO 2: EQUIPO (cards con overlay) ========= */}
+      {/* ========= EQUIPO ========= */}
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
@@ -193,47 +220,101 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ========= SEGMENTO 3: REFERIDOS ========= */}
+      {/* ========= REFERIDOS ========= */}
       <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="px-6 py-8 text-center">
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="heading-serif mt-3 text-2xl md:text-3xl font-semibold">Programa de Referidos con Exclusividad</h2>
-            <p className="mt-2 text-slate-600">¿Conoces a alguien que busca propiedad? Refierelo y obtén beneficios exclusivos.</p>
+            <h2 className="heading-serif mt-3 text-2xl md:text-3xl font-semibold">
+              Programa de Referidos con Exclusividad
+            </h2>
+            <p className="mt-2 text-slate-600">
+              ¿Conoces a alguien que busca propiedad? Refierelo y obtén beneficios exclusivos.
+            </p>
           </div>
 
           <div className="px-6 pb-8">
             <h3 className="heading-serif text-lg font-semibold">Tus datos (Referente)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div><label className="block text-sm text-slate-700 mb-1">Nombre completo *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Tu nombre completo" /></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Email *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="tu@email.com" /></div>
-              <div className="md:col-span-2"><label className="block text-sm text-slate-700 mb-1">Teléfono</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" /></div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Tu nombre completo" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="tu@email.com" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
+              </div>
             </div>
 
             <h3 className="heading-serif mt-8 text-lg font-semibold">Datos del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div><label className="block text-sm text-slate-700 mb-1">Nombre completo *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Nombre del referido" /></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Email *</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="email@referido.com" /></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Teléfono del referido</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" /></div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Nombre del referido" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="email@referido.com" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Teléfono del referido</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
+              </div>
               <div />
             </div>
 
             <h3 className="heading-serif mt-8 text-lg font-semibold">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div><label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label><select className="w-full rounded-md border border-slate-300 px-3 py-2"><option>Seleccionar tipo</option><option>Casa</option><option>Departamento</option><option>Oficina</option><option>Terreno</option></select></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Comuna de interés</label><select className="w-full rounded-md border border-slate-300 px-3 py-2"><option>Seleccionar comuna</option><option>Las Condes</option><option>Vitacura</option><option>Lo Barnechea</option><option>Providencia</option></select></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (CLP)</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" /></div>
-              <div><label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (CLP)</label><input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" /></div>
-              <div className="md:col-span-2"><label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label><textarea className="w-full rounded-md border border-slate-300 px-3 py-2" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." /></div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
+                <select className="w-full rounded-md border border-slate-300 px-3 py-2">
+                  <option>Seleccionar tipo</option>
+                  <option>Casa</option>
+                  <option>Departamento</option>
+                  <option>Oficina</option>
+                  <option>Terreno</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Comuna de interés</label>
+                <select className="w-full rounded-md border border-slate-300 px-3 py-2">
+                  <option>Seleccionar comuna</option>
+                  <option>Las Condes</option>
+                  <option>Vitacura</option>
+                  <option>Lo Barnechea</option>
+                  <option>Providencia</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (CLP)</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (CLP)</label>
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
+                <textarea className="w-full rounded-md border border-slate-300 px-3 py-2" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
+              </div>
             </div>
 
             <div className="mt-6">
-              <button type="button" className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-neutral-900 px-4 py-3 text-white text-sm font-medium hover:bg-black">
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-neutral-900 px-4 py-3 text-white text-sm font-medium hover:bg-black"
+              >
                 <Gift className="h-4 w-4" /> Enviar referido
               </button>
-              <p className="mt-3 text-center text-xs text-slate-500">Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.</p>
+              <p className="mt-3 text-center text-xs text-slate-500">
+                Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
+              </p>
             </div>
           </div>
         </div>
