@@ -1,9 +1,90 @@
 'use client';
 
 import Link from 'next/link';
-import Image, { ImageLoader } from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Bed,
+  ShowerHead,
+  Ruler,
+  Gift,
+  Users2,
+} from 'lucide-react';
+
+/* ======================= Helpers robustos para imágenes locales ======================= */
+
+// Prefijo para cuando la app vive bajo /project u otro basePath
+const ASSET_PREFIX =
+  (typeof window !== 'undefined' && (window as any).__NEXT_DATA__?.assetPrefix) ||
+  process.env.NEXT_PUBLIC_BASE_PATH ||
+  ''; // ej: '/project' o ''
+
+// Normaliza nombres: quita tildes, deja solo letras/números/espacios/guiones
+function normalizeHumanName(s: string) {
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // tildes
+    .replace(/[^\w\s-]/g, '') // signos raros
+    .trim();
+}
+
+function toSlug(s: string) {
+  return normalizeHumanName(s)
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+// Genera rutas candidatas para distintos casos de nombres/extensiones
+function candidateTeamPaths(nombre: string): string[] {
+  const norm = normalizeHumanName(nombre);                // "Carolina San Martin"
+  const slug = toSlug(nombre);                            // "carolina-san-martin"
+  const withSpaces = `${ASSET_PREFIX}/team/${norm}.png`;  // "/team/Carolina San Martin.png"
+  const withSpacesPNG = `${ASSET_PREFIX}/team/${norm}.PNG`;
+  const withSpacesWebp = `${ASSET_PREFIX}/team/${norm}.webp`;
+  const withSpacesJpg = `${ASSET_PREFIX}/team/${norm}.jpg`;
+
+  const withSlug = `${ASSET_PREFIX}/team/${slug}.png`;    // "/team/carolina-san-martin.png"
+  const withSlugPNG = `${ASSET_PREFIX}/team/${slug}.PNG`;
+  const withSlugWebp = `${ASSET_PREFIX}/team/${slug}.webp`;
+  const withSlugJpg = `${ASSET_PREFIX}/team/${slug}.jpg`;
+
+  return [
+    withSlug, withSlugPNG, withSlugWebp, withSlugJpg,
+    withSpaces, withSpacesPNG, withSpacesWebp, withSpacesJpg,
+  ];
+}
+
+// Hook: prueba las rutas hasta que una cargue (silueta placeholder si ninguna)
+function useFirstExistingImage(nombre: string, fallbackUrl: string) {
+  const [src, setSrc] = useState<string>(fallbackUrl);
+  useEffect(() => {
+    let cancelled = false;
+    const candidates = candidateTeamPaths(nombre);
+    let idx = 0;
+
+    const tryNext = () => {
+      if (cancelled || idx >= candidates.length) return;
+      const url = candidates[idx++];
+      const img = new Image();
+      img.onload = () => {
+        if (!cancelled) setSrc(url);
+      };
+      img.onerror = () => {
+        tryNext(); // prueba la siguiente
+      };
+      img.src = url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now(); // bust cache
+    };
+
+    tryNext();
+    return () => { cancelled = true; };
+  }, [nombre]);
+
+  return src;
+}
+
+/* ======================= Tipos y utilidades del sitio ======================= */
 
 type Property = {
   id: string;
@@ -22,14 +103,13 @@ type Property = {
   destacada?: boolean;
 };
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-const publicLoader: ImageLoader = ({ src }) => `${BASE_PATH}${src}`;
-
 function fmtPrecio(pUf?: number | null, pClp?: number | null) {
   if (typeof pUf === 'number' && pUf > 0) return `UF ${new Intl.NumberFormat('es-CL').format(pUf)}`;
   if (typeof pClp === 'number' && pClp > 0) return `$ ${new Intl.NumberFormat('es-CL').format(pClp)}`;
   return 'Consultar';
 }
+
+/* ================================== Página ================================== */
 
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
@@ -153,7 +233,7 @@ export default function HomePage() {
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* ========= SEGMENTO 2: EQUIPO (usa loader para /public) ========= */}
+      {/* ========= SEGMENTO 2: EQUIPO (con detección automática de ruta válida) ========= */}
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
@@ -161,39 +241,44 @@ export default function HomePage() {
         </div>
 
         <p className="mt-3 max-w-3xl text-slate-700">
-          En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar: cada día combinamos <span className="font-semibold">criterio arquitectónico</span>, <span className="font-semibold">respaldo legal</span> y <span className="font-semibold">mirada financiera</span> para que cada decisión inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
+          En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
+          cada día combinamos <span className="font-semibold">criterio arquitectónico</span>, <span className="font-semibold">respaldo legal</span> y <span className="font-semibold">mirada financiera</span> para que cada decisión inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
         </p>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { nombre: 'Carolina San Martín', linea1: 'Socia Fundadora', linea2: 'Arquitecta', foto: '/team/carolina-san-martin.png' },
-            { nombre: 'Alberto Gesswein', linea1: 'Socio', linea2: 'Periodista y Gestor de Proyectos', foto: '/team/alberto-gesswein.png' },
-            { nombre: 'Jan Gesswein', linea1: 'Socio', linea2: 'Abogado', foto: '/team/jan-gesswein.png' },
-            { nombre: 'Kay Gesswein', linea1: 'Socio', linea2: 'Ingeniero Comercial · Magíster en Finanzas', foto: '/team/kay-gesswein.png' },
-          ].map((m) => (
-            <article key={m.nombre} className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg">
-              <div className="relative h-28 rounded-t-2xl bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 overflow-visible">
-                {/* Contenedor del retrato (sale del panel) */}
-                <div className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-[170px] relative">
-                  <Image
-                    loader={publicLoader}
-                    src={m.foto}
+            { nombre: 'Carolina San Martín', linea1: 'Socia Fundadora', linea2: 'Arquitecta' },
+            { nombre: 'Alberto Gesswein', linea1: 'Socio', linea2: 'Periodista y Gestor de Proyectos' },
+            { nombre: 'Jan Gesswein', linea1: 'Socio', linea2: 'Abogado' },
+            { nombre: 'Kay Gesswein', linea1: 'Socio', linea2: 'Ingeniero Comercial · Magíster en Finanzas' },
+          ].map((m) => {
+            const src = useFirstExistingImage(
+              m.nombre,
+              // placeholder de cortesía (si nada coincide)
+              'https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=400&auto=format&fit=crop'
+            );
+
+            return (
+              <article key={m.nombre} className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg">
+                {/* Panel superior (pequeño) y retrato sobresaliendo */}
+                <div className="relative h-28 rounded-t-2xl bg-gradient-to-b from-sky-200 via-sky-300 to-sky-500 overflow-visible">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
                     alt={m.nombre}
-                    fill
-                    sizes="170px"
-                    style={{ objectFit: 'contain', objectPosition: 'top' }}
-                    unoptimized
+                    className="absolute left-1/2 -translate-x-1/2 -top-6 h-44 w-auto object-contain object-top drop-shadow-xl"
+                    loading="lazy"
                   />
                 </div>
-              </div>
 
-              <div className="bg-[#0A2E57] text-white px-4 pt-12 pb-4 rounded-b-2xl">
-                <h3 className="text-lg font-semibold">{m.nombre}</h3>
-                <p className="text-xs uppercase tracking-widest/relaxed opacity-90">{m.linea1}</p>
-                <p className="mt-1 text-sm text-white/90">{m.linea2}</p>
-              </div>
-            </article>
-          ))}
+                <div className="bg-[#0A2E57] text-white px-4 pt-12 pb-4 rounded-b-2xl">
+                  <h3 className="text-lg font-semibold">{m.nombre}</h3>
+                  <p className="text-xs uppercase tracking-widest/relaxed opacity-90">{m.linea1}</p>
+                  <p className="mt-1 text-sm text-white/90">{m.linea2}</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
