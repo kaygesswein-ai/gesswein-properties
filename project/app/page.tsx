@@ -32,7 +32,6 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Carga destacadas (carrusel + grilla)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -40,8 +39,7 @@ export default function HomePage() {
         const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' });
         const json = await res.json();
         if (!mounted) return;
-        const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        setDestacadas(data);
+        setDestacadas(Array.isArray(json?.data) ? json.data : []);
       } catch {
         if (mounted) setDestacadas([]);
       }
@@ -49,10 +47,9 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
-  // Auto-slide cada 4s
   useEffect(() => {
     if (!destacadas.length) return;
-    timerRef.current && clearInterval(timerRef.current);
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [destacadas.length]);
@@ -85,50 +82,43 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        {/* Contenido principal del hero */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[72vh] md:min-h-[78vh] flex items-end pb-10 md:pb-14">
-          {/* Colocamos botón y tarjeta en línea (misma altura) */}
-          <div className="w-full relative flex items-start gap-4">
-            {/* BOTÓN: azul corporativo, texto blanco, sin negrita, doble línea con borde externo más delgado */}
+          {/* FILA: Botón a la izquierda (un poco más arriba) + Tarjeta única hacia el centro-izquierda */}
+          <div className="w-full relative flex items-start gap-5">
+            {/* Botón único: azul corporativo, dos líneas internas (externa más delgada), sin negrita */}
             <Link
               href="/propiedades"
-              className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none"
-              style={{
-                // doble línea interna: externo 1px (mitad), interno 3px
-                boxShadow:
-                  'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
-              }}
+              className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none self-start -mt-2"
+              style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
             >
               Ver Propiedades
             </Link>
 
-            {/* TARJETA RESUMEN: misma esquina izquierda, pero tamaño ~1/2, sin bordes redondeados y más transparente.
-                La movemos un poco a la derecha para liberar la flecha izquierda del carrusel */}
-            <div className="ml-6 md:ml-10 bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-md">
-              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+            {/* Tarjeta resumen (única), cuadrada, más al centro-izquierda y sin duplicados */}
+            <div className="bg-white/70 backdrop-blur-md shadow-2xl p-5 md:p-6 rounded-none max-w-2xl ml-2 md:ml-6">
+              <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
               <p className="mt-1 text-sm text-gray-600">
-                {active?.comuna ? `${active.comuna} · ` : ''}
-                {active?.tipo ?? '—'} · {active?.operacion ?? '—'}
+                {active?.comuna ? `${active.comuna} · ` : ''}{active?.tipo ?? '—'} · {active?.operacion ?? '—'}
               </p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50/70 p-3">
+                <div className="bg-gray-50/80 p-3">
                   <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
                     <Bed className="h-4 w-4" />
                     Dormitorios
                   </div>
                   <div className="text-base font-semibold">{active?.dormitorios ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-3">
+                <div className="bg-gray-50/80 p-3">
                   <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
                     <ShowerHead className="h-4 w-4" />
                     Baños
                   </div>
                   <div className="text-base font-semibold">{active?.banos ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-3">
+                <div className="bg-gray-50/80 p-3">
                   <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
                     <Ruler className="h-4 w-4" />
                     Área útil (m²)
@@ -137,14 +127,14 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-xl font-extrabold text-[#C1272D]">
+              <div className="mt-5 flex items-center justify-between">
+                <div className="text-2xl font-extrabold text-[#C1272D]">
                   {fmtPrecio(active?.precio_uf, active?.precio_clp)}
                 </div>
                 {active?.id ? (
                   <Link
                     href={`/propiedades/${active.id}`}
-                    className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none"
+                    className="inline-flex items-center border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none"
                   >
                     Ver detalle
                   </Link>
@@ -153,7 +143,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Flechas finas */}
+          {/* Flechas (finas) */}
           {destacadas.length > 1 && (
             <>
               <button
@@ -177,20 +167,16 @@ export default function HomePage() {
           {destacadas.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {destacadas.map((_, idx) => (
-                <span
-                  key={idx}
-                  className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`}
-                />
+                <span key={idx} className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`} />
               ))}
             </div>
           )}
         </div>
 
-        {/* Espaciador pequeño para no tapar la siguiente sección */}
         <div className="h-2 md:h-4" />
       </section>
 
-      {/* PROPIEDADES DESTACADAS (grilla conserva tu implementación) */}
+      {/* PROPIEDADES DESTACADAS (grilla abajo, igual que antes) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold">Propiedades destacadas</h2>
