@@ -81,10 +81,10 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        {/* Contenido del hero (altura casi pantalla completa) */}
+        {/* Contenido del hero (casi pantalla completa) */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[92vh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* BOTÓN CTA */}
+            {/* BOTÓN CTA (Ver Propiedades) */}
             <div className="ml-6 md:ml-10 mb-3">
               <Link
                 href="/propiedades"
@@ -176,7 +176,6 @@ export default function HomePage() {
             </div>
           )}
         </div>
-        {/* (Quitamos el espaciador para que no asome "Equipo" en el primer pantallazo) */}
       </section>
 
       {/* ========= EQUIPO ========= */}
@@ -300,7 +299,7 @@ export default function HomePage() {
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (CLP)</label>
-                <input className="W-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
@@ -308,17 +307,23 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mt-6">
+            {/* BOTÓN Enviar referido con MISMO estilo que “Ver Propiedades” */}
+            <div className="mt-6 flex justify-center">
               <button
                 type="button"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-neutral-900 px-4 py-3 text-white text-sm font-medium hover:bg-black"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
+                style={{
+                  boxShadow:
+                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                }}
               >
                 <Gift className="h-4 w-4" /> Enviar referido
               </button>
-              <p className="mt-3 text-center text-xs text-slate-500">
-                Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
-              </p>
             </div>
+
+            <p className="mt-3 text-center text-xs text-slate-500">
+              Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
+            </p>
           </div>
         </div>
       </section>
