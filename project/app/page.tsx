@@ -32,6 +32,10 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Swipe refs
+  const touchStartX = useRef<number | null>(null);
+  const touchDeltaX = useRef(0);
+
   // Carga destacadas
   useEffect(() => {
     let mounted = true;
@@ -65,6 +69,32 @@ export default function HomePage() {
     });
   };
 
+  // Swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchDeltaX.current = 0;
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current !== null) {
+      touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+    }
+  };
+  const handleTouchEnd = () => {
+    const dx = touchDeltaX.current;
+    const TH = 50; // umbral
+    if (Math.abs(dx) > TH) {
+      if (dx < 0) go(1);
+      else go(-1);
+    }
+    touchStartX.current = null;
+    touchDeltaX.current = 0;
+    // reanudar auto-slide
+    if (destacadas.length) {
+      timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
+    }
+  };
+
   const active = destacadas[i];
   const bg = useMemo(() => {
     if (!active)
@@ -76,15 +106,20 @@ export default function HomePage() {
   return (
     <main className="bg-white">
       {/* ========= HERO / CARRUSEL ========= */}
-      <section className="relative w-full overflow-hidden isolate">
+      <section
+        className="relative w-full overflow-hidden isolate"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Fondo */}
         <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
         {/* Contenido del hero (casi pantalla completa) */}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[92vh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* BOTÓN CTA (Ver Propiedades) */}
+            {/* BOTÓN CTA */}
             <div className="ml-6 md:ml-10 mb-3">
               <Link
                 href="/propiedades"
@@ -208,9 +243,9 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay al hover */}
-              <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0 group-hover:bg-[#0A2E57]/90 transition duration-300" />
-              <div className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition duration-300">
+              {/* Overlay: visible siempre en móvil, hover en desktop */}
+              <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/80 md:bg-[#0A2E57]/0 md:group-hover:bg-[#0A2E57]/90 transition duration-300" />
+              <div className="absolute inset-0 flex items-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition duration-300">
                 <div className="w-full p-4 text-white">
                   <h3 className="heading-serif text-lg font-semibold leading-snug">{m.nombre}</h3>
                   <p className="text-xs font-semibold uppercase tracking-wider mt-1">{m.cargo}</p>
@@ -307,7 +342,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* BOTÓN Enviar referido con MISMO estilo que “Ver Propiedades” */}
+            {/* Botón con el mismo estilo que “Ver Propiedades” */}
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
