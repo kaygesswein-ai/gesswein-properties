@@ -128,3 +128,8 @@ textarea::placeholder {
   border-radius: 8px;
   color: #fff;
 }
+/* Safe padding para el héroe en pantallas pequeñas */
+@media (max-width: 640px) {
+  .hero-safe-x { padding-left: 1rem; padding-right: 1rem; } /* 16px */
+  .hero-safe-left { margin-left: 1rem; }                     /* 16px */
+}
