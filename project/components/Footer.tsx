@@ -16,7 +16,7 @@ const NAV = [
 // Íconos en el mismo orden del navbar: WhatsApp, Mail, Teléfono, Instagram, Facebook, LinkedIn
 function SocialIcons() {
   return (
-    <div className="mt-5 flex items-center justify-center gap-6 md:gap-8 text-white">
+    <div className="mt-2 flex items-center justify-center gap-6 md:gap-8 text-white">
       {/* WhatsApp con teléfono dentro */}
       <Link
         aria-label="WhatsApp"
@@ -54,43 +54,44 @@ export default function Footer() {
   return (
     <footer className="bg-[#0E2C4A] text-white">
       <div className="mx-auto w-full max-w-6xl px-4">
-        {/* Bloque superior: logo + redes */}
         <div className="flex flex-col items-center pt-8 md:pt-10">
           {/* LOGO — usa el archivo de project/public/logo-white.svg */}
           <Image
             src="/logo-white.svg"
             alt="Gesswein Properties"
-            width={200}
-            height={44}
+            width={260}
+            height={54}
             priority
-            className="h-7 w-auto md:h-8"
+            className="h-10 w-auto md:h-12"
           />
 
+          {/* NAV ARRIBA DE LA LÍNEA */}
+          <nav className="mt-4 md:mt-5">
+            <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12.5px] tracking-[0.18em] md:text-[13.5px]">
+              {NAV.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="text-white/90 transition-colors hover:text-white"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* SEPARADOR */}
+          <div className="mx-auto my-6 h-px w-full max-w-5xl bg-white/15 md:my-7" />
+
+          {/* REDES SOCIALES DEBAJO DE LA LÍNEA */}
           <SocialIcons />
         </div>
 
-        {/* Separador sutil */}
-        <div className="mx-auto my-6 h-px w-full max-w-5xl bg-white/15 md:my-7" />
-
-        {/* Navegación inferior */}
-        <nav className="pb-7 md:pb-8">
-          <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12.5px] tracking-[0.18em] md:text-[13.5px]">
-            {NAV.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="text-white/90 transition-colors hover:text-white"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          <p className="mt-6 pb-6 text-center text-xs text-white/70 md:text-[13px]">
-            © 2025 Gesswein Properties. Todos los derechos reservados.
-          </p>
-        </nav>
+        {/* COPYRIGHT */}
+        <p className="mt-6 pb-7 text-center text-xs text-white/70 md:text-[13px]">
+          © 2025 Gesswein Properties. Todos los derechos reservados.
+        </p>
       </div>
     </footer>
   );
