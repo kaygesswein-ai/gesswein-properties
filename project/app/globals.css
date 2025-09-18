@@ -60,3 +60,34 @@ textarea::placeholder {
   font-weight: 600;
   letter-spacing: .02em;
 }
+/* ——— MENÚ CENTRADO CON BARRAS FINAS ——— */
+.nav-list{
+  display:flex;
+  align-items:center;
+  gap:26px;                 /* espacio entre items */
+  flex-wrap:nowrap;         /* NO permitir salto de línea */
+  white-space:nowrap;       /* Safari/Firefox: evitar quiebres */
+}
+
+.nav-li{ position:relative; }
+
+/* Barra fina entre items */
+.nav-li + .nav-li::before{
+  content:'';
+  position:absolute;
+  left:-13px;               /* mitad del gap */
+  top:50%;
+  width:1px;
+  height:16px;              /* más corta */
+  transform:translateY(-50%);
+  background:rgba(255,255,255,0.65);
+}
+
+.nav-a{
+  display:inline-block;
+  text-transform:uppercase;
+  font-weight:500;
+  font-size:14px;           /* TIPOGRAFÍA MÁS CHICA */
+  line-height:1;
+  letter-spacing:0.22em;    /* tracking moderado */
+}
