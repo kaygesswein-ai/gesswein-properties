@@ -4,6 +4,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
+/**
+ * Navbar “2 atrás”:
+ * - Logo blanco a la izquierda (src: /logo-white.svg)
+ * - Enlaces centrados con separador |
+ * - Redes a la derecha (WhatsApp con telefonito, Email, Teléfono, IG, FB, IN)
+ * - Transparente arriba; al scrollear: azul corporativo con blur
+ * - Altura estable: no mueve el hero/slider
+ */
+
 const LINKS = [
   { href: '/', label: 'INICIO' },
   { href: '/propiedades', label: 'PROPIEDADES' },
@@ -12,24 +21,25 @@ const LINKS = [
   { href: '/contacto', label: 'CONTACTO' },
 ];
 
-// Iconitos simples en línea, del mismo grosor que usabas
+// Iconos finos (línea 1.7) como los que tenías
 const Ico = {
-  Wa: (p: any) => (
+  WaPhone: (p: any) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...p}>
+      {/* circunferencia/burbuja */}
       <path strokeWidth="1.7" d="M20.5 11.7A8.5 8.5 0 1 1 7.9 3.6L6.6 6.9l3.4-1.2" />
-      <path strokeWidth="1.7" d="M8.5 9.5c.3 1.7 2.5 3.9 4.2 4.2M8.5 9.5l1.9-.9M12.7 13.7l.9-1.9" />
-      <path strokeWidth="1.7" d="M14.5 11.5c0 .2-.4.9-.6 1.1-.2.2-.7.1-1 .1s-1.1-.3-1.8-.9-1.5-1.6-1.8-2.2c-.3-.6-.4-1-.4-1.2s0-.4.2-.6c.2-.2.6-.8.8-1 .2-.2.4-.2.6-.2h.4c.1 0 .3.1.4.3l.6 1.2" />
+      {/* teléfono dentro */}
+      <path strokeWidth="1.7" d="M14.7 13.5c-.8.8-3.4-.7-4.7-2s-2.8-3.9-2-4.7l1.1-1.1 1.2 2.2-1 1c.2.7 1.2 2 1.9 2.7s2 .17 2.6 0l1 1-1.1 1.1Z" />
     </svg>
   ),
   Mail: (p: any) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...p}>
-      <path strokeWidth="1.7" d="M4 6h16v12H4z" />
+      <rect x="3.8" y="5.5" width="16.4" height="13" rx="1.8" strokeWidth="1.7" />
       <path strokeWidth="1.7" d="m4 7 8 6 8-6" />
     </svg>
   ),
   Phone: (p: any) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...p}>
-      <path strokeWidth="1.7" d="M5 5c1 4 5 8 9 9l3-3 3 3-2 3c-1 1-3 2-5 1C7 16 4 11 3 8c-1-2 0-4 1-5l3-2 3 3-3 3Z" />
+      <path strokeWidth="1.7" d="M6.5 3.5 9 6l-2 2c1 3 4 6 7 7l2-2 2.5 2.5c.4.4.5 1.1.2 1.6l-1 1.7c-.4.7-1.2 1.1-2 1-3-.2-6.9-2.2-9.9-5.2S1.3 7.6 1.1 4.6c0-.8.3-1.6 1-2l1.7-1c.5-.3 1.2-.2 1.6.2Z" />
     </svg>
   ),
   Ig: (p: any) => (
@@ -46,8 +56,8 @@ const Ico = {
   ),
   In: (p: any) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...p}>
-      <rect x="3" y="8" width="4" height="12" strokeWidth="1.7" />
-      <circle cx="5" cy="5" r="2" strokeWidth="1.7" />
+      <rect x="3" y="9" width="4" height="11" strokeWidth="1.7" />
+      <circle cx="5" cy="5.5" r="1.9" strokeWidth="1.7" />
       <path strokeWidth="1.7" d="M11 20v-7a3 3 0 0 1 6 0v7" />
     </svg>
   ),
@@ -66,72 +76,68 @@ export default function Navbar() {
   return (
     <header
       className={[
-        'fixed inset-x-0 top-0 z-50 transition-colors',
-        solid ? 'bg-[#0c2d4a]/95 backdrop-blur' : 'bg-transparent',
+        'fixed inset-x-0 top-0 z-50 transition-colors duration-300',
+        solid ? 'bg-[#0C2D4A]/95 backdrop-blur' : 'bg-transparent',
       ].join(' ')}
     >
-      {/* Contenedor ancho similar al que ya usas */}
-      <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6">
-        {/* Alto calibrado para no empujar el hero */}
+      {/* ancho similar al look que aprobaste */}
+      <div className="mx-auto w-full max-w-[1400px] px-5 md:px-6">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo (mismo tamaño percibido que te gusta) */}
+          {/* LOGO a la izquierda (alineado con “Ver Propiedades”) */}
           <Link href="/" className="shrink-0">
             <Image
               src="/logo-white.svg"
               alt="Gesswein Properties"
-              width={150}
+              width={168}
               height={28}
-              className="h-[22px] w-auto md:h-[24px]"
+              className="h-[24px] w-auto"
               priority
             />
           </Link>
 
-          {/* Menú centrado, tracking y separadores finos */}
-          <nav className="pointer-events-auto hidden md:flex flex-1 items-center justify-center">
+          {/* ENLACES centrados con separador | y tracking suave */}
+          <nav className="hidden md:flex flex-1 items-center justify-center">
             <ul className="flex items-center text-white">
-              {LINKS.map((item, idx) => (
+              {LINKS.map((item, i) => (
                 <li key={item.href} className="flex items-center">
                   <Link
                     href={item.href}
-                    className="px-3 text-[14px] tracking-[.25em] hover:opacity-90"
+                    className="px-3 text-[14px] tracking-[.22em] hover:opacity-90"
                   >
                     {item.label}
                   </Link>
-                  {idx < LINKS.length - 1 && (
-                    <span className="mx-2 text-white/50">|</span>
+                  {i < LINKS.length - 1 && (
+                    <span className="mx-2 text-white/60">|</span>
                   )}
                 </li>
               ))}
             </ul>
           </nav>
 
-          {/* Redes a la derecha, mismo orden que el footer */}
-          <div className="ml-3 hidden items-center gap-4 text-white md:flex">
-            <Link aria-label="WhatsApp" href="https://wa.me/56900000000" target="_blank" className="hover:text-white">
-              <Ico.Wa className="h-[18px] w-[18px]" />
+          {/* REDES a la derecha (orden: WA, Mail, Tel, IG, FB, IN) */}
+          <div className="hidden md:flex items-center gap-4 text-white">
+            <Link aria-label="WhatsApp" href="https://wa.me/56900000000" target="_blank" className="hover:opacity-90">
+              <Ico.WaPhone className="h-[18px] w-[18px]" />
             </Link>
-            <Link aria-label="Email" href="mailto:hola@gessweinproperties.cl" className="hover:text-white">
+            <Link aria-label="Email" href="mailto:hola@gessweinproperties.cl" className="hover:opacity-90">
               <Ico.Mail className="h-[18px] w-[18px]" />
             </Link>
-            <Link aria-label="Teléfono" href="tel:+56900000000" className="hover:text-white">
+            <Link aria-label="Teléfono" href="tel:+56900000000" className="hover:opacity-90">
               <Ico.Phone className="h-[18px] w-[18px]" />
             </Link>
-            <Link aria-label="Instagram" href="https://instagram.com/" target="_blank" className="hover:text-white">
+            <Link aria-label="Instagram" href="https://instagram.com" target="_blank" className="hover:opacity-90">
               <Ico.Ig className="h-[18px] w-[18px]" />
             </Link>
-            <Link aria-label="Facebook" href="https://facebook.com/" target="_blank" className="hover:text-white">
+            <Link aria-label="Facebook" href="https://facebook.com" target="_blank" className="hover:opacity-90">
               <Ico.Fb className="h-[18px] w-[18px]" />
             </Link>
-            <Link aria-label="LinkedIn" href="https://linkedin.com/" target="_blank" className="hover:text-white">
+            <Link aria-label="LinkedIn" href="https://linkedin.com" target="_blank" className="hover:opacity-90">
               <Ico.In className="h-[18px] w-[18px]" />
             </Link>
           </div>
-
-          {/* En móvil NO tocamos nada aún: dejamos limpio (sin menú) para no romper nada. 
-             Si tenías íconos en mobile, los añade tu header/hero previo.
-          */}
         </div>
       </div>
     </header>
   );
 }
+
