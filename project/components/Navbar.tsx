@@ -1,146 +1,182 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import Image from 'next/image'
-import { useEffect, useState } from 'react'
-import { Mail, Phone, Instagram, Facebook, Linkedin } from 'lucide-react'
+import Link from 'next/link';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
-/** Ícono WhatsApp con burbuja y teléfono adentro */
-function WhatsAppPhone(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      {/* Burbuja de chat */}
-      <path d="M20 11.5a8.5 8.5 0 1 1-3.2-6.63A8.5 8.5 0 0 1 20 11.5Z" />
-      <path d="M7.2 18.6 4 20l1.4-3.2" />
-      {/* Teléfono dentro de la burbuja */}
-      <path d="M10.6 7.8c.2-.2.5-.3.8-.2l1.8.6c.4.1.6.6.5 1l-.2.8c-.1.3-.3.5-.5.7l-.4.4c.6.9 1.4 1.6 2.3 2.3l.4-.4c.2-.2.4-.4.7-.5l.8-.2c.4-.1.8.1 1 .5l.6 1.8c.1.3 0 .6-.2.8-.7.7-1.7 1.2-2.7 1.1-1.3-.1-2.6-.7-4.2-2.3-1.6-1.6-2.2-2.9-2.3-4.2-.1-1 .4-2 1.1-2.7Z" />
-    </svg>
-  )
-}
+const NAV = [
+  { href: '/', label: 'INICIO' },
+  { href: '/propiedades', label: 'PROPIEDADES' },
+  { href: '/servicios', label: 'SERVICIOS' },
+  { href: '/equipo', label: 'EQUIPO' },
+  { href: '/contacto', label: 'CONTACTO' },
+];
+
+// SVGs livianos (sin librerías)
+const IconWhatsapp = (props: any) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+    <path strokeWidth="1.7" d="M20.5 11.7A8.5 8.5 0 1 1 7.9 3.6L6.6 6.9l3.4-1.2" />
+    <path strokeWidth="1.7" d="M8.5 9.5c.3 1.7 2.5 3.9 4.2 4.2M8.5 9.5l1.9-.9M12.7 13.7l.9-1.9" />
+    <path strokeWidth="1.7" d="M14.5 11.5c0 .2-.4.9-.6 1.1-.2.2-.7.1-1 .1s-1.1-.3-1.8-.9-1.5-1.6-1.8-2.2c-.3-.6-.4-1-.4-1.2s0-.4.2-.6c.2-.2.6-.8.8-1 .2-.2.4-.2.6-.2h.4c.1 0 .3.1.4.3l.6 1.2" />
+  </svg>
+);
+const IconMail = (p: any) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...p}>
+    <path strokeWidth="1.7" d="M4 6h16v12H4z" />
+    <path strokeWidth="1.7" d="m4 7 8 6 8-6" />
+  </svg>
+);
+const IconPhone = (p: any) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...p}>
+    <path strokeWidth="1.7" d="M5 5c1 4 5 8 9 9l3-3 3 3-2 3c-1 1-3 2-5 1C7 16 4 11 3 8c-1-2 0-4 1-5l3-2 3 3-3 3Z" />
+  </svg>
+);
+const IconInstagram = (p: any) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...p}>
+    <rect x="3.5" y="3.5" width="17" height="17" rx="4" strokeWidth="1.7" />
+    <circle cx="12" cy="12" r="3.5" strokeWidth="1.7" />
+    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+  </svg>
+);
+const IconFacebook = (p: any) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...p}>
+    <path strokeWidth="1.7" d="M14 8h3V5h-3c-1.7 0-3 1.3-3 3v3H8v3h3v5h3v-5h3l1-3h-4V8Z" />
+  </svg>
+);
+const IconLinkedIn = (p: any) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...p}>
+    <rect x="3" y="8" width="4" height="12" strokeWidth="1.7" />
+    <circle cx="5" cy="5" r="2" strokeWidth="1.7" />
+    <path strokeWidth="1.7" d="M11 20v-7a3 3 0 0 1 6 0v7" />
+  </svg>
+);
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  const wrapper = 'fixed top-0 inset-x-0 z-50 transition-colors duration-300'
-  const bg = scrolled
-    ? 'bg-[#0A2E57]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,.06)]'
-    : 'bg-transparent'
-
-  const linkBase =
-    'text-white/90 hover:text-white transition-colors select-none'
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <header className={`${wrapper} ${bg}`}>
-      {/* OJO: pl-* iguala el gutter del hero/card para alinear el logo con “Ver Propiedades” */}
-      <div className="mx-auto max-w-7xl pr-4 sm:pr-6 lg:pr-8 pl-6 md:pl-10 lg:pl-12 xl:pl-16">
-        <div className="h-16 md:h-18 flex items-center">
-          {/* LOGO más pequeño (≈ 3/4 del anterior) */}
-          <Link href="/" aria-label="Gesswein Properties" className="shrink-0">
+    <header
+      className={[
+        'fixed inset-x-0 top-0 z-50 transition-colors',
+        scrolled ? 'bg-[#0c2d4a]/95 backdrop-blur' : 'bg-transparent',
+      ].join(' ')}
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="flex h-14 items-center justify-between gap-3 md:h-16">
+          {/* Logo */}
+          <Link href="/" className="shrink-0">
             <Image
               src="/logo-white.svg"
               alt="Gesswein Properties"
-              width={120}   // antes ~150
-              height={30}
+              width={148}
+              height={28}
+              className="h-[22px] w-auto md:h-[26px]"
               priority
-              className="w-[105px] md:w-[120px] h-auto"
             />
           </Link>
 
-          {/* Menú + redes a la derecha */}
-          <div className="ml-auto flex items-center gap-3 md:gap-4">
-            {/* MENÚ compacto, con separadores y tracking fino */}
-            <nav className="hidden md:flex items-center text-white">
-              <Link
-                href="/"
-                className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-              >
-                Inicio
-              </Link>
-              <span className="mx-2 text-white/60">|</span>
-              <Link
-                href="/propiedades"
-                className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-              >
-                Propiedades
-              </Link>
-              <span className="mx-2 text-white/60">|</span>
-              <Link
-                href="/servicios"
-                className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-              >
-                Servicios
-              </Link>
-              <span className="mx-2 text-white/60">|</span>
-              <Link
-                href="/equipo"
-                className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-              >
-                Equipo
-              </Link>
-              <span className="mx-2 text-white/60">|</span>
-              <Link
-                href="/contacto"
-                className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-              >
-                Contacto
-              </Link>
-            </nav>
+          {/* Desktop: menú + redes */}
+          <nav className="hidden md:flex items-center gap-8">
+            <ul className="flex items-center gap-6 tracking-[.25em] text-white">
+              {NAV.map((i) => (
+                <li key={i.href}>
+                  <Link href={i.href} className="text-sm hover:opacity-90">
+                    {i.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
 
-            {/* Redes — pegadas al menú */}
-            <div className="flex items-center gap-3 text-white">
-              {/* WhatsApp con teléfono dentro */}
-              <Link
-                href="https://wa.me/56900000000"
-                aria-label="WhatsApp"
-                className={linkBase}
-              >
-                <WhatsAppPhone className="h-[18px] w-[18px]" />
+            <div className="ml-6 flex items-center gap-4 text-white/90">
+              <Link aria-label="WhatsApp" href="https://wa.me/56900000000" target="_blank" className="hover:text-white">
+                <IconWhatsapp className="h-5 w-5" />
               </Link>
-
-              <Link
-                href="mailto:hola@gessweinproperties.cl"
-                aria-label="Email"
-                className={linkBase}
-              >
-                <Mail className="h-[18px] w-[18px]" />
+              <Link aria-label="Email" href="mailto:hola@gessweinproperties.cl" className="hover:text-white">
+                <IconMail className="h-5 w-5" />
               </Link>
-
-              <Link href="tel:+56900000000" aria-label="Teléfono" className={linkBase}>
-                <Phone className="h-[18px] w-[18px]" />
+              <Link aria-label="Teléfono" href="tel:+56900000000" className="hover:text-white">
+                <IconPhone className="h-5 w-5" />
               </Link>
-
-              <Link href="https://instagram.com" aria-label="Instagram" className={linkBase}>
-                <Instagram className="h-[18px] w-[18px]" />
+              <Link aria-label="Instagram" href="https://instagram.com/" target="_blank" className="hover:text-white">
+                <IconInstagram className="h-5 w-5" />
               </Link>
-
-              <Link href="https://facebook.com" aria-label="Facebook" className={linkBase}>
-                <Facebook className="h-[18px] w-[18px]" />
+              <Link aria-label="Facebook" href="https://facebook.com/" target="_blank" className="hover:text-white">
+                <IconFacebook className="h-5 w-5" />
               </Link>
-
-              <Link href="https://linkedin.com" aria-label="LinkedIn" className={linkBase}>
-                <Linkedin className="h-[18px] w-[18px]" />
+              <Link aria-label="LinkedIn" href="https://linkedin.com/" target="_blank" className="hover:text-white">
+                <IconLinkedIn className="h-5 w-5" />
               </Link>
             </div>
+          </nav>
+
+          {/* Móvil: redes a la izquierda y hamburguesa al extremo derecho */}
+          <div className="flex grow items-center justify-end gap-4 md:hidden">
+            <div className="flex items-center gap-4 text-white/90">
+              <Link aria-label="WhatsApp" href="https://wa.me/56900000000" target="_blank">
+                <IconWhatsapp className="h-[18px] w-[18px]" />
+              </Link>
+              <Link aria-label="Email" href="mailto:hola@gessweinproperties.cl">
+                <IconMail className="h-[18px] w-[18px]" />
+              </Link>
+              <Link aria-label="Teléfono" href="tel:+56900000000">
+                <IconPhone className="h-[18px] w-[18px]" />
+              </Link>
+              <Link aria-label="Instagram" href="https://instagram.com/" target="_blank">
+                <IconInstagram className="h-[18px] w-[18px]" />
+              </Link>
+              <Link aria-label="Facebook" href="https://facebook.com/" target="_blank">
+                <IconFacebook className="h-[18px] w-[18px]" />
+              </Link>
+              <Link aria-label="LinkedIn" href="https://linkedin.com/" target="_blank">
+                <IconLinkedIn className="h-[18px] w-[18px]" />
+              </Link>
+            </div>
+
+            {/* Botón hamburguesa (extremo derecho) */}
+            <button
+              aria-label="Abrir menú"
+              onClick={() => setOpen((v) => !v)}
+              className="ml-2 grid h-10 w-10 place-content-center rounded-md/80 text-white/90 ring-1 ring-white/15 hover:bg-white/10"
+            >
+              {/* ícono hamburguesa puro SVG */}
+              <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" fill="none">
+                <path strokeWidth="1.7" d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Drawer móvil */}
+      {open && (
+        <div className="md:hidden">
+          <div className="mx-auto max-w-7xl px-4 pb-4 pt-2 sm:px-6">
+            <ul className="rounded-xl bg-[#0c2d4a]/95 p-3 backdrop-blur ring-1 ring-white/10">
+              {NAV.map((i) => (
+                <li key={i.href}>
+                  <Link
+                    href={i.href}
+                    onClick={() => setOpen(false)}
+                    className="block px-3 py-3 text-sm tracking-[.25em] text-white hover:bg-white/10 rounded-lg"
+                  >
+                    {i.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </header>
-  )
+  );
 }
 
 
