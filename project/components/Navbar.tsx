@@ -8,35 +8,27 @@ import {
   Phone,
   Instagram,
   Facebook,
-  Linkedin,
+  Linkedin, MessageCircle, 
   Menu,
   X,
 } from 'lucide-react'
 
-/** WhatsApp: burbuja delineada + teléfono centrado (igual al footer) */
-function WhatsAppBadge(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      {/* Burbuja */}
-      <circle cx="12" cy="12" r="8.6" />
-      {/* Cola */}
-      <path d="M7.2 18.4 4.9 19.3l1-2.6" />
+{/* WhatsApp con teléfono dentro (sin relleno) */}
+<Link
+  aria-label="WhatsApp"
+  href="https://wa.me/56900000000"
+  className="group relative inline-flex h-6 w-6 items-center justify-center text-white md:h-7 md:w-7"
+>
+  {/* Burbuja */}
+  <MessageCircle
+    className="absolute inset-0 h-full w-full stroke-current stroke-[1.6] [vector-effect:non-scaling-stroke]"
+  />
+  {/* Teléfono: ajustes de centrado + leve rotación para que se vea “igual que en footer” */}
+  <Phone
+    className="absolute h-[12px] w-[12px] md:h-[14px] md:w-[14px] stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke] -translate-y-[0.5px] translate-x-[0.3px] rotate-[18deg]"
+  />
+</Link>
 
-      {/* Teléfono (centrado ópticamente) */}
-      <g transform="translate(12,12) translate(-12,-12)">
-        <path
-          d="M14.7 15.8c-.23.14-.5.18-.76.1-2.04-.6-3.83-2.39-4.43-4.43-.07-.26-.04-.53.1-.76l.57-.96c.19-.32.58-.46.93-.34l1.17.41c.33.11.55.42.53.76l-.06.67c-.01.19.05.39.18.55l.56.68c.1.12.23.21.38.26l.86.3c.24.09.43.29.5.53l.27 1.01c.09.33-.03.68-.31.87l-.99.65Z"
-          fill="currentColor"
-          stroke="none"
-          transform="translate(-.1,.15) scale(1.02)"
         />
       </g>
     </svg>
