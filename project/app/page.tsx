@@ -26,6 +26,11 @@ function fmtPrecio(pUf?: number | null, pClp?: number | null) {
   if (typeof pClp === 'number' && pClp > 0) return `$ ${new Intl.NumberFormat('es-CL').format(pClp)}`;
   return 'Consultar';
 }
+function capFirst(s?: string | null) {
+  if (!s) return '';
+  const lower = s.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
 
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
@@ -82,7 +87,7 @@ export default function HomePage() {
   };
   const handleTouchEnd = () => {
     const dx = touchDeltaX.current;
-    const TH = 50; // umbral
+    const TH = 50;
     if (Math.abs(dx) > TH) {
       if (dx < 0) go(1);
       else go(-1);
@@ -101,6 +106,14 @@ export default function HomePage() {
     const imgs = active.coverImage || active.imagenes?.[0] || active.images?.[0];
     return imgs || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
   }, [active]);
+
+  const lineaSecundaria = [
+    capFirst(active?.comuna),
+    capFirst(active?.tipo),
+    capFirst(active?.operacion),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <main className="bg-white">
@@ -124,7 +137,7 @@ export default function HomePage() {
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
               <p className="mt-1 text-sm text-gray-600">
-                {active?.comuna ? `${active.comuna} · ` : ''}{active?.tipo ?? '—'} · {active?.operacion ?? '—'}
+                {lineaSecundaria || '—'}
               </p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
@@ -148,16 +161,27 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* FILA: Precio | Propiedades | Detalle */}
+              {/* FILA: Precio | Detalle | Propiedades (Propiedades a la derecha) */}
               <div className="mt-4 flex items-center gap-3">
                 <div className="text-xl font-extrabold text-[#C1272D]">
                   {fmtPrecio(active?.precio_uf, active?.precio_clp)}
                 </div>
 
-                {/* CTA intermedio */}
+                {/* Detalle (al medio) */}
+                {active?.id ? (
+                  <Link
+                    href={`/propiedades/${active.id}`}
+                    className="inline-flex items-center bg-white px-3 py-2 text-sm font-medium text-gray-900 rounded-none font-sans border border-gray-300 outline outline-1 outline-[currentColor] hover:bg-gray-50"
+                    title="Detalle de la propiedad"
+                  >
+                    Detalle
+                  </Link>
+                ) : null}
+
+                {/* Propiedades (extremo derecho) */}
                 <Link
                   href="/propiedades"
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
+                  className="ml-auto inline-flex items-center px-3 py-2 text-sm font-medium tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
                   style={{
                     boxShadow:
                       'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
@@ -165,22 +189,11 @@ export default function HomePage() {
                 >
                   Propiedades
                 </Link>
-
-                {/* Detalle con línea externa del mismo color del texto */}
-                {active?.id ? (
-                  <Link
-                    href={`/propiedades/${active.id}`}
-                    className="ml-auto inline-flex items-center bg-white px-3 py-2 text-sm font-medium text-gray-900 rounded-none font-sans border border-gray-300 outline outline-1 outline-[currentColor] hover:bg-gray-50"
-                    title="Detalle de la propiedad"
-                  >
-                    Detalle
-                  </Link>
-                ) : null}
               </div>
             </div>
           </div>
 
-          {/* Flechas (más arriba: ~42% en mobile / ~45% en md+) */}
+          {/* Flechas (más arriba, como pediste) */}
           {destacadas.length > 1 && (
             <>
               <button
@@ -366,7 +379,6 @@ export default function HomePage() {
     </main>
   );
 }
-
 
 
 
