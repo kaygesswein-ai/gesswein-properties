@@ -25,7 +25,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Si pasa a desktop, cierra el menú móvil
+  // Si el usuario agranda a desktop, cierra el menú móvil
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 768) setOpen(false)
@@ -98,9 +98,9 @@ export default function Navbar() {
                 </Link>
               </nav>
 
-              {/* Redes */}
+              {/* Redes (mismo orden/tamaño que acordamos) */}
               <div className="flex items-center gap-3 text-white">
-                {/* WhatsApp – burbuja + teléfono (centrado como footer) */}
+                {/* WhatsApp – igual al footer (burbuja + teléfono superpuesto) */}
                 <Link
                   href="https://wa.me/56900000000"
                   aria-label="WhatsApp"
@@ -109,8 +109,8 @@ export default function Navbar() {
                   <span className="relative inline-flex h-[18px] w-[18px] items-center justify-center">
                     {/* Burbuja */}
                     <MessageCircle className="absolute inset-0 h-full w-full stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke]" />
-                    {/* Teléfono (ligero corrimiento a la izquierda) */}
-                    <Phone className="absolute h-[11px] w-[11px] stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke] rotate-[24deg] -translate-x-[0.6px] -translate-y-[0.2px]" />
+                    {/* Teléfono centrado y con ángulo tipo footer */}
+                    <Phone className="absolute h-[11px] w-[11px] stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke] rotate-[24deg] translate-x-[0.1px] -translate-y-[0.2px]" />
                   </span>
                 </Link>
 
@@ -155,7 +155,7 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Panel móvil (overlay gris translúcido + texto negro) */}
+      {/* Panel móvil (overlay gris translúcido + texto negro corporativo) */}
       <div
         id="mobile-menu"
         className={`md:hidden fixed inset-x-0 top-16 z-40
@@ -204,5 +204,6 @@ export default function Navbar() {
     </>
   )
 }
+
 
 
