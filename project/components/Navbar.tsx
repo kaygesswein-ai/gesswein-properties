@@ -25,7 +25,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Si el usuario agranda la ventana a desktop, cierra el menú móvil
+  // Si el usuario agranda a desktop, cierra el menú móvil
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 768) setOpen(false)
@@ -38,7 +38,6 @@ export default function Navbar() {
   const bg = scrolled
     ? 'bg-[#0A2E57]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,.06)]'
     : 'bg-transparent'
-
   const linkBase = 'text-white/90 hover:text-white transition-colors select-none'
 
   return (
@@ -101,16 +100,18 @@ export default function Navbar() {
 
               {/* Redes (mismo orden y tamaños) */}
               <div className="flex items-center gap-3 text-white">
-                {/* WhatsApp sin relleno: burbuja + teléfono centrado */}
+                {/* WhatsApp sin relleno: EXACTO 18px como los demás */}
                 <Link
                   href="https://wa.me/56900000000"
                   aria-label="WhatsApp"
-                  className="relative inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
+                  className={linkBase}
                 >
-                  {/* Burbuja */}
-                  <MessageCircle className="absolute inset-0 h-full w-full stroke-current stroke-[1.6] [vector-effect:non-scaling-stroke]" />
-                  {/* Teléfono (centrado óptico) */}
-                  <Phone className="absolute h-[12px] w-[12px] md:h-[14px] md:w-[14px] stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke] -translate-y-[0.5px] translate-x-[0.3px] rotate-[18deg]" />
+                  <span className="relative inline-flex h-[18px] w-[18px] items-center justify-center">
+                    {/* Burbuja */}
+                    <MessageCircle className="absolute inset-0 h-full w-full stroke-current stroke-[1.5] [vector-effect:non-scaling-stroke]" />
+                    {/* Teléfono centrado y con ángulo tipo footer */}
+                    <Phone className="absolute h-[10.5px] w-[10.5px] stroke-current stroke-[1.5] [vector-effect:non-scaling-stroke] translate-x-[0.2px] -translate-y-[0.2px] rotate-[22deg]" />
+                  </span>
                 </Link>
 
                 <Link
@@ -203,4 +204,5 @@ export default function Navbar() {
     </>
   )
 }
+
 
