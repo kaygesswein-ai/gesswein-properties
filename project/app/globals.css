@@ -133,3 +133,17 @@ textarea::placeholder {
   .hero-safe-x { padding-left: 1rem; padding-right: 1rem; } /* 16px */
   .hero-safe-left { margin-left: 1rem; }                     /* 16px */
 }
+/* === Forzar que todo lo que use “negrita” se vea SIN negrita y en MAYÚSCULAS === */
+.font-bold,
+.font-semibold,
+.font-extrabold,
+b,
+strong {
+  font-weight: 400 !important;
+  text-transform: uppercase !important;
+}
+
+/* En títulos que antes usaban serif + semibold, mantenemos la familia actual y sin negrita */
+.heading-serif {
+  font-weight: 400 !important;
+}
