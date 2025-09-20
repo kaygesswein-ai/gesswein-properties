@@ -246,7 +246,7 @@ export default function HomePage() {
 
         <p className="mt-3 max-w-4xl text-slate-700">
           En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
-          cada día combinamos <span className="font-semibold">criterio arquitectónico</span>, <span className="font-semibold">respaldo legal</span> y <span className="font-semibold">mirada financiera</span> para que cada decisión inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
+          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera</span> para que cada decisión inmobiliaria sea segura y rentable.
         </p>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -292,7 +292,7 @@ export default function HomePage() {
               Programa de Referidos con Exclusividad
             </h2>
             <p className="mt-2 text-slate-600">
-              ¿Conoces a alguien que busca propiedad? Refierelo y obtén beneficios exclusivos.
+              ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
             </p>
           </div>
 
