@@ -56,7 +56,7 @@ export default function HomePage() {
   // Auto-slide
   useEffect(() => {
     if (!destacadas.length) return;
-    timerRef.current && clearInterval(timerRef.current);
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [destacadas.length]);
@@ -117,10 +117,11 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
         {/* Contenido del hero (casi pantalla completa) */}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
+        {/* ↑↑↑ GUTTERS del hero para encuadrar CTA y tarjeta dentro de las flechas */}
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* BOTÓN CTA */}
-            <div className="ml-6 md:ml-10 mb-3">
+            {/* BOTÓN CTA — alineado a la misma guía izquierda que la tarjeta */}
+            <div className="mb-3">
               <Link
                 href="/propiedades"
                 className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
@@ -133,8 +134,8 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* TARJETA RESUMEN */}
-            <div className="ml-6 md:ml-10 bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-md">
+            {/* TARJETA RESUMEN — ancho controlado para no invadir flechas */}
+            <div className="bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-lg md:max-w-xl lg:max-w-2xl">
               <h1 className="heading-serif text-[1.4rem] md:text-2xl font-semibold text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
@@ -179,20 +180,20 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Flechas */}
+          {/* Flechas — un poco más adentro para dar aire simétrico */}
           {destacadas.length > 1 && (
             <>
               <button
                 aria-label="Anterior"
                 onClick={() => go(-1)}
-                className="group absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2"
+                className="group absolute left-4 md:left-6 top-1/2 -translate-y-1/2 p-2"
               >
                 <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
               <button
                 aria-label="Siguiente"
                 onClick={() => go(1)}
-                className="group absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2"
+                className="group absolute right-4 md:right-6 top-1/2 -translate-y-1/2 p-2"
               >
                 <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
@@ -365,4 +366,5 @@ export default function HomePage() {
     </main>
   );
 }
+
 
