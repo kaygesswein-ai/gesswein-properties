@@ -1,42 +1,60 @@
+@@ -1,22 +1,16 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import { Montserrat, Cinzel } from 'next/font/google'
 import { Inter } from 'next/font/google'
 
-/**
- * Bloqueamos una sola tipografía en todo el sitio: INTER.
- * (Es la que se ve en el navbar: sans, mayúsculas y tracking alto.)
- */
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import Analytics from '@/components/Analytics'
+import { Toaster } from '@/components/ui/toaster'
+
+const montserrat = Montserrat({
 const inter = Inter({
   subsets: ['latin'],
+  weight: ['300','400','500','600','700'],
+  variable: '--font-sans',
   display: 'swap',
-  weight: ['400', '500', '600', '700'], // puedes quitar pesos si lo prefieres
+})
+
+const cinzel = Cinzel({
+  subsets: ['latin'],
+  weight: ['400','600','700'],
+  variable: '--font-serif',
+  display: 'swap',
+  weight: ['400','500','600','700'], // ajusta si necesitas más grosores
 })
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: 'Gesswein Properties - Corretaje Inmobiliario',
+@@ -28,10 +22,10 @@ export const metadata: Metadata = {
     template: '%s | Gesswein Properties',
   },
   description:
-    'Propiedades y asesoría inmobiliaria de alto estándar en Santiago.',
-}
-
+    'Especialistas en propiedades premium en Santiago Oriente. Corretaje inmobiliario con asesoría arquitectónica.',
+    'Especialistas en propiedades premium en Santiago Oriente. Corretaje inmobiliario, asesoría arquitectónica y programa de referidos exclusivo.',
+  openGraph: {
+    title: 'Gesswein Properties - Corretaje Inmobiliario Santiago',
+    description: 'Especialistas en propiedades premium en Santiago Oriente.',
+    description: 'Especialistas en propiedades premium en Santiago Oriente',
+    url: siteUrl,
+    siteName: 'Gesswein Properties',
+    locale: 'es_CL',
+@@ -44,14 +38,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      {/* Inter aplicado a TODO el sitio */}
+      <body className={`${montserrat.variable} ${cinzel.variable} font-sans`}>
       <body className={inter.className}>
         <div className="min-h-screen flex flex-col">
-          {/* Si tu Navbar/Footer están en otras rutas, mantén tus imports actuales */}
-          {children}
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
         </div>
+        <Toaster />
+        <Analytics />
       </body>
     </html>
   )
 }
-
 
 
