@@ -129,9 +129,14 @@ export default function HomePage() {
         {/* Contenido del hero */}
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* TARJETA RESUMEN (más contenida en desktop para que no “se estire”) */}
-            <div className="bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none
-                            max-w-lg md:max-w-xl lg:max-w-xl xl:max-w-[720px]">
+            {/* TARJETA RESUMEN — versión más pequeña en desktop */}
+            <div
+              className="
+                bg-white/65 backdrop-blur-sm shadow-xl rounded-none
+                p-4 md:p-5
+                max-w-[600px] md:max-w-[620px] lg:max-w-[640px] xl:max-w-[660px]
+              "
+            >
               <h1 className="heading-serif text-[1.4rem] md:text-2xl font-semibold text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
@@ -139,21 +144,21 @@ export default function HomePage() {
                 {lineaSecundaria || '—'}
               </p>
 
-              {/* Métricas: compacidad para móvil y desktop */}
+              {/* Métricas compactas */}
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50/70 p-2 md:p-3">
+                <div className="bg-gray-50/70 p-2.5 md:p-3">
                   <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <Bed className="h-4 w-4" /> Dormitorios
                   </div>
                   <div className="text-base font-semibold">{active?.dormitorios ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-2 md:p-3">
+                <div className="bg-gray-50/70 p-2.5 md:p-3">
                   <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <ShowerHead className="h-4 w-4" /> Baños
                   </div>
                   <div className="text-base font-semibold">{active?.banos ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-2 md:p-3">
+                <div className="bg-gray-50/70 p-2.5 md:p-3">
                   <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <Ruler className="h-4 w-4" /> Área (m²)
                   </div>
