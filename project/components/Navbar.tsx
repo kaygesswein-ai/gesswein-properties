@@ -13,27 +13,36 @@ import {
   X,
 } from 'lucide-react'
 
-/** Ícono WhatsApp con teléfono BLANCO centrado (burbuja con borde) */
+/** Ícono WhatsApp sin relleno y con el teléfono centrado */
 function WhatsAppPhone(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth={1.7}
       strokeLinecap="round"
       strokeLinejoin="round"
       {...props}
     >
-      {/* Burbuja con borde */}
-      <path d="M20.5 11.7a8.5 8.5 0 1 1-3.1-6.6 8.5 8.5 0 0 1 3.1 6.6Z" />
-      <path d="M7.3 18.7 4.1 20l1.2-3.2" />
-      {/* Teléfono blanco centrado */}
-      <path
-        d="M10.2 8.2c.3-.3.7-.4 1.1-.3l1.9.6c.5.2.8.7.6 1.2l-.2.9c-.1.3-.3.6-.6.8l-.4.4c.7 1 1.5 1.8 2.5 2.5l.4-.4c.2-.2.5-.4.8-.5l.9-.2c.5-.1 1 .2 1.2.6l.6 1.9c.1.4 0 .8-.3 1.1-1 .9-2.1 1.3-3.4 1.2-1.5-.1-3.2-.9-5-2.7s-2.6-3.5-2.7-5c-.1-1.3.3-2.4 1.2-3.4Z"
-        fill="currentColor"
-        stroke="none"
-      />
+      {/* Burbuja (anillo) */}
+      <circle cx="12" cy="11.5" r="8.5" />
+      {/* Colita de la burbuja */}
+      <path d="M7.2 18.6 4 20l1.4-3.2" />
+
+      {/* Teléfono centrado geométricamente en (12, 11.5), sin relleno */}
+      <g transform="translate(12 11.5) scale(0.58) rotate(40) translate(-12 -12)">
+        {/* Trazo del ícono 'Phone' (estilo Lucide) */}
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2
+                 19.79 19.79 0 0 1-8.63-3.07
+                 19.5 19.5 0 0 1-6-6
+                 19.79 19.79 0 0 1-3.07-8.63
+                 A2 2 0 0 1 5 2h3a2 2 0 0 1 2 1.72
+                 c.12.81.3 1.6.57 2.35a2 2 0 0 1-.45 2.11L9.91 9.91
+                 a16 16 0 0 0 6.18 6.18l1.73-1.21
+                 a2 2 0 0 1 2.11-.45c.75.27 1.54.45 2.35.57
+                 A2 2 0 0 1 22 16.92z" />
+      </g>
     </svg>
   )
 }
