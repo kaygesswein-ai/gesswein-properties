@@ -16,22 +16,13 @@ export const metadata: Metadata = {
   },
   description:
     'Especialistas en propiedades premium en Santiago Oriente. Corretaje inmobiliario, asesoría y programa de referidos.',
-  openGraph: {
-    title: 'Gesswein Properties - Corretaje Inmobiliario Santiago',
-    description: 'Especialistas en propiedades premium en Santiago Oriente',
-    url: siteUrl,
-    siteName: 'Gesswein Properties',
-    locale: 'es_CL',
-    type: 'website',
-  },
-  twitter: { card: 'summary_large_image' },
-  robots: { index: true, follow: true },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body>
+      {/* Usamos la MISMA fuente del Navbar: Tailwind font-sans (stack de sistema) */}
+      <body className="font-sans">
         <div className="min-h-screen flex flex-col">
           <Navbar />
           <main className="flex-1">{children}</main>
