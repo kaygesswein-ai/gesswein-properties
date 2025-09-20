@@ -129,7 +129,7 @@ export default function HomePage() {
         {/* Contenido del hero */}
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* TARJETA RESUMEN — tamaño fijo pequeño también en desktop */}
+            {/* TARJETA RESUMEN — tamaño “móvil” también en desktop */}
             <div
               className="
                 bg-white/65 backdrop-blur-sm shadow-xl rounded-none
@@ -166,9 +166,15 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Botón Detalle centrado bajo “Baños” */}
-              <div className="mt-3 grid grid-cols-3">
-                <div className="col-start-2 flex justify-center">
+              {/* ACCIONES: precio (izq) | Detalle centrado (bajo “Baños”) | Propiedades (der) */}
+              <div className="mt-4 grid grid-cols-3 items-center gap-3">
+                {/* Precio en azul corporativo */}
+                <div className="text-xl font-extrabold text-[#0A2E57]">
+                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
+                </div>
+
+                {/* Detalle: centrado en la columna 2 (queda justo bajo “Baños”) */}
+                <div className="flex justify-center">
                   {active?.id ? (
                     <Link
                       href={`/propiedades/${active.id}`}
@@ -179,24 +185,20 @@ export default function HomePage() {
                     </Link>
                   ) : null}
                 </div>
-              </div>
 
-              {/* FILA: Precio (azul corporativo) | Propiedades (derecha) */}
-              <div className="mt-3 flex items-center gap-3">
-                <div className="text-xl font-extrabold text-[#0A2E57]">
-                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
+                {/* Propiedades: a la derecha */}
+                <div className="flex justify-end">
+                  <Link
+                    href="/propiedades"
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
+                    style={{
+                      boxShadow:
+                        'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                    }}
+                  >
+                    Propiedades
+                  </Link>
                 </div>
-
-                <Link
-                  href="/propiedades"
-                  className="ml-auto inline-flex items-center px-3 py-2 text-sm font-medium tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
-                  style={{
-                    boxShadow:
-                      'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
-                  }}
-                >
-                  Propiedades
-                </Link>
               </div>
             </div>
           </div>
@@ -267,7 +269,7 @@ export default function HomePage() {
 
               {/* Overlay: visible siempre en móvil, hover en desktop */}
               <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/80 md:bg-[#0A2E57]/0 md:group-hover:bg-[#0A2E57]/90 transition duration-300" />
-              <div className="absolute inset-0 flex items=end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition duration-300">
+              <div className="absolute inset-0 flex items-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition duration-300">
                 <div className="w-full p-4 text-white">
                   <h3 className="heading-serif text-lg font-semibold leading-snug">{m.nombre}</h3>
                   <p className="text-xs font-semibold uppercase tracking-wider mt-1">{m.cargo}</p>
@@ -387,8 +389,6 @@ export default function HomePage() {
     </main>
   );
 }
-
-
 
 
 
