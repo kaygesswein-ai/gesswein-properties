@@ -8,33 +8,11 @@ import {
   Phone,
   Instagram,
   Facebook,
-  Linkedin, MessageCircle, 
+  Linkedin,
+  MessageCircle,
   Menu,
   X,
 } from 'lucide-react'
-
-{/* WhatsApp con teléfono dentro (sin relleno) */}
-<Link
-  aria-label="WhatsApp"
-  href="https://wa.me/56900000000"
-  className="group relative inline-flex h-6 w-6 items-center justify-center text-white md:h-7 md:w-7"
->
-  {/* Burbuja */}
-  <MessageCircle
-    className="absolute inset-0 h-full w-full stroke-current stroke-[1.6] [vector-effect:non-scaling-stroke]"
-  />
-  {/* Teléfono: ajustes de centrado + leve rotación para que se vea “igual que en footer” */}
-  <Phone
-    className="absolute h-[12px] w-[12px] md:h-[14px] md:w-[14px] stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke] -translate-y-[0.5px] translate-x-[0.3px] rotate-[18deg]"
-  />
-</Link>
-
-        />
-      </g>
-    </svg>
-  );
-}
-
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -60,6 +38,7 @@ export default function Navbar() {
   const bg = scrolled
     ? 'bg-[#0A2E57]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,.06)]'
     : 'bg-transparent'
+
   const linkBase = 'text-white/90 hover:text-white transition-colors select-none'
 
   return (
@@ -120,16 +99,19 @@ export default function Navbar() {
                 </Link>
               </nav>
 
-              {/* Redes (mantiene tamaños y orden) */}
+              {/* Redes (mismo orden y tamaños) */}
               <div className="flex items-center gap-3 text-white">
-         <Link
-  href="https://wa.me/56900000000"
-  aria-label="WhatsApp"
-  className={linkBase}
->
-  <WhatsAppBadge className="h-[18px] w-[18px]" />
-</Link>
-
+                {/* WhatsApp sin relleno: burbuja + teléfono centrado */}
+                <Link
+                  href="https://wa.me/56900000000"
+                  aria-label="WhatsApp"
+                  className="relative inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
+                >
+                  {/* Burbuja */}
+                  <MessageCircle className="absolute inset-0 h-full w-full stroke-current stroke-[1.6] [vector-effect:non-scaling-stroke]" />
+                  {/* Teléfono (centrado óptico) */}
+                  <Phone className="absolute h-[12px] w-[12px] md:h-[14px] md:w-[14px] stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke] -translate-y-[0.5px] translate-x-[0.3px] rotate-[18deg]" />
+                </Link>
 
                 <Link
                   href="mailto:hola@gessweinproperties.cl"
@@ -172,52 +154,52 @@ export default function Navbar() {
         </div>
       </header>
 
-{/* Panel móvil (overlay gris translúcido + texto negro corporativo) */}
-<div
-  id="mobile-menu"
-  className={`md:hidden fixed inset-x-0 top-16 z-40
-              bg-white/80 backdrop-blur-sm border-t border-black/10
-              transition-all duration-200
-              ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
->
-  <nav className="flex flex-col py-3">
-    <Link
-      href="/"
-      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-      onClick={() => setOpen(false)}
-    >
-      Inicio
-    </Link>
-    <Link
-      href="/propiedades"
-      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-      onClick={() => setOpen(false)}
-    >
-      Propiedades
-    </Link>
-    <Link
-      href="/servicios"
-      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-      onClick={() => setOpen(false)}
-    >
-      Servicios
-    </Link>
-    <Link
-      href="/equipo"
-      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-      onClick={() => setOpen(false)}
-    >
-      Equipo
-    </Link>
-    <Link
-      href="/contacto"
-      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-      onClick={() => setOpen(false)}
-    >
-      Contacto
-    </Link>
-  </nav>
-</div>
+      {/* Panel móvil (overlay gris translúcido + texto negro) */}
+      <div
+        id="mobile-menu"
+        className={`md:hidden fixed inset-x-0 top-16 z-40
+                    bg-white/80 backdrop-blur-sm border-t border-black/10
+                    transition-all duration-200
+                    ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      >
+        <nav className="flex flex-col py-3">
+          <Link
+            href="/"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+            onClick={() => setOpen(false)}
+          >
+            Inicio
+          </Link>
+          <Link
+            href="/propiedades"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+            onClick={() => setOpen(false)}
+          >
+            Propiedades
+          </Link>
+          <Link
+            href="/servicios"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+            onClick={() => setOpen(false)}
+          >
+            Servicios
+          </Link>
+          <Link
+            href="/equipo"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+            onClick={() => setOpen(false)}
+          >
+            Equipo
+          </Link>
+          <Link
+            href="/contacto"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+            onClick={() => setOpen(false)}
+          >
+            Contacto
+          </Link>
+        </nav>
+      </div>
     </>
   )
 }
