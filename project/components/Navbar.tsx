@@ -13,13 +13,11 @@ import {
   X,
 } from 'lucide-react'
 
-/** WhatsApp (igual al del footer): burbuja delineada + teléfono centrado */
-function WhatsAppMark(props: React.SVGProps<SVGSVGElement>) {
+/** WhatsApp: burbuja delineada + teléfono centrado (igual al footer) */
+function WhatsAppBadge(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="24"
-      height="24"
       fill="none"
       stroke="currentColor"
       strokeWidth={1.8}
@@ -27,19 +25,24 @@ function WhatsAppMark(props: React.SVGProps<SVGSVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      {/* Burbuja + cola */}
-      <path d="M20.5 11.5a8.5 8.5 0 1 1-4.63-7.6 8.5 8.5 0 0 1 4.63 7.6Z" />
-      <path d="M7.4 18.3 4.9 19.2l.9-2.5" />
+      {/* Burbuja */}
+      <circle cx="12" cy="12" r="8.6" />
+      {/* Cola */}
+      <path d="M7.2 18.4 4.9 19.3l1-2.6" />
 
-      {/* Teléfono centrado */}
-      <path
-        d="M14.95 13.9c-.2.12-.45.17-.69.1-1.94-.57-3.64-2.27-4.21-4.21-.08-.24-.02-.49.1-.69l.56-.97c.18-.32.58-.46.92-.34l1.12.39c.31.11.52.41.5.74l-.05.63c-.01.18.05.37.17.52l.53.65c.09.11.21.19.35.24l.81.28c.22.08.4.26.46.49l.24.95c.07.3-.05.62-.31.79l-.8.52Z"
-        fill="currentColor"
-        stroke="none"
-      />
+      {/* Teléfono (centrado ópticamente) */}
+      <g transform="translate(12,12) translate(-12,-12)">
+        <path
+          d="M14.7 15.8c-.23.14-.5.18-.76.1-2.04-.6-3.83-2.39-4.43-4.43-.07-.26-.04-.53.1-.76l.57-.96c.19-.32.58-.46.93-.34l1.17.41c.33.11.55.42.53.76l-.06.67c-.01.19.05.39.18.55l.56.68c.1.12.23.21.38.26l.86.3c.24.09.43.29.5.53l.27 1.01c.09.33-.03.68-.31.87l-.99.65Z"
+          fill="currentColor"
+          stroke="none"
+          transform="translate(-.1,.15) scale(1.02)"
+        />
+      </g>
     </svg>
   );
 }
+
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -127,13 +130,14 @@ export default function Navbar() {
 
               {/* Redes (mantiene tamaños y orden) */}
               <div className="flex items-center gap-3 text-white">
-           <Link
+         <Link
   href="https://wa.me/56900000000"
   aria-label="WhatsApp"
   className={linkBase}
 >
-  <WhatsAppMark className="h-[18px] w-[18px]" />
+  <WhatsAppBadge className="h-[18px] w-[18px]" />
 </Link>
+
 
                 <Link
                   href="mailto:hola@gessweinproperties.cl"
