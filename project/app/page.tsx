@@ -116,25 +116,10 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        {/* Contenido del hero (casi pantalla completa) */}
-        {/* ↑↑↑ GUTTERS del hero para encuadrar CTA y tarjeta dentro de las flechas */}
+        {/* Contenido del hero */}
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* BOTÓN CTA — alineado a la misma guía izquierda que la tarjeta */}
-            <div className="mb-3">
-              <Link
-                href="/propiedades"
-                className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
-                style={{
-                  boxShadow:
-                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
-                }}
-              >
-                Ver Propiedades
-              </Link>
-            </div>
-
-            {/* TARJETA RESUMEN — ancho controlado para no invadir flechas */}
+            {/* TARJETA RESUMEN */}
             <div className="bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-lg md:max-w-xl lg:max-w-2xl">
               <h1 className="heading-serif text-[1.4rem] md:text-2xl font-semibold text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
@@ -164,14 +149,30 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between">
+              {/* FILA: Precio | Ver Propiedades | Ver detalle */}
+              <div className="mt-4 flex items-center gap-3">
                 <div className="text-xl font-extrabold text-[#C1272D]">
                   {fmtPrecio(active?.precio_uf, active?.precio_clp)}
                 </div>
+
+                {/* Ver Propiedades (botón intermedio) */}
+                <Link
+                  href="/propiedades"
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
+                  style={{
+                    boxShadow:
+                      'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                  }}
+                >
+                  Ver Propiedades
+                </Link>
+
+                {/* Ver detalle con línea externa del mismo color que el texto */}
                 {active?.id ? (
                   <Link
                     href={`/propiedades/${active.id}`}
-                    className="inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none font-sans"
+                    className="ml-auto inline-flex items-center bg-white px-3 py-2 text-sm font-medium text-gray-900 rounded-none font-sans border border-gray-300 outline outline-1 outline-[currentColor] hover:bg-gray-50"
+                    title="Ver detalle de la propiedad"
                   >
                     Ver detalle
                   </Link>
@@ -180,7 +181,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Flechas — un poco más adentro para dar aire simétrico */}
+          {/* Flechas */}
           {destacadas.length > 1 && (
             <>
               <button
@@ -366,6 +367,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
