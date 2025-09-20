@@ -13,38 +13,32 @@ import {
   X,
 } from 'lucide-react'
 
-/** Ícono WhatsApp sin relleno y con el teléfono centrado */
-function WhatsAppPhone(props: React.SVGProps<SVGSVGElement>) {
+/** WhatsApp (igual al del footer): burbuja delineada + teléfono centrado */
+function WhatsAppMark(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 24 24"
+      width="24"
+      height="24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.7}
+      strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
       {...props}
     >
-      {/* Burbuja (anillo) */}
-      <circle cx="12" cy="11.5" r="8.5" />
-      {/* Colita de la burbuja */}
-      <path d="M7.2 18.6 4 20l1.4-3.2" />
+      {/* Burbuja + cola */}
+      <path d="M20.5 11.5a8.5 8.5 0 1 1-4.63-7.6 8.5 8.5 0 0 1 4.63 7.6Z" />
+      <path d="M7.4 18.3 4.9 19.2l.9-2.5" />
 
-      {/* Teléfono centrado geométricamente en (12, 11.5), sin relleno */}
-      <g transform="translate(12 11.5) scale(0.58) rotate(40) translate(-12 -12)">
-        {/* Trazo del ícono 'Phone' (estilo Lucide) */}
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2
-                 19.79 19.79 0 0 1-8.63-3.07
-                 19.5 19.5 0 0 1-6-6
-                 19.79 19.79 0 0 1-3.07-8.63
-                 A2 2 0 0 1 5 2h3a2 2 0 0 1 2 1.72
-                 c.12.81.3 1.6.57 2.35a2 2 0 0 1-.45 2.11L9.91 9.91
-                 a16 16 0 0 0 6.18 6.18l1.73-1.21
-                 a2 2 0 0 1 2.11-.45c.75.27 1.54.45 2.35.57
-                 A2 2 0 0 1 22 16.92z" />
-      </g>
+      {/* Teléfono centrado */}
+      <path
+        d="M14.95 13.9c-.2.12-.45.17-.69.1-1.94-.57-3.64-2.27-4.21-4.21-.08-.24-.02-.49.1-.69l.56-.97c.18-.32.58-.46.92-.34l1.12.39c.31.11.52.41.5.74l-.05.63c-.01.18.05.37.17.52l.53.65c.09.11.21.19.35.24l.81.28c.22.08.4.26.46.49l.24.95c.07.3-.05.62-.31.79l-.8.52Z"
+        fill="currentColor"
+        stroke="none"
+      />
     </svg>
-  )
+  );
 }
 
 export default function Navbar() {
@@ -133,13 +127,13 @@ export default function Navbar() {
 
               {/* Redes (mantiene tamaños y orden) */}
               <div className="flex items-center gap-3 text-white">
-                <Link
-                  href="https://wa.me/56900000000"
-                  aria-label="WhatsApp"
-                  className={linkBase}
-                >
-                  <WhatsAppPhone className="h-[18px] w-[18px]" />
-                </Link>
+           <Link
+  href="https://wa.me/56900000000"
+  aria-label="WhatsApp"
+  className={linkBase}
+>
+  <WhatsAppMark className="h-[18px] w-[18px]" />
+</Link>
 
                 <Link
                   href="mailto:hola@gessweinproperties.cl"
