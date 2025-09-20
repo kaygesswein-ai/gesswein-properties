@@ -111,9 +111,7 @@ export default function HomePage() {
     capFirst(active?.comuna),
     capFirst(active?.tipo),
     capFirst(active?.operacion),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  ].filter(Boolean).join(' · ');
 
   return (
     <main className="bg-white">
@@ -131,8 +129,9 @@ export default function HomePage() {
         {/* Contenido del hero */}
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* TARJETA RESUMEN */}
-            <div className="bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-lg md:max-w-xl lg:max-w-2xl">
+            {/* TARJETA RESUMEN (más contenida en desktop para que no “se estire”) */}
+            <div className="bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none
+                            max-w-lg md:max-w-xl lg:max-w-xl xl:max-w-[720px]">
               <h1 className="heading-serif text-[1.4rem] md:text-2xl font-semibold text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
@@ -140,22 +139,23 @@ export default function HomePage() {
                 {lineaSecundaria || '—'}
               </p>
 
+              {/* Métricas: compacidad para móvil y desktop */}
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                <div className="bg-gray-50/70 p-2 md:p-3">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <Bed className="h-4 w-4" /> Dormitorios
                   </div>
                   <div className="text-base font-semibold">{active?.dormitorios ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                <div className="bg-gray-50/70 p-2 md:p-3">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <ShowerHead className="h-4 w-4" /> Baños
                   </div>
                   <div className="text-base font-semibold">{active?.banos ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                    <Ruler className="h-4 w-4" /> Área útil (m²)
+                <div className="bg-gray-50/70 p-2 md:p-3">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
+                    <Ruler className="h-4 w-4" /> Área (m²)
                   </div>
                   <div className="text-base font-semibold">{active?.superficie_util_m2 ?? '—'}</div>
                 </div>
@@ -167,7 +167,7 @@ export default function HomePage() {
                   {fmtPrecio(active?.precio_uf, active?.precio_clp)}
                 </div>
 
-                {/* Detalle (al medio) */}
+                {/* Detalle (centro) */}
                 {active?.id ? (
                   <Link
                     href={`/propiedades/${active.id}`}
@@ -178,7 +178,7 @@ export default function HomePage() {
                   </Link>
                 ) : null}
 
-                {/* Propiedades (extremo derecho) */}
+                {/* Propiedades (derecha) */}
                 <Link
                   href="/propiedades"
                   className="ml-auto inline-flex items-center px-3 py-2 text-sm font-medium tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
@@ -193,7 +193,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Flechas (más arriba, como pediste) */}
+          {/* Flechas (más arriba) */}
           {destacadas.length > 1 && (
             <>
               <button
@@ -379,6 +379,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
