@@ -129,12 +129,12 @@ export default function HomePage() {
         {/* Contenido del hero */}
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* TARJETA RESUMEN — versión más pequeña en desktop */}
+            {/* TARJETA RESUMEN — tamaño fijo pequeño también en desktop */}
             <div
               className="
                 bg-white/65 backdrop-blur-sm shadow-xl rounded-none
                 p-4 md:p-5
-                max-w-[600px] md:max-w-[620px] lg:max-w-[640px] xl:max-w-[660px]
+                w-full max-w-[520px]
               "
             >
               <h1 className="heading-serif text-[1.4rem] md:text-2xl font-semibold text-gray-900">
@@ -198,7 +198,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Flechas (más arriba) */}
+          {/* Flechas (altura ajustada) */}
           {destacadas.length > 1 && (
             <>
               <button
@@ -384,6 +384,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
