@@ -89,7 +89,6 @@ export default function HomePage() {
     }
     touchStartX.current = null;
     touchDeltaX.current = 0;
-    // reanudar auto-slide
     if (destacadas.length) {
       timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
     }
@@ -149,13 +148,13 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* FILA: Precio | Ver Propiedades | Ver detalle */}
+              {/* FILA: Precio | Propiedades | Detalle */}
               <div className="mt-4 flex items-center gap-3">
                 <div className="text-xl font-extrabold text-[#C1272D]">
                   {fmtPrecio(active?.precio_uf, active?.precio_clp)}
                 </div>
 
-                {/* Ver Propiedades (botón intermedio) */}
+                {/* CTA intermedio */}
                 <Link
                   href="/propiedades"
                   className="inline-flex items-center px-3 py-2 text-sm font-medium tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
@@ -164,37 +163,37 @@ export default function HomePage() {
                       'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
                   }}
                 >
-                  Ver Propiedades
+                  Propiedades
                 </Link>
 
-                {/* Ver detalle con línea externa del mismo color que el texto */}
+                {/* Detalle con línea externa del mismo color del texto */}
                 {active?.id ? (
                   <Link
                     href={`/propiedades/${active.id}`}
                     className="ml-auto inline-flex items-center bg-white px-3 py-2 text-sm font-medium text-gray-900 rounded-none font-sans border border-gray-300 outline outline-1 outline-[currentColor] hover:bg-gray-50"
-                    title="Ver detalle de la propiedad"
+                    title="Detalle de la propiedad"
                   >
-                    Ver detalle
+                    Detalle
                   </Link>
                 ) : null}
               </div>
             </div>
           </div>
 
-          {/* Flechas */}
+          {/* Flechas (más arriba: ~42% en mobile / ~45% en md+) */}
           {destacadas.length > 1 && (
             <>
               <button
                 aria-label="Anterior"
                 onClick={() => go(-1)}
-                className="group absolute left-4 md:left-6 top-1/2 -translate-y-1/2 p-2"
+                className="group absolute left-4 md:left-6 top-[42%] md:top-[45%] -translate-y-1/2 p-2"
               >
                 <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
               <button
                 aria-label="Siguiente"
                 onClick={() => go(1)}
-                className="group absolute right-4 md:right-6 top-1/2 -translate-y-1/2 p-2"
+                className="group absolute right-4 md:right-6 top-[42%] md:top-[45%] -translate-y-1/2 p-2"
               >
                 <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
@@ -344,7 +343,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Botón con el mismo estilo que “Ver Propiedades” */}
+            {/* Botón con el mismo estilo que “Propiedades” */}
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
