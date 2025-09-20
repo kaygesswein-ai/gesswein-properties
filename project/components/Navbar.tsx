@@ -173,51 +173,52 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Panel móvil desplegable (no afecta escritorio) */}
-      <div
-        id="mobile-menu"
-        className={`md:hidden fixed inset-x-0 top-16 z-40 bg-[#0A2E57] border-t border-white/10 transition-all duration-200 ${
-          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <nav className="flex flex-col py-3">
-          <Link
-            href="/"
-            className="px-5 py-3 text-white/90 uppercase tracking-[.30em] text-[12px]"
-            onClick={() => setOpen(false)}
-          >
-            Inicio
-          </Link>
-          <Link
-            href="/propiedades"
-            className="px-5 py-3 text-white/90 uppercase tracking-[.30em] text-[12px]"
-            onClick={() => setOpen(false)}
-          >
-            Propiedades
-          </Link>
-          <Link
-            href="/servicios"
-            className="px-5 py-3 text-white/90 uppercase tracking-[.30em] text-[12px]"
-            onClick={() => setOpen(false)}
-          >
-            Servicios
-          </Link>
-          <Link
-            href="/equipo"
-            className="px-5 py-3 text-white/90 uppercase tracking-[.30em] text-[12px]"
-            onClick={() => setOpen(false)}
-          >
-            Equipo
-          </Link>
-          <Link
-            href="/contacto"
-            className="px-5 py-3 text-white/90 uppercase tracking-[.30em] text-[12px]"
-            onClick={() => setOpen(false)}
-          >
-            Contacto
-          </Link>
-        </nav>
-      </div>
+{/* Panel móvil (overlay gris translúcido + texto negro corporativo) */}
+<div
+  id="mobile-menu"
+  className={`md:hidden fixed inset-x-0 top-16 z-40
+              bg-white/80 backdrop-blur-sm border-t border-black/10
+              transition-all duration-200
+              ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+>
+  <nav className="flex flex-col py-3">
+    <Link
+      href="/"
+      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+      onClick={() => setOpen(false)}
+    >
+      Inicio
+    </Link>
+    <Link
+      href="/propiedades"
+      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+      onClick={() => setOpen(false)}
+    >
+      Propiedades
+    </Link>
+    <Link
+      href="/servicios"
+      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+      onClick={() => setOpen(false)}
+    >
+      Servicios
+    </Link>
+    <Link
+      href="/equipo"
+      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+      onClick={() => setOpen(false)}
+    >
+      Equipo
+    </Link>
+    <Link
+      href="/contacto"
+      className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
+      onClick={() => setOpen(false)}
+    >
+      Contacto
+    </Link>
+  </nav>
+</div>
     </>
   )
 }
