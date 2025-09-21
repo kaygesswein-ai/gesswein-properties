@@ -2,166 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Familias tipográficas expuestas por next/font en layout */
-:root {
-  --font-sans: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  --font-serif: 'Cinzel', Georgia, 'Times New Roman', serif;
-}
-
-/* Montserrat por defecto en todo */
+/* ========= TIPOGRAFÍA GLOBAL (igual a la del navbar) ========= */
 html, body {
-  font-family: var(--font-sans);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-/* Cinzel en títulos y acentos tipo Signature */
-h1, h2, h3, .heading-serif {
-  font-family: var(--font-serif);
-  letter-spacing: 0.01em;
+/* Si en algún componente se usa esta clase para títulos, que herede la sans */
+.heading-serif {
+  font-family: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
 }
 
-/* Utilidad para navegación en mayúsculas con tracking amplio */
+/* ========= UTILIDADES OPCIONALES ========= */
+
+/* Navegación en mayúsculas con tracking (úsala solo donde quieras mayúsculas) */
 .nav-caps {
   text-transform: uppercase;
   letter-spacing: 0.28em;
 }
-/* === Forzar tipografía de marca en TODOS los controles === */
-button,
-input,
-select,
-textarea,
-label,
-summary,
-a[role="button"],
-[role="button"],
-[type="button"],
-[type="submit"],
-[type="reset"] {
-  font-family: var(--font-sans) !important; /* Montserrat */
+
+/* Safe padding del héroe en móviles */
+@media (max-width: 640px) {
+  .hero-safe-x { padding-left: 1rem; padding-right: 1rem; }
+  .hero-safe-left { margin-left: 1rem; }
 }
 
-/* Opciones de <select> y placeholders */
-select option,
-select optgroup,
-input::placeholder,
-textarea::placeholder {
-  font-family: var(--font-sans) !important; /* Montserrat */
-}
-
-/* Extra: asegura los CTA con la sans y peso consistente */
-.btn,
-.cta {
-  font-family: var(--font-sans) !important;
-  font-weight: 600;
-  letter-spacing: .02em;
-}
-/* Forzar Montserrat en el CTA del héroe */
-.hero-cta {
-  font-family: var(--font-sans) !important;
-  font-weight: 600;
-  letter-spacing: .02em;
-}
-/* ——— MENÚ CENTRADO CON BARRAS FINAS ——— */
+/* ========= NAV DESKTOP (barras finas + links) ========= */
 .nav-list{
   display:flex;
   align-items:center;
-  gap:26px;                 /* espacio entre items */
-  flex-wrap:nowrap;         /* NO permitir salto de línea */
-  white-space:nowrap;       /* Safari/Firefox: evitar quiebres */
+  gap:26px;            /* espacio entre items */
+  flex-wrap:nowrap;    /* no permitir salto de línea */
+  white-space:nowrap;  /* Safari/Firefox: evitar quiebres */
 }
-
 .nav-li{ position:relative; }
 
 /* Barra fina entre items */
 .nav-li + .nav-li::before{
   content:'';
   position:absolute;
-  left:-13px;               /* mitad del gap */
+  left:-13px;          /* mitad del gap */
   top:50%;
   width:1px;
-  height:16px;              /* más corta */
+  height:16px;
   transform:translateY(-50%);
   background:rgba(255,255,255,0.65);
 }
 
 .nav-a{
   display:inline-block;
-  text-transform:uppercase;
   font-weight:500;
-  font-size:14px;           /* TIPOGRAFÍA MÁS CHICA */
+  font-size:14px;
   line-height:1;
-  letter-spacing:0.22em;    /* tracking moderado */
+  letter-spacing:0.22em;
 }
-/* Separador vertical y estilos de los links del nav (desktop) */
+
+/* Separador vertical y estilos de links del nav (desktop) */
 .gp-sep {
-  display: inline-block;
-  width: 1px;
-  height: 16px;
-  margin: 0 16px;
-  background-color: rgba(255,255,255,0.35);
+  display:inline-block;
+  width:1px;
+  height:16px;
+  margin:0 16px;
+  background-color:rgba(255,255,255,0.35);
 }
 .gp-navlink {
-  position: relative;
-  color: rgba(255,255,255,0.95);
-  letter-spacing: 0.25em;
-  transition: opacity .2s ease;
+  position:relative;
+  color:rgba(255,255,255,0.95);
+  letter-spacing:0.25em;
+  transition:opacity .2s ease;
 }
-.gp-navlink:hover { opacity: .85; }
+.gp-navlink:hover { opacity:.85; }
 
 /* Iconos RRSS del nav desktop */
 .gp-icon {
-  color: rgba(255,255,255,0.95);
-  transition: opacity .2s ease;
+  color:rgba(255,255,255,0.95);
+  transition:opacity .2s ease;
 }
-.gp-icon:hover { opacity: .85; }
+.gp-icon:hover { opacity:.85; }
 
 /* Links del panel mobile */
 .gp-mobile {
-  padding: 12px 4px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding:12px 4px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
 }
 .gp-mobile-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 8px;
-  color: #fff;
-}
-/* Safe padding para el héroe en pantallas pequeñas */
-@media (max-width: 640px) {
-  .hero-safe-x { padding-left: 1rem; padding-right: 1rem; } /* 16px */
-  .hero-safe-left { margin-left: 1rem; }                     /* 16px */
-}
-/* === Forzar que todo lo que use “negrita” se vea SIN negrita y en MAYÚSCULAS === */
-.font-bold,
-.font-semibold,
-.font-extrabold,
-b,
-strong {
-  font-weight: 400 !important;
-  text-transform: uppercase !important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px;
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius:8px;
+  color:#fff;
 }
 
-/* En títulos que antes usaban serif + semibold, mantenemos la familia actual y sin negrita */
-.heading-serif {
-  font-weight: 400 !important;
-}
-/* === Unificar tipografía con el NAVBAR (stack sans de Tailwind) === */
-html, body {
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-}
-
-/* Los títulos que antes forzaban serif pasan a heredar la sans del navbar */
-.heading-serif {
-  font-family: inherit !important;
-}
-
-/* Eliminar negrita en todo el sitio y reemplazar por MAYÚSCULAS */
-.font-bold,
-.font-semibold,
-.font-extrabold,
-b, strong {
-  font-weight: 400 !important;
-  text-transform: uppercase !important;
-}
+/* ========= IMPORTANTE =========
+   Eliminamos TODAS las reglas globales que:
+   - forzaban Montserrat/Cinzel
+   - forzaban mayúsculas/negrita o las quitaban globalmente
+   - sobreescribían tipografía en inputs/selects/botones
+   A partir de ahora, usa utilidades de Tailwind por componente:
+   uppercase / normal-case / font-semibold / font-bold, etc.
+*/
