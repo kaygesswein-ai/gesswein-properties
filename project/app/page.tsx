@@ -55,7 +55,6 @@ const REGIONES = [
 ] as const;
 type Region = typeof REGIONES[number];
 
-// Mapa (resumen operativo; puedes ampliar cuando quieras)
 const COMUNAS_POR_REGION: Record<Region, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
   Tarapacá: ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica', 'Huara', 'Camiña', 'Colchane'],
@@ -165,7 +164,7 @@ export default function HomePage() {
     capFirst(active?.operacion),
   ].filter(Boolean).join(' · ');
 
-  /* --------- Estado formulario referidos (solo UI) --------- */
+  /* --------- Estado formulario referidos --------- */
   const [regionSel, setRegionSel] = useState<Region | ''>('');
   const comunas = regionSel ? COMUNAS_POR_REGION[regionSel] : [];
 
@@ -190,19 +189,19 @@ export default function HomePage() {
               <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50/70 p-2.5 md:p-3">
+                <div className="bg-gray-50 p-2.5 md:p-3">
                   <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <Bed className="h-4 w-4" /> Dormitorios
                   </div>
                   <div className="text-base">{active?.dormitorios ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-2.5 md:p-3">
+                <div className="bg-gray-50 p-2.5 md:p-3">
                   <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <ShowerHead className="h-4 w-4" /> Baños
                   </div>
                   <div className="text-base">{active?.banos ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-2.5 md:p-3">
+                <div className="bg-gray-50 p-2.5 md:p-3">
                   <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <Ruler className="h-4 w-4" /> Área (m²)
                   </div>
@@ -210,11 +209,9 @@ export default function HomePage() {
                 </div>
               </div>
 
+              {/* ACCIONES: ahora IZQ = Ver más, DER = Precio (mismo tamaño que título, en negrita) */}
               <div className="mt-4 flex items-center gap-3">
-                <div className="text-2xl md:text-3xl text-[#0A2E57] tracking-wide px-3 py-1.5 bg-white/80 border border-[#0A2E57]/30 shadow-sm">
-                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
-                </div>
-                <div className="ml-auto">
+                <div>
                   {active?.id ? (
                     <Link
                       href={`/propiedades/${active.id}`}
@@ -224,6 +221,10 @@ export default function HomePage() {
                       Ver más
                     </Link>
                   ) : null}
+                </div>
+
+                <div className="ml-auto text-[1.4rem] md:text-2xl font-bold text-[#0A2E57]">
+                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
                 </div>
               </div>
             </div>
@@ -263,7 +264,6 @@ export default function HomePage() {
           cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera para que cada decisión inmobiliaria sea segura y rentable.
         </p>
 
-        {/* Tarjetas simplificadas (sin mayúsculas forzadas) */}
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { nombre: 'Carolina San Martín', cargo: 'Socia fundadora', profesion: 'Arquitecta', foto: '/team/carolina-san-martin.png' },
@@ -276,6 +276,7 @@ export default function HomePage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={m.foto} alt={m.nombre} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
               </div>
+
               <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/80 md:bg-[#0A2E57]/0 md:group-hover:bg-[#0A2E57]/90 transition duration-300" />
               <div className="absolute inset-0 flex items-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition duration-300">
                 <div className="w-full p-4 text-white">
@@ -298,7 +299,7 @@ export default function HomePage() {
             </div>
             <h2 className="mt-3 text-2xl md:text-3xl">Programa de referidos con exclusividad</h2>
             <p className="mt-2 text-slate-600">
-              ¿conoces a alguien que busca propiedad? refiérelo y obtén beneficios exclusivos.
+              ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
             </p>
           </div>
 
@@ -307,15 +308,15 @@ export default function HomePage() {
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="tu nombre completo" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="Tu nombre completo" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="tu@email.com" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="tu@email.com" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="+56 9 1234 5678" />
               </div>
             </div>
 
@@ -323,78 +324,85 @@ export default function HomePage() {
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="nombre del referido" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="Nombre del referido" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="email@referido.com" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="email@referido.com" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Teléfono del referido</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">¿quiere comprar o vender?</label>
-                <select className="w-full rounded-md border border-slate-300 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400">
-                  <option>seleccionar</option>
-                  <option>comprar</option>
-                  <option>vender</option>
-                </select>
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="+56 9 1234 5678" />
               </div>
             </div>
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
+              {/* 1) ¿Quiere comprar o vender? (PRIMERO) */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <select className="w-full rounded-md border border-slate-300 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400">
-                  <option>seleccionar tipo</option>
-                  <option>casa</option>
-                  <option>departamento</option>
-                  <option>oficina</option>
-                  <option>terreno</option>
+                <label className="block text-sm text-slate-700 mb-1">¿Quiere comprar o vender?</label>
+                <select className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400">
+                  <option>Seleccionar</option>
+                  <option>Comprar</option>
+                  <option>Vender</option>
                 </select>
               </div>
 
+              {/* 2) Tipo de propiedad */}
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
+                <select className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400">
+                  <option>Seleccionar tipo</option>
+                  <option>Casa</option>
+                  <option>Departamento</option>
+                  <option>Oficina</option>
+                  <option>Terreno</option>
+                </select>
+              </div>
+
+              {/* 3) Región */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <select
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400"
                   value={regionSel}
-                  onChange={(e) => setRegionSel(e.target.value as Region || '')}
+                  onChange={(e) => setRegionSel((e.target.value as Region) || '')}
                 >
-                  <option value="">seleccionar región</option>
+                  <option value="">Seleccionar región</option>
                   {REGIONES.map((r) => (
-                    <option key={r} value={r}>{r.toLowerCase()}</option>
+                    <option key={r} value={r}>{r}</option>
                   ))}
                 </select>
               </div>
 
+              {/* 4) Comuna (dependiente) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <select
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400 disabled:bg-slate-50"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400 disabled:bg-gray-100"
                   disabled={!regionSel}
                 >
-                  {!regionSel && <option>selecciona una región primero</option>}
+                  {!regionSel && <option>Selecciona una región primero</option>}
                   {regionSel && comunas.map((c) => (
-                    <option key={c}>{c.toLowerCase()}</option>
+                    <option key={c}>{c}</option>
                   ))}
                 </select>
               </div>
 
+              {/* 5) Presupuestos UF */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" inputMode="numeric" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="0" inputMode="numeric" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" inputMode="numeric" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="0" inputMode="numeric" />
               </div>
 
+              {/* 6) Comentarios */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
-                <textarea className="w-full rounded-md border border-slate-300 px-3 py-2" rows={4} placeholder="cualquier información adicional que pueda ser útil..." />
+                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
               </div>
             </div>
 
@@ -409,7 +417,7 @@ export default function HomePage() {
             </div>
 
             <p className="mt-3 text-center text-xs text-slate-500">
-              al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
+              Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
             </p>
           </div>
         </div>
@@ -417,6 +425,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
