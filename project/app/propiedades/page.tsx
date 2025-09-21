@@ -23,7 +23,8 @@ type Property = {
 
 const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
-  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=2000&auto=format&fit=crop'; // imagen genérica elegante
+  // Foto genérica elegante (puedes cambiarla cuando quieras)
+  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=2000&auto=format&fit=crop';
 
 const fmtUF = (n?: number | null) =>
   typeof n === 'number' && n > 0
@@ -37,7 +38,6 @@ const fmtCLP = (n?: number | null) =>
 
 const cap = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
 
-/* ===== Regiones (Metropolitana primero) y comunas ===== */
 const REGIONES = [
   'Metropolitana de Santiago',
   'Arica y Parinacota',
@@ -80,7 +80,6 @@ const COMUNAS: Record<Region, string[]> = {
   Magallanes: ['Punta Arenas','Puerto Natales'],
 };
 
-/* ===== Barrios por comuna (ejemplos) ===== */
 const BARRIOS: Record<string, string[]> = {
   'Las Condes': ['El Golf','San Damián','Estoril','Los Dominicos','Apoquindo'],
   'Vitacura': ['Santa María de Manquehue','Lo Curro','Jardín del Este'],
@@ -92,7 +91,6 @@ const BARRIOS: Record<string, string[]> = {
   'Valdivia': ['Isla Teja','Torreones','Las Ánimas','Regional'],
 };
 
-/* ===== Tipos ===== */
 const TIPOS = [
   'Casa',
   'Casa amoblada',
@@ -115,11 +113,9 @@ const fmtMiles = (raw: string) => {
 
 /* ================== Página ================== */
 export default function PropiedadesPage() {
-  /* ——— Buscador superior ——— */
   const [qTop, setQTop] = useState('');
 
-  /* ——— Filtros ——— */
-  const [estado, setEstado] = useState<'venta'|'arriendo'|''>(''); // solo Venta/Arriendo, sin “Todos”
+  const [estado, setEstado] = useState<'venta'|'arriendo'|''>('');
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<Region | ''>('');
   const [comuna, setComuna] = useState('');
@@ -157,7 +153,6 @@ export default function PropiedadesPage() {
       .then(json => {
         const data: Property[] = Array.isArray(json?.data) ? json.data : [];
         setItems(data);
-        // inferir región/comuna desde primer resultado si el usuario buscó por texto
         if (qTop && data.length && !region && !comuna) {
           const f = data[0];
           if (f?.region) setRegion(f.region as Region);
@@ -181,14 +176,13 @@ export default function PropiedadesPage() {
 
   return (
     <main className="bg-white">
-      {/* ===== HERO (más abajo, alineado como en home) ===== */}
+      {/* ===== HERO más bajo y alineado ===== */}
       <section
-        className="relative bg-center bg-cover min-h-[80vh]"
+        className="relative bg-center bg-cover min-h-[88vh]"
         style={{ backgroundImage: `url(${HERO_IMG})` }}
       >
         <div className="absolute inset-0 bg-black/35" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          {/* empuja el bloque hacia el borde inferior */}
           <div className="h-full flex flex-col justify-end pb-8">
             <div className="max-w-3xl">
               <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
@@ -197,7 +191,7 @@ export default function PropiedadesPage() {
               </p>
             </div>
 
-            {/* Buscador superior (debajo del título) */}
+            {/* Buscador superior */}
             <div className="mt-6 max-w-2xl">
               <div className="relative">
                 <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
@@ -220,17 +214,18 @@ export default function PropiedadesPage() {
         </div>
       </section>
 
-      {/* ===== REFINAR BÚSQUEDA (inputs estilo Referidos, con escritura + flecha) ===== */}
+      {/* ===== REFINAR BÚSQUEDA ===== */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-2 text-slate-700 mb-3">
-            <Filter className="h-4 w-4 text-[color:var(--blue)]" />
-            <span className="text-sm">Refinar búsqueda</span>
+          <div className="flex items-center gap-2 text-slate-800 mb-3">
+            <Filter className="h-5 w-5 text-[color:var(--blue)]" />
+            <span className="text-lg md:text-xl uppercase" style={{ ['--blue' as any]: BRAND_BLUE }}>
+              REFINAR BÚSQUEDA
+            </span>
           </div>
 
-          {/* FILA: Estado, Tipo (datalist), Región (datalist), Comuna (datalist), Barrio (dependiente) */}
+          {/* Fila 1: 5 columnas iguales */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-            {/* Estado (solo Venta/Arriendo) */}
             <select
               value={estado}
               onChange={(e)=>setEstado(e.target.value as any)}
@@ -241,7 +236,6 @@ export default function PropiedadesPage() {
               <option value="arriendo">Arriendo</option>
             </select>
 
-            {/* Tipo: input + datalist (escribible y con flecha) */}
             <div>
               <input
                 list="dl-tipos"
@@ -255,7 +249,6 @@ export default function PropiedadesPage() {
               </datalist>
             </div>
 
-            {/* Región: input + datalist */}
             <div>
               <input
                 list="dl-regiones"
@@ -269,7 +262,6 @@ export default function PropiedadesPage() {
               </datalist>
             </div>
 
-            {/* Comuna dependiente (input + datalist) */}
             <div>
               <input
                 list="dl-comunas"
@@ -284,7 +276,6 @@ export default function PropiedadesPage() {
               </datalist>
             </div>
 
-            {/* Barrio dependiente de comuna */}
             <div>
               <input
                 list="dl-barrios"
@@ -300,56 +291,55 @@ export default function PropiedadesPage() {
             </div>
           </div>
 
-          {/* FILA: Moneda + Min/Máx + Buscar (filtros) */}
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-6 gap-3">
-            <div>
-              <select
-                value={moneda}
-                onChange={(e)=>{ setMoneda(e.target.value as any); setMinValor(''); setMaxValor(''); }}
-                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-              >
-                <option value="UF">UF</option>
-                <option value="CLP">$ CLP</option>
-              </select>
-            </div>
+          {/* Fila 2: mismas 5 columnas (mismo ancho por control) */}
+          <div className="mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+            <select
+              value={moneda}
+              onChange={(e)=>{ setMoneda(e.target.value as any); setMinValor(''); setMaxValor(''); }}
+              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+            >
+              <option value="UF">UF</option>
+              <option value="CLP">$ CLP</option>
+            </select>
+
             <input
               value={minValor}
               onChange={(e)=>setMinValor(fmtMiles(e.target.value))}
               inputMode="numeric"
               placeholder="Mín"
-              className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
             />
+
             <input
               value={maxValor}
               onChange={(e)=>setMaxValor(fmtMiles(e.target.value))}
               inputMode="numeric"
               placeholder="Máx"
-              className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
             />
-            <div className="hidden md:block md:col-span-2" />
-            <div className="md:col-span-1 flex">
-              <button
-                onClick={()=>setTrigger(v=>v+1)}
-                className="w-full px-5 py-2 text-sm text-white rounded-none"
-                style={{
-                  background: BRAND_BLUE,
-                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
-                }}
-              >
-                Buscar
-              </button>
-            </div>
+
+            {/* Columna vacía para mantener el layout 5-col */}
+            <div className="w-full" />
+
+            <button
+              onClick={()=>setTrigger(v=>v+1)}
+              className="w-full px-5 py-2 text-sm text-white rounded-none"
+              style={{
+                background: BRAND_BLUE,
+                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+              }}
+            >
+              Buscar
+            </button>
           </div>
         </div>
       </section>
 
       {/* ===== LISTADO ===== */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Título de la sección */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl md:text-2xl text-slate-900">Propiedades disponibles</h2>
+          <h2 className="text-xl md:text-2xl text-slate-900 uppercase">PROPIEDADES DISPONIBLES</h2>
 
-          {/* Ordenar por (aquí abajo, junto a las propiedades) */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-600">Ordenar por:</span>
             <select
@@ -435,6 +425,7 @@ export default function PropiedadesPage() {
     </main>
   );
 }
+
 
 
 
