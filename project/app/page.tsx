@@ -35,7 +35,9 @@ function capFirst(s?: string | null) {
 }
 
 /* -------------------- Datos Chile -------------------- */
+/* Pediste que “Metropolitana de Santiago” aparezca primero en las listas */
 const REGIONES = [
+  'Metropolitana de Santiago',
   'Arica y Parinacota',
   'Tarapacá',
   'Antofagasta',
@@ -51,7 +53,6 @@ const REGIONES = [
   'Los Lagos',
   'Aysén',
   'Magallanes',
-  'Metropolitana de Santiago',
 ] as const;
 type Region = typeof REGIONES[number];
 
@@ -172,11 +173,22 @@ export default function HomePage() {
     capFirst(active?.operacion),
   ].filter(Boolean).join(' · ');
 
-  /* --------- Estado formulario referidos (inputs con datalist) --------- */
+  /* --------- Estado formulario referidos (datalist + formato UF) --------- */
   const [regionInput, setRegionInput] = useState('');
   const [comunaInput, setComunaInput] = useState('');
+  const [minUF, setMinUF] = useState(''); // formateado con miles
+  const [maxUF, setMaxUF] = useState('');
+
   const regionSel = REGIONES.find((r) => r.toLowerCase() === regionInput.toLowerCase()) || '';
   const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
+
+  const formatUF = (raw: string) => {
+    // Dejar solo dígitos, quitar ceros iniciales redundantes y formatear con miles (es-CL) sin decimales
+    const digits = raw.replace(/\D+/g, '');
+    if (!digits) return '';
+    const n = parseInt(digits, 10);
+    return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n);
+  };
 
   return (
     <main className="bg-white">
@@ -359,7 +371,7 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio necesita - con datalist (buscable) */}
+              {/* Servicio necesita - datalist (buscable) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <input
@@ -422,14 +434,26 @@ export default function HomePage() {
                 </datalist>
               </div>
 
-              {/* Presupuestos UF */}
+              {/* Presupuestos UF (formato con miles y sin decimales mientras escribes) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="0" inputMode="numeric" />
+                <input
+                  value={minUF}
+                  onChange={(e) => setMinUF(formatUF(e.target.value))}
+                  inputMode="numeric"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="0"
+                />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="0" inputMode="numeric" />
+                <input
+                  value={maxUF}
+                  onChange={(e) => setMaxUF(formatUF(e.target.value))}
+                  inputMode="numeric"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="0"
+                />
               </div>
 
               {/* Comentarios */}
@@ -458,4 +482,5 @@ export default function HomePage() {
     </main>
   );
 }
+
 
