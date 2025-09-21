@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Bed, ShowerHead, Ruler, Search, Filter } from 'lucide-react';
+import { Bed, ShowerHead, Ruler, Search, Filter, Settings } from 'lucide-react';
 
 /* ================== Tipos + helpers ================== */
 type Property = {
@@ -17,8 +17,10 @@ type Property = {
   dormitorios?: number | null;
   banos?: number | null;
   superficie_util_m2?: number | null;
+  superficie_terreno_m2?: number | null;
   coverImage?: string;
   createdAt?: string;
+  estilo?: string | null;
 };
 
 const BRAND_BLUE = '#0A2E57';
@@ -92,7 +94,7 @@ const BARRIOS: Record<string, string[]> = {
   'Valdivia': ['Isla Teja','Torreones','Las Ánimas','Regional'],
 };
 
-/* ===== Tipos ===== */
+/* ===== Tipos y estilos ===== */
 const TIPOS = [
   'Casa',
   'Casa amoblada',
@@ -105,6 +107,18 @@ const TIPOS = [
   'Local comercial',
   'Terreno',
   'Parcela',
+] as const;
+
+const ESTILOS = [
+  'Mediterráneo',
+  'Colonial',
+  'Barroco',
+  'Neoclásico',
+  'Moderno',
+  'Contemporáneo',
+  'Rústico',
+  'Minimalista',
+  'Industrial',
 ] as const;
 
 /* Números con puntos de miles (sin decimales) */
@@ -129,9 +143,17 @@ export default function PropiedadesPage() {
   const [barrio, setBarrio] = useState('');
   const barriosComuna = useMemo(() => (comuna && BARRIOS[comuna]) || [], [comuna]);
 
-  const [moneda, setMoneda] = useState<'UF'|'CLP'>('UF');
+  const [moneda, setMoneda] = useState<'UF'|'CLP$'>('UF');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
+
+  /* Avanzado */
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [minDorm, setMinDorm] = useState('');
+  const [minBanos, setMinBanos] = useState('');
+  const [minM2Const, setMinM2Const] = useState('');
+  const [minM2Terreno, setMinM2Terreno] = useState('');
+  const [estilo, setEstilo] = useState('');
 
   const [trigger, setTrigger] = useState(0);
   const [order, setOrder] = useState<'recientes'|'precio-asc'|'precio-desc'>('recientes');
@@ -151,6 +173,12 @@ export default function PropiedadesPage() {
     if (barrio) p.set('barrio', barrio);
     if (minValor) p.set(moneda === 'UF' ? 'minUF' : 'minCLP', minValor.replace(/\./g, ''));
     if (maxValor) p.set(moneda === 'UF' ? 'maxUF' : 'maxCLP', maxValor.replace(/\./g, ''));
+
+    if (minDorm) p.set('minDorm', minDorm);
+    if (minBanos) p.set('minBanos', minBanos);
+    if (minM2Const) p.set('minM2Const', minM2Const.replace(/\./g, ''));
+    if (minM2Terreno) p.set('minM2Terreno', minM2Terreno.replace(/\./g, ''));
+    if (estilo) p.set('estilo', estilo);
 
     setLoading(true);
     fetch(`/api/propiedades?${p.toString()}`, { signal: controller.signal })
@@ -181,30 +209,29 @@ export default function PropiedadesPage() {
 
   return (
     <main className="bg-white">
-      {/* ===== HERO (contenido anclado abajo-izquierda y alineado con el logo) ===== */}
+      {/* ===== HERO ===== */}
       <section
         className="relative bg-center bg-cover min-h-[72vh]"
         style={{ backgroundImage: `url(${HERO_IMG})` }}
       >
         <div className="absolute inset-0 bg-black/35" />
-        {/* Contenedor absoluto pegado al borde inferior, alineado con márgenes del sitio */}
         <div className="absolute bottom-6 left-0 right-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
-              <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
+              <h1 className="text-white text-3xl md:text-4xl uppercase">Propiedades</h1>
               <p className="text-white/85 mt-2">
                 Encuentra tu próxima inversión o tu nuevo hogar.
               </p>
             </div>
 
-            {/* Buscador superior (alineado a la izquierda) */}
+            {/* Buscador superior */}
             <div className="mt-4 max-w-2xl">
               <div className="relative">
                 <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
                 <input
                   value={qTop}
                   onChange={(e)=>setQTop(e.target.value)}
-                  placeholder="Buscar por calle (ej. Alameda)"
+                  placeholder="Buscar por calle (ej. Alameda 13800)"
                   className="w-full rounded-md bg-white/95 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
                 />
                 <button
@@ -305,13 +332,13 @@ export default function PropiedadesPage() {
               <input
                 list="dl-moneda"
                 value={moneda}
-                onChange={(e)=>setMoneda((e.target.value as 'UF'|'CLP') || 'UF')}
+                onChange={(e)=>setMoneda((e.target.value as 'UF'|'CLP$') || 'UF')}
                 placeholder="Moneda"
                 className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
               />
               <datalist id="dl-moneda">
                 <option value="UF" />
-                <option value="CLP" />
+                <option value="CLP$" />
               </datalist>
             </div>
 
@@ -331,7 +358,17 @@ export default function PropiedadesPage() {
               className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
             />
 
-            <div className="w-full" />
+            {/* Botón Búsqueda avanzada */}
+            <button
+              type="button"
+              onClick={()=>setShowAdvanced(v=>!v)}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-2 text-sm text-white rounded-none"
+              style={{ background: '#334155' }} /* slate-700 */
+              title="Búsqueda avanzada"
+            >
+              <Settings className="h-4 w-4" />
+              Búsqueda avanzada
+            </button>
 
             <button
               onClick={()=>setTrigger(v=>v+1)}
@@ -344,6 +381,52 @@ export default function PropiedadesPage() {
               Buscar
             </button>
           </div>
+
+          {/* Fila 3: Avanzado */}
+          {showAdvanced && (
+            <div className="mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+              <input
+                value={minDorm}
+                onChange={(e)=>setMinDorm(e.target.value.replace(/\D+/g,''))}
+                inputMode="numeric"
+                placeholder="Mín. dormitorios"
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              />
+              <input
+                value={minBanos}
+                onChange={(e)=>setMinBanos(e.target.value.replace(/\D+/g,''))}
+                inputMode="numeric"
+                placeholder="Mín. baños"
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              />
+              <input
+                value={minM2Const}
+                onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))}
+                inputMode="numeric"
+                placeholder="Mín. m² construidos"
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              />
+              <input
+                value={minM2Terreno}
+                onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))}
+                inputMode="numeric"
+                placeholder="Mín. m² terreno"
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              />
+              <div>
+                <input
+                  list="dl-estilos"
+                  value={estilo}
+                  onChange={(e)=>setEstilo(e.target.value)}
+                  placeholder="Estilo (opcional)"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <datalist id="dl-estilos">
+                  {ESTILOS.map(es => <option key={es} value={es} />)}
+                </datalist>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -437,6 +520,7 @@ export default function PropiedadesPage() {
     </main>
   );
 }
+
 
 
 
