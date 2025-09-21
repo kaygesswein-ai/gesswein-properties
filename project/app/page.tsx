@@ -83,6 +83,14 @@ const COMUNAS_POR_REGION: Record<Region, string[]> = {
   ],
 };
 
+const SERVICIOS = [
+  'Comprar',
+  'Vender',
+  'Arrendar',
+  'Gestionar un arriendo',
+  'Consultoría específica',
+];
+
 /* -------------------- Componente -------------------- */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
@@ -164,9 +172,11 @@ export default function HomePage() {
     capFirst(active?.operacion),
   ].filter(Boolean).join(' · ');
 
-  /* --------- Estado formulario referidos --------- */
-  const [regionSel, setRegionSel] = useState<Region | ''>('');
-  const comunas = regionSel ? COMUNAS_POR_REGION[regionSel] : [];
+  /* --------- Estado formulario referidos (inputs con datalist) --------- */
+  const [regionInput, setRegionInput] = useState('');
+  const [comunaInput, setComunaInput] = useState('');
+  const regionSel = REGIONES.find((r) => r.toLowerCase() === regionInput.toLowerCase()) || '';
+  const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
 
   return (
     <main className="bg-white">
@@ -209,7 +219,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* ACCIONES: ahora IZQ = Ver más, DER = Precio (mismo tamaño que título, en negrita) */}
+              {/* Acciones: IZQ Ver más | DER Precio (mismo tamaño que título y en negrita) */}
               <div className="mt-4 flex items-center gap-3">
                 <div>
                   {active?.id ? (
@@ -271,18 +281,45 @@ export default function HomePage() {
             { nombre: 'Jan Gesswein', cargo: 'Socio', profesion: 'Abogado', foto: '/team/jan-gesswein.png' },
             { nombre: 'Kay Gesswein', cargo: 'Socio', profesion: 'Ingeniero comercial · Magíster en finanzas', foto: '/team/kay-gesswein.png' },
           ].map((m) => (
-            <article key={m.nombre} className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-lg transition">
+            <article
+              key={m.nombre}
+              className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-lg transition"
+              tabIndex={0}
+            >
               <div className="aspect-[3/4] w-full bg-slate-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={m.foto} alt={m.nombre} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                <img
+                  src={m.foto}
+                  alt={m.nombre}
+                  className="h-full w-full object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
               </div>
 
-              <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/80 md:bg-[#0A2E57]/0 md:group-hover:bg-[#0A2E57]/90 transition duration-300" />
-              <div className="absolute inset-0 flex items-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition duration-300">
+              {/* Overlay: oculto por defecto; aparece en hover/active/focus */}
+              <div className="
+                pointer-events-none absolute inset-0
+                bg-[#0A2E57]/0
+                group-hover:bg-[#0A2E57]/90
+                group-active:bg-[#0A2E57]/90
+                focus-within:bg-[#0A2E57]/90
+                transition duration-300
+              " />
+
+              {/* Texto: aparece solo al interactuar */}
+              <div className="
+                absolute inset-0 flex items-end
+                opacity-0
+                group-hover:opacity-100
+                group-active:opacity-100
+                focus-within:opacity-100
+                transition duration-300
+              ">
                 <div className="w-full p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
-                  <p className="text-xs mt-1">{m.cargo}</p>
-                  <p className="mt-1 text-sm text-white/90">{m.profesion}</p>
+                  {/* invertimos tamaños: cargo más grande y profesión más pequeña */}
+                  <p className="text-sm mt-1">{m.cargo}</p>
+                  <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
                 </div>
               </div>
             </article>
@@ -308,101 +345,97 @@ export default function HomePage() {
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="Tu nombre completo" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="Tu nombre completo" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="tu@email.com" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="tu@email.com" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="+56 9 1234 5678" />
-              </div>
-            </div>
-
-            <h3 className="mt-8 text-lg">Datos del referido</h3>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="Nombre del referido" />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="email@referido.com" />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Teléfono del referido</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="+56 9 1234 5678" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
               </div>
             </div>
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* 1) ¿Quiere comprar o vender? (PRIMERO) */}
+              {/* Servicio necesita - con datalist (buscable) */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1">¿Quiere comprar o vender?</label>
-                <select className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400">
-                  <option>Seleccionar</option>
-                  <option>Comprar</option>
-                  <option>Vender</option>
-                </select>
+                <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
+                <input
+                  list="servicios-list"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
+                  placeholder="Seleccionar"
+                />
+                <datalist id="servicios-list">
+                  {SERVICIOS.map((s) => <option key={s} value={s} />)}
+                </datalist>
               </div>
 
-              {/* 2) Tipo de propiedad */}
+              {/* Tipo de propiedad - datalist */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <select className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400">
-                  <option>Seleccionar tipo</option>
-                  <option>Casa</option>
-                  <option>Departamento</option>
-                  <option>Oficina</option>
-                  <option>Terreno</option>
-                </select>
+                <input
+                  list="tipo-prop-list"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
+                  placeholder="Seleccionar tipo"
+                />
+                <datalist id="tipo-prop-list">
+                  <option value="Casa" />
+                  <option value="Departamento" />
+                  <option value="Oficina" />
+                  <option value="Terreno" />
+                </datalist>
               </div>
 
-              {/* 3) Región */}
+              {/* Región - datalist (buscable) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
-                <select
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400"
-                  value={regionSel}
-                  onChange={(e) => setRegionSel((e.target.value as Region) || '')}
-                >
-                  <option value="">Seleccionar región</option>
-                  {REGIONES.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
+                <input
+                  list="regiones-list"
+                  value={regionInput}
+                  onChange={(e) => {
+                    setRegionInput(e.target.value);
+                    setComunaInput(''); // limpiar comuna si cambia región
+                  }}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
+                  placeholder="Seleccionar región"
+                />
+                <datalist id="regiones-list">
+                  {REGIONES.map((r) => <option key={r} value={r} />)}
+                </datalist>
               </div>
 
-              {/* 4) Comuna (dependiente) */}
+              {/* Comuna dependiente - datalist */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
-                <select
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 appearance-none focus:outline-none focus:ring-0 focus:border-slate-400 disabled:bg-gray-100"
+                <input
+                  list="comunas-list"
+                  value={comunaInput}
+                  onChange={(e) => setComunaInput(e.target.value)}
                   disabled={!regionSel}
-                >
-                  {!regionSel && <option>Selecciona una región primero</option>}
-                  {regionSel && comunas.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 bg-gray-50 text-slate-500 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+                  placeholder={regionSel ? 'Seleccionar comuna' : 'Selecciona una región primero'}
+                />
+                <datalist id="comunas-list">
+                  {regionSel && comunas.map((c) => <option key={c} value={c} />)}
+                </datalist>
               </div>
 
-              {/* 5) Presupuestos UF */}
+              {/* Presupuestos UF */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="0" inputMode="numeric" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="0" inputMode="numeric" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" placeholder="0" inputMode="numeric" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="0" inputMode="numeric" />
               </div>
 
-              {/* 6) Comentarios */}
+              {/* Comentarios */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
-                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
+                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
               </div>
             </div>
 
@@ -425,3 +458,4 @@ export default function HomePage() {
     </main>
   );
 }
+
