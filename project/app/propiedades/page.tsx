@@ -23,7 +23,7 @@ type Property = {
 
 const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
-  // Foto genérica elegante (puedes cambiarla cuando quieras)
+  // Foto genérica elegante
   'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=2000&auto=format&fit=crop';
 
 const fmtUF = (n?: number | null) =>
@@ -38,6 +38,7 @@ const fmtCLP = (n?: number | null) =>
 
 const cap = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
 
+/* ===== Regiones y comunas ===== */
 const REGIONES = [
   'Metropolitana de Santiago',
   'Arica y Parinacota',
@@ -80,6 +81,7 @@ const COMUNAS: Record<Region, string[]> = {
   Magallanes: ['Punta Arenas','Puerto Natales'],
 };
 
+/* ===== Barrios (ejemplos) ===== */
 const BARRIOS: Record<string, string[]> = {
   'Las Condes': ['El Golf','San Damián','Estoril','Los Dominicos','Apoquindo'],
   'Vitacura': ['Santa María de Manquehue','Lo Curro','Jardín del Este'],
@@ -91,6 +93,7 @@ const BARRIOS: Record<string, string[]> = {
   'Valdivia': ['Isla Teja','Torreones','Las Ánimas','Regional'],
 };
 
+/* ===== Tipos ===== */
 const TIPOS = [
   'Casa',
   'Casa amoblada',
@@ -105,6 +108,7 @@ const TIPOS = [
   'Parcela',
 ] as const;
 
+/* Números con puntos de miles (sin decimales) */
 const fmtMiles = (raw: string) => {
   const digits = raw.replace(/\D+/g, '');
   if (!digits) return '';
@@ -113,9 +117,11 @@ const fmtMiles = (raw: string) => {
 
 /* ================== Página ================== */
 export default function PropiedadesPage() {
+  /* Buscador superior */
   const [qTop, setQTop] = useState('');
 
-  const [estado, setEstado] = useState<'venta'|'arriendo'|''>('');
+  /* Filtros */
+  const [estado, setEstado] = useState(''); // venta / arriendo
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<Region | ''>('');
   const [comuna, setComuna] = useState('');
@@ -139,7 +145,7 @@ export default function PropiedadesPage() {
     const p = new URLSearchParams();
 
     if (qTop.trim()) p.set('q', qTop.trim());
-    if (estado) p.set('operacion', estado);
+    if (estado) p.set('operacion', estado as any);
     if (tipo) p.set('tipo', tipo);
     if (region) p.set('region', region);
     if (comuna) p.set('comuna', comuna);
@@ -176,45 +182,49 @@ export default function PropiedadesPage() {
 
   return (
     <main className="bg-white">
-      {/* ===== HERO más bajo y alineado ===== */}
+      {/* ===== HERO (contenido pegado abajo; se ve foto + buscador + separador) ===== */}
       <section
-        className="relative bg-center bg-cover min-h-[88vh]"
+        className="relative bg-center bg-cover min-h-[70vh]"
         style={{ backgroundImage: `url(${HERO_IMG})` }}
       >
         <div className="absolute inset-0 bg-black/35" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          <div className="h-full flex flex-col justify-end pb-8">
-            <div className="max-w-3xl">
-              <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
-              <p className="text-white/85 mt-2">
-                Encuentra tu próxima inversión o tu nuevo hogar.
-              </p>
-            </div>
+          {/* Espaciador para “pegar” el contenido abajo sin tocar el logo */}
+          <div className="flex flex-col h-full">
+            <div className="flex-1" />
+            <div className="pb-8">
+              <div className="max-w-3xl">
+                <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
+                <p className="text-white/85 mt-2">
+                  Encuentra tu próxima inversión o tu nuevo hogar.
+                </p>
+              </div>
 
-            {/* Buscador superior */}
-            <div className="mt-6 max-w-2xl">
-              <div className="relative">
-                <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
-                <input
-                  value={qTop}
-                  onChange={(e)=>setQTop(e.target.value)}
-                  placeholder="Buscar por título o calle (ej. Camino Mirasol)"
-                  className="w-full rounded-md bg-white/95 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
-                />
-                <button
-                  onClick={()=>setTrigger(v=>v+1)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-md"
-                  style={{ background: BRAND_BLUE }}
-                >
-                  Buscar
-                </button>
+              {/* Buscador superior */}
+              <div className="mt-6 max-w-2xl">
+                <div className="relative">
+                  <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
+                  <input
+                    value={qTop}
+                    onChange={(e)=>setQTop(e.target.value)}
+                    placeholder="Buscar por calle (ej. Alameda)"
+                    className="w-full rounded-md bg-white/95 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
+                  />
+                  <button
+                    onClick={()=>setTrigger(v=>v+1)}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-md"
+                    style={{ background: BRAND_BLUE }}
+                  >
+                    Buscar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== REFINAR BÚSQUEDA ===== */}
+      {/* ===== REFINAR BÚSQUEDA (inputs gris claro, todos iguales) ===== */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-2 text-slate-800 mb-3">
@@ -226,15 +236,20 @@ export default function PropiedadesPage() {
 
           {/* Fila 1: 5 columnas iguales */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-            <select
-              value={estado}
-              onChange={(e)=>setEstado(e.target.value as any)}
-              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-            >
-              <option value="" disabled hidden>Estado</option>
-              <option value="venta">Venta</option>
-              <option value="arriendo">Arriendo</option>
-            </select>
+            {/* Estado como input + datalist (igual estilo que el resto) */}
+            <div>
+              <input
+                list="dl-estado"
+                value={estado}
+                onChange={(e)=>setEstado(e.target.value)}
+                placeholder="Estado"
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              />
+              <datalist id="dl-estado">
+                <option value="Venta" />
+                <option value="Arriendo" />
+              </datalist>
+            </div>
 
             <div>
               <input
@@ -293,14 +308,20 @@ export default function PropiedadesPage() {
 
           {/* Fila 2: mismas 5 columnas (mismo ancho por control) */}
           <div className="mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-            <select
-              value={moneda}
-              onChange={(e)=>{ setMoneda(e.target.value as any); setMinValor(''); setMaxValor(''); }}
-              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-            >
-              <option value="UF">UF</option>
-              <option value="CLP">$ CLP</option>
-            </select>
+            {/* Moneda como input + datalist (igual estilo) */}
+            <div>
+              <input
+                list="dl-moneda"
+                value={moneda}
+                onChange={(e)=>setMoneda((e.target.value as 'UF'|'CLP') || 'UF')}
+                placeholder="Moneda"
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              />
+              <datalist id="dl-moneda">
+                <option value="UF" />
+                <option value="CLP" />
+              </datalist>
+            </div>
 
             <input
               value={minValor}
@@ -318,7 +339,7 @@ export default function PropiedadesPage() {
               className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
             />
 
-            {/* Columna vacía para mantener el layout 5-col */}
+            {/* Columna vacía para mantener layout simétrico */}
             <div className="w-full" />
 
             <button
@@ -425,6 +446,7 @@ export default function PropiedadesPage() {
     </main>
   );
 }
+
 
 
 
