@@ -215,10 +215,11 @@ export default function PropiedadesPage() {
         style={{ backgroundImage: `url(${HERO_IMG})` }}
       >
         <div className="absolute inset-0 bg-black/35" />
+        {/* alineado con el logo: mismo contenedor y paddings */}
         <div className="absolute bottom-6 left-0 right-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
-              <h1 className="text-white text-3xl md:text-4xl uppercase">Propiedades</h1>
+              <h1 className="text-white text-3xl md:text-4xl uppercase">PROPIEDADES</h1>
               <p className="text-white/85 mt-2">
                 Encuentra tu próxima inversión o tu nuevo hogar.
               </p>
@@ -247,12 +248,12 @@ export default function PropiedadesPage() {
         </div>
       </section>
 
-      {/* ===== REFINAR BÚSQUEDA ===== */}
+      {/* ===== FILTROS ===== */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-2 text-slate-800 mb-3">
             <Filter className="h-5 w-5" color={BRAND_BLUE} />
-            <span className="text-lg md:text-xl uppercase">REFINAR BÚSQUEDA</span>
+            <span className="text-lg md:text-xl uppercase">FILTROS</span>
           </div>
 
           {/* Fila 1: 5 columnas */}
@@ -328,19 +329,15 @@ export default function PropiedadesPage() {
 
           {/* Fila 2: mismas 5 columnas */}
           <div className="mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-            <div>
-              <input
-                list="dl-moneda"
-                value={moneda}
-                onChange={(e)=>setMoneda((e.target.value as 'UF'|'CLP$') || 'UF')}
-                placeholder="Moneda"
-                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-              />
-              <datalist id="dl-moneda">
-                <option value="UF" />
-                <option value="CLP$" />
-              </datalist>
-            </div>
+            {/* Moneda como SELECT (UF / CLP$) */}
+            <select
+              value={moneda}
+              onChange={(e)=>setMoneda(e.target.value as 'UF'|'CLP$')}
+              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+            >
+              <option value="UF">UF</option>
+              <option value="CLP$">CLP$</option>
+            </select>
 
             <input
               value={minValor}
@@ -358,12 +355,12 @@ export default function PropiedadesPage() {
               className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
             />
 
-            {/* Botón Búsqueda avanzada */}
+            {/* Botón Búsqueda avanzada (gris corporativo) */}
             <button
               type="button"
               onClick={()=>setShowAdvanced(v=>!v)}
               className="w-full inline-flex items-center justify-center gap-2 px-5 py-2 text-sm text-white rounded-none"
-              style={{ background: '#334155' }} /* slate-700 */
+              style={{ background: '#64748b' }} /* slate-500 */
               title="Búsqueda avanzada"
             >
               <Settings className="h-4 w-4" />
@@ -456,13 +453,17 @@ export default function PropiedadesPage() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {itemsOrdenados.map((p) => (
-              <article key={p.id} className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition">
+              <Link
+                key={p.id}
+                href={`/propiedades/${p.id}`}
+                className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
+              >
                 <div className="aspect-[4/3] bg-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={p.coverImage || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop'}
                     alt={p.titulo || 'Propiedad'}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:opacity-95 transition"
                   />
                 </div>
 
@@ -495,13 +496,9 @@ export default function PropiedadesPage() {
                     </div>
                   </div>
 
+                  {/* invertido: Ver más a la izquierda, precio a la derecha */}
                   <div className="mt-4 flex items-center justify-between">
-                    <div className="text-[color:var(--blue)] font-semibold space-y-0.5" style={{ ['--blue' as any]: BRAND_BLUE }}>
-                      <div>{fmtUF(p.precio_uf)}</div>
-                      {p.precio_clp ? <div className="text-slate-500 text-xs">{fmtCLP(p.precio_clp)}</div> : null}
-                    </div>
-                    <Link
-                      href={`/propiedades/${p.id}`}
+                    <span
                       className="inline-flex items-center px-3 py-1.5 text-sm text-white rounded-none"
                       style={{
                         background: BRAND_BLUE,
@@ -509,10 +506,15 @@ export default function PropiedadesPage() {
                       }}
                     >
                       Ver más
-                    </Link>
+                    </span>
+
+                    <div className="text-right text-[color:var(--blue)] font-semibold space-y-0.5" style={{ ['--blue' as any]: BRAND_BLUE }}>
+                      <div>{fmtUF(p.precio_uf)}</div>
+                      {p.precio_clp ? <div className="text-slate-500 text-xs">{fmtCLP(p.precio_clp)}</div> : null}
+                    </div>
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         )}
@@ -520,6 +522,7 @@ export default function PropiedadesPage() {
     </main>
   );
 }
+
 
 
 
