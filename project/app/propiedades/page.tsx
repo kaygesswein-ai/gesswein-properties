@@ -34,8 +34,6 @@ const fmtCLP = (n?: number | null) =>
     ? `$ ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`
     : '';
 
-const cap = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
-
 /* === Regiones (romano delante, sin paréntesis) === */
 const REGIONES = [
   'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',
@@ -47,7 +45,7 @@ type Region = typeof REGIONES[number];
 const REG_N_ARABIC: Record<Region, number> = {
   'Arica y Parinacota': 1, Tarapacá: 2, Antofagasta: 3, Atacama: 4, Coquimbo: 5, Valparaíso: 6,
   "O'Higgins": 7, Maule: 8, 'Ñuble': 16, 'Biobío': 12, 'La Araucanía': 9, 'Los Ríos': 14,
-  'Los Lagos': 10, Aysén: 11, Magallanes: 15, 'Metropolitana de Santiago': 13,
+  'Los Lagos': 10, Aysén: 11, Magallanes': 15, 'Metropolitana de Santiago': 13,
 };
 const toRoman = (n: number) => {
   const m: [number,string][]= [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
@@ -119,7 +117,9 @@ export default function PropiedadesPage(){
   const [barrio,setBarrio] = useState('');
   const barriosComuna = useMemo(()=> (comuna && BARRIOS[comuna]) || [], [comuna]);
 
+  /* === UF/CLP como *mismo tipo de control* que Operación (input + datalist) === */
   const [moneda,setMoneda] = useState<'UF'|'CLP$'>('UF');
+
   const [minValor,setMinValor] = useState('');
   const [maxValor,setMaxValor] = useState('');
 
@@ -131,7 +131,6 @@ export default function PropiedadesPage(){
   const [estac,setEstac] = useState('');
 
   const [trigger,setTrigger] = useState(0);
-  const [order,setOrder] = useState<'recientes'|'precio-asc'|'precio-desc'>('recientes');
 
   useEffect(()=>{
     const m = regionInput.match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
@@ -158,15 +157,8 @@ export default function PropiedadesPage(){
       if(estac) p.set('estacionamientos', estac);
     }
 
-    fetch(`/api/propiedades?${p.toString()}`)
-      .then(r=>r.json())
-      .then(()=>{/* no-op demo */})
-      .catch(()=>{});
+    fetch(`/api/propiedades?${p.toString()}`).catch(()=>{});
   },[trigger, advancedMode, qTop, operacion, tipo, region, comuna, barrio, minValor, maxValor, moneda, minDorm, minBanos, minM2Const, minM2Terreno, estac]);
-
-  // ——— Demo de resultados (placeholder) ———
-  const [items] = useState<Property[]>([]);
-  const itemsOrdenados = items;
 
   return (
     <main className="bg-white">
@@ -231,10 +223,11 @@ export default function PropiedadesPage(){
             >Búsqueda avanzada</button>
           </div>
 
-          {/* RÁPIDA */}
+          {/* ====== RÁPIDA ====== */}
           {advancedMode==='rapida' && (
             <>
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                {/* Operación (input + datalist) */}
                 <input
                   list="dl-operacion"
                   value={operacion}
@@ -297,15 +290,18 @@ export default function PropiedadesPage(){
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                {/* <select> real para igualar estilo y ofrecer UF/CLP$ */}
-                <select
+                {/* >>> UF: MISMO CONTROL QUE OPERACIÓN (input + datalist) <<< */}
+                <input
+                  list="dl-moneda"
                   value={moneda}
-                  onChange={(e)=>setMoneda(e.target.value as 'UF'|'CLP$')}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-                >
-                  <option value="UF">UF</option>
-                  <option value="CLP$">CLP$</option>
-                </select>
+                  onChange={(e)=>setMoneda((e.target.value as 'UF'|'CLP$') || 'UF')}
+                  placeholder="UF"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <datalist id="dl-moneda">
+                  <option value="UF" />
+                  <option value="CLP$" />
+                </datalist>
 
                 <input
                   value={minValor}
@@ -334,66 +330,69 @@ export default function PropiedadesPage(){
             </>
           )}
 
-          {/* AVANZADA */}
+          {/* ====== AVANZADA ======
+              - Los filtros *compartidos* mantienen el gris claro (bg-gray-50)
+              - SOLO los controles NUEVOS usan gris más oscuro (bg-gray-100)
+              - Botón Buscar del mismo ancho/alto que un input
+          */}
           {advancedMode==='avanzada' && (
             <>
               <div className="pl-2 sm:pl-4"><div className="h-px bg-slate-200 my-4" /></div>
 
+              {/* mismos que rápida -> bg-gray-50 */}
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <input list="dl-operacion" value={operacion} onChange={(e)=>setOperacion(e.target.value)}
                   placeholder="Operación"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <input list="dl-tipos" value={tipo} onChange={(e)=>setTipo(e.target.value)}
                   placeholder="Tipo de propiedad"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <input list="dl-regiones" value={regionInput} onChange={(e)=>{ setRegionInput(e.target.value); setComuna(''); setBarrio(''); }}
                   placeholder="Región"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <input list="dl-comunas" value={comuna} onChange={(e)=>{ setComuna(e.target.value); setBarrio(''); }}
                   placeholder="Comuna" disabled={!region}
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100/70 disabled:text-slate-400" />
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400" />
                 <input list="dl-barrios" value={barrio} onChange={(e)=>setBarrio(e.target.value)}
                   placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]}
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100/70 disabled:text-slate-400" />
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400" />
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <select
-                  value={moneda}
-                  onChange={(e)=>setMoneda(e.target.value as 'UF'|'CLP$')}
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700"
-                >
-                  <option value="UF">UF</option>
-                  <option value="CLP$">CLP$</option>
-                </select>
+                {/* UF/CLP igual a Operación */}
+                <input list="dl-moneda" value={moneda}
+                  onChange={(e)=>setMoneda((e.target.value as 'UF'|'CLP$') || 'UF')}
+                  placeholder="UF"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric"
-                  placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                  placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric"
-                  placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                  placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
+
+                {/* NUEVOS => gris más oscuro */}
                 <input value={minDorm} onChange={(e)=>setMinDorm(e.target.value.replace(/\D+/g,''))} inputMode="numeric"
-                  placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                  placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minBanos} onChange={(e)=>setMinBanos(e.target.value.replace(/\D+/g,''))} inputMode="numeric"
-                  placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                  placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric"
-                  placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                  placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric"
-                  placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                {/* Estacionamientos numérico (reemplaza Estilo) */}
+                  placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={estac} onChange={(e)=>setEstac(e.target.value.replace(/\D+/g,''))} inputMode="numeric"
-                  placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                  placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+
+                {/* Botón Buscar: mismo tamaño/columna que los inputs */}
+                <button
+                  onClick={()=>setTrigger(v=>v+1)}
+                  className="w-full px-5 py-2 text-sm text-white rounded-none"
+                  style={{ background: BRAND_BLUE, boxShadow:'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}
+                >
+                  Buscar
+                </button>
                 <div className="hidden lg:block" />
-                <div className="flex lg:justify-end">
-                  <button
-                    onClick={()=>setTrigger(v=>v+1)}
-                    className="w-full lg:w-auto px-5 py-2 text-sm text-white rounded-none"
-                    style={{ background: BRAND_BLUE, boxShadow:'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}
-                  >
-                    Buscar
-                  </button>
-                </div>
               </div>
             </>
           )}
@@ -418,7 +417,6 @@ export default function PropiedadesPage(){
           </div>
         </div>
 
-        {/* Tarjeta de ejemplo (el listado real se llena desde API en tu proyecto) */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[1,2,3].map(i=>(
             <Link key={i} href="#" className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition">
@@ -449,7 +447,6 @@ export default function PropiedadesPage(){
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">
-                  {/* Ver más: fondo blanco, texto del color del título, borde azul corporativo */}
                   <span
                     className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
                     style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
