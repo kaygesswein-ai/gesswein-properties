@@ -2,17 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-  Bed,
-  ShowerHead,
-  Ruler,
-  Search,
-  Filter,
-} from 'lucide-react';
+import { Bed, ShowerHead, Ruler, Search, Filter } from 'lucide-react';
 
-/* ===========================================
-   Tipos + helpers
-=========================================== */
+/* ================== Tipos + helpers ================== */
 type Property = {
   id: string;
   titulo?: string;
@@ -31,8 +23,7 @@ type Property = {
 
 const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
-  // Foto genérica elegante (Unsplash, libre) – cámbiala cuando quieras.
-  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=1600&auto=format&fit=crop';
+  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=2000&auto=format&fit=crop'; // imagen genérica elegante
 
 const fmtUF = (n?: number | null) =>
   typeof n === 'number' && n > 0
@@ -89,18 +80,15 @@ const COMUNAS: Record<Region, string[]> = {
   Magallanes: ['Punta Arenas','Puerto Natales'],
 };
 
-/* ===== Sectores por comuna (muestra) ===== */
-const SECTORES: Record<string, string[]> = {
-  // RM
+/* ===== Barrios por comuna (ejemplos) ===== */
+const BARRIOS: Record<string, string[]> = {
   'Las Condes': ['El Golf','San Damián','Estoril','Los Dominicos','Apoquindo'],
   'Vitacura': ['Santa María de Manquehue','Lo Curro','Jardín del Este'],
   'Lo Barnechea': ['La Dehesa','Los Trapenses','El Huinganal'],
   'Providencia': ['Los Leones','Pedro de Valdivia','Providencia Centro'],
-  // Valparaíso
   'Limache': ['Limache Viejo','Limache Nuevo','San Francisco de Limache','Lliu Lliu','Villa Queronque'],
   'Viña del Mar': ['Reñaca','Jardín del Mar','Oriente','Centro'],
   'Concón': ['Bosques de Montemar','Costa de Montemar','Concón Centro'],
-  // Los Ríos
   'Valdivia': ['Isla Teja','Torreones','Las Ánimas','Regional'],
 };
 
@@ -119,56 +107,47 @@ const TIPOS = [
   'Parcela',
 ] as const;
 
-/* ===== util inputs ===== */
 const fmtMiles = (raw: string) => {
   const digits = raw.replace(/\D+/g, '');
   if (!digits) return '';
   return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(parseInt(digits, 10));
 };
 
-/* ===========================================
-   Página
-=========================================== */
+/* ================== Página ================== */
 export default function PropiedadesPage() {
-  /* ------- Buscador superior (título/calle) ------- */
+  /* ——— Buscador superior ——— */
   const [qTop, setQTop] = useState('');
 
-  /* ------- Filtros ------- */
-  const [estado, setEstado] = useState<'venta'|'arriendo'|''>(''); // sin "Todos"
-  const [tipo, setTipo] = useState<string>('');                    // placeholder no seleccionable
+  /* ——— Filtros ——— */
+  const [estado, setEstado] = useState<'venta'|'arriendo'|''>(''); // solo Venta/Arriendo, sin “Todos”
+  const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<Region | ''>('');
   const [comuna, setComuna] = useState('');
   const comunasRegion = useMemo(() => (region ? COMUNAS[region] : []), [region]);
 
-  const [sector, setSector] = useState('');
-  const sectoresComuna = useMemo(() => (comuna && SECTORES[comuna]) || [], [comuna]);
+  const [barrio, setBarrio] = useState('');
+  const barriosComuna = useMemo(() => (comuna && BARRIOS[comuna]) || [], [comuna]);
 
-  // Moneda (UF/CLP) + rango
   const [moneda, setMoneda] = useState<'UF'|'CLP'>('UF');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  // Disparo de búsqueda (solo con botón)
   const [trigger, setTrigger] = useState(0);
   const [order, setOrder] = useState<'recientes'|'precio-asc'|'precio-desc'>('recientes');
 
-  /* ------- Datos ------- */
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Buscar (se ejecuta solo cuando apretas "Buscar" o el botón del buscador superior)
   useEffect(() => {
     const controller = new AbortController();
     const p = new URLSearchParams();
 
-    // top search
     if (qTop.trim()) p.set('q', qTop.trim());
-    // filtros
     if (estado) p.set('operacion', estado);
     if (tipo) p.set('tipo', tipo);
     if (region) p.set('region', region);
     if (comuna) p.set('comuna', comuna);
-    if (sector) p.set('sector', sector);
+    if (barrio) p.set('barrio', barrio);
     if (minValor) p.set(moneda === 'UF' ? 'minUF' : 'minCLP', minValor.replace(/\./g, ''));
     if (maxValor) p.set(moneda === 'UF' ? 'maxUF' : 'maxCLP', maxValor.replace(/\./g, ''));
 
@@ -178,12 +157,11 @@ export default function PropiedadesPage() {
       .then(json => {
         const data: Property[] = Array.isArray(json?.data) ? json.data : [];
         setItems(data);
-
-        // Si el usuario buscó por texto y no fijó región/comuna, infiere desde el primer resultado.
+        // inferir región/comuna desde primer resultado si el usuario buscó por texto
         if (qTop && data.length && !region && !comuna) {
-          const first = data[0];
-          if (first?.region) setRegion(first.region as Region);
-          if (first?.comuna) setComuna(first.comuna);
+          const f = data[0];
+          if (f?.region) setRegion(f.region as Region);
+          if (f?.comuna) setComuna(f.comuna);
         }
       })
       .catch(() => setItems([]))
@@ -195,83 +173,64 @@ export default function PropiedadesPage() {
 
   const itemsOrdenados = useMemo(() => {
     const arr = [...items];
-    if (order === 'precio-asc') {
-      arr.sort((a, b) => (a.precio_uf ?? 0) - (b.precio_uf ?? 0));
-    } else if (order === 'precio-desc') {
-      arr.sort((a, b) => (b.precio_uf ?? 0) - (a.precio_uf ?? 0));
-    } else {
-      arr.sort((a, b) =>
-        (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime())
-      );
-    }
+    if (order === 'precio-asc') arr.sort((a, b) => (a.precio_uf ?? 0) - (b.precio_uf ?? 0));
+    else if (order === 'precio-desc') arr.sort((a, b) => (b.precio_uf ?? 0) - (a.precio_uf ?? 0));
+    else arr.sort((a, b) => (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime()));
     return arr;
   }, [items, order]);
 
   return (
     <main className="bg-white">
-      {/* ====== HERO con foto genérica (más alto: ~70vh) ====== */}
+      {/* ===== HERO (más abajo, alineado como en home) ===== */}
       <section
-        className="relative bg-center bg-cover min-h-[70vh]"
+        className="relative bg-center bg-cover min-h-[80vh]"
         style={{ backgroundImage: `url(${HERO_IMG})` }}
       >
         <div className="absolute inset-0 bg-black/35" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-end pb-10">
-          <div>
-            <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
-            <p className="text-white/85 mt-2 max-w-2xl">
-              Encuentra tu próxima inversión o tu nuevo hogar.
-            </p>
-          </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          {/* empuja el bloque hacia el borde inferior */}
+          <div className="h-full flex flex-col justify-end pb-8">
+            <div className="max-w-3xl">
+              <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
+              <p className="text-white/85 mt-2">
+                Encuentra tu próxima inversión o tu nuevo hogar.
+              </p>
+            </div>
 
-          {/* Buscador superior (título/calle) – separado del bloque de filtros */}
-          <div className="mt-6 w-full">
-            <div className="relative max-w-2xl">
-              <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/80" />
-              <input
-                value={qTop}
-                onChange={(e)=>setQTop(e.target.value)}
-                placeholder="Buscar por título o calle (ej. Camino Mirasol)"
-                className="w-full rounded-md bg-white/90 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
-              />
-              <button
-                onClick={()=>setTrigger(v=>v+1)}
-                className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-md"
-                style={{ background: BRAND_BLUE }}
-              >
-                Buscar
-              </button>
+            {/* Buscador superior (debajo del título) */}
+            <div className="mt-6 max-w-2xl">
+              <div className="relative">
+                <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
+                <input
+                  value={qTop}
+                  onChange={(e)=>setQTop(e.target.value)}
+                  placeholder="Buscar por título o calle (ej. Camino Mirasol)"
+                  className="w-full rounded-md bg-white/95 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
+                />
+                <button
+                  onClick={()=>setTrigger(v=>v+1)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-md"
+                  style={{ background: BRAND_BLUE }}
+                >
+                  Buscar
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ====== BLOQUE DE FILTROS (debajo del hero) ====== */}
+      {/* ===== REFINAR BÚSQUEDA (inputs estilo Referidos, con escritura + flecha) ===== */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2 text-slate-700">
-              <Filter className="h-4 w-4 text-[color:var(--blue)]" />
-              <span className="text-sm">Refinar búsqueda</span>
-            </div>
-
-            {/* Ordenar por */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-600">Ordenar por:</span>
-              <select
-                value={order}
-                onChange={(e)=>setOrder(e.target.value as any)}
-                className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-              >
-                <option value="recientes">Más recientes</option>
-                <option value="precio-asc">Precio: menor a mayor</option>
-                <option value="precio-desc">Precio: mayor a menor</option>
-              </select>
-            </div>
+          <div className="flex items-center gap-2 text-slate-700 mb-3">
+            <Filter className="h-4 w-4 text-[color:var(--blue)]" />
+            <span className="text-sm">Refinar búsqueda</span>
           </div>
 
-          {/* Fila 1: Estado, Tipo, Región, Comuna, Sector */}
+          {/* FILA: Estado, Tipo (datalist), Región (datalist), Comuna (datalist), Barrio (dependiente) */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-            {/* Estado (sin “Todos” y con placeholder no seleccionable) */}
+            {/* Estado (solo Venta/Arriendo) */}
             <select
               value={estado}
               onChange={(e)=>setEstado(e.target.value as any)}
@@ -282,53 +241,68 @@ export default function PropiedadesPage() {
               <option value="arriendo">Arriendo</option>
             </select>
 
-            {/* Tipo (placeholder no seleccionable) */}
-            <select
-              value={tipo}
-              onChange={(e)=>setTipo(e.target.value)}
-              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-            >
-              <option value="" disabled hidden>Tipo de propiedad</option>
-              {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            {/* Tipo: input + datalist (escribible y con flecha) */}
+            <div>
+              <input
+                list="dl-tipos"
+                value={tipo}
+                onChange={(e)=>setTipo(e.target.value)}
+                placeholder="Tipo de propiedad"
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              />
+              <datalist id="dl-tipos">
+                {TIPOS.map(t => <option key={t} value={t} />)}
+              </datalist>
+            </div>
 
-            {/* Región */}
-            <select
-              value={region}
-              onChange={(e)=>{ setRegion(e.target.value as Region); setComuna(''); setSector(''); }}
-              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-            >
-              <option value="" disabled hidden>Región</option>
-              {REGIONES.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
+            {/* Región: input + datalist */}
+            <div>
+              <input
+                list="dl-regiones"
+                value={region}
+                onChange={(e)=>{ setRegion(e.target.value as Region); setComuna(''); setBarrio(''); }}
+                placeholder="Región"
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+              />
+              <datalist id="dl-regiones">
+                {REGIONES.map(r => <option key={r} value={r} />)}
+              </datalist>
+            </div>
 
-            {/* Comuna dependiente */}
-            <select
-              value={comuna}
-              onChange={(e)=>{ setComuna(e.target.value); setSector(''); }}
-              disabled={!region}
-              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 disabled:bg-gray-100 disabled:text-slate-400"
-            >
-              <option value="" disabled hidden>{region ? 'Comuna' : 'Elige región primero'}</option>
-              {comunasRegion.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+            {/* Comuna dependiente (input + datalist) */}
+            <div>
+              <input
+                list="dl-comunas"
+                value={comuna}
+                onChange={(e)=>{ setComuna(e.target.value); setBarrio(''); }}
+                placeholder={region ? 'Comuna' : 'Elige región primero'}
+                disabled={!region}
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+              />
+              <datalist id="dl-comunas">
+                {region && comunasRegion.map(c => <option key={c} value={c} />)}
+              </datalist>
+            </div>
 
-            {/* Sector dependiente de comuna */}
-            <select
-              value={sector}
-              onChange={(e)=>setSector(e.target.value)}
-              disabled={!comuna || sectoresComuna.length===0}
-              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 disabled:bg-gray-100 disabled:text-slate-400"
-            >
-              <option value="" disabled hidden>{comuna ? 'Sector' : 'Elige comuna primero'}</option>
-              {sectoresComuna.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            {/* Barrio dependiente de comuna */}
+            <div>
+              <input
+                list="dl-barrios"
+                value={barrio}
+                onChange={(e)=>setBarrio(e.target.value)}
+                placeholder={comuna ? 'Barrio' : 'Elige comuna primero'}
+                disabled={!comuna || barriosComuna.length===0}
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+              />
+              <datalist id="dl-barrios">
+                {comuna && barriosComuna.map(b => <option key={b} value={b} />)}
+              </datalist>
+            </div>
           </div>
 
-          {/* Fila 2: Moneda + rango + botón Buscar */}
+          {/* FILA: Moneda + Min/Máx + Buscar (filtros) */}
           <div className="mt-3 grid grid-cols-1 md:grid-cols-6 gap-3">
-            {/* Moneda */}
-            <div className="md:col-span-1">
+            <div>
               <select
                 value={moneda}
                 onChange={(e)=>{ setMoneda(e.target.value as any); setMinValor(''); setMaxValor(''); }}
@@ -338,8 +312,6 @@ export default function PropiedadesPage() {
                 <option value="CLP">$ CLP</option>
               </select>
             </div>
-
-            {/* Min / Max */}
             <input
               value={minValor}
               onChange={(e)=>setMinValor(fmtMiles(e.target.value))}
@@ -354,11 +326,7 @@ export default function PropiedadesPage() {
               placeholder="Máx"
               className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
             />
-
-            {/* espacio flexible */}
             <div className="hidden md:block md:col-span-2" />
-
-            {/* Botón Buscar (filtros) */}
             <div className="md:col-span-1 flex">
               <button
                 onClick={()=>setTrigger(v=>v+1)}
@@ -375,8 +343,27 @@ export default function PropiedadesPage() {
         </div>
       </section>
 
-      {/* ====== LISTA (4 columnas XL) ====== */}
+      {/* ===== LISTADO ===== */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Título de la sección */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl md:text-2xl text-slate-900">Propiedades disponibles</h2>
+
+          {/* Ordenar por (aquí abajo, junto a las propiedades) */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">Ordenar por:</span>
+            <select
+              value={order}
+              onChange={(e)=>setOrder(e.target.value as any)}
+              className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+            >
+              <option value="recientes">Más recientes</option>
+              <option value="precio-asc">Precio: menor a mayor</option>
+              <option value="precio-desc">Precio: mayor a menor</option>
+            </select>
+          </div>
+        </div>
+
         {loading ? (
           <p className="text-slate-500">Cargando propiedades…</p>
         ) : itemsOrdenados.length === 0 ? (
@@ -448,5 +435,6 @@ export default function PropiedadesPage() {
     </main>
   );
 }
+
 
 
