@@ -23,7 +23,6 @@ type Property = {
 
 const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
-  // Foto genérica elegante
   'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=2000&auto=format&fit=crop';
 
 const fmtUF = (n?: number | null) =>
@@ -182,61 +181,55 @@ export default function PropiedadesPage() {
 
   return (
     <main className="bg-white">
-      {/* ===== HERO (contenido pegado abajo; se ve foto + buscador + separador) ===== */}
+      {/* ===== HERO (contenido anclado abajo-izquierda y alineado con el logo) ===== */}
       <section
-        className="relative bg-center bg-cover min-h-[70vh]"
+        className="relative bg-center bg-cover min-h-[72vh]"
         style={{ backgroundImage: `url(${HERO_IMG})` }}
       >
         <div className="absolute inset-0 bg-black/35" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          {/* Espaciador para “pegar” el contenido abajo sin tocar el logo */}
-          <div className="flex flex-col h-full">
-            <div className="flex-1" />
-            <div className="pb-8">
-              <div className="max-w-3xl">
-                <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
-                <p className="text-white/85 mt-2">
-                  Encuentra tu próxima inversión o tu nuevo hogar.
-                </p>
-              </div>
+        {/* Contenedor absoluto pegado al borde inferior, alineado con márgenes del sitio */}
+        <div className="absolute bottom-6 left-0 right-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl">
+              <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
+              <p className="text-white/85 mt-2">
+                Encuentra tu próxima inversión o tu nuevo hogar.
+              </p>
+            </div>
 
-              {/* Buscador superior */}
-              <div className="mt-6 max-w-2xl">
-                <div className="relative">
-                  <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
-                  <input
-                    value={qTop}
-                    onChange={(e)=>setQTop(e.target.value)}
-                    placeholder="Buscar por calle (ej. Alameda)"
-                    className="w-full rounded-md bg-white/95 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
-                  />
-                  <button
-                    onClick={()=>setTrigger(v=>v+1)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-md"
-                    style={{ background: BRAND_BLUE }}
-                  >
-                    Buscar
-                  </button>
-                </div>
+            {/* Buscador superior (alineado a la izquierda) */}
+            <div className="mt-4 max-w-2xl">
+              <div className="relative">
+                <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
+                <input
+                  value={qTop}
+                  onChange={(e)=>setQTop(e.target.value)}
+                  placeholder="Buscar por calle (ej. Alameda)"
+                  className="w-full rounded-md bg-white/95 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
+                />
+                <button
+                  onClick={()=>setTrigger(v=>v+1)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-none"
+                  style={{ background: BRAND_BLUE }}
+                >
+                  Buscar
+                </button>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== REFINAR BÚSQUEDA (inputs gris claro, todos iguales) ===== */}
+      {/* ===== REFINAR BÚSQUEDA ===== */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-2 text-slate-800 mb-3">
-            <Filter className="h-5 w-5 text-[color:var(--blue)]" />
-            <span className="text-lg md:text-xl uppercase" style={{ ['--blue' as any]: BRAND_BLUE }}>
-              REFINAR BÚSQUEDA
-            </span>
+            <Filter className="h-5 w-5" color={BRAND_BLUE} />
+            <span className="text-lg md:text-xl uppercase">REFINAR BÚSQUEDA</span>
           </div>
 
-          {/* Fila 1: 5 columnas iguales */}
+          {/* Fila 1: 5 columnas */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-            {/* Estado como input + datalist (igual estilo que el resto) */}
             <div>
               <input
                 list="dl-estado"
@@ -268,7 +261,7 @@ export default function PropiedadesPage() {
               <input
                 list="dl-regiones"
                 value={region}
-                onChange={(e)=>{ setRegion(e.target.value as Region); setComuna(''); setBarrio(''); }}
+                onChange={(e)=>{ setRegion(e.target.value as any); setComuna(''); setBarrio(''); }}
                 placeholder="Región"
                 className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
               />
@@ -287,7 +280,7 @@ export default function PropiedadesPage() {
                 className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
               />
               <datalist id="dl-comunas">
-                {region && comunasRegion.map(c => <option key={c} value={c} />)}
+                {region && COMUNAS[region].map(c => <option key={c} value={c} />)}
               </datalist>
             </div>
 
@@ -297,18 +290,17 @@ export default function PropiedadesPage() {
                 value={barrio}
                 onChange={(e)=>setBarrio(e.target.value)}
                 placeholder={comuna ? 'Barrio' : 'Elige comuna primero'}
-                disabled={!comuna || barriosComuna.length===0}
+                disabled={!comuna || !BARRIOS[comuna]}
                 className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
               />
               <datalist id="dl-barrios">
-                {comuna && barriosComuna.map(b => <option key={b} value={b} />)}
+                {comuna && (BARRIOS[comuna] || []).map(b => <option key={b} value={b} />)}
               </datalist>
             </div>
           </div>
 
-          {/* Fila 2: mismas 5 columnas (mismo ancho por control) */}
+          {/* Fila 2: mismas 5 columnas */}
           <div className="mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-            {/* Moneda como input + datalist (igual estilo) */}
             <div>
               <input
                 list="dl-moneda"
@@ -339,7 +331,6 @@ export default function PropiedadesPage() {
               className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
             />
 
-            {/* Columna vacía para mantener layout simétrico */}
             <div className="w-full" />
 
             <button
@@ -446,6 +437,7 @@ export default function PropiedadesPage() {
     </main>
   );
 }
+
 
 
 
