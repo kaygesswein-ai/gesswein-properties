@@ -1,373 +1,475 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import Image from 'next/image';
-import { Search, Filter, Wrench } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { Bed, ShowerHead, Ruler, Search, Filter } from 'lucide-react';
 
-type Operacion = 'venta' | 'arriendo';
-type Moneda = 'UF' | 'CLP$';
+type Property = {
+  id: string;
+  titulo?: string;
+  comuna?: string;
+  region?: string;
+  operacion?: 'venta' | 'arriendo';
+  tipo?: string;
+  precio_uf?: number | null;
+  precio_clp?: number | null;
+  dormitorios?: number | null;
+  banos?: number | null;
+  superficie_util_m2?: number | null;
+  superficie_terreno_m2?: number | null;
+  coverImage?: string;
+  createdAt?: string;
+};
 
-const AZUL = '#0A2E57';
+const BRAND_BLUE = '#0A2E57';
+const HERO_IMG =
+  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=2000&auto=format&fit=crop';
 
-const baseInput =
-  'w-full h-11 rounded-md border border-slate-300 bg-white px-3 text-[15px] leading-none text-slate-700 placeholder:text-slate-400 outline-none focus:border-slate-400';
-const baseSelect = baseInput; // <- MISMO ESTILO para TODOS (incluye UF)
-const softInput =
-  'w-full h-11 rounded-md border border-slate-300 bg-slate-100 px-3 text-[15px] leading-none text-slate-700 placeholder:text-slate-500 outline-none focus:border-slate-400';
+const fmtUF = (n?: number | null) =>
+  typeof n === 'number' && n > 0
+    ? `UF ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`
+    : 'Consultar';
+const fmtCLP = (n?: number | null) =>
+  typeof n === 'number' && n > 0
+    ? `$ ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`
+    : '';
 
-const pill =
-  'inline-flex items-center justify-center h-11 rounded-md px-4 text-white shadow-sm';
-const pillPrimary = `${pill} bg-[${AZUL}] hover:opacity-90`;
-const pillGray = `${pill} bg-slate-600 hover:opacity-90`;
+const cap = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
 
-export default function PropiedadesPage() {
-  // Filtros “rápidos”
-  const [operacion, setOperacion] = useState<Operacion | ''>('');
-  const [tipo, setTipo] = useState('');
-  const [region, setRegion] = useState('');
-  const [comuna, setComuna] = useState('');
-  const [barrio, setBarrio] = useState('');
-  const [moneda, setMoneda] = useState<Moneda>('UF');
-  const [min, setMin] = useState('');
-  const [max, setMax] = useState('');
+/* === Regiones (romano delante, sin paréntesis) === */
+const REGIONES = [
+  'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',
+  "O'Higgins",'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes',
+  'Metropolitana de Santiago',
+] as const;
+type Region = typeof REGIONES[number];
 
-  // Avanzados
-  const [showAvanzada, setShowAvanzada] = useState(false);
-  const [minDorm, setMinDorm] = useState('');
-  const [minBan, setMinBan] = useState('');
-  const [minMC, setMinMC] = useState('');
-  const [minMT, setMinMT] = useState('');
-  const [estac, setEstac] = useState('');
+const REG_N_ARABIC: Record<Region, number> = {
+  'Arica y Parinacota': 1, Tarapacá: 2, Antofagasta: 3, Atacama: 4, Coquimbo: 5, Valparaíso: 6,
+  "O'Higgins": 7, Maule: 8, 'Ñuble': 16, 'Biobío': 12, 'La Araucanía': 9, 'Los Ríos': 14,
+  'Los Lagos': 10, Aysén: 11, Magallanes: 15, 'Metropolitana de Santiago': 13,
+};
+const toRoman = (n: number) => {
+  const m: [number,string][]= [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+  let s=''; let x=n; for(const [v,r] of m){while(x>=v){s+=r;x-=v;}} return s;
+};
+const regionDisplay = (r: Region) => `${toRoman(REG_N_ARABIC[r])} - ${r}`;
 
-  const regiones = useMemo(
-    () => [
-      { id: 'I', label: 'I Tarapacá' },
-      { id: 'II', label: 'II Antofagasta' },
-      { id: 'III', label: 'III Atacama' },
-      { id: 'IV', label: 'IV Coquimbo' },
-      { id: 'V', label: 'V Valparaíso' },
-      { id: 'RM', label: 'XIII Metropolitana de Santiago' },
-      { id: 'VI', label: 'VI O’Higgins' },
-      { id: 'VII', label: 'VII Maule' },
-      { id: 'VIII', label: 'VIII Biobío' },
-      { id: 'IX', label: 'IX La Araucanía' },
-      { id: 'X', label: 'X Los Lagos' },
-      { id: 'XI', label: 'XI Aysén' },
-      { id: 'XII', label: 'XII Magallanes' },
-      { id: 'XIV', label: 'XIV Los Ríos' },
-      { id: 'XV', label: 'XV Arica y Parinacota' },
-      { id: 'XVI', label: 'XVI Ñuble' },
-    ],
-    []
-  );
+const COMUNAS: Record<Region,string[]> = {
+  'Arica y Parinacota':['Arica','Camarones','Putre','General Lagos'],
+  Tarapacá:['Iquique','Alto Hospicio','Pozo Almonte','Pica'],
+  Antofagasta:['Antofagasta','Calama','San Pedro de Atacama'],
+  Atacama:['Copiapó','Caldera','Vallenar'],
+  Coquimbo:['La Serena','Coquimbo','Ovalle'],
+  Valparaíso:['Viña del Mar','Valparaíso','Concón','Quilpué','Villa Alemana','Limache','Olmué'],
+  "O'Higgins":['Rancagua','Machalí','San Fernando','Santa Cruz'],
+  Maule:['Talca','Curicó','Linares'],
+  'Ñuble':['Chillán','San Carlos'],
+  'Biobío':['Concepción','San Pedro de la Paz','Talcahuano','Hualpén'],
+  'La Araucanía':['Temuco','Villarrica','Pucón'],
+  'Los Ríos':['Valdivia','Panguipulli','La Unión'],
+  'Los Lagos':['Puerto Montt','Puerto Varas','Osorno','Castro','Ancud'],
+  Aysén:['Coyhaique','Aysén'],
+  Magallanes:['Punta Arenas','Puerto Natales'],
+  'Metropolitana de Santiago':[
+    'Las Condes','Vitacura','Lo Barnechea','Providencia','Santiago','Ñuñoa','La Reina','Huechuraba',
+    'La Florida','Maipú','Puente Alto','Colina','Lampa','Talagante','Peñalolén','Macul'
+  ],
+};
+
+const BARRIOS: Record<string,string[]> = {
+  'Las Condes':['El Golf','Nueva Las Condes','San Damián','Estoril','Los Dominicos','Cantagallo','Apoquindo'],
+  'Vitacura':['Santa María de Manquehue','Lo Curro','Jardín del Este','Vitacura Centro','Parque Bicentenario'],
+  'Lo Barnechea':['La Dehesa','Los Trapenses','El Huinganal','Valle La Dehesa'],
+  'Providencia':['Los Leones','Pedro de Valdivia','Providencia Centro','Bellavista'],
+  'Ñuñoa':['Plaza Ñuñoa','Villa Frei','Irarrazabal','Suárez Mujica'],
+  'Santiago':['Centro','Lastarria','Parque Almagro','Barrio Brasil','Yungay'],
+  'La Reina':['La Reina Alta','Nueva La Reina','La Reina Centro'],
+  'Huechuraba':['Ciudad Empresarial','Pedro Fontova'],
+  'La Florida':['Trinidad','Walker Martínez','Bellavista','Gerónimo de Alderete'],
+  'Maipú':['Ciudad Satélite','El Abrazo','Maipú Centro'],
+  'Puente Alto':['Eyzaguirre','Malloco Colorado','Balmaceda'],
+  'Colina':['Chicureo Oriente','Chicureo Poniente','Piedra Roja','Las Brisas','Santa Elena'],
+  'Peñalolén':['Los Presidentes','San Luis','Altos de Peñalolén'],
+  'Macul':['Macul Centro','Emilio Rojas','Los Plátanos'],
+  'Lampa':['Valle Grande','Chicauma'],
+  'Talagante':['Talagante Centro','Isla de Maipo Norte'],
+  'Limache':['Limache Viejo','Limache Nuevo','San Francisco','Lliu Lliu'],
+  'Viña del Mar':['Reñaca','Jardín del Mar','Oriente','Centro'],
+  'Concón':['Bosques de Montemar','Costa de Montemar','Concón Centro'],
+  'Valdivia':['Isla Teja','Torreones','Las Ánimas','Regional'],
+};
+
+const fmtMiles = (raw: string) => {
+  const digits = raw.replace(/\D+/g,'');
+  if(!digits) return '';
+  return new Intl.NumberFormat('es-CL',{maximumFractionDigits:0}).format(parseInt(digits,10));
+};
+
+export default function PropiedadesPage(){
+  const [qTop,setQTop] = useState('');
+
+  const [operacion,setOperacion] = useState('');
+  const [tipo,setTipo] = useState('');
+  const [regionInput,setRegionInput] = useState('');
+  const [region,setRegion] = useState<Region|''>('');
+  const [comuna,setComuna] = useState('');
+  const comunasRegion = useMemo(()=> (region? COMUNAS[region] : []), [region]);
+
+  const [barrio,setBarrio] = useState('');
+  const barriosComuna = useMemo(()=> (comuna && BARRIOS[comuna]) || [], [comuna]);
+
+  const [moneda,setMoneda] = useState<'UF'|'CLP$'>('UF');
+  const [minValor,setMinValor] = useState('');
+  const [maxValor,setMaxValor] = useState('');
+
+  const [advancedMode,setAdvancedMode] = useState<'rapida'|'avanzada'>('rapida');
+  const [minDorm,setMinDorm] = useState('');
+  const [minBanos,setMinBanos] = useState('');
+  const [minM2Const,setMinM2Const] = useState('');
+  const [minM2Terreno,setMinM2Terreno] = useState('');
+  const [estac,setEstac] = useState('');
+
+  const [trigger,setTrigger] = useState(0);
+  const [order,setOrder] = useState<'recientes'|'precio-asc'|'precio-desc'>('recientes');
+
+  useEffect(()=>{
+    const m = regionInput.match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
+    const name = (m ? m[1] : regionInput) as Region;
+    if(name && (REG_N_ARABIC as any)[name]) setRegion(name); else setRegion('');
+  },[regionInput]);
+
+  useEffect(()=>{
+    const p = new URLSearchParams();
+    if(qTop.trim()) p.set('q', qTop.trim());
+    if(operacion) p.set('operacion', operacion as any);
+    if(tipo) p.set('tipo', tipo);
+    if(region) p.set('region', region);
+    if(comuna) p.set('comuna', comuna);
+    if(barrio) p.set('barrio', barrio);
+    if(minValor) p.set(moneda==='UF'?'minUF':'minCLP', minValor.replace(/\./g,''));
+    if(maxValor) p.set(moneda==='UF'?'maxUF':'maxCLP', maxValor.replace(/\./g,''));
+
+    if(advancedMode==='avanzada'){
+      if(minDorm) p.set('minDorm', minDorm);
+      if(minBanos) p.set('minBanos', minBanos);
+      if(minM2Const) p.set('minM2Const', minM2Const.replace(/\./g,''));
+      if(minM2Terreno) p.set('minM2Terreno', minM2Terreno.replace(/\./g,''));
+      if(estac) p.set('estacionamientos', estac);
+    }
+
+    fetch(`/api/propiedades?${p.toString()}`)
+      .then(r=>r.json())
+      .then(()=>{/* no-op demo */})
+      .catch(()=>{});
+  },[trigger, advancedMode, qTop, operacion, tipo, region, comuna, barrio, minValor, maxValor, moneda, minDorm, minBanos, minM2Const, minM2Terreno, estac]);
+
+  // ——— Demo de resultados (placeholder) ———
+  const [items] = useState<Property[]>([]);
+  const itemsOrdenados = items;
 
   return (
     <main className="bg-white">
-      {/* Hero con imagen genérica */}
-      <section className="relative isolate">
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
-          {/* fondo */}
-          <div className="absolute inset-0 -z-10">
-            <Image
-              src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1920&auto=format&fit=crop"
-              alt="Interior elegante"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-center md:object-[50%_35%]"
-            />
-            <div className="absolute inset-0 bg-black/35" />
-          </div>
-
-          {/* Títulos y buscador alineados con el logo (margen izquierdo igual a container) */}
-          <h1
-            className="text-4xl sm:text-5xl font-normal tracking-[0.28em] text-white"
-            style={{ textTransform: 'uppercase' }}
-          >
-            Propiedades
-          </h1>
-          <p className="mt-2 text-white/90">
-            Encuentra tu próxima inversión o tu nuevo hogar.
-          </p>
-
-          {/* Buscador simple */}
-          <div className="mt-6 max-w-3xl">
-            <div className="flex gap-2">
-              <input
-                className="flex-1 h-11 rounded-md border border-white/70 bg-white/95 px-3 text-slate-800 placeholder:text-slate-500 outline-none"
-                placeholder="Buscar por calle (ej. Alameda 13800)"
-              />
-              <button className={pillPrimary}>
-                <Search className="mr-2 h-4 w-4" />
-                Buscar
-              </button>
+      {/* HERO */}
+      <section
+        className="relative bg-cover min-h-[72vh]"
+        style={{ backgroundImage:`url(${HERO_IMG})`, backgroundPosition:'50% 82%' }}
+      >
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute bottom-6 left-0 right-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="pl-2 sm:pl-4">
+              <div className="max-w-3xl">
+                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">PROPIEDADES</h1>
+                <p className="text-white/85 mt-2">Encuentra tu próxima inversión o tu nuevo hogar.</p>
+              </div>
+              <div className="mt-4 max-w-2xl">
+                <div className="relative">
+                  <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
+                  <input
+                    value={qTop}
+                    onChange={(e)=>setQTop(e.target.value)}
+                    placeholder="Buscar por calle (ej. Alameda 13800)"
+                    className="w-full rounded-md bg-white/95 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
+                  />
+                  <button
+                    onClick={()=>setTrigger(v=>v+1)}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-none"
+                    style={{ background: BRAND_BLUE }}
+                  >
+                    Buscar
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Filtros */}
-      <section className="border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-4 flex items-center gap-3">
-            <Filter className="h-5 w-5 text-slate-700" />
-            <h2
-              className="text-lg font-normal tracking-[0.28em] text-slate-900"
-              style={{ textTransform: 'uppercase' }}
-            >
-              Filtros
-            </h2>
+      {/* FILTROS */}
+      <section className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center gap-2 text-slate-800 mb-4 pl-2 sm:pl-4">
+            <Filter className="h-5 w-5" color={BRAND_BLUE} />
+            <span className="text-lg md:text-xl uppercase tracking-[0.25em]">FILTROS</span>
           </div>
 
-          {/* Toggle rápida / avanzada */}
-          <div className="mb-6 flex gap-3">
+          <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
             <button
-              onClick={() => setShowAvanzada(false)}
-              className={`h-10 rounded-md border px-3 text-sm ${
-                !showAvanzada
-                  ? 'bg-white text-slate-900 border-slate-300'
-                  : 'bg-slate-100 text-slate-700 border-slate-300'
-              }`}
-            >
-              Búsqueda rápida
-            </button>
+              type="button"
+              onClick={()=>setAdvancedMode('rapida')}
+              className={`px-3 py-2 text-sm rounded-none border ${advancedMode==='rapida'
+                ? 'bg-gray-200 border-gray-300 text-slate-900'
+                : 'bg-gray-50 border-gray-300 text-slate-700'}`}
+            >Búsqueda rápida</button>
             <button
-              onClick={() => setShowAvanzada(true)}
-              className={`h-10 rounded-md border px-3 text-sm inline-flex items-center gap-2 ${
-                showAvanzada
-                  ? 'bg-white text-slate-900 border-slate-300'
-                  : 'bg-slate-100 text-slate-700 border-slate-300'
-              }`}
-            >
-              <Wrench className="h-4 w-4" />
-              Búsqueda avanzada
-            </button>
+              type="button"
+              onClick={()=>setAdvancedMode('avanzada')}
+              className={`px-3 py-2 text-sm rounded-none border ${advancedMode==='avanzada'
+                ? 'bg-gray-200 border-gray-300 text-slate-900'
+                : 'bg-gray-50 border-gray-300 text-slate-700'}`}
+            >Búsqueda avanzada</button>
           </div>
 
           {/* RÁPIDA */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
-            {/* Operación */}
-            <select
-              value={operacion}
-              onChange={(e) => setOperacion(e.target.value as Operacion | '')}
-              className={baseSelect}
-            >
-              <option value="">Operación</option>
-              <option value="venta">Venta</option>
-              <option value="arriendo">Arriendo</option>
-            </select>
-
-            {/* Tipo propiedad */}
-            <select
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value)}
-              className={baseSelect}
-            >
-              <option value="">Tipo de propiedad</option>
-              <option>Casa</option>
-              <option>Departamento</option>
-              <option>Bodega</option>
-              <option>Oficina</option>
-              <option>Local comercial</option>
-              <option>Terreno</option>
-            </select>
-
-            {/* Región */}
-            <select
-              value={region}
-              onChange={(e) => {
-                setRegion(e.target.value);
-                setComuna('');
-                setBarrio('');
-              }}
-              className={baseSelect}
-            >
-              <option value="">Región</option>
-              {regiones.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Comuna */}
-            <select
-              value={comuna}
-              onChange={(e) => {
-                setComuna(e.target.value);
-                setBarrio('');
-              }}
-              className={baseSelect}
-              disabled={!region}
-            >
-              <option value="">
-                {region ? 'Comuna' : 'Elige región primero'}
-              </option>
-              {/* Demo – completa con tus comunas reales */}
-              {region === 'RM' && (
-                <>
-                  <option>Las Condes</option>
-                  <option>Providencia</option>
-                  <option>Vitacura</option>
-                </>
-              )}
-            </select>
-
-            {/* Barrio */}
-            <select
-              value={barrio}
-              onChange={(e) => setBarrio(e.target.value)}
-              className={baseSelect}
-              disabled={!comuna}
-            >
-              <option value="">{comuna ? 'Barrio' : 'Elige comuna primero'}</option>
-              {/* Demo – completa con tus barrios reales */}
-              {comuna === 'Las Condes' && (
-                <>
-                  <option>El Golf</option>
-                  <option>San Carlos de Apoquindo</option>
-                </>
-              )}
-              {comuna === 'Providencia' && (
-                <>
-                  <option>Pedro de Valdivia Norte</option>
-                  <option>Santa Isabel</option>
-                </>
-              )}
-            </select>
-
-            {/* UF / CLP + rangos */}
-            <div className="grid grid-cols-3 gap-3">
-              <select
-                value={moneda}
-                onChange={(e) => setMoneda(e.target.value as Moneda)}
-                className={baseSelect} // <- MISMO ESTILO QUE “Operación”
-              >
-                <option value="UF">UF</option>
-                <option value="CLP$">CLP$</option>
-              </select>
-              <input
-                value={min}
-                onChange={(e) => setMin(e.target.value)}
-                inputMode="numeric"
-                placeholder="Mín"
-                className={baseInput}
-              />
-              <input
-                value={max}
-                onChange={(e) => setMax(e.target.value)}
-                inputMode="numeric"
-                placeholder="Máx"
-                className={baseInput}
-              />
-            </div>
-          </div>
-
-          {/* AVANZADA (solo los NUEVOS con relleno gris) */}
-          {showAvanzada && (
+          {advancedMode==='rapida' && (
             <>
-              <div className="my-6 h-px w-full bg-slate-200" />
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <input
-                  value={minDorm}
-                  onChange={(e) => setMinDorm(e.target.value)}
+                  list="dl-operacion"
+                  value={operacion}
+                  onChange={(e)=>setOperacion(e.target.value)}
+                  placeholder="Operación"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <datalist id="dl-operacion">
+                  <option value="Venta" />
+                  <option value="Arriendo" />
+                </datalist>
+
+                <input
+                  list="dl-tipos"
+                  value={tipo}
+                  onChange={(e)=>setTipo(e.target.value)}
+                  placeholder="Tipo de propiedad"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <datalist id="dl-tipos">
+                  {['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno'].map(t=>(
+                    <option key={t} value={t} />
+                  ))}
+                </datalist>
+
+                <input
+                  list="dl-regiones"
+                  value={regionInput}
+                  onChange={(e)=>{ setRegionInput(e.target.value); setComuna(''); setBarrio(''); }}
+                  placeholder="Región"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <datalist id="dl-regiones">
+                  {REGIONES.map(r => <option key={r} value={regionDisplay(r)} />)}
+                </datalist>
+
+                <input
+                  list="dl-comunas"
+                  value={comuna}
+                  onChange={(e)=>{ setComuna(e.target.value); setBarrio(''); }}
+                  placeholder="Comuna"
+                  disabled={!region}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+                />
+                <datalist id="dl-comunas">
+                  {region && COMUNAS[region].map(c => <option key={c} value={c} />)}
+                </datalist>
+
+                <input
+                  list="dl-barrios"
+                  value={barrio}
+                  onChange={(e)=>setBarrio(e.target.value)}
+                  placeholder="Barrio"
+                  disabled={!comuna || !BARRIOS[comuna]}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+                />
+                <datalist id="dl-barrios">
+                  {comuna && (BARRIOS[comuna] || []).map(b => <option key={b} value={b} />)}
+                </datalist>
+              </div>
+
+              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                {/* <select> real para igualar estilo y ofrecer UF/CLP$ */}
+                <select
+                  value={moneda}
+                  onChange={(e)=>setMoneda(e.target.value as 'UF'|'CLP$')}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                >
+                  <option value="UF">UF</option>
+                  <option value="CLP$">CLP$</option>
+                </select>
+
+                <input
+                  value={minValor}
+                  onChange={(e)=>setMinValor(fmtMiles(e.target.value))}
                   inputMode="numeric"
-                  placeholder="Mínimo dormitorios"
-                  className={softInput}
+                  placeholder="Mín"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                 />
                 <input
-                  value={minBan}
-                  onChange={(e) => setMinBan(e.target.value)}
+                  value={maxValor}
+                  onChange={(e)=>setMaxValor(fmtMiles(e.target.value))}
                   inputMode="numeric"
-                  placeholder="Mínimo baños"
-                  className={softInput}
+                  placeholder="Máx"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                 />
-                <input
-                  value={minMC}
-                  onChange={(e) => setMinMC(e.target.value)}
-                  inputMode="numeric"
-                  placeholder="Mín m² construidos"
-                  className={softInput}
-                />
-                <input
-                  value={minMT}
-                  onChange={(e) => setMinMT(e.target.value)}
-                  inputMode="numeric"
-                  placeholder="Mín m² de terreno"
-                  className={softInput}
-                />
-                <input
-                  value={estac}
-                  onChange={(e) => setEstac(e.target.value)}
-                  inputMode="numeric"
-                  placeholder="Estacionamientos"
-                  className={softInput}
-                />
-                {/* Botón buscar del mismo tamaño que los inputs */}
-                <button className={`${pillPrimary} w-full`}>
+
+                <button
+                  onClick={()=>setTrigger(v=>v+1)}
+                  className="w-full px-5 py-2 text-sm text-white rounded-none"
+                  style={{ background: BRAND_BLUE, boxShadow:'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}
+                >
                   Buscar
                 </button>
+                <div className="hidden lg:block" />
               </div>
             </>
           )}
 
-          {/* Botón Buscar (rápida) del mismo tamaño que un input */}
-          {!showAvanzada && (
-            <div className="mt-6 grid grid-cols-1 lg:grid-cols-6 gap-3">
-              <div className="lg:col-start-6">
-                <button className={`${pillPrimary} w-full`}>Buscar</button>
+          {/* AVANZADA */}
+          {advancedMode==='avanzada' && (
+            <>
+              <div className="pl-2 sm:pl-4"><div className="h-px bg-slate-200 my-4" /></div>
+
+              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <input list="dl-operacion" value={operacion} onChange={(e)=>setOperacion(e.target.value)}
+                  placeholder="Operación"
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input list="dl-tipos" value={tipo} onChange={(e)=>setTipo(e.target.value)}
+                  placeholder="Tipo de propiedad"
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input list="dl-regiones" value={regionInput} onChange={(e)=>{ setRegionInput(e.target.value); setComuna(''); setBarrio(''); }}
+                  placeholder="Región"
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input list="dl-comunas" value={comuna} onChange={(e)=>{ setComuna(e.target.value); setBarrio(''); }}
+                  placeholder="Comuna" disabled={!region}
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100/70 disabled:text-slate-400" />
+                <input list="dl-barrios" value={barrio} onChange={(e)=>setBarrio(e.target.value)}
+                  placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]}
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100/70 disabled:text-slate-400" />
               </div>
-            </div>
+
+              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <select
+                  value={moneda}
+                  onChange={(e)=>setMoneda(e.target.value as 'UF'|'CLP$')}
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700"
+                >
+                  <option value="UF">UF</option>
+                  <option value="CLP$">CLP$</option>
+                </select>
+                <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric"
+                  placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric"
+                  placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input value={minDorm} onChange={(e)=>setMinDorm(e.target.value.replace(/\D+/g,''))} inputMode="numeric"
+                  placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input value={minBanos} onChange={(e)=>setMinBanos(e.target.value.replace(/\D+/g,''))} inputMode="numeric"
+                  placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+              </div>
+
+              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric"
+                  placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric"
+                  placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                {/* Estacionamientos numérico (reemplaza Estilo) */}
+                <input value={estac} onChange={(e)=>setEstac(e.target.value.replace(/\D+/g,''))} inputMode="numeric"
+                  placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <div className="hidden lg:block" />
+                <div className="flex lg:justify-end">
+                  <button
+                    onClick={()=>setTrigger(v=>v+1)}
+                    className="w-full lg:w-auto px-5 py-2 text-sm text-white rounded-none"
+                    style={{ background: BRAND_BLUE, boxShadow:'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}
+                  >
+                    Buscar
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </section>
 
-      {/* Listado – demo con 3 cards clicables; “Ver más” blanco y a la IZQUIERDA */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
-          <h3
-            className="mb-6 mt-8 text-xl font-normal tracking-[0.28em] text-slate-900"
-            style={{ textTransform: 'uppercase' }}
-          >
-            Propiedades disponibles
-          </h3>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {['Depto luminoso en Vitacura', 'Casa familiar en Lo Barnechea', 'Oficina en Providencia'].map(
-              (t, idx) => (
-                <a
-                  key={t}
-                  href={`/propiedades/${idx + 1}`}
-                  className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm hover:shadow-md transition"
-                >
-                  <div className="aspect-[4/3] bg-slate-100" />
-                  <div className="p-4">
-                    <h4 className="text-lg text-slate-900">{t}</h4>
-                    <p className="mt-1 text-sm text-slate-600">Vitacura · Departamento · Venta</p>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      {/* Ver más a la IZQUIERDA, blanco con borde y texto azul */}
-                      <span
-                        className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-[color:var(--gp-azul,#0A2E57)]"
-                        style={{ ['--gp-azul' as any]: AZUL }}
-                      >
-                        Ver más
-                      </span>
-
-                      <span className="text-base font-medium text-slate-900">
-                        {idx === 2 ? 'Consultar' : `${moneda} ${idx === 0 ? '10.500' : '23.000'}`}
-                      </span>
-                    </div>
-                  </div>
-                </a>
-              )
-            )}
+      {/* LISTADO (demo visual) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">PROPIEDADES DISPONIBLES</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">Ordenar por:</span>
+            <select
+              value={'recientes'}
+              onChange={()=>{}}
+              className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+            >
+              <option value="recientes">Más recientes</option>
+              <option value="precio-asc">Precio: menor a mayor</option>
+              <option value="precio-desc">Precio: mayor a menor</option>
+            </select>
           </div>
+        </div>
+
+        {/* Tarjeta de ejemplo (el listado real se llena desde API en tu proyecto) */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[1,2,3].map(i=>(
+            <Link key={i} href="#" className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition">
+              <div className="aspect-[4/3] bg-slate-100">
+                <img
+                  src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop"
+                  alt="Propiedad"
+                  className="w-full h-full object-cover group-hover:opacity-95 transition"
+                />
+              </div>
+              <div className="p-4 flex flex-col">
+                <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">Depto luminoso en Vitacura</h3>
+                <p className="mt-1 text-sm text-slate-600">Vitacura · Departamento · Venta</p>
+
+                <div className="mt-3 grid grid-cols-3 text-center">
+                  <div className="border border-slate-200 p-2">
+                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500"><Bed className="h-4 w-4" /> Dorm.</div>
+                    <div className="text-sm">2</div>
+                  </div>
+                  <div className="border border-slate-200 p-2">
+                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500"><ShowerHead className="h-4 w-4" /> Baños</div>
+                    <div className="text-sm">2</div>
+                  </div>
+                  <div className="border border-slate-200 p-2">
+                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500"><Ruler className="h-4 w-4" /> m²</div>
+                    <div className="text-sm">78</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  {/* Ver más: fondo blanco, texto del color del título, borde azul corporativo */}
+                  <span
+                    className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
+                    style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                  >
+                    Ver más
+                  </span>
+                  <div className="text-right font-semibold text-[color:var(--blue)]" style={{ ['--blue' as any]: BRAND_BLUE }}>
+                    <div>UF 10.500</div>
+                    <div className="text-slate-500 text-xs">$ 365.000.000</div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
     </main>
   );
 }
+
 
 
 
