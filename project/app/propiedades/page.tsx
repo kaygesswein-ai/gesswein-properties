@@ -8,9 +8,6 @@ import {
   Ruler,
   Search,
   Filter,
-  Home,
-  Building2,
-  ArrowDownAZ,
 } from 'lucide-react';
 
 /* ===========================================
@@ -29,10 +26,13 @@ type Property = {
   banos?: number | null;
   superficie_util_m2?: number | null;
   coverImage?: string;
-  createdAt?: string; // para ordenar por “publicación”
+  createdAt?: string;
 };
 
 const BRAND_BLUE = '#0A2E57';
+const HERO_IMG =
+  // Foto genérica elegante (Unsplash, libre) – cámbiala cuando quieras.
+  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=1600&auto=format&fit=crop';
 
 const fmtUF = (n?: number | null) =>
   typeof n === 'number' && n > 0
@@ -46,7 +46,7 @@ const fmtCLP = (n?: number | null) =>
 
 const cap = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
 
-/* ===== Regiones (Metropolitana primero) y comunas (subset amplio) ===== */
+/* ===== Regiones (Metropolitana primero) y comunas ===== */
 const REGIONES = [
   'Metropolitana de Santiago',
   'Arica y Parinacota',
@@ -69,114 +69,129 @@ type Region = typeof REGIONES[number];
 
 const COMUNAS: Record<Region, string[]> = {
   'Metropolitana de Santiago': [
-    'Santiago','Providencia','Las Condes','Vitacura','Lo Barnechea','Ñuñoa','La Reina','Macul','Peñalolén',
-    'La Florida','Puente Alto','Maipú','Huechuraba','Independencia','Recoleta','Conchalí','Renca',
-    'Quilicura','Pudahuel','Cerro Navia','Lo Prado','Estación Central','Quinta Normal','San Miguel',
-    'San Joaquín','La Cisterna','San Ramón','La Granja','El Bosque','Pedro Aguirre Cerda','Cerrillos',
-    'San Bernardo','Buin','Paine','Calera de Tango','Colina','Lampa','Tiltil','Talagante','Peñaflor',
-    'Isla de Maipo','El Monte','Padre Hurtado','Melipilla','Curacaví','María Pinto',
+    'Las Condes','Vitacura','Lo Barnechea','Providencia','Santiago','Ñuñoa','La Reina','Huechuraba',
+    'La Florida','Maipú','Puente Alto','Colina','Lampa','Talagante','Peñalolén','Macul',
   ],
   'Arica y Parinacota': ['Arica','Camarones','Putre','General Lagos'],
-  Tarapacá: ['Iquique','Alto Hospicio','Pozo Almonte','Pica','Huara','Camiña','Colchane'],
-  Antofagasta: ['Antofagasta','Mejillones','Taltal','Sierra Gorda','Calama','San Pedro de Atacama','Tocopilla','María Elena'],
-  Atacama: ['Copiapó','Caldera','Tierra Amarilla','Vallenar','Huasco','Freirina','Chañaral','Diego de Almagro'],
-  Coquimbo: ['La Serena','Coquimbo','Andacollo','Vicuña','Ovalle','Monte Patria','Punitaqui','Illapel','Los Vilos','Salamanca'],
-  Valparaíso: ['Valparaíso','Viña del Mar','Concón','Quilpué','Villa Alemana','Limache','Olmué','Quillota','La Calera','San Antonio','Casablanca','Quintero','Puchuncaví'],
-  "O'Higgins": ['Rancagua','Machalí','Graneros','Doñihue','San Vicente','Santa Cruz','San Fernando','Pichilemu'],
-  Maule: ['Talca','Maule','San Clemente','Cauquenes','Curicó','Molina','Rauco','Linares','Parral','San Javier'],
-  'Ñuble': ['Chillán','Chillán Viejo','San Carlos','Coihueco','Bulnes','Quirihue'],
-  'Biobío': ['Concepción','Talcahuano','Hualpén','Chiguayante','San Pedro de la Paz','Coronel','Lota','Los Ángeles','Arauco','Curanilahue'],
-  'La Araucanía': ['Temuco','Padre Las Casas','Villarrica','Pucón','Angol','Victoria','Nueva Imperial'],
-  'Los Ríos': ['Valdivia','Lanco','Panguipulli','Los Lagos','La Unión','Río Bueno'],
-  'Los Lagos': ['Puerto Montt','Puerto Varas','Frutillar','Osorno','Castro','Ancud','Quellón'],
-  Aysén: ['Coyhaique','Aysén','Cisnes','Chile Chico'],
-  Magallanes: ['Punta Arenas','Puerto Natales','Porvenir','Cabo de Hornos'],
+  Tarapacá: ['Iquique','Alto Hospicio','Pozo Almonte','Pica'],
+  Antofagasta: ['Antofagasta','Calama','San Pedro de Atacama'],
+  Atacama: ['Copiapó','Caldera','Vallenar'],
+  Coquimbo: ['La Serena','Coquimbo','Ovalle'],
+  Valparaíso: ['Viña del Mar','Valparaíso','Concón','Quilpué','Villa Alemana','Limache','Olmué'],
+  "O'Higgins": ['Rancagua','Machalí','San Fernando','Santa Cruz'],
+  Maule: ['Talca','Curicó','Linares'],
+  'Ñuble': ['Chillán','San Carlos'],
+  'Biobío': ['Concepción','San Pedro de la Paz','Talcahuano','Hualpén'],
+  'La Araucanía': ['Temuco','Villarrica','Pucón'],
+  'Los Ríos': ['Valdivia','Panguipulli','La Unión'],
+  'Los Lagos': ['Puerto Montt','Puerto Varas','Osorno','Castro','Ancud'],
+  Aysén: ['Coyhaique','Aysén'],
+  Magallanes: ['Punta Arenas','Puerto Natales'],
 };
 
-/* ===== Tipos (amplios, para parecerse al sitio de referencia) ===== */
+/* ===== Sectores por comuna (muestra) ===== */
+const SECTORES: Record<string, string[]> = {
+  // RM
+  'Las Condes': ['El Golf','San Damián','Estoril','Los Dominicos','Apoquindo'],
+  'Vitacura': ['Santa María de Manquehue','Lo Curro','Jardín del Este'],
+  'Lo Barnechea': ['La Dehesa','Los Trapenses','El Huinganal'],
+  'Providencia': ['Los Leones','Pedro de Valdivia','Providencia Centro'],
+  // Valparaíso
+  'Limache': ['Limache Viejo','Limache Nuevo','San Francisco de Limache','Lliu Lliu','Villa Queronque'],
+  'Viña del Mar': ['Reñaca','Jardín del Mar','Oriente','Centro'],
+  'Concón': ['Bosques de Montemar','Costa de Montemar','Concón Centro'],
+  // Los Ríos
+  'Valdivia': ['Isla Teja','Torreones','Las Ánimas','Regional'],
+};
+
+/* ===== Tipos ===== */
 const TIPOS = [
-  'Todos',
   'Casa',
-  'Casa poblada',
+  'Casa amoblada',
   'Casa en playa',
-  'Departamento',
+  'Casa de campo',
+  'Departamento sin amoblar',
+  'Departamento amoblado',
   'Bodega',
   'Oficina',
   'Local comercial',
   'Terreno',
   'Parcela',
-  'Sitio',
-  'Industrial',
-  'Campo',
 ] as const;
 
-/* Sectores sugeridos (libre + datalist) */
-const SECTORES_SUG = [
-  'El Golf','San Damián','Santa María de Manquehue','Los Trapenses','La Dehesa','El Alba',
-  'Barrio El Bosque','Barrio Italia','Lastarria','Centro','Costa','Cordillera','Oriente','Poniente',
-];
-
-/* Formatting de inputs */
-const fmtUFInput = (raw: string) => {
+/* ===== util inputs ===== */
+const fmtMiles = (raw: string) => {
   const digits = raw.replace(/\D+/g, '');
   if (!digits) return '';
   return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(parseInt(digits, 10));
 };
-const fmtCLPInput = fmtUFInput;
 
 /* ===========================================
    Página
 =========================================== */
 export default function PropiedadesPage() {
-  /* ------- Filtros visibles ------- */
-  const [estado, setEstado] = useState<'venta'|'arriendo'|'todos'>('todos');
-  const [tipo, setTipo] = useState<typeof TIPOS[number]>('Todos');
+  /* ------- Buscador superior (título/calle) ------- */
+  const [qTop, setQTop] = useState('');
+
+  /* ------- Filtros ------- */
+  const [estado, setEstado] = useState<'venta'|'arriendo'|''>(''); // sin "Todos"
+  const [tipo, setTipo] = useState<string>('');                    // placeholder no seleccionable
   const [region, setRegion] = useState<Region | ''>('');
   const [comuna, setComuna] = useState('');
-  const [sector, setSector] = useState('');
-  const [q, setQ] = useState('');
-
-  const [minUF, setMinUF] = useState('');
-  const [maxUF, setMaxUF] = useState('');
-  const [minCLP, setMinCLP] = useState('');
-  const [maxCLP, setMaxCLP] = useState('');
-
   const comunasRegion = useMemo(() => (region ? COMUNAS[region] : []), [region]);
 
-  /* ------- Búsqueda / orden ------- */
-  const [trigger, setTrigger] = useState(0); // buscar solo al apretar “Buscar”
+  const [sector, setSector] = useState('');
+  const sectoresComuna = useMemo(() => (comuna && SECTORES[comuna]) || [], [comuna]);
+
+  // Moneda (UF/CLP) + rango
+  const [moneda, setMoneda] = useState<'UF'|'CLP'>('UF');
+  const [minValor, setMinValor] = useState('');
+  const [maxValor, setMaxValor] = useState('');
+
+  // Disparo de búsqueda (solo con botón)
+  const [trigger, setTrigger] = useState(0);
   const [order, setOrder] = useState<'recientes'|'precio-asc'|'precio-desc'>('recientes');
 
+  /* ------- Datos ------- */
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Buscar (se ejecuta solo cuando apretas "Buscar" o el botón del buscador superior)
   useEffect(() => {
     const controller = new AbortController();
-    const params = new URLSearchParams();
-    if (q.trim()) params.set('q', q.trim());
-    if (estado !== 'todos') params.set('operacion', estado);
-    if (tipo !== 'Todos') params.set('tipo', tipo);
-    if (region) params.set('region', region);
-    if (comuna) params.set('comuna', comuna);
-    if (sector) params.set('sector', sector);
-    if (minUF) params.set('minUF', minUF.replace(/\./g, ''));
-    if (maxUF) params.set('maxUF', maxUF.replace(/\./g, ''));
-    if (minCLP) params.set('minCLP', minCLP.replace(/\./g, ''));
-    if (maxCLP) params.set('maxCLP', maxCLP.replace(/\./g, ''));
+    const p = new URLSearchParams();
+
+    // top search
+    if (qTop.trim()) p.set('q', qTop.trim());
+    // filtros
+    if (estado) p.set('operacion', estado);
+    if (tipo) p.set('tipo', tipo);
+    if (region) p.set('region', region);
+    if (comuna) p.set('comuna', comuna);
+    if (sector) p.set('sector', sector);
+    if (minValor) p.set(moneda === 'UF' ? 'minUF' : 'minCLP', minValor.replace(/\./g, ''));
+    if (maxValor) p.set(moneda === 'UF' ? 'maxUF' : 'maxCLP', maxValor.replace(/\./g, ''));
 
     setLoading(true);
-    fetch(`/api/propiedades?${params.toString()}`, { signal: controller.signal })
+    fetch(`/api/propiedades?${p.toString()}`, { signal: controller.signal })
       .then(r => r.json())
       .then(json => {
         const data: Property[] = Array.isArray(json?.data) ? json.data : [];
         setItems(data);
+
+        // Si el usuario buscó por texto y no fijó región/comuna, infiere desde el primer resultado.
+        if (qTop && data.length && !region && !comuna) {
+          const first = data[0];
+          if (first?.region) setRegion(first.region as Region);
+          if (first?.comuna) setComuna(first.comuna);
+        }
       })
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
 
     return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trigger]); // <- se ejecuta sólo al presionar “Buscar”
+  }, [trigger]);
 
   const itemsOrdenados = useMemo(() => {
     const arr = [...items];
@@ -185,7 +200,6 @@ export default function PropiedadesPage() {
     } else if (order === 'precio-desc') {
       arr.sort((a, b) => (b.precio_uf ?? 0) - (a.precio_uf ?? 0));
     } else {
-      // recientes (si existe createdAt), sino dejamos tal cual
       arr.sort((a, b) =>
         (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime())
       );
@@ -195,152 +209,160 @@ export default function PropiedadesPage() {
 
   return (
     <main className="bg-white">
-      {/* ====== HERO con foto genérica (50vh) ====== */}
+      {/* ====== HERO con foto genérica (más alto: ~70vh) ====== */}
       <section
-        className="relative bg-center bg-cover min-h-[50vh]"
-        style={{ backgroundImage: "url('/hero/propiedades-generic.jpg')" }}
+        className="relative bg-center bg-cover min-h-[70vh]"
+        style={{ backgroundImage: `url(${HERO_IMG})` }}
       >
-        {/* Si la imagen no existe aún, crea /public/hero/propiedades-generic.jpg con una
-           foto elegante (interior/exterior). Cambia la ruta si usas otro nombre. */}
         <div className="absolute inset-0 bg-black/35" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
-          <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
-          <p className="text-white/85 mt-2 max-w-2xl">
-            Encuentra tu próxima inversión o tu nuevo hogar.
-          </p>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-end pb-10">
+          <div>
+            <h1 className="text-white text-3xl md:text-4xl">Propiedades</h1>
+            <p className="text-white/85 mt-2 max-w-2xl">
+              Encuentra tu próxima inversión o tu nuevo hogar.
+            </p>
+          </div>
+
+          {/* Buscador superior (título/calle) – separado del bloque de filtros */}
+          <div className="mt-6 w-full">
+            <div className="relative max-w-2xl">
+              <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/80" />
+              <input
+                value={qTop}
+                onChange={(e)=>setQTop(e.target.value)}
+                placeholder="Buscar por título o calle (ej. Camino Mirasol)"
+                className="w-full rounded-md bg-white/90 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
+              />
+              <button
+                onClick={()=>setTrigger(v=>v+1)}
+                className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-md"
+                style={{ background: BRAND_BLUE }}
+              >
+                Buscar
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ====== BARRA DE FILTROS (estilo “búsqueda” de referencia) ====== */}
+      {/* ====== BLOQUE DE FILTROS (debajo del hero) ====== */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-2 text-slate-700 mb-3">
-            <Filter className="h-4 w-4 text-[color:var(--blue)]" />
-            <span className="text-sm">Filtros</span>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2 text-slate-700">
+              <Filter className="h-4 w-4 text-[color:var(--blue)]" />
+              <span className="text-sm">Refinar búsqueda</span>
+            </div>
+
+            {/* Ordenar por */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-600">Ordenar por:</span>
+              <select
+                value={order}
+                onChange={(e)=>setOrder(e.target.value as any)}
+                className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+              >
+                <option value="recientes">Más recientes</option>
+                <option value="precio-asc">Precio: menor a mayor</option>
+                <option value="precio-desc">Precio: mayor a menor</option>
+              </select>
+            </div>
           </div>
 
-          {/* 1) FILA SUPERIOR: Estado, Tipo, Región, Comuna, Sector */}
+          {/* Fila 1: Estado, Tipo, Región, Comuna, Sector */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-            {/* Estado (Venta / Arriendo / Todos) */}
+            {/* Estado (sin “Todos” y con placeholder no seleccionable) */}
             <select
               value={estado}
               onChange={(e)=>setEstado(e.target.value as any)}
               className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
             >
-              <option value="todos">Estado: Todos</option>
+              <option value="" disabled hidden>Estado</option>
               <option value="venta">Venta</option>
               <option value="arriendo">Arriendo</option>
             </select>
 
-            {/* Tipo (lista ampliada) */}
+            {/* Tipo (placeholder no seleccionable) */}
             <select
               value={tipo}
-              onChange={(e)=>setTipo(e.target.value as any)}
+              onChange={(e)=>setTipo(e.target.value)}
               className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
             >
+              <option value="" disabled hidden>Tipo de propiedad</option>
               {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
 
-            {/* Región (datalist buscable) */}
-            <div>
-              <input
-                list="dl-regiones"
-                value={region}
-                onChange={(e)=>{ setRegion(e.target.value as Region); setComuna(''); }}
-                placeholder="Región"
-                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-              />
-              <datalist id="dl-regiones">
-                {REGIONES.map(r => <option key={r} value={r} />)}
-              </datalist>
-            </div>
+            {/* Región */}
+            <select
+              value={region}
+              onChange={(e)=>{ setRegion(e.target.value as Region); setComuna(''); setSector(''); }}
+              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+            >
+              <option value="" disabled hidden>Región</option>
+              {REGIONES.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
 
-            {/* Comuna dependiente (datalist) */}
-            <div>
-              <input
-                list="dl-comunas"
-                value={comuna}
-                onChange={(e)=>setComuna(e.target.value)}
-                placeholder={region ? 'Comuna' : 'Elige región primero'}
-                disabled={!region}
-                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
-              />
-              <datalist id="dl-comunas">
-                {region && comunasRegion.map(c => <option key={c} value={c} />)}
-              </datalist>
-            </div>
+            {/* Comuna dependiente */}
+            <select
+              value={comuna}
+              onChange={(e)=>{ setComuna(e.target.value); setSector(''); }}
+              disabled={!region}
+              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 disabled:bg-gray-100 disabled:text-slate-400"
+            >
+              <option value="" disabled hidden>{region ? 'Comuna' : 'Elige región primero'}</option>
+              {comunasRegion.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
 
-            {/* Sector (libre + sugerencias) */}
-            <div>
-              <input
-                list="dl-sectores"
-                value={sector}
-                onChange={(e)=>setSector(e.target.value)}
-                placeholder="Sector (opcional)"
-                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-              />
-              <datalist id="dl-sectores">
-                {SECTORES_SUG.map(s => <option key={s} value={s} />)}
-              </datalist>
-            </div>
+            {/* Sector dependiente de comuna */}
+            <select
+              value={sector}
+              onChange={(e)=>setSector(e.target.value)}
+              disabled={!comuna || sectoresComuna.length===0}
+              className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 disabled:bg-gray-100 disabled:text-slate-400"
+            >
+              <option value="" disabled hidden>{comuna ? 'Sector' : 'Elige comuna primero'}</option>
+              {sectoresComuna.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
           </div>
 
-          {/* 2) FILA INFERIOR: buscador libre + UF/CLP + botón Buscar */}
-          <div className="mt-3 grid grid-cols-1 lg:grid-cols-6 gap-3">
-            {/* Texto libre */}
-            <div className="lg:col-span-2">
-              <div className="relative">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={q}
-                  onChange={(e)=>setQ(e.target.value)}
-                  placeholder="Buscar por título, calle, etc."
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-9 py-2 text-slate-700 placeholder-slate-400"
-                />
-              </div>
+          {/* Fila 2: Moneda + rango + botón Buscar */}
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-6 gap-3">
+            {/* Moneda */}
+            <div className="md:col-span-1">
+              <select
+                value={moneda}
+                onChange={(e)=>{ setMoneda(e.target.value as any); setMinValor(''); setMaxValor(''); }}
+                className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+              >
+                <option value="UF">UF</option>
+                <option value="CLP">$ CLP</option>
+              </select>
             </div>
 
-            {/* UF */}
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                value={minUF}
-                onChange={(e)=>setMinUF(fmtUFInput(e.target.value))}
-                inputMode="numeric"
-                placeholder="UF mínima"
-                className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-              />
-              <input
-                value={maxUF}
-                onChange={(e)=>setMaxUF(fmtUFInput(e.target.value))}
-                inputMode="numeric"
-                placeholder="UF máxima"
-                className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-              />
-            </div>
+            {/* Min / Max */}
+            <input
+              value={minValor}
+              onChange={(e)=>setMinValor(fmtMiles(e.target.value))}
+              inputMode="numeric"
+              placeholder="Mín"
+              className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+            />
+            <input
+              value={maxValor}
+              onChange={(e)=>setMaxValor(fmtMiles(e.target.value))}
+              inputMode="numeric"
+              placeholder="Máx"
+              className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+            />
 
-            {/* CLP */}
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                value={minCLP}
-                onChange={(e)=>setMinCLP(fmtCLPInput(e.target.value))}
-                inputMode="numeric"
-                placeholder="$ mínima"
-                className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-              />
-              <input
-                value={maxCLP}
-                onChange={(e)=>setMaxCLP(fmtCLPInput(e.target.value))}
-                inputMode="numeric"
-                placeholder="$ máxima"
-                className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-              />
-            </div>
+            {/* espacio flexible */}
+            <div className="hidden md:block md:col-span-2" />
 
-            {/* Botón Buscar */}
-            <div className="flex items-stretch">
+            {/* Botón Buscar (filtros) */}
+            <div className="md:col-span-1 flex">
               <button
-                onClick={()=>setTrigger((n)=>n+1)}
-                className="w-full lg:w-auto px-5 py-2 text-sm text-white rounded-none"
+                onClick={()=>setTrigger(v=>v+1)}
+                className="w-full px-5 py-2 text-sm text-white rounded-none"
                 style={{
                   background: BRAND_BLUE,
                   boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
@@ -348,22 +370,6 @@ export default function PropiedadesPage() {
               >
                 Buscar
               </button>
-            </div>
-
-            {/* Ordenar por */}
-            <div className="lg:col-span-1">
-              <div className="relative">
-                <ArrowDownAZ className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <select
-                  value={order}
-                  onChange={(e)=>setOrder(e.target.value as any)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 pl-9 pr-3 py-2 text-slate-700"
-                >
-                  <option value="recientes">Más recientes</option>
-                  <option value="precio-asc">Precio: menor a mayor</option>
-                  <option value="precio-desc">Precio: mayor a menor</option>
-                </select>
-              </div>
             </div>
           </div>
         </div>
@@ -379,17 +385,15 @@ export default function PropiedadesPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {itemsOrdenados.map((p) => (
               <article key={p.id} className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition">
-                {/* Imagen */}
                 <div className="aspect-[4/3] bg-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={p.coverImage || '/placeholder.jpg'}
+                    src={p.coverImage || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop'}
                     alt={p.titulo || 'Propiedad'}
                     className="w-full h-full object-cover"
                   />
                 </div>
 
-                {/* Contenido */}
                 <div className="p-4 flex flex-col">
                   <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
                     {p.titulo || 'Propiedad'}
@@ -398,7 +402,6 @@ export default function PropiedadesPage() {
                     {[cap(p.comuna), cap(p.tipo), cap(p.operacion)].filter(Boolean).join(' · ')}
                   </p>
 
-                  {/* Specs */}
                   <div className="mt-3 grid grid-cols-3 text-center">
                     <div className="border border-slate-200 p-2">
                       <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
@@ -420,7 +423,6 @@ export default function PropiedadesPage() {
                     </div>
                   </div>
 
-                  {/* Precio + CTA */}
                   <div className="mt-4 flex items-center justify-between">
                     <div className="text-[color:var(--blue)] font-semibold space-y-0.5" style={{ ['--blue' as any]: BRAND_BLUE }}>
                       <div>{fmtUF(p.precio_uf)}</div>
