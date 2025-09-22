@@ -92,11 +92,38 @@ const SERVICIOS = [
   'Consultoría específica',
 ];
 
+/* -------------------- UF del día para calcular CLP<->UF en el héroe -------------------- */
+const BRAND_BLUE = '#0A2E57';
+const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
+function useUf() {
+  const [uf, setUf] = useState<number | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    const load = async () => {
+      try {
+        const r = await fetch('/api/uf', { cache: 'no-store' });
+        const j = await r.json().catch(() => ({} as any));
+        const val = typeof j?.uf === 'number' ? j.uf : null;
+        if (!cancel) setUf(val);
+      } catch {
+        if (!cancel) setUf(null);
+      }
+    };
+    load();
+    const id = setInterval(load, 12 * 60 * 60 * 1000);
+    return () => { cancel = true; clearInterval(id); };
+  }, []);
+  return uf;
+}
+
 /* -------------------- Componente -------------------- */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const ufValue = useUf();
 
   // swipe
   const touchStartX = useRef<number | null>(null);
@@ -183,16 +210,11 @@ export default function HomePage() {
   const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
 
   const formatUF = (raw: string) => {
-    // Dejar solo dígitos, quitar ceros iniciales redundantes y formatear con miles (es-CL) sin decimales
     const digits = raw.replace(/\D+/g, '');
     if (!digits) return '';
     const n = parseInt(digits, 10);
     return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n);
   };
-
-  // formateadores para el precio dual (UF arriba, CLP abajo)
-  const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-  const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
   return (
     <main className="bg-white">
@@ -206,7 +228,7 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h=[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
             <div className="bg-white/65 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[520px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
@@ -250,20 +272,38 @@ export default function HomePage() {
                   ) : null}
                 </div>
 
-                {/* Col 2: vacío para mantener simetría (mismo ancho) */}
+                {/* Col 2: vacío para simetría */}
                 <div />
 
                 {/* Col 3: Precio UF/CLP (derecha, dos líneas) */}
                 <div className="text-right">
                   <div className="text-[#0A2E57] font-semibold">
-                    {typeof active?.precio_uf === 'number' && active.precio_uf > 0
-                      ? `UF ${nfUF.format(active.precio_uf)}`
-                      : 'Consultar'}
+                    {/* UF directa o calculada desde CLP si hay UF del día */}
+                    {(() => {
+                      const pUF = active?.precio_uf ?? null;
+                      const pCLP = active?.precio_clp ?? null;
+                      let ufLine: string | null = null;
+                      if (typeof pUF === 'number' && pUF > 0) {
+                        ufLine = `UF ${nfUF.format(pUF)}`;
+                      } else if (typeof pCLP === 'number' && pCLP > 0 && ufValue) {
+                        ufLine = `UF ${nfUF.format(pCLP / ufValue)}`;
+                      }
+                      return ufLine ?? 'Consultar';
+                    })()}
                   </div>
                   <div className="text-xs text-slate-600">
-                    {typeof active?.precio_clp === 'number' && active.precio_clp > 0
-                      ? `$ ${nfCLP.format(active.precio_clp)}`
-                      : ''}
+                    {/* CLP directo o calculado desde UF si hay UF del día */}
+                    {(() => {
+                      const pUF = active?.precio_uf ?? null;
+                      const pCLP = active?.precio_clp ?? null;
+                      let clpLine: string | null = null;
+                      if (typeof pCLP === 'number' && pCLP > 0) {
+                        clpLine = `$ ${nfCLP.format(pCLP)}`;
+                      } else if (typeof pUF === 'number' && pUF > 0 && ufValue) {
+                        clpLine = `$ ${nfCLP.format(pUF * ufValue)}`;
+                      }
+                      return clpLine ?? '';
+                    })()}
                   </div>
                 </div>
               </div>
@@ -297,7 +337,8 @@ export default function HomePage() {
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
-          <h2 className="text-2xl md:text-3xl">Equipo</h2>
+          {/* MAYÚSCULAS + tracking igual que PROPIEDADES */}
+          <h2 className="text-2xl md:text-3xl uppercase tracking-[0.25em]">EQUIPO</h2>
         </div>
 
         <p className="mt-3 max-w-4xl text-slate-700">
@@ -348,7 +389,8 @@ export default function HomePage() {
               ">
                 <div className="w-full p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
-                  <p className="text-sm mt-1">{m.cargo}</p>
+                  {/* Cargo en MAYÚSCULAS */}
+                  <p className="text-sm mt-1 uppercase">{m.cargo}</p>
                   <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
                 </div>
               </div>
@@ -371,6 +413,7 @@ export default function HomePage() {
           </div>
 
           <div className="px-6 pb-8">
+            {/* Tus datos (referente) */}
             <h3 className="text-lg">Tus datos (referente)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
@@ -387,6 +430,24 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* NUEVO: Datos del referido */}
+            <h3 className="mt-8 text-lg">Datos del referido</h3>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="Nombre del referido" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="email@referido.com" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
+              </div>
+            </div>
+
+            {/* Preferencias del referido (se mantiene) */}
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               {/* Servicio necesita - datalist (buscable) */}
@@ -500,6 +561,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
