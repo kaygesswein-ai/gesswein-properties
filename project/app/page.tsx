@@ -33,18 +33,10 @@ function capFirst(s?: string | null) {
   const lower = s.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
-/* Forzar formato correcto para “Lo Barnechea” venga como venga */
-function formatComuna(s?: string | null) {
-  if (!s) return '';
-  const t = s.replace(/\s+/g, '').toLowerCase();
-  if (t === 'lobarnechea') return 'Lo Barnechea';
-  if (/^lo\s*barnechea$/i.test(s)) return 'Lo Barnechea';
-  return capFirst(s);
-}
 
-/* -------------------- Datos Chile (referidos) -------------------- */
-/* Orden: todas y “Metropolitana de Santiago” al final */
+/* -------------------- Datos Chile -------------------- */
 const REGIONES = [
+  'Metropolitana de Santiago',
   'Arica y Parinacota',
   'Tarapacá',
   'Antofagasta',
@@ -60,7 +52,6 @@ const REGIONES = [
   'Los Lagos',
   'Aysén',
   'Magallanes',
-  'Metropolitana de Santiago', // última
 ] as const;
 type Region = typeof REGIONES[number];
 
@@ -92,30 +83,44 @@ const COMUNAS_POR_REGION: Record<Region, string[]> = {
   ],
 };
 
-/* Números romanos para label en datalist (la value queda limpia para la lógica de comuna) */
-const REGION_NUM: Record<Region, number> = {
-  'Arica y Parinacota': 1,
-  Tarapacá: 2,
-  Antofagasta: 3,
-  Atacama: 4,
-  Coquimbo: 5,
-  Valparaíso: 6,
-  "O'Higgins": 7,
-  Maule: 8,
-  'Ñuble': 16,
-  'Biobío': 12,
-  'La Araucanía': 9,
-  'Los Ríos': 14,
-  'Los Lagos': 10,
-  Aysén: 11,
-  Magallanes: 15,
-  'Metropolitana de Santiago': 13,
+/* ——— Listado romano para el SELECT de Inicio (Metropolitana al final) ——— */
+const REGIONES_ROMANAS = [
+  'I - Arica y Parinacota',
+  'II - Tarapacá',
+  'III - Antofagasta',
+  'IV - Atacama',
+  'V - Coquimbo',
+  'VI - Valparaíso',
+  "VII - O'Higgins",
+  'VIII - Maule',
+  'XVI - Ñuble',
+  'XII - Biobío',
+  'IX - La Araucanía',
+  'XIV - Los Ríos',
+  'X - Los Lagos',
+  'XI - Aysén',
+  'XV - Magallanes',
+  'XIII - Metropolitana de Santiago',
+] as const;
+
+const ROMANO_A_NOMBRE: Record<string, string> = {
+  'I - Arica y Parinacota': 'Arica y Parinacota',
+  'II - Tarapacá': 'Tarapacá',
+  'III - Antofagasta': 'Antofagasta',
+  'IV - Atacama': 'Atacama',
+  'V - Coquimbo': 'Coquimbo',
+  'VI - Valparaíso': 'Valparaíso',
+  "VII - O'Higgins": "O'Higgins",
+  'VIII - Maule': 'Maule',
+  'XVI - Ñuble': 'Ñuble',
+  'XII - Biobío': 'Biobío',
+  'IX - La Araucanía': 'La Araucanía',
+  'XIV - Los Ríos': 'Los Ríos',
+  'X - Los Lagos': 'Los Lagos',
+  'XI - Aysén': 'Aysén',
+  'XV - Magallanes': 'Magallanes',
+  'XIII - Metropolitana de Santiago': 'Metropolitana de Santiago',
 };
-const toRoman = (n: number) => {
-  const m: [number,string][]= [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
-  let s=''; let x=n; for(const [v,r] of m){while(x>=v){s+=r;x-=v;}} return s;
-};
-const regionLabel = (r: Region) => `${toRoman(REGION_NUM[r])} - ${r}`;
 
 const SERVICIOS = [
   'Comprar',
@@ -125,37 +130,11 @@ const SERVICIOS = [
   'Consultoría específica',
 ];
 
-const BRAND_BLUE = '#0A2E57';
-const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-
-function useUf() {
-  const [uf, setUf] = useState<number | null>(null);
-  useEffect(() => {
-    let cancel = false;
-    const load = async () => {
-      try {
-        const r = await fetch('/api/uf', { cache: 'no-store' });
-        const j = await r.json().catch(() => ({} as any));
-        const val = typeof j?.uf === 'number' ? j.uf : null;
-        if (!cancel) setUf(val);
-      } catch {
-        if (!cancel) setUf(null);
-      }
-    };
-    load();
-    const id = setInterval(load, 12 * 60 * 60 * 1000);
-    return () => { cancel = true; clearInterval(id); };
-  }, []);
-  return uf;
-}
-
 /* -------------------- Componente -------------------- */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const ufValue = useUf();
 
   // swipe
   const touchStartX = useRef<number | null>(null);
@@ -227,15 +206,15 @@ export default function HomePage() {
   }, [active]);
 
   const lineaSecundaria = [
-    formatComuna(active?.comuna), // <- corrige “Lo Barnechea”
+    capFirst(active?.comuna),
     capFirst(active?.tipo),
     capFirst(active?.operacion),
   ].filter(Boolean).join(' · ');
 
-  /* --------- Estado formulario referidos (datalist + formato UF) --------- */
+  /* --------- Estado formulario referidos --------- */
   const [regionInput, setRegionInput] = useState('');
   const [comunaInput, setComunaInput] = useState('');
-  const [minUF, setMinUF] = useState('');
+  const [minUF, setMinUF] = useState(''); // miles
   const [maxUF, setMaxUF] = useState('');
 
   const regionSel = REGIONES.find((r) => r.toLowerCase() === regionInput.toLowerCase()) || '';
@@ -260,7 +239,8 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h=[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
+        {/* >>> ajuste móvil: pt-14 para que no quede pegado al navbar */}
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20 pt-14 sm:pt-0">
           <div className="w-full relative">
             <div className="bg-white/65 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[520px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
@@ -289,55 +269,24 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* ===== Acciones en 3 columnas (mismo ancho que los cuadritos de arriba) ===== */}
-              <div className="mt-4 grid grid-cols-3 gap-3 items-center">
-                {/* Col 1: Ver más (izquierda) - estilo blanco con borde azul */}
+              {/* Acciones: IZQ Ver más | DER Precio */}
+              <div className="mt-4 flex items-center gap-3">
                 <div>
                   {active?.id ? (
                     <Link
                       href={`/propiedades/${active.id}`}
-                      className="inline-flex w-full items-center justify-center px-3 py-2 text-sm rounded-none border"
-                      style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                      className="inline-flex items-center px-3 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
+                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
                     >
                       Ver más
                     </Link>
                   ) : null}
                 </div>
 
-                {/* Col 2: vacío para simetría */}
-                <div />
-
-                {/* Col 3: Precio UF/CLP (derecha, dos líneas) */}
-                <div className="text-right">
-                  <div className="text-[#0A2E57] font-semibold">
-                    {(() => {
-                      const pUF = active?.precio_uf ?? null;
-                      const pCLP = active?.precio_clp ?? null;
-                      let ufLine: string | null = null;
-                      if (typeof pUF === 'number' && pUF > 0) {
-                        ufLine = `UF ${nfUF.format(pUF)}`;
-                      } else if (typeof pCLP === 'number' && pCLP > 0 && ufValue) {
-                        ufLine = `UF ${nfUF.format(pCLP / ufValue)}`;
-                      }
-                      return ufLine ?? 'Consultar';
-                    })()}
-                  </div>
-                  <div className="text-xs text-slate-600">
-                    {(() => {
-                      const pUF = active?.precio_uf ?? null;
-                      const pCLP = active?.precio_clp ?? null;
-                      let clpLine: string | null = null;
-                      if (typeof pCLP === 'number' && pCLP > 0) {
-                        clpLine = `$ ${nfCLP.format(pCLP)}`;
-                      } else if (typeof pUF === 'number' && pUF > 0 && ufValue) {
-                        clpLine = `$ ${nfCLP.format(pUF * ufValue)}`;
-                      }
-                      return clpLine ?? '';
-                    })()}
-                  </div>
+                <div className="ml-auto text-[1.4rem] md:text-2xl font-bold text-[#0A2E57]">
+                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
                 </div>
               </div>
-              {/* ===== Fin acciones ===== */}
             </div>
           </div>
 
@@ -367,8 +316,7 @@ export default function HomePage() {
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
-          {/* MAYÚSCULAS + tracking igual que PROPIEDADES */}
-          <h2 className="text-2xl md:text-3xl uppercase tracking-[0.25em]">EQUIPO</h2>
+          <h2 className="text-2xl md:text-3xl">Equipo</h2>
         </div>
 
         <p className="mt-3 max-w-4xl text-slate-700">
@@ -419,8 +367,9 @@ export default function HomePage() {
               ">
                 <div className="w-full p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
-                  {/* Cargo en MAYÚSCULAS */}
-                  <p className="text-sm mt-1 uppercase">{m.cargo}</p>
+                  {/* cargo en mayúsculas si quieres forzarlo:
+                      <p className="text-sm mt-1 uppercase">{m.cargo}</p> */}
+                  <p className="text-sm mt-1">{m.cargo}</p>
                   <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
                 </div>
               </div>
@@ -436,7 +385,6 @@ export default function HomePage() {
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            {/* “Referidos” con R mayúscula */}
             <h2 className="mt-3 text-2xl md:text-3xl">Programa de Referidos con exclusividad</h2>
             <p className="mt-2 text-slate-600">
               ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
@@ -444,7 +392,6 @@ export default function HomePage() {
           </div>
 
           <div className="px-6 pb-8">
-            {/* Tus datos (referente) */}
             <h3 className="text-lg">Tus datos (referente)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
@@ -461,12 +408,11 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Datos del referido */}
             <h3 className="mt-8 text-lg">Datos del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="Nombre del referido" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="nombre del referido" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
@@ -478,7 +424,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Preferencias del referido */}
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               {/* Servicio necesita - datalist (buscable) */}
@@ -494,7 +439,7 @@ export default function HomePage() {
                 </datalist>
               </div>
 
-              {/* Tipo de propiedad - datalist (actualizado) */}
+              {/* Tipo de propiedad - datalist */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <input
@@ -512,24 +457,24 @@ export default function HomePage() {
                 </datalist>
               </div>
 
-              {/* Región - datalist (label con romanos, value limpia) */}
+              {/* Región con SELECT (romanos, Metropolitana al final) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
-                <input
-                  list="regiones-list"
-                  value={regionInput}
+                <select
+                  value={REGIONES_ROMANAS.find(r => ROMANO_A_NOMBRE[r] === regionSel) ?? ''}
                   onChange={(e) => {
-                    setRegionInput(e.target.value);
-                    setComunaInput(''); // limpiar comuna si cambia región
+                    const roman = e.target.value;
+                    const nombre = ROMANO_A_NOMBRE[roman] ?? '';
+                    setRegionInput(nombre);
+                    setComunaInput('');
                   }}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
-                  placeholder="Seleccionar región"
-                />
-                <datalist id="regiones-list">
-                  {REGIONES.map((r) => (
-                    <option key={r} value={r} label={regionLabel(r)} />
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                >
+                  <option value="" disabled>Seleccionar región</option>
+                  {REGIONES_ROMANAS.map((r) => (
+                    <option key={r} value={r}>{r}</option>
                   ))}
-                </datalist>
+                </select>
               </div>
 
               {/* Comuna dependiente - datalist */}
@@ -540,68 +485,4 @@ export default function HomePage() {
                   value={comunaInput}
                   onChange={(e) => setComunaInput(e.target.value)}
                   disabled={!regionSel}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 bg-gray-50 text-slate-500 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
-                  placeholder={regionSel ? 'Seleccionar comuna' : 'Selecciona una región primero'}
-                />
-                <datalist id="comunas-list">
-                  {regionSel && (COMUNAS_POR_REGION[regionSel] || []).map((c) => <option key={c} value={c} />)}
-                </datalist>
-              </div>
-
-              {/* Presupuestos UF (formato miles) */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
-                <input
-                  value={minUF}
-                  onChange={(e) => setMinUF(formatUF(e.target.value))}
-                  inputMode="numeric"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
-                <input
-                  value={maxUF}
-                  onChange={(e) => setMaxUF(formatUF(e.target.value))}
-                  inputMode="numeric"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="0"
-                />
-              </div>
-
-              {/* Comentarios */}
-              <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
-                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
-                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
-              >
-                <Gift className="h-4 w-4" /> Enviar referido
-              </button>
-            </div>
-
-            <p className="mt-3 text-center text-xs text-slate-500">
-              Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
-}
-
-
-
-
-
-
-
-
-
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 bg-gray-50 text-slate-500 placeholder-slate-
