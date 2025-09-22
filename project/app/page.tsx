@@ -1,14 +1,14 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
+import { Bed, ShowerHead, Ruler, Search, Filter } from 'lucide-react';
 
-/* -------------------- Tipos -------------------- */
 type Property = {
   id: string;
   titulo?: string;
   comuna?: string;
+  region?: string;
   operacion?: 'venta' | 'arriendo';
   tipo?: string;
   precio_uf?: number | null;
@@ -16,28 +16,85 @@ type Property = {
   dormitorios?: number | null;
   banos?: number | null;
   superficie_util_m2?: number | null;
-  imagenes?: string[];
-  images?: string[];
+  superficie_terreno_m2?: number | null;
   coverImage?: string;
-  destacada?: boolean;
+  createdAt?: string;
 };
 
-/* -------------------- Utilidades -------------------- */
-function fmtPrecio(pUf?: number | null, pClp?: number | null) {
-  if (typeof pUf === 'number' && pUf > 0) return `UF ${new Intl.NumberFormat('es-CL').format(pUf)}`;
-  if (typeof pClp === 'number' && pClp > 0) return `$ ${new Intl.NumberFormat('es-CL').format(pClp)}`;
-  return 'Consultar';
-}
-function capFirst(s?: string | null) {
-  if (!s) return '';
-  const lower = s.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
+const BRAND_BLUE = '#0A2E57';
+const HERO_IMG =
+  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=2000&auto=format&fit=crop';
+
+const fmtMiles = (raw: string) => {
+  const digits = raw.replace(/\D+/g, '');
+  if (!digits) return '';
+  return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(
+    parseInt(digits, 10),
+  );
+};
+
+/** ========== UF helper (local, sin dependencias) ========== **/
+function useUfValue() {
+  const [uf, setUf] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancel = false;
+
+    (async () => {
+      try {
+        // Ideal: usar tu endpoint /api/uf (servidor → mindicador.cl con cache)
+        const r = await fetch('/api/uf', { cache: 'no-store' });
+        const j = await r.json().catch(() => ({}));
+        const value = typeof j?.uf === 'number' ? j.uf : null;
+        if (!cancel) setUf(value);
+      } catch {
+        if (!cancel) setUf(null);
+      }
+    })();
+
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  return uf;
 }
 
-/* -------------------- Datos Chile -------------------- */
-/* Pediste que “Metropolitana de Santiago” aparezca primero en las listas */
+const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
+/** Muestra “UF arriba / CLP abajo”. Si falta uno, lo calcula con la UF del día (si está disponible). */
+function PriceTag({
+  priceUF,
+  priceCLP,
+  ufValue,
+  className,
+}: {
+  priceUF?: number | null;
+  priceCLP?: number | null;
+  ufValue?: number | null;
+  className?: string;
+}) {
+  let uf = priceUF ?? null;
+  let clp = priceCLP ?? null;
+
+  if (uf == null && clp != null && ufValue) uf = clp / ufValue;
+  if (clp == null && uf != null && ufValue) clp = uf * ufValue;
+
+  return (
+    <div className={className}>
+      <div className="font-semibold" style={{ color: BRAND_BLUE }}>
+        {uf != null && uf > 0 ? `UF ${nfUF.format(uf)}` : 'Consultar'}
+      </div>
+      <div className="text-xs text-slate-500">
+        {clp != null && clp > 0 ? `$ ${nfCLP.format(clp)}` : ''}
+      </div>
+    </div>
+  );
+}
+
+/* === Regiones (romano delante, sin paréntesis) === */
 const REGIONES = [
-  'Metropolitana de Santiago',
   'Arica y Parinacota',
   'Tarapacá',
   'Antofagasta',
@@ -53,434 +110,638 @@ const REGIONES = [
   'Los Lagos',
   'Aysén',
   'Magallanes',
+  'Metropolitana de Santiago',
 ] as const;
-type Region = typeof REGIONES[number];
+type Region = (typeof REGIONES)[number];
 
-const COMUNAS_POR_REGION: Record<Region, string[]> = {
+const REG_N_ARABIC: Record<Region, number> = {
+  'Arica y Parinacota': 1,
+  Tarapacá: 2,
+  Antofagasta: 3,
+  Atacama: 4,
+  Coquimbo: 5,
+  Valparaíso: 6,
+  "O'Higgins": 7,
+  Maule: 8,
+  'Ñuble': 16,
+  'Biobío': 12,
+  'La Araucanía': 9,
+  'Los Ríos': 14,
+  'Los Lagos': 10,
+  Aysén: 11,
+  Magallanes: 15,
+  'Metropolitana de Santiago': 13,
+};
+
+const toRoman = (n: number) => {
+  const m: [number, string][] = [
+    [1000, 'M'],
+    [900, 'CM'],
+    [500, 'D'],
+    [400, 'CD'],
+    [100, 'C'],
+    [90, 'XC'],
+    [50, 'L'],
+    [40, 'XL'],
+    [10, 'X'],
+    [9, 'IX'],
+    [5, 'V'],
+    [4, 'IV'],
+    [1, 'I'],
+  ];
+  let s = '';
+  let x = n;
+  for (const [v, r] of m) {
+    while (x >= v) {
+      s += r;
+      x -= v;
+    }
+  }
+  return s;
+};
+const regionDisplay = (r: Region) => `${toRoman(REG_N_ARABIC[r])} - ${r}`;
+
+const COMUNAS: Record<Region, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
-  Tarapacá: ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica', 'Huara', 'Camiña', 'Colchane'],
-  Antofagasta: ['Antofagasta', 'Mejillones', 'Taltal', 'Sierra Gorda', 'Calama', 'San Pedro de Atacama', 'María Elena', 'Tocopilla'],
-  Atacama: ['Copiapó', 'Caldera', 'Tierra Amarilla', 'Vallenar', 'Huasco', 'Freirina', 'Chañaral', 'Diego de Almagro'],
-  Coquimbo: ['La Serena', 'Coquimbo', 'Andacollo', 'Vicuña', 'Ovalle', 'Monte Patria', 'Punitaqui', 'Illapel', 'Los Vilos', 'Salamanca'],
-  Valparaíso: ['Valparaíso', 'Viña del Mar', 'Concón', 'Quilpué', 'Villa Alemana', 'Quillota', 'La Calera', 'San Antonio', 'Casablanca', 'Quintero', 'Puchuncaví', 'Limache', 'Olmué'],
-  "O'Higgins": ['Rancagua', 'Machalí', 'Graneros', 'Mostazal', 'Doñihue', 'San Vicente', 'Santa Cruz', 'San Fernando', 'Pichilemu'],
-  Maule: ['Talca', 'Maule', 'San Clemente', 'Cauquenes', 'Curicó', 'Molina', 'Rauco', 'Linares', 'Parral'],
-  'Ñuble': ['Chillán', 'Chillán Viejo', 'San Carlos', 'Coihueco', 'Bulnes', 'Quirihue'],
-  'Biobío': ['Concepción', 'Talcahuano', 'Hualpén', 'San Pedro de la Paz', 'Chiguayante', 'Coronel', 'Lota', 'Los Ángeles', 'Arauco', 'Curanilahue'],
-  'La Araucanía': ['Temuco', 'Padre Las Casas', 'Villarrica', 'Pucón', 'Angol', 'Victoria', 'Nueva Imperial'],
-  'Los Ríos': ['Valdivia', 'Lanco', 'Panguipulli', 'Los Lagos', 'La Unión', 'Río Bueno'],
-  'Los Lagos': ['Puerto Montt', 'Puerto Varas', 'Frutillar', 'Osorno', 'Castro', 'Ancud', 'Quellón'],
-  Aysén: ['Coyhaique', 'Aysén', 'Cisnes', 'Chile Chico'],
-  Magallanes: ['Punta Arenas', 'Puerto Natales', 'Porvenir', 'Cabo de Hornos'],
+  Tarapacá: ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica'],
+  Antofagasta: ['Antofagasta', 'Calama', 'San Pedro de Atacama'],
+  Atacama: ['Copiapó', 'Caldera', 'Vallenar'],
+  Coquimbo: ['La Serena', 'Coquimbo', 'Ovalle'],
+  Valparaíso: [
+    'Viña del Mar',
+    'Valparaíso',
+    'Concón',
+    'Quilpué',
+    'Villa Alemana',
+    'Limache',
+    'Olmué',
+  ],
+  "O'Higgins": ['Rancagua', 'Machalí', 'San Fernando', 'Santa Cruz'],
+  Maule: ['Talca', 'Curicó', 'Linares'],
+  Ñuble: ['Chillán', 'San Carlos'],
+  Biobío: ['Concepción', 'San Pedro de la Paz', 'Talcahuano', 'Hualpén'],
+  'La Araucanía': ['Temuco', 'Villarrica', 'Pucón'],
+  'Los Ríos': ['Valdivia', 'Panguipulli', 'La Unión'],
+  'Los Lagos': ['Puerto Montt', 'Puerto Varas', 'Osorno', 'Castro', 'Ancud'],
+  Aysén: ['Coyhaique', 'Aysén'],
+  Magallanes: ['Punta Arenas', 'Puerto Natales'],
   'Metropolitana de Santiago': [
-    'Santiago', 'Providencia', 'Las Condes', 'Vitacura', 'Lo Barnechea', 'Ñuñoa', 'La Reina',
-    'Macul', 'Peñalolén', 'La Florida', 'Puente Alto', 'San Joaquín', 'San Miguel', 'La Cisterna',
-    'Cerrillos', 'Estación Central', 'Quinta Normal', 'Recoleta', 'Independencia', 'Huechuraba',
-    'Conchalí', 'Renca', 'Quilicura', 'Pudahuel', 'Lo Prado', 'Cerro Navia', 'Maipú',
-    'Pedro Aguirre Cerda', 'San Ramón', 'El Bosque', 'La Granja', 'Lo Espejo', 'San Bernardo',
-    'Buin', 'Paine', 'Calera de Tango', 'Talagante', 'Peñaflor', 'Isla de Maipo', 'El Monte',
-    'Padre Hurtado', 'Colina', 'Lampa', 'Tiltil', 'Melipilla', 'Curacaví', 'María Pinto',
-    'San José de Maipo', 'Pirque'
+    'Las Condes',
+    'Vitacura',
+    'Lo Barnechea',
+    'Providencia',
+    'Santiago',
+    'Ñuñoa',
+    'La Reina',
+    'Huechuraba',
+    'La Florida',
+    'Maipú',
+    'Puente Alto',
+    'Colina',
+    'Lampa',
+    'Talagante',
+    'Peñalolén',
+    'Macul',
   ],
 };
 
-const SERVICIOS = [
-  'Comprar',
-  'Vender',
-  'Arrendar',
-  'Gestionar un arriendo',
-  'Consultoría específica',
-];
+const BARRIOS: Record<string, string[]> = {
+  'Las Condes': [
+    'El Golf',
+    'Nueva Las Condes',
+    'San Damián',
+    'Estoril',
+    'Los Dominicos',
+    'Cantagallo',
+    'Apoquindo',
+  ],
+  Vitacura: [
+    'Santa María de Manquehue',
+    'Lo Curro',
+    'Jardín del Este',
+    'Vitacura Centro',
+    'Parque Bicentenario',
+  ],
+  'Lo Barnechea': ['La Dehesa', 'Los Trapenses', 'El Huinganal', 'Valle La Dehesa'],
+  Providencia: ['Los Leones', 'Pedro de Valdivia', 'Providencia Centro', 'Bellavista'],
+  Ñuñoa: ['Plaza Ñuñoa', 'Villa Frei', 'Irarrazabal', 'Suárez Mujica'],
+  Santiago: ['Centro', 'Lastarria', 'Parque Almagro', 'Barrio Brasil', 'Yungay'],
+  'La Reina': ['La Reina Alta', 'Nueva La Reina', 'La Reina Centro'],
+  Huechuraba: ['Ciudad Empresarial', 'Pedro Fontova'],
+  'La Florida': ['Trinidad', 'Walker Martínez', 'Bellavista', 'Gerónimo de Alderete'],
+  Maipú: ['Ciudad Satélite', 'El Abrazo', 'Maipú Centro'],
+  'Puente Alto': ['Eyzaguirre', 'Malloco Colorado', 'Balmaceda'],
+  Colina: ['Chicureo Oriente', 'Chicureo Poniente', 'Piedra Roja', 'Las Brisas', 'Santa Elena'],
+  Peñalolén: ['Los Presidentes', 'San Luis', 'Altos de Peñalolén'],
+  Macul: ['Macul Centro', 'Emilio Rojas', 'Los Plátanos'],
+  Lampa: ['Valle Grande', 'Chicauma'],
+  Talagante: ['Talagante Centro', 'Isla de Maipo Norte'],
+  Limache: ['Limache Viejo', 'Limache Nuevo', 'San Francisco', 'Lliu Lliu'],
+  'Viña del Mar': ['Reñaca', 'Jardín del Mar', 'Oriente', 'Centro'],
+  Concón: ['Bosques de Montemar', 'Costa de Montemar', 'Concón Centro'],
+  Valdivia: ['Isla Teja', 'Torreones', 'Las Ánimas', 'Regional'],
+};
 
-/* -------------------- Componente -------------------- */
-export default function HomePage() {
-  const [destacadas, setDestacadas] = useState<Property[]>([]);
-  const [i, setI] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+export default function PropiedadesPage() {
+  // buscador superior
+  const [qTop, setQTop] = useState('');
 
-  // swipe
-  const touchStartX = useRef<number | null>(null);
-  const touchDeltaX = useRef(0);
-
-  // Carga destacadas
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' });
-        const json = await res.json();
-        if (!mounted) return;
-        const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        setDestacadas(data);
-      } catch {
-        if (mounted) setDestacadas([]);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
-  // Auto-slide
-  useEffect(() => {
-    if (!destacadas.length) return;
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [destacadas.length]);
-
-  const go = (dir: -1 | 1) => {
-    if (!destacadas.length) return;
-    setI((p) => {
-      const n = destacadas.length;
-      return ((p + dir) % n + n) % n;
-    });
-  };
-
-  // swipe handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchDeltaX.current = 0;
-    if (timerRef.current) clearInterval(timerRef.current);
-  };
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartX.current !== null) {
-      touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
-    }
-  };
-  const handleTouchEnd = () => {
-    const dx = touchDeltaX.current;
-    const TH = 50;
-    if (Math.abs(dx) > TH) {
-      if (dx < 0) go(1); else go(-1);
-    }
-    touchStartX.current = null;
-    touchDeltaX.current = 0;
-    if (destacadas.length) {
-      timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
-    }
-  };
-
-  const active = destacadas[i];
-  const bg = useMemo(() => {
-    if (!active)
-      return 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
-    const imgs = active.coverImage || active.imagenes?.[0] || active.images?.[0];
-    return imgs || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
-  }, [active]);
-
-  const lineaSecundaria = [
-    capFirst(active?.comuna),
-    capFirst(active?.tipo),
-    capFirst(active?.operacion),
-  ].filter(Boolean).join(' · ');
-
-  /* --------- Estado formulario referidos (datalist + formato UF) --------- */
+  // filtros comunes
+  const [operacion, setOperacion] = useState('');
+  const [tipo, setTipo] = useState('');
   const [regionInput, setRegionInput] = useState('');
-  const [comunaInput, setComunaInput] = useState('');
-  const [minUF, setMinUF] = useState(''); // formateado con miles
-  const [maxUF, setMaxUF] = useState('');
+  const [region, setRegion] = useState<Region | ''>('');
+  const [comuna, setComuna] = useState('');
+  const [barrio, setBarrio] = useState('');
 
-  const regionSel = REGIONES.find((r) => r.toLowerCase() === regionInput.toLowerCase()) || '';
-  const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
+  // UF / CLP
+  const [moneda, setMoneda] = useState<'UF' | 'CLP$'>('UF');
+  const [minValor, setMinValor] = useState('');
+  const [maxValor, setMaxValor] = useState('');
 
-  const formatUF = (raw: string) => {
-    // Dejar solo dígitos, quitar ceros iniciales redundantes y formatear con miles (es-CL) sin decimales
-    const digits = raw.replace(/\D+/g, '');
-    if (!digits) return '';
-    const n = parseInt(digits, 10);
-    return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n);
-  };
+  // filtros avanzados
+  const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
+  const [minDorm, setMinDorm] = useState('');
+  const [minBanos, setMinBanos] = useState('');
+  const [minM2Const, setMinM2Const] = useState('');
+  const [minM2Terreno, setMinM2Terreno] = useState('');
+  const [estac, setEstac] = useState('');
+
+  const [trigger, setTrigger] = useState(0);
+
+  useEffect(() => {
+    // interpretar "X - Región"
+    const m = regionInput.match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
+    const name = (m ? m[1] : regionInput) as Region;
+    if (name && (REG_N_ARABIC as any)[name]) setRegion(name);
+    else setRegion('');
+  }, [regionInput]);
+
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (qTop.trim()) p.set('q', qTop.trim());
+    if (operacion) p.set('operacion', operacion);
+    if (tipo) p.set('tipo', tipo);
+    if (region) p.set('region', region);
+    if (comuna) p.set('comuna', comuna);
+    if (barrio) p.set('barrio', barrio);
+    if (minValor) p.set(moneda === 'UF' ? 'minUF' : 'minCLP', minValor.replace(/\./g, ''));
+    if (maxValor) p.set(moneda === 'UF' ? 'maxUF' : 'maxCLP', maxValor.replace(/\./g, ''));
+
+    if (advancedMode === 'avanzada') {
+      if (minDorm) p.set('minDorm', minDorm);
+      if (minBanos) p.set('minBanos', minBanos);
+      if (minM2Const) p.set('minM2Const', minM2Const.replace(/\./g, ''));
+      if (minM2Terreno) p.set('minM2Terreno', minM2Terreno.replace(/\./g, ''));
+      if (estac) p.set('estacionamientos', estac);
+    }
+
+    fetch(`/api/propiedades?${p.toString()}`).catch(() => {});
+  }, [
+    trigger,
+    advancedMode,
+    qTop,
+    operacion,
+    tipo,
+    region,
+    comuna,
+    barrio,
+    minValor,
+    maxValor,
+    moneda,
+    minDorm,
+    minBanos,
+    minM2Const,
+    minM2Terreno,
+    estac,
+  ]);
+
+  const tieneBarrios = !!BARRIOS[comuna];
+  const ufValue = useUfValue(); // <<— UF del día
 
   return (
     <main className="bg-white">
-      {/* ========= HERO ========= */}
+      {/* HERO */}
       <section
-        className="relative w-full overflow-hidden isolate"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        className="relative bg-cover min-h-[72vh]"
+        style={{ backgroundImage: `url(${HERO_IMG})`, backgroundPosition: '50% 82%' }}
       >
-        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
-        <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
-
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
-          <div className="w-full relative">
-            <div className="bg-white/65 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[520px]">
-              <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
-                {active?.titulo ?? 'Propiedad destacada'}
-              </h1>
-              <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
-
-              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50 p-2.5 md:p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
-                    <Bed className="h-4 w-4" /> Dormitorios
-                  </div>
-                  <div className="text-base">{active?.dormitorios ?? '—'}</div>
-                </div>
-                <div className="bg-gray-50 p-2.5 md:p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
-                    <ShowerHead className="h-4 w-4" /> Baños
-                  </div>
-                  <div className="text-base">{active?.banos ?? '—'}</div>
-                </div>
-                <div className="bg-gray-50 p-2.5 md:p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
-                    <Ruler className="h-4 w-4" /> Área (m²)
-                  </div>
-                  <div className="text-base">{active?.superficie_util_m2 ?? '—'}</div>
-                </div>
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute bottom-6 left-0 right-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="pl-2 sm:pl-4">
+              <div className="max-w-3xl">
+                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                  PROPIEDADES
+                </h1>
+                <p className="text-white/85 mt-2">
+                  Encuentra tu próxima inversión o tu nuevo hogar.
+                </p>
               </div>
 
-              {/* Acciones: IZQ Ver más | DER Precio (mismo tamaño que título y en negrita) */}
-              <div className="mt-4 flex items-center gap-3">
-                <div>
-                  {active?.id ? (
-                    <Link
-                      href={`/propiedades/${active.id}`}
-                      className="inline-flex items-center px-3 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
-                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
-                    >
-                      Ver más
-                    </Link>
-                  ) : null}
-                </div>
-
-                <div className="ml-auto text-[1.4rem] md:text-2xl font-bold text-[#0A2E57]">
-                  {fmtPrecio(active?.precio_uf, active?.precio_clp)}
+              <div className="mt-4 max-w-2xl">
+                <div className="relative">
+                  <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
+                  <input
+                    value={qTop}
+                    onChange={(e) => setQTop(e.target.value)}
+                    placeholder="Buscar por calle (ej. Alameda 13800)"
+                    className="w-full rounded-md bg-white/95 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
+                  />
+                  <button
+                    onClick={() => setTrigger((v) => v + 1)}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-none"
+                    style={{ background: BRAND_BLUE }}
+                  >
+                    Buscar
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Flechas */}
-          {destacadas.length > 1 && (
-            <>
-              <button aria-label="Anterior" onClick={() => go(-1)} className="group absolute left-4 md:left-6 top-[42%] md:top-[45%] -translate-y-1/2 p-2">
-                <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
-              </button>
-              <button aria-label="Siguiente" onClick={() => go(1)} className="group absolute right-4 md:right-6 top-[42%] md:top-[45%] -translate-y-1/2 p-2">
-                <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
-              </button>
-            </>
-          )}
-
-          {destacadas.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              {destacadas.map((_, idx) => (
-                <span key={idx} className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`} />
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
-      {/* ========= EQUIPO ========= */}
-      <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="flex items-center gap-3">
-          <Users2 className="h-6 w-6 text-[#0A2E57]" />
-          <h2 className="text-2xl md:text-3xl">Equipo</h2>
-        </div>
+      {/* FILTROS */}
+      <section className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center gap-2 text-slate-800 mb-4 pl-2 sm:pl-4">
+            <Filter className="h-5 w-5" color={BRAND_BLUE} />
+            <span className="text-lg md:text-xl uppercase tracking-[0.25em]">FILTROS</span>
+          </div>
 
-        <p className="mt-3 max-w-4xl text-slate-700">
-          En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
-          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera para que cada decisión inmobiliaria sea segura y rentable.
-        </p>
-
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { nombre: 'Carolina San Martín', cargo: 'Socia fundadora', profesion: 'Arquitecta', foto: '/team/carolina-san-martin.png' },
-            { nombre: 'Alberto Gesswein', cargo: 'Socio', profesion: 'Periodista y gestor de proyectos', foto: '/team/alberto-gesswein.png' },
-            { nombre: 'Jan Gesswein', cargo: 'Socio', profesion: 'Abogado', foto: '/team/jan-gesswein.png' },
-            { nombre: 'Kay Gesswein', cargo: 'Socio', profesion: 'Ingeniero comercial · Magíster en finanzas', foto: '/team/kay-gesswein.png' },
-          ].map((m) => (
-            <article
-              key={m.nombre}
-              className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-lg transition"
-              tabIndex={0}
+          {/* modo */}
+          <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setAdvancedMode('rapida')}
+              className={`px-3 py-2 text-sm rounded-none border ${
+                advancedMode === 'rapida'
+                  ? 'bg-gray-200 border-gray-300 text-slate-900'
+                  : 'bg-gray-50 border-gray-300 text-slate-700'
+              }`}
             >
-              <div className="aspect-[3/4] w-full bg-slate-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={m.foto}
-                  alt={m.nombre}
-                  className="h-full w-full object-cover"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                />
-              </div>
-
-              {/* Overlay: oculto por defecto; aparece en hover/active/focus */}
-              <div className="
-                pointer-events-none absolute inset-0
-                bg-[#0A2E57]/0
-                group-hover:bg-[#0A2E57]/90
-                group-active:bg-[#0A2E57]/90
-                focus-within:bg-[#0A2E57]/90
-                transition duration-300
-              " />
-
-              {/* Texto: aparece solo al interactuar */}
-              <div className="
-                absolute inset-0 flex items-end
-                opacity-0
-                group-hover:opacity-100
-                group-active:opacity-100
-                focus-within:opacity-100
-                transition duration-300
-              ">
-                <div className="w-full p-4 text-white">
-                  <h3 className="text-lg leading-snug">{m.nombre}</h3>
-                  {/* invertimos tamaños: cargo más grande y profesión más pequeña */}
-                  <p className="text-sm mt-1">{m.cargo}</p>
-                  <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ========= REFERIDOS ========= */}
-      <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="px-6 py-8 text-center">
-            <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
-              <Gift className="h-5 w-5 text-blue-600" />
-            </div>
-            <h2 className="mt-3 text-2xl md:text-3xl">Programa de referidos con exclusividad</h2>
-            <p className="mt-2 text-slate-600">
-              ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
-            </p>
+              Búsqueda rápida
+            </button>
+            <button
+              type="button"
+              onClick={() => setAdvancedMode('avanzada')}
+              className={`px-3 py-2 text-sm rounded-none border ${
+                advancedMode === 'avanzada'
+                  ? 'bg-gray-200 border-gray-300 text-slate-900'
+                  : 'bg-gray-50 border-gray-300 text-slate-700'
+              }`}
+            >
+              Búsqueda avanzada
+            </button>
           </div>
 
-          <div className="px-6 pb-8">
-            <h3 className="text-lg">Tus datos (referente)</h3>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="Tu nombre completo" />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="tu@email.com" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
-              </div>
-            </div>
-
-            <h3 className="mt-8 text-lg">Preferencias del referido</h3>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio necesita - datalist (buscable) */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
+          {/* === RÁPIDA === */}
+          {advancedMode === 'rapida' && (
+            <>
+              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                {/* Operación */}
                 <input
-                  list="servicios-list"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
-                  placeholder="Seleccionar"
+                  list="dl-operacion"
+                  value={operacion}
+                  onChange={(e) => setOperacion(e.target.value)}
+                  placeholder="Operación"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                 />
-                <datalist id="servicios-list">
-                  {SERVICIOS.map((s) => <option key={s} value={s} />)}
+                <datalist id="dl-operacion">
+                  <option value="Venta" />
+                  <option value="Arriendo" />
                 </datalist>
-              </div>
 
-              {/* Tipo de propiedad - datalist */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
+                {/* Tipo */}
                 <input
-                  list="tipo-prop-list"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
-                  placeholder="Seleccionar tipo"
+                  list="dl-tipos"
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value)}
+                  placeholder="Tipo de propiedad"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                 />
-                <datalist id="tipo-prop-list">
-                  <option value="Casa" />
-                  <option value="Departamento" />
-                  <option value="Oficina" />
-                  <option value="Terreno" />
+                <datalist id="dl-tipos">
+                  {['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'].map(
+                    (t) => (
+                      <option key={t} value={t} />
+                    ),
+                  )}
                 </datalist>
-              </div>
 
-              {/* Región - datalist (buscable) */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Región</label>
+                {/* Región */}
                 <input
-                  list="regiones-list"
+                  list="dl-regiones"
                   value={regionInput}
                   onChange={(e) => {
                     setRegionInput(e.target.value);
-                    setComunaInput(''); // limpiar comuna si cambia región
+                    setComuna('');
+                    setBarrio('');
                   }}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
-                  placeholder="Seleccionar región"
+                  placeholder="Región"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                 />
-                <datalist id="regiones-list">
-                  {REGIONES.map((r) => <option key={r} value={r} />)}
+                <datalist id="dl-regiones">
+                  {REGIONES.map((r) => (
+                    <option key={r} value={regionDisplay(r)} />
+                  ))}
+                </datalist>
+
+                {/* Comuna */}
+                <input
+                  list="dl-comunas"
+                  value={comuna}
+                  onChange={(e) => {
+                    setComuna(e.target.value);
+                    setBarrio('');
+                  }}
+                  placeholder="Comuna"
+                  disabled={!region}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+                />
+                <datalist id="dl-comunas">
+                  {region && COMUNAS[region].map((c) => <option key={c} value={c} />)}
+                </datalist>
+
+                {/* Barrio */}
+                <input
+                  list="dl-barrios"
+                  value={barrio}
+                  onChange={(e) => setBarrio(e.target.value)}
+                  placeholder="Barrio"
+                  disabled={!comuna || !tieneBarrios}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+                />
+                <datalist id="dl-barrios">
+                  {tieneBarrios && BARRIOS[comuna].map((b) => <option key={b} value={b} />)}
                 </datalist>
               </div>
 
-              {/* Comuna dependiente - datalist */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Comuna</label>
+              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                {/* Moneda => mismo control que Operación */}
                 <input
-                  list="comunas-list"
-                  value={comunaInput}
-                  onChange={(e) => setComunaInput(e.target.value)}
-                  disabled={!regionSel}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 bg-gray-50 text-slate-500 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
-                  placeholder={regionSel ? 'Seleccionar comuna' : 'Selecciona una región primero'}
+                  list="dl-moneda"
+                  value={moneda}
+                  onChange={(e) => setMoneda((e.target.value as 'UF' | 'CLP$') || 'UF')}
+                  placeholder="UF"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                 />
-                <datalist id="comunas-list">
-                  {regionSel && comunas.map((c) => <option key={c} value={c} />)}
+                <datalist id="dl-moneda">
+                  <option value="UF" />
+                  <option value="CLP$" />
                 </datalist>
+
+                {/* Valores */}
+                <input
+                  value={minValor}
+                  onChange={(e) => setMinValor(fmtMiles(e.target.value))}
+                  inputMode="numeric"
+                  placeholder="Mín"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <input
+                  value={maxValor}
+                  onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
+                  inputMode="numeric"
+                  placeholder="Máx"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+
+                <button
+                  onClick={() => setTrigger((v) => v + 1)}
+                  className="w-full px-5 py-2 text-sm text-white rounded-none"
+                  style={{
+                    background: BRAND_BLUE,
+                    boxShadow:
+                      'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+                  }}
+                >
+                  Buscar
+                </button>
+                <div className="hidden lg:block" />
+              </div>
+            </>
+          )}
+
+          {/* === AVANZADA === */}
+          {advancedMode === 'avanzada' && (
+            <>
+              <div className="pl-2 sm:pl-4">
+                <div className="h-px bg-slate-200 my-4" />
               </div>
 
-              {/* Presupuestos UF (formato con miles y sin decimales mientras escribes) */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
+              {/* compartidos -> gris claro */}
+              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <input
-                  value={minUF}
-                  onChange={(e) => setMinUF(formatUF(e.target.value))}
-                  inputMode="numeric"
+                  list="dl-operacion"
+                  value={operacion}
+                  onChange={(e) => setOperacion(e.target.value)}
+                  placeholder="Operación"
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="0"
+                />
+                <input
+                  list="dl-tipos"
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value)}
+                  placeholder="Tipo de propiedad"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <input
+                  list="dl-regiones"
+                  value={regionInput}
+                  onChange={(e) => {
+                    setRegionInput(e.target.value);
+                    setComuna('');
+                    setBarrio('');
+                  }}
+                  placeholder="Región"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <input
+                  list="dl-comunas"
+                  value={comuna}
+                  onChange={(e) => {
+                    setComuna(e.target.value);
+                    setBarrio('');
+                  }}
+                  placeholder="Comuna"
+                  disabled={!region}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+                />
+                <input
+                  list="dl-barrios"
+                  value={barrio}
+                  onChange={(e) => setBarrio(e.target.value)}
+                  placeholder="Barrio"
+                  disabled={!comuna || !tieneBarrios}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
                 />
               </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
+
+              {/* nuevos -> gris más oscuro */}
+              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <input
-                  value={maxUF}
-                  onChange={(e) => setMaxUF(formatUF(e.target.value))}
-                  inputMode="numeric"
+                  list="dl-moneda"
+                  value={moneda}
+                  onChange={(e) => setMoneda((e.target.value as 'UF' | 'CLP$') || 'UF')}
+                  placeholder="UF"
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="0"
+                />
+                <input
+                  value={minValor}
+                  onChange={(e) => setMinValor(fmtMiles(e.target.value))}
+                  inputMode="numeric"
+                  placeholder="Mín"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <input
+                  value={maxValor}
+                  onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
+                  inputMode="numeric"
+                  placeholder="Máx"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <input
+                  value={minDorm}
+                  onChange={(e) => setMinDorm(e.target.value.replace(/\D+/g, ''))}
+                  inputMode="numeric"
+                  placeholder="Mín. dormitorios"
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                />
+                <input
+                  value={minBanos}
+                  onChange={(e) => setMinBanos(e.target.value.replace(/\D+/g, ''))}
+                  inputMode="numeric"
+                  placeholder="Mín. baños"
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
                 />
               </div>
 
-              {/* Comentarios */}
-              <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
-                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
+              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <input
+                  value={minM2Const}
+                  onChange={(e) => setMinM2Const(fmtMiles(e.target.value))}
+                  inputMode="numeric"
+                  placeholder="Mín. m² construidos"
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                />
+                <input
+                  value={minM2Terreno}
+                  onChange={(e) => setMinM2Terreno(fmtMiles(e.target.value))}
+                  inputMode="numeric"
+                  placeholder="Mín. m² terreno"
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                />
+                <input
+                  value={estac}
+                  onChange={(e) => setEstac(e.target.value.replace(/\D+/g, ''))}
+                  inputMode="numeric"
+                  placeholder="Estacionamientos"
+                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                />
+
+                {/* Buscar del mismo tamaño que un input */}
+                <button
+                  onClick={() => setTrigger((v) => v + 1)}
+                  className="w-full px-5 py-2 text-sm text-white rounded-none"
+                  style={{
+                    background: BRAND_BLUE,
+                    boxShadow:
+                      'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+                  }}
+                >
+                  Buscar
+                </button>
+                <div className="hidden lg:block" />
               </div>
-            </div>
+            </>
+          )}
+        </div>
+      </section>
 
-            <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
-                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
-              >
-                <Gift className="h-4 w-4" /> Enviar referido
-              </button>
-            </div>
-
-            <p className="mt-3 text-center text-xs text-slate-500">
-              Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
-            </p>
+      {/* LISTADO: demo visual */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
+            PROPIEDADES DISPONIBLES
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">Ordenar por:</span>
+            <select className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700">
+              <option value="recientes">Más recientes</option>
+              <option value="precio-asc">Precio: menor a mayor</option>
+              <option value="precio-desc">Precio: mayor a menor</option>
+            </select>
           </div>
+        </div>
+
+        {/* Cards demo (reemplaza con tus datos reales) */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[1, 2, 3].map((i) => (
+            <Link
+              key={i}
+              href="#"
+              className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
+            >
+              <div className="aspect-[4/3] bg-slate-100">
+                <img
+                  src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop"
+                  alt="Propiedad"
+                  className="w-full h-full object-cover group-hover:opacity-95 transition"
+                />
+              </div>
+              <div className="p-4 flex flex-col">
+                <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
+                  Depto luminoso en Vitacura
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">Vitacura · Departamento · Venta</p>
+
+                <div className="mt-3 grid grid-cols-3 text-center">
+                  <div className="border border-slate-200 p-2">
+                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                      <Bed className="h-4 w-4" /> Dorm.
+                    </div>
+                    <div className="text-sm">2</div>
+                  </div>
+                  <div className="border border-slate-200 p-2">
+                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                      <ShowerHead className="h-4 w-4" /> Baños
+                    </div>
+                    <div className="text-sm">2</div>
+                  </div>
+                  <div className="border border-slate-200 p-2">
+                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                      <Ruler className="h-4 w-4" /> m²
+                    </div>
+                    <div className="text-sm">78</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  {/* Ver más */}
+                  <span
+                    className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
+                    style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                  >
+                    Ver más
+                  </span>
+
+                  {/* PRECIO: UF arriba, CLP abajo (auto con UF del día) */}
+                  <PriceTag
+                    priceUF={10500}       // reemplaza por propiedad.precio_uf cuando tengas data real
+                    priceCLP={null}       // si no envías CLP, lo calcula con ufValue
+                    ufValue={ufValue}     // UF del día
+                    className="text-right"
+                  />
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
     </main>
   );
 }
+
 
 
