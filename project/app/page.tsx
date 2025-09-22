@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Users2, Gift } from 'lucide-react';
-import useUf from '@/hooks/useUf';
+import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
 
 type Property = {
   id: string;
@@ -22,11 +21,38 @@ type Property = {
   destacada?: boolean;
 };
 
+function fmtPrecio(pUf?: number | null, pClp?: number | null) {
+  if (typeof pUf === 'number' && pUf > 0) return `UF ${new Intl.NumberFormat('es-CL').format(pUf)}`;
+  if (typeof pClp === 'number' && pClp > 0) return `$ ${new Intl.NumberFormat('es-CL').format(pClp)}`;
+  return 'Consultar';
+}
+
+/* ========= UF del día (sin dependencias externas) ========= */
 const BRAND_BLUE = '#0A2E57';
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-/** Precio: UF arriba (azul corporativo) / CLP abajo (gris). Si falta uno, lo calcula con la UF del día. */
+function useUf() {
+  const [uf, setUf] = useState<number | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    const load = async () => {
+      try {
+        const r = await fetch('/api/uf', { cache: 'no-store' });
+        const j = await r.json().catch(() => ({} as any));
+        const val = typeof j?.uf === 'number' ? j.uf : null;
+        if (!cancel) setUf(val);
+      } catch {
+        if (!cancel) setUf(null);
+      }
+    };
+    load();
+    const id = setInterval(load, 12 * 60 * 60 * 1000);
+    return () => { cancel = true; clearInterval(id); };
+  }, []);
+  return uf;
+}
+
 function PriceTag({
   priceUF,
   priceCLP,
@@ -40,7 +66,6 @@ function PriceTag({
 }) {
   let uf = priceUF ?? null;
   let clp = priceCLP ?? null;
-
   if (uf == null && clp != null && ufValue) uf = clp / ufValue;
   if (clp == null && uf != null && ufValue) clp = uf * ufValue;
 
@@ -56,18 +81,11 @@ function PriceTag({
   );
 }
 
-function fmtPrecio(pUf?: number | null, pClp?: number | null) {
-  // (ya no se usa visualmente, pero lo dejo por compatibilidad)
-  if (typeof pUf === 'number' && pUf > 0) return `UF ${new Intl.NumberFormat('es-CL').format(pUf)}`;
-  if (typeof pClp === 'number' && pClp > 0) return `$ ${new Intl.NumberFormat('es-CL').format(pClp)}`;
-  return 'Consultar';
-}
-
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const uf = useUf(); // UF del día para calcular CLP
+  const ufValue = useUf();
 
   // Swipe refs
   const touchStartX = useRef<number | null>(null);
@@ -87,19 +105,15 @@ export default function HomePage() {
         if (mounted) setDestacadas([]);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   // Auto-slide
   useEffect(() => {
     if (!destacadas.length) return;
-    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current && clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [destacadas.length]);
 
   const go = (dir: -1 | 1) => {
@@ -160,7 +174,7 @@ export default function HomePage() {
         {/* Contenido del hero (casi pantalla completa) */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* BOTÓN CTA (ALINEADO CON EL BLOQUE) */}
+            {/* BOTÓN CTA */}
             <div className="ml-6 md:ml-10 mb-3">
               <Link
                 href="/propiedades"
@@ -188,48 +202,47 @@ export default function HomePage() {
                   <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
                     <Bed className="h-4 w-4" /> Dormitorios
                   </div>
-                  <div className="text-base">{active?.dormitorios ?? '—'}</div>
+                  <div className="text-base font-semibold">{active?.dormitorios ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
                   <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
                     <ShowerHead className="h-4 w-4" /> Baños
                   </div>
-                  <div className="text-base">{active?.banos ?? '—'}</div>
+                  <div className="text-base font-semibold">{active?.banos ?? '—'}</div>
                 </div>
                 <div className="bg-gray-50/70 p-3">
                   <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                    <Ruler className="h-4 w-4" /> m²
+                    <Ruler className="h-4 w-4" /> Área útil (m²)
                   </div>
-                  <div className="text-base">{active?.superficie_util_m2 ?? '—'}</div>
+                  <div className="text-base font-semibold">{active?.superficie_util_m2 ?? '—'}</div>
                 </div>
               </div>
 
-              {/* PRECIO (UF/CLP) + BOTÓN "VER MÁS" con el mismo ancho que una caja superior */}
+              {/* ====== SOLO CAMBIO #1 y #2 (precio UF/CLP + botón del ancho de un cuadro) ====== */}
               <div className="mt-4 grid grid-cols-3 gap-3 items-center">
-                {/* Col 1: Precio (alineado a la izquierda) */}
+                {/* Col 1: Precio UF/CLP (azul corporativo + CLP gris) */}
                 <PriceTag
-                  priceUF={active?.precio_uf ?? 10500}
-                  priceCLP={active?.precio_clp ?? null}
-                  ufValue={uf}
+                  priceUF={active?.precio_uf ?? undefined}
+                  priceCLP={active?.precio_clp ?? undefined}
+                  ufValue={ufValue}
                   className="text-left"
                 />
 
-                {/* Col 2: Botón Ver más (mismo ancho de cada cuadro superior) */}
+                {/* Col 2: Botón “Ver más” del mismo ancho que los cuadros de arriba */}
                 {active?.id ? (
                   <Link
                     href={`/propiedades/${active.id}`}
-                    className="inline-flex items-center justify-center w-full border bg-white px-3 py-2 text-sm text-gray-900 hover:bg-gray-50 rounded-none"
+                    className="inline-flex items-center justify-center w-full border bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none font-sans"
                     style={{ borderColor: BRAND_BLUE }}
                   >
                     Ver más
                   </Link>
-                ) : (
-                  <div />
-                )}
+                ) : <div />}
 
-                {/* Col 3: espacio para mantener la simetría con 3 columnas */}
+                {/* Col 3: vacío para mantener la grilla de 3 y el equilibrio visual */}
                 <div />
               </div>
+              {/* ====== FIN de cambios ====== */}
             </div>
           </div>
 
@@ -419,6 +432,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
