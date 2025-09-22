@@ -33,11 +33,18 @@ function capFirst(s?: string | null) {
   const lower = s.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
+/* Forzar formato correcto para “Lo Barnechea” venga como venga */
+function formatComuna(s?: string | null) {
+  if (!s) return '';
+  const t = s.replace(/\s+/g, '').toLowerCase();
+  if (t === 'lobarnechea') return 'Lo Barnechea';
+  if (/^lo\s*barnechea$/i.test(s)) return 'Lo Barnechea';
+  return capFirst(s);
+}
 
-/* -------------------- Datos Chile -------------------- */
-/* Pediste que “Metropolitana de Santiago” aparezca primero en las listas */
+/* -------------------- Datos Chile (referidos) -------------------- */
+/* Orden: todas y “Metropolitana de Santiago” al final */
 const REGIONES = [
-  'Metropolitana de Santiago',
   'Arica y Parinacota',
   'Tarapacá',
   'Antofagasta',
@@ -53,6 +60,7 @@ const REGIONES = [
   'Los Lagos',
   'Aysén',
   'Magallanes',
+  'Metropolitana de Santiago', // última
 ] as const;
 type Region = typeof REGIONES[number];
 
@@ -84,6 +92,31 @@ const COMUNAS_POR_REGION: Record<Region, string[]> = {
   ],
 };
 
+/* Números romanos para label en datalist (la value queda limpia para la lógica de comuna) */
+const REGION_NUM: Record<Region, number> = {
+  'Arica y Parinacota': 1,
+  Tarapacá: 2,
+  Antofagasta: 3,
+  Atacama: 4,
+  Coquimbo: 5,
+  Valparaíso: 6,
+  "O'Higgins": 7,
+  Maule: 8,
+  'Ñuble': 16,
+  'Biobío': 12,
+  'La Araucanía': 9,
+  'Los Ríos': 14,
+  'Los Lagos': 10,
+  Aysén: 11,
+  Magallanes: 15,
+  'Metropolitana de Santiago': 13,
+};
+const toRoman = (n: number) => {
+  const m: [number,string][]= [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+  let s=''; let x=n; for(const [v,r] of m){while(x>=v){s+=r;x-=v;}} return s;
+};
+const regionLabel = (r: Region) => `${toRoman(REGION_NUM[r])} - ${r}`;
+
 const SERVICIOS = [
   'Comprar',
   'Vender',
@@ -92,7 +125,6 @@ const SERVICIOS = [
   'Consultoría específica',
 ];
 
-/* -------------------- UF del día para calcular CLP<->UF en el héroe -------------------- */
 const BRAND_BLUE = '#0A2E57';
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
@@ -195,7 +227,7 @@ export default function HomePage() {
   }, [active]);
 
   const lineaSecundaria = [
-    capFirst(active?.comuna),
+    formatComuna(active?.comuna), // <- corrige “Lo Barnechea”
     capFirst(active?.tipo),
     capFirst(active?.operacion),
   ].filter(Boolean).join(' · ');
@@ -203,7 +235,7 @@ export default function HomePage() {
   /* --------- Estado formulario referidos (datalist + formato UF) --------- */
   const [regionInput, setRegionInput] = useState('');
   const [comunaInput, setComunaInput] = useState('');
-  const [minUF, setMinUF] = useState(''); // formateado con miles
+  const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
 
   const regionSel = REGIONES.find((r) => r.toLowerCase() === regionInput.toLowerCase()) || '';
@@ -259,13 +291,13 @@ export default function HomePage() {
 
               {/* ===== Acciones en 3 columnas (mismo ancho que los cuadritos de arriba) ===== */}
               <div className="mt-4 grid grid-cols-3 gap-3 items-center">
-                {/* Col 1: Ver más (izquierda) */}
+                {/* Col 1: Ver más (izquierda) - estilo blanco con borde azul */}
                 <div>
                   {active?.id ? (
                     <Link
                       href={`/propiedades/${active.id}`}
-                      className="inline-flex w-full items-center justify-center px-3 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
-                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
+                      className="inline-flex w-full items-center justify-center px-3 py-2 text-sm rounded-none border"
+                      style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
                     >
                       Ver más
                     </Link>
@@ -278,7 +310,6 @@ export default function HomePage() {
                 {/* Col 3: Precio UF/CLP (derecha, dos líneas) */}
                 <div className="text-right">
                   <div className="text-[#0A2E57] font-semibold">
-                    {/* UF directa o calculada desde CLP si hay UF del día */}
                     {(() => {
                       const pUF = active?.precio_uf ?? null;
                       const pCLP = active?.precio_clp ?? null;
@@ -292,7 +323,6 @@ export default function HomePage() {
                     })()}
                   </div>
                   <div className="text-xs text-slate-600">
-                    {/* CLP directo o calculado desde UF si hay UF del día */}
                     {(() => {
                       const pUF = active?.precio_uf ?? null;
                       const pCLP = active?.precio_clp ?? null;
@@ -406,7 +436,8 @@ export default function HomePage() {
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="mt-3 text-2xl md:text-3xl">Programa de referidos con exclusividad</h2>
+            {/* “Referidos” con R mayúscula */}
+            <h2 className="mt-3 text-2xl md:text-3xl">Programa de Referidos con exclusividad</h2>
             <p className="mt-2 text-slate-600">
               ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
             </p>
@@ -430,7 +461,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* NUEVO: Datos del referido */}
+            {/* Datos del referido */}
             <h3 className="mt-8 text-lg">Datos del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
@@ -447,7 +478,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Preferencias del referido (se mantiene) */}
+            {/* Preferencias del referido */}
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               {/* Servicio necesita - datalist (buscable) */}
@@ -463,7 +494,7 @@ export default function HomePage() {
                 </datalist>
               </div>
 
-              {/* Tipo de propiedad - datalist */}
+              {/* Tipo de propiedad - datalist (actualizado) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <input
@@ -474,12 +505,14 @@ export default function HomePage() {
                 <datalist id="tipo-prop-list">
                   <option value="Casa" />
                   <option value="Departamento" />
+                  <option value="Bodega" />
                   <option value="Oficina" />
+                  <option value="Local comercial" />
                   <option value="Terreno" />
                 </datalist>
               </div>
 
-              {/* Región - datalist (buscable) */}
+              {/* Región - datalist (label con romanos, value limpia) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <input
@@ -493,7 +526,9 @@ export default function HomePage() {
                   placeholder="Seleccionar región"
                 />
                 <datalist id="regiones-list">
-                  {REGIONES.map((r) => <option key={r} value={r} />)}
+                  {REGIONES.map((r) => (
+                    <option key={r} value={r} label={regionLabel(r)} />
+                  ))}
                 </datalist>
               </div>
 
@@ -509,11 +544,11 @@ export default function HomePage() {
                   placeholder={regionSel ? 'Seleccionar comuna' : 'Selecciona una región primero'}
                 />
                 <datalist id="comunas-list">
-                  {regionSel && comunas.map((c) => <option key={c} value={c} />)}
+                  {regionSel && (COMUNAS_POR_REGION[regionSel] || []).map((c) => <option key={c} value={c} />)}
                 </datalist>
               </div>
 
-              {/* Presupuestos UF (formato con miles y sin decimales mientras escribes) */}
+              {/* Presupuestos UF (formato miles) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
                 <input
@@ -561,6 +596,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
