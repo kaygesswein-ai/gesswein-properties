@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
 
+/* -------------------- Tipos -------------------- */
 type Property = {
   id: string;
   titulo?: string;
@@ -21,73 +22,83 @@ type Property = {
   destacada?: boolean;
 };
 
+/* -------------------- Utilidades -------------------- */
 function fmtPrecio(pUf?: number | null, pClp?: number | null) {
   if (typeof pUf === 'number' && pUf > 0) return `UF ${new Intl.NumberFormat('es-CL').format(pUf)}`;
   if (typeof pClp === 'number' && pClp > 0) return `$ ${new Intl.NumberFormat('es-CL').format(pClp)}`;
   return 'Consultar';
 }
-
-/* ========= UF del día (sin dependencias externas) ========= */
-const BRAND_BLUE = '#0A2E57';
-const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-
-function useUf() {
-  const [uf, setUf] = useState<number | null>(null);
-  useEffect(() => {
-    let cancel = false;
-    const load = async () => {
-      try {
-        const r = await fetch('/api/uf', { cache: 'no-store' });
-        const j = await r.json().catch(() => ({} as any));
-        const val = typeof j?.uf === 'number' ? j.uf : null;
-        if (!cancel) setUf(val);
-      } catch {
-        if (!cancel) setUf(null);
-      }
-    };
-    load();
-    const id = setInterval(load, 12 * 60 * 60 * 1000);
-    return () => { cancel = true; clearInterval(id); };
-  }, []);
-  return uf;
+function capFirst(s?: string | null) {
+  if (!s) return '';
+  const lower = s.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-function PriceTag({
-  priceUF,
-  priceCLP,
-  ufValue,
-  className,
-}: {
-  priceUF?: number | null;
-  priceCLP?: number | null;
-  ufValue?: number | null;
-  className?: string;
-}) {
-  let uf = priceUF ?? null;
-  let clp = priceCLP ?? null;
-  if (uf == null && clp != null && ufValue) uf = clp / ufValue;
-  if (clp == null && uf != null && ufValue) clp = uf * ufValue;
+/* -------------------- Datos Chile -------------------- */
+/* Pediste que “Metropolitana de Santiago” aparezca primero en las listas */
+const REGIONES = [
+  'Metropolitana de Santiago',
+  'Arica y Parinacota',
+  'Tarapacá',
+  'Antofagasta',
+  'Atacama',
+  'Coquimbo',
+  'Valparaíso',
+  "O'Higgins",
+  'Maule',
+  'Ñuble',
+  'Biobío',
+  'La Araucanía',
+  'Los Ríos',
+  'Los Lagos',
+  'Aysén',
+  'Magallanes',
+] as const;
+type Region = typeof REGIONES[number];
 
-  return (
-    <div className={className}>
-      <div className="font-semibold" style={{ color: BRAND_BLUE }}>
-        {uf != null && uf > 0 ? `UF ${nfUF.format(uf)}` : 'Consultar'}
-      </div>
-      <div className="text-xs text-slate-500">
-        {clp != null && clp > 0 ? `$ ${nfCLP.format(clp)}` : ''}
-      </div>
-    </div>
-  );
-}
+const COMUNAS_POR_REGION: Record<Region, string[]> = {
+  'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
+  Tarapacá: ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica', 'Huara', 'Camiña', 'Colchane'],
+  Antofagasta: ['Antofagasta', 'Mejillones', 'Taltal', 'Sierra Gorda', 'Calama', 'San Pedro de Atacama', 'María Elena', 'Tocopilla'],
+  Atacama: ['Copiapó', 'Caldera', 'Tierra Amarilla', 'Vallenar', 'Huasco', 'Freirina', 'Chañaral', 'Diego de Almagro'],
+  Coquimbo: ['La Serena', 'Coquimbo', 'Andacollo', 'Vicuña', 'Ovalle', 'Monte Patria', 'Punitaqui', 'Illapel', 'Los Vilos', 'Salamanca'],
+  Valparaíso: ['Valparaíso', 'Viña del Mar', 'Concón', 'Quilpué', 'Villa Alemana', 'Quillota', 'La Calera', 'San Antonio', 'Casablanca', 'Quintero', 'Puchuncaví', 'Limache', 'Olmué'],
+  "O'Higgins": ['Rancagua', 'Machalí', 'Graneros', 'Mostazal', 'Doñihue', 'San Vicente', 'Santa Cruz', 'San Fernando', 'Pichilemu'],
+  Maule: ['Talca', 'Maule', 'San Clemente', 'Cauquenes', 'Curicó', 'Molina', 'Rauco', 'Linares', 'Parral'],
+  'Ñuble': ['Chillán', 'Chillán Viejo', 'San Carlos', 'Coihueco', 'Bulnes', 'Quirihue'],
+  'Biobío': ['Concepción', 'Talcahuano', 'Hualpén', 'San Pedro de la Paz', 'Chiguayante', 'Coronel', 'Lota', 'Los Ángeles', 'Arauco', 'Curanilahue'],
+  'La Araucanía': ['Temuco', 'Padre Las Casas', 'Villarrica', 'Pucón', 'Angol', 'Victoria', 'Nueva Imperial'],
+  'Los Ríos': ['Valdivia', 'Lanco', 'Panguipulli', 'Los Lagos', 'La Unión', 'Río Bueno'],
+  'Los Lagos': ['Puerto Montt', 'Puerto Varas', 'Frutillar', 'Osorno', 'Castro', 'Ancud', 'Quellón'],
+  Aysén: ['Coyhaique', 'Aysén', 'Cisnes', 'Chile Chico'],
+  Magallanes: ['Punta Arenas', 'Puerto Natales', 'Porvenir', 'Cabo de Hornos'],
+  'Metropolitana de Santiago': [
+    'Santiago', 'Providencia', 'Las Condes', 'Vitacura', 'Lo Barnechea', 'Ñuñoa', 'La Reina',
+    'Macul', 'Peñalolén', 'La Florida', 'Puente Alto', 'San Joaquín', 'San Miguel', 'La Cisterna',
+    'Cerrillos', 'Estación Central', 'Quinta Normal', 'Recoleta', 'Independencia', 'Huechuraba',
+    'Conchalí', 'Renca', 'Quilicura', 'Pudahuel', 'Lo Prado', 'Cerro Navia', 'Maipú',
+    'Pedro Aguirre Cerda', 'San Ramón', 'El Bosque', 'La Granja', 'Lo Espejo', 'San Bernardo',
+    'Buin', 'Paine', 'Calera de Tango', 'Talagante', 'Peñaflor', 'Isla de Maipo', 'El Monte',
+    'Padre Hurtado', 'Colina', 'Lampa', 'Tiltil', 'Melipilla', 'Curacaví', 'María Pinto',
+    'San José de Maipo', 'Pirque'
+  ],
+};
 
+const SERVICIOS = [
+  'Comprar',
+  'Vender',
+  'Arrendar',
+  'Gestionar un arriendo',
+  'Consultoría específica',
+];
+
+/* -------------------- Componente -------------------- */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const ufValue = useUf();
 
-  // Swipe refs
+  // swipe
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
 
@@ -111,7 +122,7 @@ export default function HomePage() {
   // Auto-slide
   useEffect(() => {
     if (!destacadas.length) return;
-    timerRef.current && clearInterval(timerRef.current);
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [destacadas.length]);
@@ -124,7 +135,7 @@ export default function HomePage() {
     });
   };
 
-  // Swipe handlers
+  // swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchDeltaX.current = 0;
@@ -137,14 +148,12 @@ export default function HomePage() {
   };
   const handleTouchEnd = () => {
     const dx = touchDeltaX.current;
-    const TH = 50; // umbral
+    const TH = 50;
     if (Math.abs(dx) > TH) {
-      if (dx < 0) go(1);
-      else go(-1);
+      if (dx < 0) go(1); else go(-1);
     }
     touchStartX.current = null;
     touchDeltaX.current = 0;
-    // reanudar auto-slide
     if (destacadas.length) {
       timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
     }
@@ -158,122 +167,126 @@ export default function HomePage() {
     return imgs || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
   }, [active]);
 
+  const lineaSecundaria = [
+    capFirst(active?.comuna),
+    capFirst(active?.tipo),
+    capFirst(active?.operacion),
+  ].filter(Boolean).join(' · ');
+
+  /* --------- Estado formulario referidos (datalist + formato UF) --------- */
+  const [regionInput, setRegionInput] = useState('');
+  const [comunaInput, setComunaInput] = useState('');
+  const [minUF, setMinUF] = useState(''); // formateado con miles
+  const [maxUF, setMaxUF] = useState('');
+
+  const regionSel = REGIONES.find((r) => r.toLowerCase() === regionInput.toLowerCase()) || '';
+  const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
+
+  const formatUF = (raw: string) => {
+    // Dejar solo dígitos, quitar ceros iniciales redundantes y formatear con miles (es-CL) sin decimales
+    const digits = raw.replace(/\D+/g, '');
+    if (!digits) return '';
+    const n = parseInt(digits, 10);
+    return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n);
+  };
+
+  // formateadores para el precio dual (UF arriba, CLP abajo)
+  const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+  const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
   return (
     <main className="bg-white">
-      {/* ========= HERO / CARRUSEL ========= */}
+      {/* ========= HERO ========= */}
       <section
         className="relative w-full overflow-hidden isolate"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Fondo */}
         <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} aria-hidden />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        {/* Contenido del hero (casi pantalla completa) */}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* BOTÓN CTA */}
-            <div className="ml-6 md:ml-10 mb-3">
-              <Link
-                href="/propiedades"
-                className="inline-flex items-center px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
-                style={{
-                  boxShadow:
-                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
-                }}
-              >
-                Ver Propiedades
-              </Link>
-            </div>
-
-            {/* TARJETA RESUMEN */}
-            <div className="ml-6 md:ml-10 bg-white/65 backdrop-blur-sm shadow-xl p-4 md:p-5 rounded-none max-w-md">
-              <h1 className="heading-serif text-[1.4rem] md:text-2xl font-semibold text-gray-900">
+            <div className="bg-white/65 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[520px]">
+              <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
-              <p className="mt-1 text-sm text-gray-600">
-                {active?.comuna ? `${active.comuna} · ` : ''}{active?.tipo ?? '—'} · {active?.operacion ?? '—'}
-              </p>
+              <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                <div className="bg-gray-50 p-2.5 md:p-3">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <Bed className="h-4 w-4" /> Dormitorios
                   </div>
-                  <div className="text-base font-semibold">{active?.dormitorios ?? '—'}</div>
+                  <div className="text-base">{active?.dormitorios ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                <div className="bg-gray-50 p-2.5 md:p-3">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <ShowerHead className="h-4 w-4" /> Baños
                   </div>
-                  <div className="text-base font-semibold">{active?.banos ?? '—'}</div>
+                  <div className="text-base">{active?.banos ?? '—'}</div>
                 </div>
-                <div className="bg-gray-50/70 p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                    <Ruler className="h-4 w-4" /> Área útil (m²)
+                <div className="bg-gray-50 p-2.5 md:p-3">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
+                    <Ruler className="h-4 w-4" /> Área (m²)
                   </div>
-                  <div className="text-base font-semibold">{active?.superficie_util_m2 ?? '—'}</div>
+                  <div className="text-base">{active?.superficie_util_m2 ?? '—'}</div>
                 </div>
               </div>
 
-              {/* ====== SOLO CAMBIO #1 y #2 (precio UF/CLP + botón del ancho de un cuadro) ====== */}
+              {/* ===== Acciones en 3 columnas (mismo ancho que los cuadritos de arriba) ===== */}
               <div className="mt-4 grid grid-cols-3 gap-3 items-center">
-                {/* Col 1: Precio UF/CLP (azul corporativo + CLP gris) */}
-                <PriceTag
-                  priceUF={active?.precio_uf ?? undefined}
-                  priceCLP={active?.precio_clp ?? undefined}
-                  ufValue={ufValue}
-                  className="text-left"
-                />
+                {/* Col 1: Ver más (izquierda) */}
+                <div>
+                  {active?.id ? (
+                    <Link
+                      href={`/propiedades/${active.id}`}
+                      className="inline-flex w-full items-center justify-center px-3 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
+                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
+                    >
+                      Ver más
+                    </Link>
+                  ) : null}
+                </div>
 
-                {/* Col 2: Botón “Ver más” del mismo ancho que los cuadros de arriba */}
-                {active?.id ? (
-                  <Link
-                    href={`/propiedades/${active.id}`}
-                    className="inline-flex items-center justify-center w-full border bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-none font-sans"
-                    style={{ borderColor: BRAND_BLUE }}
-                  >
-                    Ver más
-                  </Link>
-                ) : <div />}
-
-                {/* Col 3: vacío para mantener la grilla de 3 y el equilibrio visual */}
+                {/* Col 2: vacío para mantener simetría (mismo ancho) */}
                 <div />
+
+                {/* Col 3: Precio UF/CLP (derecha, dos líneas) */}
+                <div className="text-right">
+                  <div className="text-[#0A2E57] font-semibold">
+                    {typeof active?.precio_uf === 'number' && active.precio_uf > 0
+                      ? `UF ${nfUF.format(active.precio_uf)}`
+                      : 'Consultar'}
+                  </div>
+                  <div className="text-xs text-slate-600">
+                    {typeof active?.precio_clp === 'number' && active.precio_clp > 0
+                      ? `$ ${nfCLP.format(active.precio_clp)}`
+                      : ''}
+                  </div>
+                </div>
               </div>
-              {/* ====== FIN de cambios ====== */}
+              {/* ===== Fin acciones ===== */}
             </div>
           </div>
 
           {/* Flechas */}
           {destacadas.length > 1 && (
             <>
-              <button
-                aria-label="Anterior"
-                onClick={() => go(-1)}
-                className="group absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2"
-              >
+              <button aria-label="Anterior" onClick={() => go(-1)} className="group absolute left-4 md:left-6 top-[42%] md:top-[45%] -translate-y-1/2 p-2">
                 <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
-              <button
-                aria-label="Siguiente"
-                onClick={() => go(1)}
-                className="group absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2"
-              >
+              <button aria-label="Siguiente" onClick={() => go(1)} className="group absolute right-4 md:right-6 top-[42%] md:top-[45%] -translate-y-1/2 p-2">
                 <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
             </>
           )}
 
-          {/* Indicadores */}
           {destacadas.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {destacadas.map((_, idx) => (
-                <span
-                  key={idx}
-                  className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`}
-                />
+                <span key={idx} className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`} />
               ))}
             </div>
           )}
@@ -284,22 +297,26 @@ export default function HomePage() {
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
-          <h2 className="heading-serif text-2xl md:text-3xl font-semibold">Equipo</h2>
+          <h2 className="text-2xl md:text-3xl">Equipo</h2>
         </div>
 
         <p className="mt-3 max-w-4xl text-slate-700">
           En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
-          cada día combinamos <span className="font-semibold">criterio arquitectónico</span>, <span className="font-semibold">respaldo legal</span> y <span className="font-semibold">mirada financiera</span> para que cada decisión inmobiliaria sea <span className="font-semibold">segura y rentable</span>.
+          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera para que cada decisión inmobiliaria sea segura y rentable.
         </p>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { nombre: 'Carolina San Martín', cargo: 'SOCIA FUNDADORA', profesion: 'Arquitecta', foto: '/team/carolina-san-martin.png' },
-            { nombre: 'Alberto Gesswein', cargo: 'SOCIO', profesion: 'Periodista y Gestor de Proyectos', foto: '/team/alberto-gesswein.png' },
-            { nombre: 'Jan Gesswein', cargo: 'SOCIO', profesion: 'Abogado', foto: '/team/jan-gesswein.png' },
-            { nombre: 'Kay Gesswein', cargo: 'SOCIO', profesion: 'Ingeniero Comercial · Magíster en Finanzas', foto: '/team/kay-gesswein.png' },
+            { nombre: 'Carolina San Martín', cargo: 'Socia fundadora', profesion: 'Arquitecta', foto: '/team/carolina-san-martin.png' },
+            { nombre: 'Alberto Gesswein', cargo: 'Socio', profesion: 'Periodista y gestor de proyectos', foto: '/team/alberto-gesswein.png' },
+            { nombre: 'Jan Gesswein', cargo: 'Socio', profesion: 'Abogado', foto: '/team/jan-gesswein.png' },
+            { nombre: 'Kay Gesswein', cargo: 'Socio', profesion: 'Ingeniero comercial · Magíster en finanzas', foto: '/team/kay-gesswein.png' },
           ].map((m) => (
-            <article key={m.nombre} className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-lg transition">
+            <article
+              key={m.nombre}
+              className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-lg transition"
+              tabIndex={0}
+            >
               <div className="aspect-[3/4] w-full bg-slate-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -310,13 +327,29 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay: visible siempre en móvil, hover en desktop */}
-              <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/80 md:bg-[#0A2E57]/0 md:group-hover:bg-[#0A2E57]/90 transition duration-300" />
-              <div className="absolute inset-0 flex items-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition duration-300">
+              {/* Overlay: oculto por defecto; aparece en hover/active/focus */}
+              <div className="
+                pointer-events-none absolute inset-0
+                bg-[#0A2E57]/0
+                group-hover:bg-[#0A2E57]/90
+                group-active:bg-[#0A2E57]/90
+                focus-within:bg-[#0A2E57]/90
+                transition duration-300
+              " />
+
+              {/* Texto: aparece solo al interactuar */}
+              <div className="
+                absolute inset-0 flex items-end
+                opacity-0
+                group-hover:opacity-100
+                group-active:opacity-100
+                focus-within:opacity-100
+                transition duration-300
+              ">
                 <div className="w-full p-4 text-white">
-                  <h3 className="heading-serif text-lg font-semibold leading-snug">{m.nombre}</h3>
-                  <p className="text-xs font-semibold uppercase tracking-wider mt-1">{m.cargo}</p>
-                  <p className="mt-1 text-sm text-white/90">{m.profesion}</p>
+                  <h3 className="text-lg leading-snug">{m.nombre}</h3>
+                  <p className="text-sm mt-1">{m.cargo}</p>
+                  <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
                 </div>
               </div>
             </article>
@@ -331,93 +364,128 @@ export default function HomePage() {
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="heading-serif mt-3 text-2xl md:text-3xl font-semibold">
-              Programa de Referidos con Exclusividad
-            </h2>
+            <h2 className="mt-3 text-2xl md:text-3xl">Programa de referidos con exclusividad</h2>
             <p className="mt-2 text-slate-600">
-              ¿Conoces a alguien que busca propiedad? Refierelo y obtén beneficios exclusivos.
+              ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
             </p>
           </div>
 
           <div className="px-6 pb-8">
-            <h3 className="heading-serif text-lg font-semibold">Tus datos (Referente)</h3>
+            <h3 className="text-lg">Tus datos (referente)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Tu nombre completo" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="Tu nombre completo" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="tu@email.com" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="tu@email.com" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
               </div>
             </div>
 
-            <h3 className="heading-serif mt-8 text-lg font-semibold">Datos del referido</h3>
+            <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
+              {/* Servicio necesita - datalist (buscable) */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="Nombre del referido" />
+                <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
+                <input
+                  list="servicios-list"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
+                  placeholder="Seleccionar"
+                />
+                <datalist id="servicios-list">
+                  {SERVICIOS.map((s) => <option key={s} value={s} />)}
+                </datalist>
               </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="email@referido.com" />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Teléfono del referido</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="+56 9 1234 5678" />
-              </div>
-              <div />
-            </div>
 
-            <h3 className="heading-serif mt-8 text-lg font-semibold">Preferencias del referido</h3>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              {/* Tipo de propiedad - datalist */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <select className="w-full rounded-md border border-slate-300 px-3 py-2">
-                  <option>Seleccionar tipo</option>
-                  <option>Casa</option>
-                  <option>Departamento</option>
-                  <option>Oficina</option>
-                  <option>Terreno</option>
-                </select>
+                <input
+                  list="tipo-prop-list"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
+                  placeholder="Seleccionar tipo"
+                />
+                <datalist id="tipo-prop-list">
+                  <option value="Casa" />
+                  <option value="Departamento" />
+                  <option value="Oficina" />
+                  <option value="Terreno" />
+                </datalist>
+              </div>
+
+              {/* Región - datalist (buscable) */}
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Región</label>
+                <input
+                  list="regiones-list"
+                  value={regionInput}
+                  onChange={(e) => {
+                    setRegionInput(e.target.value);
+                    setComunaInput(''); // limpiar comuna si cambia región
+                  }}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-500 placeholder-slate-400"
+                  placeholder="Seleccionar región"
+                />
+                <datalist id="regiones-list">
+                  {REGIONES.map((r) => <option key={r} value={r} />)}
+                </datalist>
+              </div>
+
+              {/* Comuna dependiente - datalist */}
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Comuna</label>
+                <input
+                  list="comunas-list"
+                  value={comunaInput}
+                  onChange={(e) => setComunaInput(e.target.value)}
+                  disabled={!regionSel}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 bg-gray-50 text-slate-500 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+                  placeholder={regionSel ? 'Seleccionar comuna' : 'Selecciona una región primero'}
+                />
+                <datalist id="comunas-list">
+                  {regionSel && comunas.map((c) => <option key={c} value={c} />)}
+                </datalist>
+              </div>
+
+              {/* Presupuestos UF (formato con miles y sin decimales mientras escribes) */}
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
+                <input
+                  value={minUF}
+                  onChange={(e) => setMinUF(formatUF(e.target.value))}
+                  inputMode="numeric"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="0"
+                />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Comuna de interés</label>
-                <select className="w-full rounded-md border border-slate-300 px-3 py-2">
-                  <option>Seleccionar comuna</option>
-                  <option>Las Condes</option>
-                  <option>Vitacura</option>
-                  <option>Lo Barnechea</option>
-                  <option>Providencia</option>
-                </select>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
+                <input
+                  value={maxUF}
+                  onChange={(e) => setMaxUF(formatUF(e.target.value))}
+                  inputMode="numeric"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="0"
+                />
               </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (CLP)</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (CLP)</label>
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="0" />
-              </div>
+
+              {/* Comentarios */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
-                <textarea className="w-full rounded-md border border-slate-300 px-3 py-2" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
+                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
               </div>
             </div>
 
-            {/* Botón con el mismo estilo que “Ver Propiedades” */}
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-normal tracking-wide text-white bg-[#0A2E57] rounded-none font-sans"
-                style={{
-                  boxShadow:
-                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
-                }}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
+                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
               >
                 <Gift className="h-4 w-4" /> Enviar referido
               </button>
@@ -432,6 +500,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
