@@ -42,7 +42,7 @@ function capFirst(s?: string | null) {
 }
 
 /* -------------------- Datos Chile (para formulario de referidos) -------------------- */
-const REGIONES = [
+const REGIONES: readonly string[] = [
   'Arica y Parinacota',
   'Tarapacá',
   'Antofagasta',
@@ -59,8 +59,8 @@ const REGIONES = [
   'Aysén',
   'Magallanes',
   'Metropolitana de Santiago',
-] as const;
-type Region = typeof REGIONES[number];
+];
+type Region = (typeof REGIONES)[number];
 
 const COMUNAS_POR_REGION: Record<Region, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
@@ -98,11 +98,39 @@ const SERVICIOS = [
   'Consultoría específica',
 ];
 
+const TIPO_PROPIEDAD = [
+  'Casa',
+  'Departamento',
+  'Bodega',
+  'Oficina',
+  'Local comercial',
+  'Terreno',
+];
+
+/* ===== util: romanos para regiones (solo display) ===== */
+const ROMANOS = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI'];
+const displayRegion = (r: Region) => {
+  const idx = REGIONES.indexOf(r);
+  const roman = ROMANOS[idx] ?? '';
+  return roman ? `${roman} - ${r}` : r;
+};
+const extractRegionName = (value: string): Region | '' => {
+  // admite "X - Nombre" o "Nombre"
+  const v = value.includes(' - ') ? (value.split(' - ').slice(1).join(' - ')) : value;
+  const match = REGIONES.find((r) => r.toLowerCase() === v.trim().toLowerCase());
+  return (match as Region) || '';
+};
+
 /* -------------------- Componente -------------------- */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // refs para medir ancho/alto y ajustar botón "Ver más"
+  const statDormRef = useRef<HTMLDivElement | null>(null);
+  const priceBoxRef = useRef<HTMLDivElement | null>(null);
+  const verMasRef = useRef<HTMLAnchorElement | null>(null);
 
   // swipe
   const touchStartX = useRef<number | null>(null);
@@ -117,10 +145,10 @@ export default function HomePage() {
         const json = await res.json();
         if (!mounted) return;
         const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        // reemplazo "Consultar" por un precio ficticio razonable para mostrar CLP en el héroe
+        // si viene "Consultar", asigno 2300 UF para no dejar el precio vacío (solo display)
         const fixed = data.map((p) => {
           if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
-            return { ...p, precio_uf: 2300 }; // ej. 2.300 UF para no mostrar "Consultar"
+            return { ...p, precio_uf: 2300 };
           }
           return p;
         });
@@ -207,15 +235,34 @@ export default function HomePage() {
     return 0;
   }, [active, ufHoy]);
 
+  /* ====== medir ancho/alto para el botón ====== */
+  const applyButtonSize = () => {
+    const w = statDormRef.current?.offsetWidth;
+    const h = priceBoxRef.current?.offsetHeight;
+    const a = verMasRef.current;
+    if (a && w) a.style.width = `${w}px`;
+    if (a && h) a.style.height = `${h}px`;
+    if (a) a.style.display = 'inline-flex';
+    if (a) a.style.alignItems = 'center';
+    if (a) a.style.justifyContent = 'center';
+  };
+  useEffect(() => {
+    applyButtonSize();
+    const ro = new ResizeObserver(applyButtonSize);
+    if (statDormRef.current) ro.observe(statDormRef.current);
+    if (priceBoxRef.current) ro.observe(priceBoxRef.current);
+    return () => ro.disconnect();
+  }, [active]);
+
   /* --------- Estado formulario referidos --------- */
-  const [regionInput, setRegionInput] = useState('');
+  const [regionInput, setRegionInput] = useState('');   // muestra "X - Nombre" o vacío
   const [comunaInput, setComunaInput] = useState('');
-  const [servicioInput, setServicioInput] = useState(SERVICIOS[0]);
-  const [tipoInput, setTipoInput] = useState('Casa');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
+  const [servicio, setServicio] = useState('Comprar');
+  const [tipo, setTipo] = useState('Casa');
 
-  const regionSel = REGIONES.find((r) => r.toLowerCase() === regionInput.toLowerCase()) || '';
+  const regionSel = extractRegionName(regionInput);
   const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
 
   const formatUFinput = (raw: string) => {
@@ -244,7 +291,7 @@ export default function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* Card del destacado (posición consistente) */}
+            {/* Card del destacado */}
             <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[620px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
@@ -252,7 +299,7 @@ export default function HomePage() {
               <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50 p-2.5 md:p-3">
+                <div ref={statDormRef} className="bg-gray-50 p-2.5 md:p-3">
                   <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
                     <Bed className="h-4 w-4" /> Dormitorios
                   </div>
@@ -272,21 +319,23 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Acciones: IZQ Ver más (más ancho y más alto) | DER Precio */}
+              {/* Acciones: IZQ Ver más | DER Precio (UF arriba / CLP abajo) */}
               <div className="mt-4 flex items-end gap-3">
                 <div>
                   {active?.id ? (
                     <Link
+                      ref={verMasRef}
                       href={`/propiedades/${active.id}`}
-                      className="inline-flex items-center justify-center w-[320px] h-12 text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+                      className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
                     >
                       Ver más
                     </Link>
                   ) : null}
                 </div>
 
-                <div className="ml-auto text-right">
-                  <div className="text-[1.4rem] md:text-2xl font-semibold text-[#0A2E57] leading-none">
+                <div ref={priceBoxRef} className="ml-auto text-right">
+                  <div className="text-[1.25rem] md:text-[1.35rem] font-semibold text-[#0A2E57] leading-none">
                     {precioUfHero > 0 ? fmtUF(precioUfHero) : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
                   </div>
                   <div className="text-sm md:text-base text-slate-600 mt-1">
@@ -443,71 +492,63 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio (input con datalist) */}
+              {/* Servicio: input + datalist (escribible y seleccionable) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <input
-                  list="dl-servicios"
-                  value={servicioInput}
-                  onChange={(e) => setServicioInput(e.target.value)}
+                  list="servicios-list"
+                  value={servicio}
+                  onChange={(e) => setServicio(e.target.value)}
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
                   placeholder="Seleccionar o escribir…"
                 />
-                <datalist id="dl-servicios">
+                <datalist id="servicios-list">
                   {SERVICIOS.map((s) => <option key={s} value={s} />)}
                 </datalist>
               </div>
 
-              {/* Tipo de propiedad (input con datalist) */}
+              {/* Tipo de propiedad: input + datalist */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <input
-                  list="dl-tipos"
-                  value={tipoInput}
-                  onChange={(e) => setTipoInput(e.target.value)}
+                  list="tipos-prop-list"
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value)}
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
                   placeholder="Seleccionar o escribir…"
                 />
-                <datalist id="dl-tipos">
-                  <option value="Casa" />
-                  <option value="Departamento" />
-                  <option value="Bodega" />
-                  <option value="Oficina" />
-                  <option value="Local comercial" />
-                  <option value="Terreno" />
+                <datalist id="tipos-prop-list">
+                  {TIPO_PROPIEDAD.map((t) => <option key={t} value={t} />)}
                 </datalist>
               </div>
 
-              {/* Región (input con datalist) */}
+              {/* Región / Comuna con display romano – nombre (input + datalist) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <input
-                  list="dl-regiones"
+                  list="regiones-list"
                   value={regionInput}
                   onChange={(e) => { setRegionInput(e.target.value); setComunaInput(''); }}
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
                   placeholder="Seleccionar o escribir…"
                 />
-                <datalist id="dl-regiones">
-                  {REGIONES.map((r) => <option key={r} value={r} />)}
+                <datalist id="regiones-list">
+                  {REGIONES.map((r) => <option key={r} value={displayRegion(r as Region)} />)}
                 </datalist>
               </div>
 
-              {/* Comuna dependiente (input con datalist) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <input
-                  list="dl-comunas"
+                  list="comunas-list"
                   value={comunaInput}
                   onChange={(e) => setComunaInput(e.target.value)}
                   disabled={!regionSel}
                   className="w-full rounded-md border border-slate-300 px-3 py-2 bg-gray-50 text-slate-700 disabled:bg-gray-100 disabled:text-slate-400"
                   placeholder={regionSel ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
                 />
-                <datalist id="dl-comunas">
-                  {regionSel && (COMUNAS_POR_REGION[regionSel] || []).map((c) => (
-                    <option key={c} value={c} />
-                  ))}
+                <datalist id="comunas-list">
+                  {regionSel && (COMUNAS_POR_REGION[regionSel] || []).map((c) => <option key={c} value={c} />)}
                 </datalist>
               </div>
 
@@ -518,7 +559,7 @@ export default function HomePage() {
                   value={minUF}
                   onChange={(e) => setMinUF(formatUFinput(e.target.value))}
                   inputMode="numeric"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
                   placeholder="0"
                 />
               </div>
@@ -528,7 +569,7 @@ export default function HomePage() {
                   value={maxUF}
                   onChange={(e) => setMaxUF(formatUFinput(e.target.value))}
                   inputMode="numeric"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
                   placeholder="0"
                 />
               </div>
@@ -536,7 +577,7 @@ export default function HomePage() {
               {/* Comentarios */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
-                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
+                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
               </div>
             </div>
 
@@ -559,6 +600,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
