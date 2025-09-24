@@ -42,7 +42,6 @@ function capFirst(s?: string | null) {
 }
 
 /* -------------------- Datos Chile (para formulario de referidos) -------------------- */
-/** Nombres canónicos (internos) */
 const REGIONES: readonly string[] = [
   'Arica y Parinacota',
   'Tarapacá',
@@ -60,41 +59,8 @@ const REGIONES: readonly string[] = [
   'Aysén',
   'Magallanes',
   'Metropolitana de Santiago',
-] as const;
-type Region = (typeof REGIONES)[number];
-
-/** Orden y número romano EXACTOS como en la página de Propiedades
- * (incluye XIII – Metropolitana de Santiago al final, tal como la quieres ver). */
-const REGIONES_CON_ROMANO: Array<{ name: Region; roman: string }> = [
-  { roman: 'I',   name: 'Arica y Parinacota' },
-  { roman: 'II',  name: 'Tarapacá' },
-  { roman: 'III', name: 'Antofagasta' },
-  { roman: 'IV',  name: 'Atacama' },
-  { roman: 'V',   name: 'Coquimbo' },
-  { roman: 'VI',  name: 'Valparaíso' },
-  { roman: 'VII', name: "O'Higgins" },
-  { roman: 'VIII',name: 'Maule' },
-  { roman: 'XVI', name: 'Ñuble' },            // así aparece en tu lista de Propiedades
-  { roman: 'XII', name: 'Biobío' },           // así aparece en tu lista de Propiedades
-  { roman: 'IX',  name: 'La Araucanía' },
-  { roman: 'XIV', name: 'Los Ríos' },
-  { roman: 'X',   name: 'Los Lagos' },
-  { roman: 'XI',  name: 'Aysén' },
-  { roman: 'XV',  name: 'Magallanes' },
-  { roman: 'XIII',name: 'Metropolitana de Santiago' }, // Metropolitana como XIII
 ];
-
-/** Display “ROMANO – Nombre” */
-const displayRegion = (r: Region) => {
-  const item = REGIONES_CON_ROMANO.find(it => it.name === r);
-  return item ? `${item.roman} - ${item.name}` : r;
-};
-/** Acepta “ROMANO - Nombre” o solo “Nombre” y devuelve el nombre canónico */
-const extractRegionName = (value: string): Region | '' => {
-  const v = value.replace(/^[IVXLCDM]+\s*-\s*/i, '').trim();
-  const match = REGIONES.find((r) => r.toLowerCase() === v.toLowerCase());
-  return (match as Region) || '';
-};
+type Region = (typeof REGIONES)[number];
 
 const COMUNAS_POR_REGION: Record<Region, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
@@ -140,6 +106,19 @@ const TIPO_PROPIEDAD = [
   'Local comercial',
   'Terreno',
 ];
+
+/* ===== util: romanos para regiones (solo display) ===== */
+const ROMANOS = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI'];
+const displayRegion = (r: Region) => {
+  const idx = REGIONES.indexOf(r);
+  const roman = ROMANOS[idx] ?? '';
+  return roman ? `${roman} - ${r}` : r;
+};
+const extractRegionName = (value: string): Region | '' => {
+  const v = value.includes(' - ') ? (value.split(' - ').slice(1).join(' - ')) : value;
+  const match = REGIONES.find((r) => r.toLowerCase() === v.trim().toLowerCase());
+  return (match as Region) || '';
+};
 
 /* -------------------- Componente -------------------- */
 export default function HomePage() {
@@ -274,7 +253,7 @@ export default function HomePage() {
   }, [active]);
 
   /* --------- Estado formulario referidos --------- */
-  const [regionInput, setRegionInput] = useState('');   // muestra "ROMANO - Nombre" o vacío
+  const [regionInput, setRegionInput] = useState('');   // muestra "X - Nombre" o vacío
   const [comunaInput, setComunaInput] = useState('');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
@@ -441,18 +420,15 @@ export default function HomePage() {
                 "
               />
 
-              {/* Texto sobre la foto al interactuar */}
+              {/* Texto sobre la foto (abajo-izquierda al interactuar) */}
               <div
                 className="
-                  absolute inset-0 flex items=end
-                  opacity-0
-                  group-hover:opacity-100
-                  group-active:opacity-100
-                  focus-within:opacity-100
+                  pointer-events-none absolute inset-0 flex items-end justify-start
+                  opacity-0 group-hover:opacity-100 group-active:opacity-100 focus-within:opacity-100
                   transition duration-300
                 "
               >
-                <div className="w-full p-4 text-white">
+                <div className="p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
                   <p className="text-sm mt-1">{m.cargo}</p>
                   <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
@@ -511,37 +487,31 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio: input + datalist (escribible y seleccionable) */}
+              {/* Servicio: SELECT con todas las opciones */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
-                <input
-                  list="servicios-list"
+                <select
                   value={servicio}
                   onChange={(e) => setServicio(e.target.value)}
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-                  placeholder="Seleccionar o escribir…"
-                />
-                <datalist id="servicios-list">
-                  {SERVICIOS.map((s) => <option key={s} value={s} />)}
-                </datalist>
+                >
+                  {SERVICIOS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
 
-              {/* Tipo de propiedad: input + datalist */}
+              {/* Tipo de propiedad: SELECT con todas las opciones */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <input
-                  list="tipos-prop-list"
+                <select
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value)}
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-                  placeholder="Seleccionar o escribir…"
-                />
-                <datalist id="tipos-prop-list">
-                  {TIPO_PROPIEDAD.map((t) => <option key={t} value={t} />)}
-                </datalist>
+                >
+                  {TIPO_PROPIEDAD.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
               </div>
 
-              {/* Región / Comuna con display romano – nombre (input + datalist) */}
+              {/* Región (input + datalist con romanos) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <input
@@ -552,12 +522,11 @@ export default function HomePage() {
                   placeholder="Seleccionar o escribir…"
                 />
                 <datalist id="regiones-list">
-                  {REGIONES_CON_ROMANO.map((r) => (
-                    <option key={r.name} value={`${r.roman} - ${r.name}`} />
-                  ))}
+                  {REGIONES.map((r) => <option key={r} value={displayRegion(r as Region)} />)}
                 </datalist>
               </div>
 
+              {/* Comuna dependiente */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <input
