@@ -470,32 +470,34 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* ¿Qué servicio necesita? — SELECT con mismo look rectangular */}
+              {/* ¿Qué servicio necesita? — INPUT + DATALIST (igual a Región: permite escribir y elegir) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
-                <select
+                <input
+                  list="servicios-list"
                   value={servicio}
                   onChange={(e) => setServicio(e.target.value)}
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-                >
-                  {SERVICIOS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                  placeholder="Seleccionar o escribir…"
+                />
+                <datalist id="servicios-list">
+                  {SERVICIOS.map((s) => <option key={s} value={s} />)}
+                </datalist>
               </div>
 
-              {/* Tipo de propiedad — SELECT con mismo look rectangular */}
+              {/* Tipo de propiedad — INPUT + DATALIST (mismo look que Región) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <select
+                <input
+                  list="tipos-prop-list"
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value)}
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-                >
-                  {TIPO_PROPIEDAD.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+                  placeholder="Seleccionar o escribir…"
+                />
+                <datalist id="tipos-prop-list">
+                  {TIPO_PROPIEDAD.map((t) => <option key={t} value={t} />)}
+                </datalist>
               </div>
 
               {/* Región — input + datalist con romanos */}
@@ -577,6 +579,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
