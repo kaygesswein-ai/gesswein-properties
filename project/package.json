@@ -4,11 +4,11 @@
   "version": "0.1.0",
   "engines": { "node": ">=18.18.0" },
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev",
     "build": "next build",
-    "start": "next start -p 3000",
+    "start": "next start",
     "lint": "next lint",
-    "vercel-build": "next build"
+    "postinstall": "node -e \"try{require('next/dist/build/swc');console.log('SWC OK')}catch(e){console.log('Preparando SWC…')}\""
   },
   "dependencies": {
     "next": "14.2.5",
