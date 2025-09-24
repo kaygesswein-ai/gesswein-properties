@@ -253,7 +253,7 @@ export default function HomePage() {
   }, [active]);
 
   /* --------- Estado formulario referidos --------- */
-  const [regionInput, setRegionInput] = useState('');   // muestra "X - Nombre" o vacío
+  const [regionInput, setRegionInput] = useState('');
   const [comunaInput, setComunaInput] = useState('');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
@@ -317,7 +317,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Acciones: IZQ Ver más | DER Precio (UF arriba / CLP abajo) */}
+              {/* Acciones: IZQ Ver más | DER Precio */}
               <div className="mt-4 flex items-end gap-3">
                 <div>
                   {active?.id ? (
@@ -408,26 +408,9 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay azul (hover/touch) */}
-              <div
-                className="
-                  pointer-events-none absolute inset-0
-                  bg-[#0A2E57]/0
-                  group-hover:bg-[#0A2E57]/90
-                  group-active:bg-[#0A2E57]/90
-                  focus-within:bg-[#0A2E57]/90
-                  transition duration-300
-                "
-              />
-
-              {/* Texto sobre la foto (abajo-izquierda al interactuar) */}
-              <div
-                className="
-                  pointer-events-none absolute inset-0 flex items-end justify-start
-                  opacity-0 group-hover:opacity-100 group-active:opacity-100 focus-within:opacity-100
-                  transition duration-300
-                "
-              >
+              {/* Overlay azul y texto en la esquina inferior izquierda al interactuar */}
+              <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0 group-hover:bg-[#0A2E57]/90 group-active:bg-[#0A2E57]/90 focus-within:bg-[#0A2E57]/90 transition duration-300" />
+              <div className="pointer-events-none absolute inset-0 flex items-end justify-start opacity-0 group-hover:opacity-100 group-active:opacity-100 focus-within:opacity-100 transition duration-300">
                 <div className="p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
                   <p className="text-sm mt-1">{m.cargo}</p>
@@ -487,37 +470,35 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio: MISMO FORMATO QUE REGIÓN (input + datalist) */}
+              {/* ¿Qué servicio necesita? — SELECT con mismo look rectangular */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
-                <input
-                  list="servicios-list"
+                <select
                   value={servicio}
                   onChange={(e) => setServicio(e.target.value)}
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-                  placeholder="Seleccionar o escribir…"
-                />
-                <datalist id="servicios-list">
-                  {SERVICIOS.map((s) => <option key={s} value={s} />)}
-                </datalist>
+                >
+                  {SERVICIOS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Tipo de propiedad: MISMO FORMATO QUE REGIÓN (input + datalist) */}
+              {/* Tipo de propiedad — SELECT con mismo look rectangular */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <input
-                  list="tipos-prop-list"
+                <select
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value)}
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-                  placeholder="Seleccionar o escribir…"
-                />
-                <datalist id="tipos-prop-list">
-                  {TIPO_PROPIEDAD.map((t) => <option key={t} value={t} />)}
-                </datalist>
+                >
+                  {TIPO_PROPIEDAD.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Región (input + datalist con romanos) */}
+              {/* Región — input + datalist con romanos */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <input
@@ -596,6 +577,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
