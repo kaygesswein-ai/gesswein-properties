@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
-import useUf from '@/hooks/useUf';
+import useUf from '../hooks/useUf';
 
 /* -------------------- Tipos -------------------- */
 type Property = {
@@ -24,12 +24,25 @@ type Property = {
 };
 
 /* -------------------- Utilidades -------------------- */
-const capFirst = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
-const fmt0 = (n: number) => new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n);
+function fmtUF(n: number) {
+  return `UF ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`;
+}
+function fmtCLP(n: number) {
+  return `$ ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`;
+}
+function fmtPrecioFallback(pUf?: number | null, pClp?: number | null) {
+  if (typeof pUf === 'number' && pUf > 0) return fmtUF(pUf);
+  if (typeof pClp === 'number' && pClp > 0) return fmtCLP(pClp);
+  return 'Consultar';
+}
+function capFirst(s?: string | null) {
+  if (!s) return '';
+  const lower = s.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
 
-/* -------------------- Datos Chile (sin tocar tu contenido) -------------------- */
+/* -------------------- Datos Chile (para formulario de referidos) -------------------- */
 const REGIONES = [
-  'Metropolitana de Santiago',
   'Arica y Parinacota',
   'Tarapacá',
   'Antofagasta',
@@ -45,6 +58,7 @@ const REGIONES = [
   'Los Lagos',
   'Aysén',
   'Magallanes',
+  'Metropolitana de Santiago',
 ] as const;
 type Region = typeof REGIONES[number];
 
@@ -65,21 +79,27 @@ const COMUNAS_POR_REGION: Record<Region, string[]> = {
   Aysén: ['Coyhaique', 'Aysén', 'Cisnes', 'Chile Chico'],
   Magallanes: ['Punta Arenas', 'Puerto Natales', 'Porvenir', 'Cabo de Hornos'],
   'Metropolitana de Santiago': [
-    'Santiago', 'Providencia', 'Las Condes', 'Vitacura', 'Lo Barnechea', 'Ñuñoa', 'La Reina', 'Macul', 'Peñalolén',
-    'La Florida', 'Puente Alto', 'San Joaquín', 'San Miguel', 'La Cisterna', 'Cerrillos', 'Estación Central',
-    'Quinta Normal', 'Recoleta', 'Independencia', 'Huechuraba', 'Conchalí', 'Renca', 'Quilicura', 'Pudahuel',
-    'Lo Prado', 'Cerro Navia', 'Maipú', 'Pedro Aguirre Cerda', 'San Ramón', 'El Bosque', 'La Granja', 'Lo Espejo',
-    'San Bernardo', 'Buin', 'Paine', 'Calera de Tango', 'Talagante', 'Peñaflor', 'Isla de Maipo', 'El Monte',
-    'Padre Hurtado', 'Colina', 'Lampa', 'Tiltil', 'Melipilla', 'Curacaví', 'María Pinto', 'San José de Maipo', 'Pirque'
+    'Santiago', 'Providencia', 'Las Condes', 'Vitacura', 'Lo Barnechea', 'Ñuñoa', 'La Reina',
+    'Macul', 'Peñalolén', 'La Florida', 'Puente Alto', 'San Joaquín', 'San Miguel', 'La Cisterna',
+    'Cerrillos', 'Estación Central', 'Quinta Normal', 'Recoleta', 'Independencia', 'Huechuraba',
+    'Conchalí', 'Renca', 'Quilicura', 'Pudahuel', 'Lo Prado', 'Cerro Navia', 'Maipú',
+    'Pedro Aguirre Cerda', 'San Ramón', 'El Bosque', 'La Granja', 'Lo Espejo', 'San Bernardo',
+    'Buin', 'Paine', 'Calera de Tango', 'Talagante', 'Peñaflor', 'Isla de Maipo', 'El Monte',
+    'Padre Hurtado', 'Colina', 'Lampa', 'Tiltil', 'Melipilla', 'Curacaví', 'María Pinto',
+    'San José de Maipo', 'Pirque'
   ],
 };
 
-const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
+const SERVICIOS = [
+  'Comprar',
+  'Vender',
+  'Arrendar',
+  'Gestionar un arriendo',
+  'Consultoría específica',
+];
 
 /* -------------------- Componente -------------------- */
 export default function HomePage() {
-  const BRAND = '#0A2E57';
-
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -97,7 +117,14 @@ export default function HomePage() {
         const json = await res.json();
         if (!mounted) return;
         const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        setDestacadas(data);
+        // reemplazo "Consultar" por un precio ficticio razonable para mostrar CLP en el héroe
+        const fixed = data.map((p) => {
+          if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
+            return { ...p, precio_uf: 2300 }; // ej. 2.300 UF para no mostrar "Consultar"
+          }
+          return p;
+        });
+        setDestacadas(fixed);
       } catch {
         if (mounted) setDestacadas([]);
       }
@@ -160,25 +187,26 @@ export default function HomePage() {
   ].filter(Boolean).join(' · ');
 
   /* ====== UF del día y precios combinados (UF arriba, CLP abajo) ====== */
-  const { value: ufHoy } = useUf(); // hook tuyo que lee /api/uf
+  // *** ARREGLO: useUf devuelve number|null, no un objeto { value } ***
+  const ufHoy = useUf();
+
   const precioUfHero = useMemo(() => {
     if (!active) return 0;
     if (typeof active.precio_uf === 'number' && active.precio_uf > 0) return Math.round(active.precio_uf);
-    // si no hay UF pero sí CLP y tenemos ufHoy, convertimos
     if (typeof active.precio_clp === 'number' && active.precio_clp > 0 && ufHoy) {
       return Math.round(active.precio_clp / ufHoy);
     }
-    // si no trae precio (ej. “Consultar”), damos uno razonable para que no muestre “Consultar”
-    return 3500;
+    return 0;
   }, [active, ufHoy]);
 
   const precioClpHero = useMemo(() => {
     if (!active) return 0;
     if (typeof active.precio_clp === 'number' && active.precio_clp > 0) return Math.round(active.precio_clp);
-    if (ufHoy) return Math.round(precioUfHero * ufHoy);
-    // si no hay ufHoy, último recurso: aproximar con 30.000
-    return Math.round(precioUfHero * 30000);
-  }, [active, precioUfHero, ufHoy]);
+    if (typeof active.precio_uf === 'number' && active.precio_uf > 0 && ufHoy) {
+      return Math.round(active.precio_uf * ufHoy);
+    }
+    return 0;
+  }, [active, ufHoy]);
 
   /* --------- Estado formulario referidos --------- */
   const [regionInput, setRegionInput] = useState('');
@@ -187,9 +215,9 @@ export default function HomePage() {
   const [maxUF, setMaxUF] = useState('');
 
   const regionSel = REGIONES.find((r) => r.toLowerCase() === regionInput.toLowerCase()) || '';
-  const comunas = regionSel ? COMUNAS_POR_REGION[regionSel] : [];
+  const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
 
-  const formatUF = (raw: string) => {
+  const formatUFinput = (raw: string) => {
     const digits = raw.replace(/\D+/g, '');
     if (!digits) return '';
     const n = parseInt(digits, 10);
@@ -200,11 +228,12 @@ export default function HomePage() {
     <main className="bg-white">
       {/* ========= HERO ========= */}
       <section
-        className="relative w-full min-h-[100svh] md:min-h-[100vh] overflow-hidden isolate"
+        className="relative w-full overflow-hidden isolate"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Imagen de fondo full-viewport */}
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
           style={{ backgroundImage: `url(${bg})` }}
@@ -212,9 +241,10 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[100vh] flex items-end pb-16 md:pb-20">
-          <div className="w-full">
-            <div className="bg-white/65 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[560px]">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
+          <div className="w-full relative">
+            {/* Card del destacado (posición consistente) */}
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[620px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
@@ -241,24 +271,26 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Acciones: IZQ Ver más | DER Precio (UF / CLP) */}
-              <div className="mt-4 flex items-center gap-3">
+              {/* Acciones: IZQ Ver más | DER Precio (UF arriba / CLP abajo) */}
+              <div className="mt-4 flex items-end gap-3">
                 <div>
                   {active?.id ? (
                     <Link
                       href={`/propiedades/${active.id}`}
-                      className="inline-flex items-center px-3 py-2 text-sm tracking-wide text-[color:var(--brand)] bg-white rounded-none border"
-                      style={{ ['--brand' as any]: BRAND, borderColor: BRAND }}
+                      className="inline-flex items-center px-4 py-2 text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
                     >
                       Ver más
                     </Link>
                   ) : null}
                 </div>
 
-                <div className="ml-auto text-[1.35rem] md:text-[1.5rem] font-semibold leading-6 text-[color:var(--brand)] text-right"
-                     style={{ ['--brand' as any]: BRAND }}>
-                  <div>UF {fmt0(precioUfHero)}</div>
-                  <div className="text-xs md:text-sm text-gray-700 mt-0.5">$ {fmt0(precioClpHero)}</div>
+                <div className="ml-auto text-right">
+                  <div className="text-[1.4rem] md:text-2xl font-semibold text-[#0A2E57] leading-none">
+                    {precioUfHero > 0 ? fmtUF(precioUfHero) : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
+                  </div>
+                  <div className="text-sm md:text-base text-slate-600 mt-1">
+                    {precioClpHero > 0 ? fmtCLP(precioClpHero) : ''}
+                  </div>
                 </div>
               </div>
             </div>
@@ -270,14 +302,14 @@ export default function HomePage() {
               <button
                 aria-label="Anterior"
                 onClick={() => go(-1)}
-                className="group absolute left-4 md:left-6 top-[50%] -translate-y-1/2 p-2"
+                className="group absolute left-4 md:left-6 top-1/2 -translate-y-1/2 p-2"
               >
                 <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
               <button
                 aria-label="Siguiente"
                 onClick={() => go(1)}
-                className="group absolute right-4 md:right-6 top-[50%] -translate-y-1/2 p-2"
+                className="group absolute right-4 md:right-6 top-1/2 -translate-y-1/2 p-2"
               >
                 <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
@@ -296,15 +328,14 @@ export default function HomePage() {
 
       {/* ========= EQUIPO ========= */}
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="flex items-center gap-3 mb-2">
-          <Users2 className="h-6 w-6" color={BRAND} />
+        <div className="flex items-center gap-3">
+          <Users2 className="h-6 w-6 text-[#0A2E57]" />
           <h2 className="text-2xl md:text-3xl uppercase tracking-[0.25em]">EQUIPO</h2>
         </div>
 
-        <p className="max-w-4xl text-slate-700">
+        <p className="mt-3 max-w-4xl text-slate-700">
           En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
-          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera para que cada decisión
-          inmobiliaria sea segura y rentable.
+          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera para que cada decisión inmobiliaria sea segura y rentable.
         </p>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -316,7 +347,8 @@ export default function HomePage() {
           ].map((m) => (
             <article
               key={m.nombre}
-              className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm"
+              className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-lg transition"
+              tabIndex={0}
             >
               <div className="aspect-[3/4] w-full bg-slate-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -328,14 +360,29 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay azul (restaurado) */}
+              {/* Overlay azul (hover/touch) */}
               <div
-                className="pointer-events-none absolute inset-0 bg-[color:var(--brand)]/0 group-hover:bg-[color:var(--brand)]/90 group-active:bg-[color:var(--brand)]/90 group-focus-within:bg-[color:var(--brand)]/90 transition duration-300"
-                style={{ ['--brand' as any]: BRAND }}
+                className="
+                  pointer-events-none absolute inset-0
+                  bg-[#0A2E57]/0
+                  group-hover:bg-[#0A2E57]/90
+                  group-active:bg-[#0A2E57]/90
+                  focus-within:bg-[#0A2E57]/90
+                  transition duration-300
+                "
               />
 
-              {/* Texto sobre overlay */}
-              <div className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 group-active:opacity-100 group-focus-within:opacity-100 transition duration-300">
+              {/* Texto sobre la foto al interactuar */}
+              <div
+                className="
+                  absolute inset-0 flex items-end
+                  opacity-0
+                  group-hover:opacity-100
+                  group-active:opacity-100
+                  focus-within:opacity-100
+                  transition duration-300
+                "
+              >
                 <div className="w-full p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
                   <p className="text-sm mt-1">{m.cargo}</p>
@@ -354,7 +401,6 @@ export default function HomePage() {
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            {/* SIN negrita; solo R mayúscula */}
             <h2 className="mt-3 text-2xl md:text-3xl">Programa de Referidos con exclusividad</h2>
             <p className="mt-2 text-slate-600">
               ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
@@ -396,13 +442,15 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
+              {/* Servicio */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <select className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700">
-                  {SERVICIOS.map((s) => <option key={s}>{s}</option>)}
+                  {SERVICIOS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
 
+              {/* Tipo de propiedad */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <select className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700">
@@ -415,6 +463,7 @@ export default function HomePage() {
                 </select>
               </div>
 
+              {/* Región / Comuna (selects rectangulares en móvil) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <select
@@ -433,18 +482,19 @@ export default function HomePage() {
                   value={comunaInput}
                   onChange={(e) => setComunaInput(e.target.value)}
                   disabled={!regionSel}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 disabled:bg-gray-100 disabled:text-slate-400"
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 bg-gray-50 text-slate-700 disabled:bg-gray-100 disabled:text-slate-400"
                 >
                   <option value="">{regionSel ? 'Seleccionar comuna' : 'Selecciona una región primero'}</option>
                   {regionSel && (COMUNAS_POR_REGION[regionSel] || []).map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
+              {/* Presupuestos UF */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
                 <input
                   value={minUF}
-                  onChange={(e) => setMinUF(formatUF(e.target.value))}
+                  onChange={(e) => setMinUF(formatUFinput(e.target.value))}
                   inputMode="numeric"
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                   placeholder="0"
@@ -454,19 +504,25 @@ export default function HomePage() {
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
                 <input
                   value={maxUF}
-                  onChange={(e) => setMaxUF(formatUF(e.target.value))}
+                  onChange={(e) => setMaxUF(formatUFinput(e.target.value))}
                   inputMode="numeric"
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                   placeholder="0"
                 />
+              </div>
+
+              {/* Comentarios */}
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
+                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
               </div>
             </div>
 
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white rounded-none"
-                style={{ background: BRAND, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
+                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
               >
                 <Gift className="h-4 w-4" /> Enviar referido
               </button>
