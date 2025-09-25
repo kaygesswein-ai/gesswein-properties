@@ -18,6 +18,8 @@ type Property = {
   superficie_util_m2?: number | null;
   superficie_terreno_m2?: number | null;
   coverImage?: string;
+  imagenes?: string[];
+  images?: string[];
   createdAt?: string;
 };
 
@@ -35,6 +37,8 @@ const fmtMiles = (raw: string) => {
 };
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const capFirst = (s?: string | null) =>
+  s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
 /* ==== Hook para leer UF del día desde /api/uf ==== */
 function useUfValue() {
@@ -86,7 +90,7 @@ function PriceTag({
   );
 }
 
-/* ==== Datos base ==== */
+/* ==== Datos base (listas para filtros) ==== */
 const REGIONES = [
   'Arica y Parinacota',
   'Tarapacá',
@@ -210,6 +214,11 @@ export default function PropiedadesPage() {
 
   const [trigger, setTrigger] = useState(0);
 
+  /* — Resultados — */
+  const [items, setItems] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadedOnce, setLoadedOnce] = useState(false);
+
   /* Region: parsea "X - Nombre" a "Nombre" */
   useEffect(() => {
     const m = regionInput.match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
@@ -218,7 +227,7 @@ export default function PropiedadesPage() {
     else setRegion('');
   }, [regionInput]);
 
-  /* Build params + fetch demo (parcial: sólo lo que esté relleno) */
+  /* Build params + fetch (filtra solo con lo que rellenes) */
   useEffect(() => {
     const p = new URLSearchParams();
     if (qTop.trim()) p.set('q', qTop.trim());
@@ -236,13 +245,40 @@ export default function PropiedadesPage() {
       if (minM2Terreno) p.set('minM2Terreno', minM2Terreno.replace(/\./g, ''));
       if (estac) p.set('estacionamientos', estac);
     }
-    fetch(`/api/propiedades?${p.toString()}`).catch(() => {});
+
+    let cancel = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/propiedades?${p.toString()}`, { cache: 'no-store' });
+        const j = await res.json().catch(() => ({} as any));
+        const data: Property[] = Array.isArray(j?.data) ? j.data : [];
+        // Normalizo un poco las claves de imagen
+        const normalized = data.map((x) => ({
+          ...x,
+          coverImage: x.coverImage || x.imagenes?.[0] || x.images?.[0] || '',
+        }));
+        if (!cancel) {
+          setItems(normalized);
+          setLoadedOnce(true);
+        }
+      } catch {
+        if (!cancel) {
+          setItems([]);
+          setLoadedOnce(true);
+        }
+      } finally {
+        if (!cancel) setLoading(false);
+      }
+    })();
+
+    return () => { cancel = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     trigger, advancedMode, qTop, operacion, tipo, region, comuna, barrio,
     minValor, maxValor, moneda, minDorm, minBanos, minM2Const, minM2Terreno, estac,
   ]);
 
-  const tieneBarrios = !!BARRIOS[comuna];
   const ufValue = useUfValue(); // UF del día
 
   return (
@@ -495,7 +531,7 @@ export default function PropiedadesPage() {
         </div>
       </section>
 
-      {/* LISTADO (demo) */}
+      {/* LISTADO: pinta resultados reales */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
@@ -503,61 +539,82 @@ export default function PropiedadesPage() {
           </h2>
         </div>
 
+        {loading && (
+          <div className="py-8 text-slate-600">Cargando propiedades…</div>
+        )}
+
+        {!loading && loadedOnce && items.length === 0 && (
+          <div className="py-8 text-slate-600">No se encontraron propiedades con esos criterios.</div>
+        )}
+
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {[1, 2, 3].map((i) => (
-            <Link
-              key={i}
-              href="#"
-              className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
-            >
-              <div className="aspect-[4/3] bg-slate-100">
-                <img
-                  src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop"
-                  alt="Propiedad"
-                  className="w-full h-full object-cover group-hover:opacity-95 transition"
-                />
-              </div>
-              <div className="p-4 flex flex-col">
-                <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
-                  Depto luminoso en Vitacura
-                </h3>
-                <p className="mt-1 text-sm text-slate-600">Vitacura · Departamento · Venta</p>
+          {items.map((p) => {
+            const href = `/propiedades/${p.id}`;
+            const img = p.coverImage || p.imagenes?.[0] || p.images?.[0] ||
+              'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
-                <div className="mt-3 grid grid-cols-3 text-center">
-                  <div className="border border-slate-200 p-2">
-                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                      <Bed className="h-4 w-4" /> Dorm.
+            return (
+              <Link
+                key={p.id}
+                href={href}
+                className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
+              >
+                <div className="aspect-[4/3] bg-slate-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img}
+                    alt={p.titulo || 'Propiedad'}
+                    className="w-full h-full object-cover group-hover:opacity-95 transition"
+                  />
+                </div>
+                <div className="p-4 flex flex-col">
+                  <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
+                    {p.titulo || 'Propiedad'}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {[capFirst(p.comuna), capFirst(p.tipo), capFirst(p.operacion)].filter(Boolean).join(' · ')}
+                  </p>
+
+                  <div className="mt-3 grid grid-cols-3 text-center">
+                    <div className="border border-slate-200 p-2">
+                      <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                        <Bed className="h-4 w-4" /> Dorm.
+                      </div>
+                      <div className="text-sm">{p.dormitorios ?? '—'}</div>
                     </div>
-                    <div className="text-sm">2</div>
+                    <div className="border border-slate-200 p-2">
+                      <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                        <ShowerHead className="h-4 w-4" /> Baños
+                      </div>
+                      <div className="text-sm">{p.banos ?? '—'}</div>
+                    </div>
+                    <div className="border border-slate-200 p-2">
+                      <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                        <Ruler className="h-4 w-4" /> m²
+                      </div>
+                      <div className="text-sm">{p.superficie_util_m2 ?? '—'}</div>
+                    </div>
                   </div>
-                  <div className="border border-slate-200 p-2">
-                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                      <ShowerHead className="h-4 w-4" /> Baños
-                    </div>
-                    <div className="text-sm">2</div>
-                  </div>
-                  <div className="border border-slate-200 p-2">
-                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                      <Ruler className="h-4 w-4" /> m²
-                    </div>
-                    <div className="text-sm">78</div>
+
+                  <div className="mt-4 flex items-center justify-between">
+                    <span
+                      className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
+                      style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                    >
+                      Ver más
+                    </span>
+
+                    <PriceTag
+                      priceUF={p.precio_uf ?? null}
+                      priceCLP={p.precio_clp ?? null}
+                      ufValue={ufValue}
+                      className="text-right"
+                    />
                   </div>
                 </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <span
-                    className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
-                    style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                  >
-                    Ver más
-                  </span>
-
-                  {/* Precio UF/CLP usando UF del día */}
-                  <PriceTag priceUF={10500} priceCLP={null} ufValue={useUfValue()} className="text-right" />
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
     </main>
