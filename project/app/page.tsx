@@ -120,6 +120,62 @@ const extractRegionName = (value: string): Region | '' => {
   return (match as Region) || '';
 };
 
+/* ================== ComboBox simple (input + lista flotante) ================== */
+type ComboBoxProps = {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder?: string;
+};
+function ComboBox({ value, onChange, options, placeholder }: ComboBoxProps) {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  // cerrar al click fuera
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (!boxRef.current) return;
+      if (!boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  const shown = options.filter(opt =>
+    !value ? true : opt.toLowerCase().includes(value.toLowerCase())
+  );
+
+  return (
+    <div ref={boxRef} className="relative">
+      <input
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder ?? 'Seleccionar o escribir…'}
+        className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+      />
+      {open && shown.length > 0 && (
+        <div
+          className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-md border border-slate-300 bg-white shadow"
+          role="listbox"
+        >
+          {shown.map((opt) => (
+            <button
+              type="button"
+              key={opt}
+              className="block w-full text-left px-3 py-2 hover:bg-slate-100"
+              onMouseDown={(e) => e.preventDefault()}  // evita blur antes del click
+              onClick={() => { onChange(opt); setOpen(false); }}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* -------------------- Componente -------------------- */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
@@ -408,7 +464,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay azul y texto en la esquina inferior izquierda al interactuar */}
+              {/* Overlay azul + texto abajo-izquierda al hover/touch */}
               <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0 group-hover:bg-[#0A2E57]/90 group-active:bg-[#0A2E57]/90 focus-within:bg-[#0A2E57]/90 transition duration-300" />
               <div className="pointer-events-none absolute inset-0 flex items-end justify-start opacity-0 group-hover:opacity-100 group-active:opacity-100 focus-within:opacity-100 transition duration-300">
                 <div className="p-4 text-white">
@@ -470,37 +526,29 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* ¿Qué servicio necesita? — INPUT + DATALIST (igual a Región: permite escribir y elegir) */}
+              {/* ¿Qué servicio necesita? — Combobox (mismo look que Región, permite escribir y ver lista) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
-                <input
-                  list="servicios-list"
+                <ComboBox
                   value={servicio}
-                  onChange={(e) => setServicio(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                  onChange={setServicio}
+                  options={SERVICIOS}
                   placeholder="Seleccionar o escribir…"
                 />
-                <datalist id="servicios-list">
-                  {SERVICIOS.map((s) => <option key={s} value={s} />)}
-                </datalist>
               </div>
 
-              {/* Tipo de propiedad — INPUT + DATALIST (mismo look que Región) */}
+              {/* Tipo de propiedad — Combobox */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <input
-                  list="tipos-prop-list"
+                <ComboBox
                   value={tipo}
-                  onChange={(e) => setTipo(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                  onChange={setTipo}
+                  options={TIPO_PROPIEDAD}
                   placeholder="Seleccionar o escribir…"
                 />
-                <datalist id="tipos-prop-list">
-                  {TIPO_PROPIEDAD.map((t) => <option key={t} value={t} />)}
-                </datalist>
               </div>
 
-              {/* Región — input + datalist con romanos */}
+              {/* Región — input + datalist con romanos (como antes) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <input
@@ -579,6 +627,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
