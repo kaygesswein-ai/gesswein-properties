@@ -131,7 +131,6 @@ function ComboBox({ value, onChange, options, placeholder }: ComboBoxProps) {
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
-  // cerrar al click fuera
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (!boxRef.current) return;
@@ -141,9 +140,12 @@ function ComboBox({ value, onChange, options, placeholder }: ComboBoxProps) {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  const shown = options.filter(opt =>
-    !value ? true : opt.toLowerCase().includes(value.toLowerCase())
-  );
+  // Regla: si el input está vacío o coincide EXACTO con una opción, mostramos TODAS.
+  const norm = value.trim().toLowerCase();
+  const matchesExact = options.some(o => o.toLowerCase() === norm);
+  const shown = (norm === '' || matchesExact)
+    ? options
+    : options.filter(opt => opt.toLowerCase().includes(norm));
 
   return (
     <div ref={boxRef} className="relative">
@@ -156,7 +158,7 @@ function ComboBox({ value, onChange, options, placeholder }: ComboBoxProps) {
       />
       {open && shown.length > 0 && (
         <div
-          className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-md border border-slate-300 bg-white shadow"
+          className="absolute z-50 mt-1 w-full max-h-56 overflow-auto rounded-md border border-slate-300 bg-white shadow"
           role="listbox"
         >
           {shown.map((opt) => (
@@ -164,7 +166,7 @@ function ComboBox({ value, onChange, options, placeholder }: ComboBoxProps) {
               type="button"
               key={opt}
               className="block w-full text-left px-3 py-2 hover:bg-slate-100"
-              onMouseDown={(e) => e.preventDefault()}  // evita blur antes del click
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => { onChange(opt); setOpen(false); }}
             >
               {opt}
@@ -464,7 +466,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay azul + texto abajo-izquierda al hover/touch */}
+              {/* Overlay azul + texto abajo-izquierda */}
               <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0 group-hover:bg-[#0A2E57]/90 group-active:bg-[#0A2E57]/90 focus-within:bg-[#0A2E57]/90 transition duration-300" />
               <div className="pointer-events-none absolute inset-0 flex items-end justify-start opacity-0 group-hover:opacity-100 group-active:opacity-100 focus-within:opacity-100 transition duration-300">
                 <div className="p-4 text-white">
@@ -526,7 +528,7 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* ¿Qué servicio necesita? — Combobox (mismo look que Región, permite escribir y ver lista) */}
+              {/* ¿Qué servicio necesita? — Combobox */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <ComboBox
@@ -548,7 +550,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Región — input + datalist con romanos (como antes) */}
+              {/* Región — input + datalist con romanos */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <input
@@ -627,6 +629,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 
 
