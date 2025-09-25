@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Bed, ShowerHead, Ruler, Search, Filter } from 'lucide-react';
+import { Bed, ShowerHead, Ruler, Filter } from 'lucide-react';
 
 type Property = {
   id: string;
@@ -86,7 +86,7 @@ function PriceTag({
   );
 }
 
-/* ==== Datos base (tipados suaves para evitar TS estrictos en build) ==== */
+/* ==== Datos base ==== */
 const REGIONES = [
   'Arica y Parinacota',
   'Tarapacá',
@@ -196,7 +196,7 @@ export default function PropiedadesPage() {
   const [barrio, setBarrio] = useState('');
 
   /* — UF / CLP — */
-  const [moneda, setMoneda] = useState<'UF' | 'CLP$'>('UF');
+  const [moneda, setMoneda] = useState<'UF' | '$CLP'>('UF');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
@@ -218,7 +218,7 @@ export default function PropiedadesPage() {
     else setRegion('');
   }, [regionInput]);
 
-  /* Build params + fetch demo */
+  /* Build params + fetch demo (parcial: sólo lo que esté relleno) */
   useEffect(() => {
     const p = new URLSearchParams();
     if (qTop.trim()) p.set('q', qTop.trim());
@@ -266,12 +266,12 @@ export default function PropiedadesPage() {
               </div>
               <div className="mt-4 max-w-2xl">
                 <div className="relative">
-                  <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/90" />
+                  {/* Texto lo más a la izquierda y placeholder vacío */}
                   <input
                     value={qTop}
                     onChange={(e) => setQTop(e.target.value)}
-                    placeholder="Buscar por calle (ej. Alameda 13800)"
-                    className="w-full rounded-md bg-white/95 backdrop-blur px-10 py-3 text-slate-900 placeholder-slate-500"
+                    placeholder=""
+                    className="w-full rounded-md bg-white/95 backdrop-blur px-3 py-3 text-slate-900"
                   />
                   <button
                     onClick={() => setTrigger((v) => v + 1)}
@@ -287,12 +287,12 @@ export default function PropiedadesPage() {
         </div>
       </section>
 
-      {/* FILTROS */}
+      {/* BÚSQUEDA */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-2 text-slate-800 mb-4 pl-2 sm:pl-4">
             <Filter className="h-5 w-5" color={BRAND_BLUE} />
-            <span className="text-lg md:text-xl uppercase tracking-[0.25em]">FILTROS</span>
+            <span className="text-lg md:text-xl uppercase tracking-[0.25em]">BÚSQUEDA</span>
           </div>
 
           {/* modo */}
@@ -387,17 +387,17 @@ export default function PropiedadesPage() {
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                {/* Moneda -> igual look que Operación (input + datalist) */}
+                {/* Moneda -> input + datalist */}
                 <input
                   list="dl-moneda"
                   value={moneda}
-                  onChange={(e) => setMoneda((e.target.value as 'UF' | 'CLP$') || 'UF')}
+                  onChange={(e) => setMoneda((e.target.value as 'UF' | '$CLP') || 'UF')}
                   placeholder="UF"
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                 />
                 <datalist id="dl-moneda">
                   <option value="UF" />
-                  <option value="CLP$" />
+                  <option value="$CLP" />
                 </datalist>
 
                 <input
@@ -457,7 +457,7 @@ export default function PropiedadesPage() {
 
               {/* nuevos (gris un poco más oscuro) */}
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <input list="dl-moneda" value={moneda} onChange={(e) => setMoneda((e.target.value as 'UF' | 'CLP$') || 'UF')}
+                <input list="dl-moneda" value={moneda} onChange={(e) => setMoneda((e.target.value as 'UF' | '$CLP') || 'UF')}
                   placeholder="UF"
                   className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minValor} onChange={(e) => setMinValor(fmtMiles(e.target.value))} inputMode="numeric"
@@ -501,14 +501,6 @@ export default function PropiedadesPage() {
           <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
             PROPIEDADES DISPONIBLES
           </h2>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">Ordenar por:</span>
-            <select className="rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700">
-              <option value="recientes">Más recientes</option>
-              <option value="precio-asc">Precio: menor a mayor</option>
-              <option value="precio-desc">Precio: mayor a menor</option>
-            </select>
-          </div>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -561,7 +553,7 @@ export default function PropiedadesPage() {
                   </span>
 
                   {/* Precio UF/CLP usando UF del día */}
-                  <PriceTag priceUF={10500} priceCLP={null} ufValue={ufValue} className="text-right" />
+                  <PriceTag priceUF={10500} priceCLP={null} ufValue={useUfValue()} className="text-right" />
                 </div>
               </div>
             </Link>
@@ -571,6 +563,7 @@ export default function PropiedadesPage() {
     </main>
   );
 }
+
 
 
 
