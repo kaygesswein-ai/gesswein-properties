@@ -116,7 +116,6 @@ const displayRegion = (r: Region) => {
   return roman ? `${roman} - ${r}` : r;
 };
 const extractRegionName = (value: string): Region | '' => {
-  // admite "X - Nombre" o "Nombre"
   const v = value.includes(' - ') ? (value.split(' - ').slice(1).join(' - ')) : value;
   const match = REGIONES.find((r) => r.toLowerCase() === v.trim().toLowerCase());
   return (match as Region) || '';
@@ -128,16 +127,13 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // refs para medir ancho/alto y ajustar botón "Ver más"
   const statDormRef = useRef<HTMLDivElement | null>(null);
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const verMasRef = useRef<HTMLAnchorElement | null>(null);
 
-  // swipe
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
 
-  // Carga destacadas
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -146,7 +142,6 @@ export default function HomePage() {
         const json = await res.json();
         if (!mounted) return;
         const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        // si viene "Consultar", asigno 2300 UF para no dejar el precio vacío (solo display)
         const fixed = data.map((p) => {
           if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
             return { ...p, precio_uf: 2300 };
@@ -161,7 +156,6 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
-  // Auto-slide
   useEffect(() => {
     if (!destacadas.length) return;
     if (timerRef.current) clearInterval(timerRef.current);
@@ -177,7 +171,6 @@ export default function HomePage() {
     });
   };
 
-  // swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchDeltaX.current = 0;
@@ -215,7 +208,6 @@ export default function HomePage() {
     capFirst(active?.operacion),
   ].filter(Boolean).join(' · ');
 
-  /* ====== UF del día y precios combinados (UF arriba, CLP abajo) ====== */
   const ufHoy = useUf();
 
   const precioUfHero = useMemo(() => {
@@ -236,7 +228,6 @@ export default function HomePage() {
     return 0;
   }, [active, ufHoy]);
 
-  /* ====== medir ancho/alto para el botón ====== */
   const applyButtonSize = () => {
     const w = statDormRef.current?.offsetWidth;
     const h = priceBoxRef.current?.offsetHeight;
@@ -256,7 +247,7 @@ export default function HomePage() {
   }, [active]);
 
   /* --------- Estado formulario referidos --------- */
-  const [regionInput, setRegionInput] = useState('');   // muestra "X - Nombre" o vacío
+  const [regionInput, setRegionInput] = useState('');
   const [comunaInput, setComunaInput] = useState('');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
@@ -282,7 +273,6 @@ export default function HomePage() {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Imagen de fondo full-viewport */}
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
           style={{ backgroundImage: `url(${bg})` }}
@@ -292,7 +282,6 @@ export default function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            {/* Card del destacado */}
             <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[620px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
@@ -320,7 +309,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Acciones: IZQ Ver más | DER Precio (UF arriba / CLP abajo) */}
               <div className="mt-4 flex items-end gap-3">
                 <div>
                   {active?.id ? (
@@ -347,7 +335,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Flechas */}
           {destacadas.length > 1 && (
             <>
               <button
@@ -402,7 +389,6 @@ export default function HomePage() {
               tabIndex={0}
             >
               <div className="aspect-[3/4] w-full bg-slate-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={m.foto}
                   alt={m.nombre}
@@ -411,7 +397,6 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay azul (hover/touch) */}
               <div
                 className="
                   pointer-events-none absolute inset-0
@@ -423,7 +408,6 @@ export default function HomePage() {
                 "
               />
 
-              {/* Texto sobre la foto al interactuar */}
               <div
                 className="
                   absolute inset-0 flex items-end
@@ -493,11 +477,11 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio: SmartSelect (escribible + lista completa al abrir) */}
+              {/* Servicio: SmartSelect -> options string[] */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <SmartSelect
-                  options={SERVICIOS.map(s => ({ label: s, value: s }))}
+                  options={SERVICIOS}
                   value={servicio}
                   onChange={(v) => setServicio(v)}
                   placeholder="Seleccionar o escribir…"
@@ -505,11 +489,11 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Tipo de propiedad: SmartSelect */}
+              {/* Tipo de propiedad: SmartSelect -> options string[] */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <SmartSelect
-                  options={TIPO_PROPIEDAD.map(t => ({ label: t, value: t }))}
+                  options={TIPO_PROPIEDAD}
                   value={tipo}
                   onChange={(v) => setTipo(v)}
                   placeholder="Seleccionar o escribir…"
@@ -517,11 +501,11 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Región: SmartSelect con display romano – nombre */}
+              {/* Región: SmartSelect con display "X - Nombre" -> options string[] */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
-                  options={REGIONES.map(r => ({ label: displayRegion(r as Region), value: displayRegion(r as Region) }))}
+                  options={REGIONES.map(r => displayRegion(r as Region))}
                   value={regionInput}
                   onChange={(v) => { setRegionInput(v); setComunaInput(''); }}
                   placeholder="Seleccionar o escribir…"
@@ -529,11 +513,11 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Comuna: SmartSelect condicionado por región */}
+              {/* Comuna: SmartSelect dependiente de región -> options string[] */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
-                  options={(regionSel ? (COMUNAS_POR_REGION[regionSel] || []) : []).map(c => ({ label: c, value: c }))}
+                  options={regionSel ? (COMUNAS_POR_REGION[regionSel] || []) : []}
                   value={comunaInput}
                   onChange={(v) => setComunaInput(v)}
                   placeholder={regionSel ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
@@ -564,7 +548,6 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Comentarios */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
                 <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
