@@ -1,21 +1,21 @@
 // project/app/api/propiedades/route.ts
 import { NextResponse } from 'next/server';
 
-/** Util: capitaliza primera letra, resto minúsculas */
+/** Capitaliza primera letra */
 function capFirst(s: string | null | undefined) {
   if (!s) return '';
   const lower = String(s).toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-/** Convierte cualquier cosa numérica segura (UF/CLP) */
+/** Number seguro (UF/CLP) */
 function toNum(v: any) {
   if (v == null) return null;
   const n = Number(String(v).replace(/\./g, ''));
   return Number.isFinite(n) ? n : null;
 }
 
-/** Aplica filtros del UI sobre un arreglo de propiedades */
+/** Aplica filtros que envía el front */
 function applyFilters(list: any[], p: URLSearchParams) {
   const operacion = String(p.get('operacion') || '').trim().toLowerCase();
   const tipo = String(p.get('tipo') || '').trim().toLowerCase();
@@ -37,13 +37,12 @@ function applyFilters(list: any[], p: URLSearchParams) {
   if (comuna) out = out.filter((x) => String(x.comuna || '').toLowerCase() === comuna);
   if (destacada) out = out.filter((x) => !!x.destacada);
 
-  // Rango por UF o CLP (si llegan ambos, se aplican ambos)
   if (minUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! >= minUF);
   if (maxUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! <= maxUF);
   if (minCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! >= minCLP);
   if (maxCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! <= maxCLP);
 
-  // Normaliza mayúscula en "tipo" por si la BD trae minúsculas
+  // Normaliza “tipo” en mayúscula inicial
   out = out.map((x) => ({ ...x, tipo: capFirst(x.tipo) }));
 
   return out;
@@ -56,10 +55,9 @@ export async function GET(req: Request) {
 
   let data: any[] = [];
 
-  // 1) Igual que antes: intenta ir contra supabase-rest
+  // 1) Intento contra supabase-rest (igual que antes)
   try {
     const qs = new URLSearchParams();
-    // Sólo pasamos a supabase-rest lo que hoy usaba tu archivo original
     if (params.get('comuna')) qs.set('comuna', params.get('comuna')!);
     if (params.get('operacion')) qs.set('operacion', params.get('operacion')!);
     if (params.get('tipo')) qs.set('tipo', params.get('tipo')!);
@@ -74,30 +72,32 @@ export async function GET(req: Request) {
       if (Array.isArray(j)) data = j;
     }
   } catch {
-    // silencioso: si falla, nos vamos al fallback
+    // silencioso
   }
 
-  // 2) Fallback: usa el dataset en memoria si la BD no entregó nada
+  // 2) Fallback a dataset local si BD no entregó nada
   if (!Array.isArray(data) || data.length === 0) {
     try {
-      const mod: any = await import('@/lib/featured');
+      // **RUTA RELATIVA CORRECTA** desde project/app/api/propiedades/route.ts
+      const mod: any = await import('../../lib/featured');
       if (typeof mod.getAllProperties === 'function') {
         data = await mod.getAllProperties();
       } else if (Array.isArray(mod.ALL)) {
         data = mod.ALL;
       } else if (Array.isArray(mod.FEATURED)) {
-        // al menos devolvemos destacadas si no existe el total
         data = mod.FEATURED;
+      } else {
+        data = [];
       }
     } catch {
       data = [];
     }
   }
 
-  // 3) Aplica TODOS los filtros del UI sobre el arreglo resultante
+  // 3) Filtros del front
   let filtered = applyFilters(data, params);
 
-  // 4) limit opcional (lo usa la portada cuando pide destacadas)
+  // 4) limit opcional
   if (limit) filtered = filtered.slice(0, limit);
 
   return NextResponse.json({ data: filtered });
