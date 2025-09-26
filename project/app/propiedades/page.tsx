@@ -341,7 +341,7 @@ export default function PropiedadesPage() {
                   options={['UF', 'CLP$']}
                   value={moneda}
                   onChange={(v) => setMoneda((v as any) || 'UF')}
-                  placeholder="UF"
+                  placeholder="UF/CLP$"
                 />
 
                 <input
