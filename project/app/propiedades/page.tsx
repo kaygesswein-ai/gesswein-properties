@@ -21,6 +21,9 @@ type Property = {
   coverImage?: string;
   createdAt?: string;
   destacada?: boolean;
+  // Algunos feeds usan otros nombres para estacionamientos:
+  // estacionamientos?: number | null;
+  // estacionamientos_totales?: number | null;
 };
 
 const BRAND_BLUE = '#0A2E57';
@@ -133,7 +136,7 @@ export default function PropiedadesPage() {
   const [barrio, setBarrio] = useState('');
 
   /* — UF / CLP — */
-  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>(''); // ⬅️ sin preselección
+  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
@@ -161,12 +164,12 @@ export default function PropiedadesPage() {
 
   const ufValue = useUfValue(); // UF del día
 
-  // 🔹 disparo una búsqueda inicial al montar (para no dejar vacío el listado)
+  // disparo una búsqueda inicial al montar
   useEffect(() => {
     setTrigger((v) => v + 1);
   }, []);
 
-  /* Build params + fetch reales (sin caché) — SOLO cuando cambia "trigger" */
+  /* Build params + fetch — SOLO cuando cambia "trigger" */
   useEffect(() => {
     const p = new URLSearchParams();
 
@@ -199,20 +202,71 @@ export default function PropiedadesPage() {
       }
     }
 
+    // --- NUEVO: parámetros avanzados ---
+    const toN = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
+    const dormN  = toN(minDorm);
+    const banN   = toN(minBanos);
+    const constN = toN(minM2Const);
+    const terrN  = toN(minM2Terreno);
+    const estN   = toN(estac);
+
+    if (!Number.isNaN(dormN))  p.set('minDorm', String(dormN));
+    if (!Number.isNaN(banN))   p.set('minBanos', String(banN));
+    if (!Number.isNaN(constN)) p.set('minM2Const', String(constN));
+    if (!Number.isNaN(terrN))  p.set('minM2Terreno', String(terrN));
+    if (!Number.isNaN(estN))   p.set('minEstac', String(estN));
+
     let cancel = false;
     setLoading(true);
+
     fetch(`/api/propiedades?${p.toString()}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => {
         if (cancel) return;
         const arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
-        setItems(arr);
+
+        // --- NUEVO: Filtro en cliente (fallback) ---
+        // Si el usuario pide mínimos, excluimos items que no tengan dato o que no cumplan.
+        const getNum = (v: unknown) =>
+          typeof v === 'number' && !Number.isNaN(v) ? v : null;
+        const getEstac = (it: any) => {
+          const a = getNum(it?.estacionamientos);
+          const b = getNum(it?.estac);
+          const c = getNum(it?.estacionamientos_totales);
+          return a ?? b ?? c;
+        };
+
+        const filtered = arr.filter((p) => {
+          if (!Number.isNaN(dormN)) {
+            const v = getNum(p.dormitorios);
+            if (v == null || v < dormN) return false;
+          }
+          if (!Number.isNaN(banN)) {
+            const v = getNum(p.banos);
+            if (v == null || v < banN) return false;
+          }
+          if (!Number.isNaN(constN)) {
+            const v = getNum(p.superficie_util_m2);
+            if (v == null || v < constN) return false;
+          }
+          if (!Number.isNaN(terrN)) {
+            const v = getNum(p.superficie_terreno_m2);
+            if (v == null || v < terrN) return false;
+          }
+          if (!Number.isNaN(estN)) {
+            const v = getEstac(p);
+            if (v == null || v < estN) return false;
+          }
+          return true;
+        });
+
+        setItems(filtered);
       })
       .catch(() => { if (!cancel) setItems([]); })
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [trigger]); // ← solo al apretar Buscar (o carga inicial)
+  }, [trigger]);
 
   return (
     <main className="bg-white">
@@ -235,9 +289,7 @@ export default function PropiedadesPage() {
               </div>
               <div className="mt-4 max-w-2xl">
                 <div className="relative">
-                  <Search
-                    className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-white/90"
-                  />
+                  <Search className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-white/90" />
                   <input
                     value={qTop}
                     onChange={(e) => setQTop(e.target.value)}
