@@ -1,5 +1,7 @@
 // project/lib/featured.ts
 
+export const featuredApiPath = '/api/featured';
+
 export type Property = {
   id: string;
   titulo: string;
@@ -60,7 +62,7 @@ const FEATURED: Property[] = [
     region: 'Metropolitana de Santiago',
     operacion: 'Arriendo',
     tipo: 'Oficina',
-    // Solicitud: precio ficticio para la oficina
+    // Precio ficticio solicitado
     precio_uf: 4000,
     precio_clp: null,
     dormitorios: 0,
@@ -114,14 +116,19 @@ const EXTRA: Property[] = (() => {
     const tipo = tipos[i % tipos.length];
     const comuna = comunas[i % comunas.length];
     const operacion: Property['operacion'] = i % 5 === 0 ? 'Arriendo' : 'Venta';
-    const dormitorios = tipo === 'Oficina' || tipo === 'Bodega' || tipo === 'Local comercial' ? 0 : (1 + (i % 4));
+    const dormitorios =
+      tipo === 'Oficina' || tipo === 'Bodega' || tipo === 'Local comercial'
+        ? 0
+        : 1 + (i % 4);
     const banos = tipo === 'Terreno' ? 0 : 1 + (i % 3);
-    const m2 = 45 + (i * 7) % 160;
-    // precios “razonables” solo en UF; CLP se calculará con la UF del día en el front
+    const m2 = 45 + ((i * 7) % 160);
+
     const precioUF =
-      tipo === 'Terreno' ? 3500 + (i * 70) % 6000 :
-      tipo === 'Oficina' ? 2500 + (i * 40) % 3500 :
-      4500 + (i * 120) % 22000;
+      tipo === 'Terreno'
+        ? 3500 + ((i * 70) % 6000)
+        : tipo === 'Oficina'
+        ? 2500 + ((i * 40) % 3500)
+        : 4500 + ((i * 120) % 22000);
 
     arr.push({
       id: makeId('pub', i),
@@ -154,11 +161,9 @@ const EXTRA: Property[] = (() => {
 const ALL: Property[] = [...FEATURED, ...EXTRA];
 
 export async function getFeaturedProperties(): Promise<Property[]> {
-  // Se mantiene el orden publicado
   return FEATURED;
 }
 
 export async function getAllProperties(): Promise<Property[]> {
-  // Todas las publicaciones disponibles para /propiedades
   return ALL;
 }
