@@ -1,182 +1,215 @@
+// project/app/api/propiedades/route.ts
 import { NextResponse } from 'next/server';
-import * as FeaturedMod from '../../../lib/featured'; // import flexible
+import { featuredItems } from '../../../lib/featured';
 
-// Obtiene el path/API base si existiera en lib/featured
-const getFeaturedApiPath = (): string => {
-  const m = FeaturedMod as any;
-  return (
-    m.featuredApiPath ||
-    m.FEATURED_API_PATH ||
-    m.apiPath ||
-    '/api/propiedades'
-  );
-};
-
-// Obtiene la lista de destacadas sin depender del nombre exacto del export
-const getFeaturedList = (): any[] => {
-  const m = FeaturedMod as any;
-  return (
-    m.featuredList ||
-    m.featured ||
-    m.FEATURED ||
-    m.items ||
-    m.default ||
-    []
-  );
-};
-
-// Fotos libres para las NO destacadas (todas distintas)
-const stockPhotos = [
-  'https://images.unsplash.com/photo-1600585154340-1e4ce9a7a8c8?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1565183997392-2f6f122e5912?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1459535653751-d571815e906b?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1505692952047-1a78307da8f3?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1444419988131-046ed4e5ffd6?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1445510861639-5651173bc5d5?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1505692794403-34d4982ae5e9?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1448630360428-65456885c650?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1523217582562-09d0def993a6?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1451976426598-a7593bd6d0b2?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1502005229762-cf1b2da7c89a?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1486304873000-235643847519?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1475855581690-80accde3ae2b?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1505691723518-36a5ac3b2a59?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1444418776041-9c7e33cc5a9c?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1493666438817-866a91353ca9?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1600&auto=format&fit=crop',
-];
-
-const pick = <T,>(arr: T[], i: number) => arr[i % arr.length];
+/** ---------- Tipos ---------- */
+type Op = 'venta' | 'arriendo';
+type Tipo =
+  | 'Casa'
+  | 'Departamento'
+  | 'Oficina'
+  | 'Bodega'
+  | 'Local comercial'
+  | 'Terreno';
 
 type Prop = {
   id: string;
   titulo: string;
   comuna: string;
   region: string;
-  operacion: 'venta' | 'arriendo';
-  tipo: string;
-  precio_uf?: number | null;
-  precio_clp?: number | null;
-  dormitorios?: number | null;
-  banos?: number | null;
-  superficie_util_m2?: number | null;
-  coverImage?: string;
+  operacion: Op;
+  tipo: Tipo;
+  precio_uf: number | null;
+  precio_clp: number | null;
+  dormitorios: number | null;
+  banos: number | null;
+  superficie_util_m2: number | null;
+  superficie_terreno_m2: number | null;
+  coverImage: string;
   destacada?: boolean;
 };
 
-const capFirst = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : s;
+/** ---------- Datos de ejemplo para NO destacadas (30) ---------- */
+function makeId(prefix: string, n: number) {
+  return `${prefix}-${String(n).padStart(2, '0')}`;
+}
 
-function makeNonFeatured(count = 30): Prop[] {
-  const comunas = ['Vitacura','Providencia','Ñuñoa','Santiago','Las Condes','La Reina','Lo Barnechea','Huechuraba','La Florida','Maipú','Colina'];
-  const tipos = ['Departamento','Casa','Oficina','Local comercial','Bodega','Terreno'];
-  const ops: Array<'venta' | 'arriendo'> = ['venta','arriendo'];
+const COMUNAS = [
+  'Vitacura',
+  'Providencia',
+  'Lo Barnechea',
+  'Las Condes',
+  'Ñuñoa',
+  'Santiago',
+  'La Reina',
+  'Huechuraba',
+  'Maipú',
+  'Colina',
+] as const;
 
+const TIPOS: Tipo[] = [
+  'Casa',
+  'Departamento',
+  'Oficina',
+  'Bodega',
+  'Local comercial',
+  'Terreno',
+];
+
+const FOTO_CASA =
+  'https://images.unsplash.com/photo-1505691723518-36a5ac3b2b8b?q=80&w=1600&auto=format&fit=crop';
+const FOTO_DEPTO =
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop';
+const FOTO_OFICINA =
+  'https://images.unsplash.com/photo-1517502166878-35c93a0072bb?q=80&w=1600&auto=format&fit=crop';
+const FOTO_LOCAL =
+  'https://images.unsplash.com/photo-1507138833268-3b9080fc026a?q=80&w=1600&auto=format&fit=crop';
+const FOTO_BODEGA =
+  'https://images.unsplash.com/photo-1582582621959-48d3a00a3f2c?q=80&w=1600&auto=format&fit=crop';
+const FOTO_TERRENO =
+  'https://images.unsplash.com/photo-1535909339361-9b84d31b1cdf?q=80&w=1600&auto=format&fit=crop';
+
+function fotoPorTipo(t: Tipo): string {
+  switch (t) {
+    case 'Casa':
+      return FOTO_CASA;
+    case 'Departamento':
+      return FOTO_DEPTO;
+    case 'Oficina':
+      return FOTO_OFICINA;
+    case 'Local comercial':
+      return FOTO_LOCAL;
+    case 'Bodega':
+      return FOTO_BODEGA;
+    case 'Terreno':
+      return FOTO_TERRENO;
+  }
+}
+
+function genPublicaciones(): Prop[] {
   const arr: Prop[] = [];
-  for (let i = 0; i < count; i++) {
-    const tipo = pick(tipos, i);
-    const operacion = pick(ops, i);
-    const comuna = pick(comunas, i);
-    const uf = operacion === 'venta' ? 3500 + i * 120 : 45 + (i % 8) * 5;
-    const dorm = (tipo === 'Departamento' || tipo === 'Casa') ? 1 + (i % 4) : 0;
-    const banos = (tipo === 'Departamento' || tipo === 'Casa') ? 1 + (i % 3) : 1;
-    const m2 = tipo === 'Terreno' ? 400 + i * 30 : 60 + (i % 6) * 20;
+  for (let i = 1; i <= 30; i++) {
+    const tipo = TIPOS[i % TIPOS.length];
+    const comuna = COMUNAS[i % COMUNAS.length];
+    const operacion: Op = i % 5 === 0 ? 'arriendo' : 'venta';
+
+    const m2 = tipo === 'Terreno' ? 300 + ((i * 37) % 1200) : 45 + ((i * 11) % 180);
+
+    const dormitorios: number | null =
+      tipo === 'Terreno' || tipo === 'Bodega' || tipo === 'Local comercial'
+        ? 0
+        : 1 + (i % 4);
+
+    const banos: number | null = tipo === 'Terreno' ? 0 : 1 + (i % 2);
+
+    const precioUF =
+      tipo === 'Terreno'
+        ? 3500 + ((i * 70) % 6000)
+        : tipo === 'Oficina'
+        ? 2500 + ((i * 40) % 3500)
+        : 4500 + ((i * 120) % 22000);
 
     arr.push({
-      id: `nf-${i + 1}`,
-      titulo: `${tipo} en ${comuna} #${i + 1}`,
+      id: makeId('pub', i),
+      titulo:
+        tipo === 'Casa'
+          ? `Casa en ${comuna}`
+          : tipo === 'Departamento'
+          ? `Departamento en ${comuna}`
+          : tipo === 'Terreno'
+          ? `Terreno en ${comuna}`
+          : `${tipo} en ${comuna}`,
       comuna,
       region: 'Metropolitana de Santiago',
       operacion,
       tipo,
-      precio_uf: uf,
-      dormitorios: dorm,
+      precio_uf: precioUF,
+      precio_clp: null,
+      dormitorios,
       banos,
-      superficie_util_m2: m2,
-      coverImage: pick(stockPhotos, i),
-      destacada: false,
+      superficie_util_m2: tipo === 'Terreno' ? null : m2,
+      superficie_terreno_m2: tipo === 'Terreno' ? m2 : null,
+      coverImage: fotoPorTipo(tipo),
     });
   }
   return arr;
 }
 
+/** ---------- Utilidades ---------- */
+const toNumber = (s: string | null): number | null => {
+  if (!s) return null;
+  const v = Number(String(s).replace(/\./g, ''));
+  return Number.isFinite(v) ? v : null;
+};
+
+/** ---------- Handler ---------- */
 export async function GET(req: Request) {
-  // 1) Destacadas desde lib/featured (mantiene coverImage/títulos existentes)
-  const baseFeatured = getFeaturedList();
-  const featured: Prop[] = (Array.isArray(baseFeatured) ? baseFeatured : []).map((p: any, i: number) => ({
-    id: p.id ?? `feat-${i + 1}`,
-    titulo: p.titulo ?? 'Propiedad destacada',
-    comuna: p.comuna ?? '',
-    region: p.region ?? 'Metropolitana de Santiago',
-    operacion: (p.operacion ?? 'venta'),
-    tipo: capFirst(p.tipo ?? 'Propiedad'),
-    precio_uf: p.precio_uf ?? null,
-    precio_clp: p.precio_clp ?? null,
-    dormitorios: p.dormitorios ?? null,
-    banos: p.banos ?? null,
-    superficie_util_m2: p.superficie_util_m2 ?? null,
-    coverImage: p.coverImage ?? p.images?.[0] ?? p.imagenes?.[0] ?? undefined,
-    destacada: true,
-  }));
+  // 1) Base de datos en memoria
+  const arr: Prop[] = genPublicaciones();
 
-  // 2) No destacadas
-  const nonFeatured = makeNonFeatured(30);
-
-  // 3) UF del día para calcular CLP si falta
-  let uf: number | null = null;
-  try {
-    const r = await fetch(new URL('/api/uf', req.url), { cache: 'no-store' });
-    const j = await r.json().catch(() => ({} as any));
-    uf = typeof j?.uf === 'number' ? j.uf : null;
-  } catch {
-    uf = null;
+  // 2) Inyecta las 3 destacadas (arriba y sin duplicados)
+  {
+    const seen = new Set(arr.map((p) => p.id));
+    featuredItems.forEach((f) => {
+      if (!seen.has(f.id)) {
+        arr.unshift({
+          id: f.id,
+          titulo: f.titulo,
+          comuna: f.comuna,
+          region: 'Metropolitana de Santiago',
+          operacion: f.operacion, // 'venta' | 'arriendo'
+          tipo: f.tipo, // 'Casa' | 'Departamento' | 'Oficina'
+          precio_uf: f.precio_uf ?? null,
+          precio_clp: f.precio_clp ?? null,
+          dormitorios: f.dormitorios ?? 0,
+          banos: f.banos ?? 0,
+          superficie_util_m2: f.superficie_util_m2 ?? null,
+          superficie_terreno_m2: null,
+          coverImage: f.coverImage,
+          destacada: true,
+        });
+      }
+    });
   }
 
-  const all: Prop[] = [...featured, ...nonFeatured].map((p) => {
-    if ((!p.precio_clp || p.precio_clp <= 0) && p.precio_uf && uf) {
-      return { ...p, precio_clp: Math.round(p.precio_uf * uf) };
-    }
-    return p;
-  });
-
-  // Filtros
+  // 3) Filtros simples según los query params existentes en tu UI
   const { searchParams } = new URL(req.url);
-  const q = (searchParams.get('q') || '').trim().toLowerCase();
-  const operacion = (searchParams.get('operacion') || '').toLowerCase();
-  const tipo = (searchParams.get('tipo') || '').toLowerCase();
-  const region = (searchParams.get('region') || '').toLowerCase();
-  const comuna = (searchParams.get('comuna') || '').toLowerCase();
-  const minUF = parseInt(searchParams.get('minUF') || '', 10);
-  const maxUF = parseInt(searchParams.get('maxUF') || '', 10);
-  const minCLP = parseInt(searchParams.get('minCLP') || '', 10);
-  const maxCLP = parseInt(searchParams.get('maxCLP') || '', 10);
 
-  const filtered = all.filter((p) => {
-    if (q && !(`${p.titulo} ${p.comuna}`.toLowerCase().includes(q))) return false;
-    if (operacion && p.operacion.toLowerCase() !== operacion) return false;
-    if (tipo && p.tipo.toLowerCase() !== tipo) return false;
-    if (region && p.region.toLowerCase() !== region) return false;
-    if (comuna && p.comuna.toLowerCase() !== comuna) return false;
+  const q = searchParams.get('q')?.toLowerCase() ?? '';
+  const operacion = (searchParams.get('operacion') || '').toLowerCase() as Op | '';
+  const tipo = (searchParams.get('tipo') || '') as Tipo | '';
+  const region = searchParams.get('region') || '';
+  const comuna = searchParams.get('comuna') || '';
+  const barrio = searchParams.get('barrio') || ''; // placeholder (no se usa en estos datos)
 
-    if (!Number.isNaN(minUF) && p.precio_uf != null && p.precio_uf < minUF) return false;
-    if (!Number.isNaN(maxUF) && p.precio_uf != null && p.precio_uf > maxUF) return false;
-    if (!Number.isNaN(minCLP) && p.precio_clp != null && p.precio_clp < minCLP) return false;
-    if (!Number.isNaN(maxCLP) && p.precio_clp != null && p.precio_clp > maxCLP) return false;
+  const minUF = toNumber(searchParams.get('minUF'));
+  const maxUF = toNumber(searchParams.get('maxUF'));
+  const minCLP = toNumber(searchParams.get('minCLP'));
+  const maxCLP = toNumber(searchParams.get('maxCLP'));
 
-    return true;
-  });
+  let items = arr;
 
-  return NextResponse.json({ data: filtered, total: filtered.length, featuredApiPath: getFeaturedApiPath() });
+  if (q) {
+    items = items.filter(
+      (p) =>
+        p.titulo.toLowerCase().includes(q) ||
+        p.comuna.toLowerCase().includes(q) ||
+        p.region.toLowerCase().includes(q),
+    );
+  }
+  if (operacion) items = items.filter((p) => p.operacion === operacion);
+  if (tipo) items = items.filter((p) => p.tipo === tipo);
+  if (region) items = items.filter((p) => p.region === region);
+  if (comuna) items = items.filter((p) => p.comuna === comuna);
+  if (barrio) {
+    // no hay barrios en estos datos; se deja el hook para cuando existan
+  }
+
+  // Rango por UF / CLP (si llega cualquiera, se respeta)
+  if (minUF != null) items = items.filter((p) => (p.precio_uf ?? Infinity) >= minUF);
+  if (maxUF != null) items = items.filter((p) => (p.precio_uf ?? -Infinity) <= maxUF);
+  if (minCLP != null) items = items.filter((p) => (p.precio_clp ?? Infinity) >= minCLP);
+  if (maxCLP != null) items = items.filter((p) => (p.precio_clp ?? -Infinity) <= maxCLP);
+
+  return NextResponse.json({ items });
 }
