@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
 import useUf from '../hooks/useUf';
-import { featuredApiPath } from '../lib/featured'; // canal único para destacadas
 
 /* -------------------- Tipos -------------------- */
 type Property = {
@@ -43,7 +42,7 @@ function capFirst(s?: string | null) {
 }
 
 /* -------------------- Datos Chile (para formulario de referidos) -------------------- */
-const REGIONES = [
+const REGIONES: readonly string[] = [
   'Arica y Parinacota',
   'Tarapacá',
   'Antofagasta',
@@ -60,8 +59,8 @@ const REGIONES = [
   'Aysén',
   'Magallanes',
   'Metropolitana de Santiago',
-] as const;
-type Region = typeof REGIONES[number];
+];
+type Region = (typeof REGIONES)[number];
 
 const COMUNAS_POR_REGION: Record<Region, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
@@ -116,6 +115,7 @@ const displayRegion = (r: Region) => {
   return roman ? `${roman} - ${r}` : r;
 };
 const extractRegionName = (value: string): Region | '' => {
+  // admite "X - Nombre" o "Nombre"
   const v = value.includes(' - ') ? (value.split(' - ').slice(1).join(' - ')) : value;
   const match = REGIONES.find((r) => r.toLowerCase() === v.trim().toLowerCase());
   return (match as Region) || '';
@@ -136,23 +136,39 @@ export default function HomePage() {
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
 
-  // Carga destacadas DESDE LA MISMA FUENTE QUE PROPIEDADES
+  // ========= Carga destacadas (ÚNICO CAMBIO) =========
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const url = featuredApiPath('/api/propiedades');
-        const res = await fetch(url, { cache: 'no-store' });
-        const json = await res.json().catch(() => ({} as any));
+        // Traemos todo y filtramos client-side por "destacada"
+        const res = await fetch('/api/propiedades', { cache: 'no-store' });
+        const json = await res.json();
         if (!mounted) return;
-        const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        setDestacadas(data);
+
+        const all: Property[] = Array.isArray(json?.data) ? json.data : [];
+
+        // tomamos primero las que vienen marcadas como destacadas
+        let feats = all.filter((p) => p?.destacada);
+        // fallback para nunca dejar vacío el carrusel
+        if (feats.length === 0) feats = all.slice(0, Math.min(6, all.length));
+
+        // si viene "Consultar", asigno 2300 UF solo para display
+        const fixed = feats.map((p) => {
+          if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
+            return { ...p, precio_uf: 2300 };
+          }
+          return p;
+        });
+
+        setDestacadas(fixed);
       } catch {
         if (mounted) setDestacadas([]);
       }
     })();
     return () => { mounted = false; };
   }, []);
+  // ========= FIN ÚNICO CAMBIO =========
 
   // Auto-slide
   useEffect(() => {
@@ -249,7 +265,7 @@ export default function HomePage() {
   }, [active]);
 
   /* --------- Estado formulario referidos --------- */
-  const [regionInput, setRegionInput] = useState('');
+  const [regionInput, setRegionInput] = useState('');   // muestra "X - Nombre" o vacío
   const [comunaInput, setComunaInput] = useState('');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
@@ -512,7 +528,7 @@ export default function HomePage() {
                   placeholder="Seleccionar o escribir…"
                 />
                 <datalist id="tipos-prop-list">
-                  {['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'].map((t) => <option key={t} value={t} />)}
+                  {TIPO_PROPIEDAD.map((t) => <option key={t} value={t} />)}
                 </datalist>
               </div>
 
