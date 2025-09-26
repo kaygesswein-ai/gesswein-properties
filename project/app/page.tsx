@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
-import useUf from '../hooks/useUf';
+import useUf from './hooks/useUf'; // mantiene tu hook actual (number | null)
+import { featuredApiPath } from '../lib/featured'; // canal único para destacadas
 
 /* -------------------- Tipos -------------------- */
 type Property = {
@@ -42,7 +43,7 @@ function capFirst(s?: string | null) {
 }
 
 /* -------------------- Datos Chile (para formulario de referidos) -------------------- */
-const REGIONES: readonly string[] = [
+const REGIONES = [
   'Arica y Parinacota',
   'Tarapacá',
   'Antofagasta',
@@ -59,8 +60,8 @@ const REGIONES: readonly string[] = [
   'Aysén',
   'Magallanes',
   'Metropolitana de Santiago',
-];
-type Region = (typeof REGIONES)[number];
+] as const;
+type Region = typeof REGIONES[number];
 
 const COMUNAS_POR_REGION: Record<Region, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
@@ -120,64 +121,6 @@ const extractRegionName = (value: string): Region | '' => {
   return (match as Region) || '';
 };
 
-/* ================== ComboBox simple (input + lista flotante) ================== */
-type ComboBoxProps = {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  placeholder?: string;
-};
-function ComboBox({ value, onChange, options, placeholder }: ComboBoxProps) {
-  const [open, setOpen] = useState(false);
-  const boxRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (!boxRef.current) return;
-      if (!boxRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
-
-  // Regla: si el input está vacío o coincide EXACTO con una opción, mostramos TODAS.
-  const norm = value.trim().toLowerCase();
-  const matchesExact = options.some(o => o.toLowerCase() === norm);
-  const shown = (norm === '' || matchesExact)
-    ? options
-    : options.filter(opt => opt.toLowerCase().includes(norm));
-
-  return (
-    <div ref={boxRef} className="relative">
-      <input
-        value={value}
-        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        placeholder={placeholder ?? 'Seleccionar o escribir…'}
-        className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-      />
-      {open && shown.length > 0 && (
-        <div
-          className="absolute z-50 mt-1 w-full max-h-56 overflow-auto rounded-md border border-slate-300 bg-white shadow"
-          role="listbox"
-        >
-          {shown.map((opt) => (
-            <button
-              type="button"
-              key={opt}
-              className="block w-full text-left px-3 py-2 hover:bg-slate-100"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { onChange(opt); setOpen(false); }}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* -------------------- Componente -------------------- */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
@@ -193,22 +136,17 @@ export default function HomePage() {
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
 
-  // Carga destacadas
+  // Carga destacadas DESDE LA MISMA FUENTE QUE PROPIEDADES
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' });
-        const json = await res.json();
+        const url = featuredApiPath('/api/propiedades');
+        const res = await fetch(url, { cache: 'no-store' });
+        const json = await res.json().catch(() => ({} as any));
         if (!mounted) return;
         const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        const fixed = data.map((p) => {
-          if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
-            return { ...p, precio_uf: 2300 };
-          }
-          return p;
-        });
-        setDestacadas(fixed);
+        setDestacadas(data);
       } catch {
         if (mounted) setDestacadas([]);
       }
@@ -375,7 +313,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Acciones: IZQ Ver más | DER Precio */}
+              {/* Acciones: IZQ Ver más | DER Precio (UF arriba / CLP abajo) */}
               <div className="mt-4 flex items-end gap-3">
                 <div>
                   {active?.id ? (
@@ -466,10 +404,30 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Overlay azul + texto abajo-izquierda */}
-              <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0 group-hover:bg-[#0A2E57]/90 group-active:bg-[#0A2E57]/90 focus-within:bg-[#0A2E57]/90 transition duration-300" />
-              <div className="pointer-events-none absolute inset-0 flex items-end justify-start opacity-0 group-hover:opacity-100 group-active:opacity-100 focus-within:opacity-100 transition duration-300">
-                <div className="p-4 text-white">
+              {/* Overlay azul (hover/touch) */}
+              <div
+                className="
+                  pointer-events-none absolute inset-0
+                  bg-[#0A2E57]/0
+                  group-hover:bg-[#0A2E57]/90
+                  group-active:bg-[#0A2E57]/90
+                  focus-within:bg-[#0A2E57]/90
+                  transition duration-300
+                "
+              />
+
+              {/* Texto sobre la foto al interactuar */}
+              <div
+                className="
+                  absolute inset-0 flex items-end
+                  opacity-0
+                  group-hover:opacity-100
+                  group-active:opacity-100
+                  focus-within:opacity-100
+                  transition duration-300
+                "
+              >
+                <div className="w-full p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
                   <p className="text-sm mt-1">{m.cargo}</p>
                   <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
@@ -528,29 +486,37 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* ¿Qué servicio necesita? — Combobox */}
+              {/* Servicio: input + datalist (escribible y seleccionable) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
-                <ComboBox
+                <input
+                  list="servicios-list"
                   value={servicio}
-                  onChange={setServicio}
-                  options={SERVICIOS}
+                  onChange={(e) => setServicio(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
                   placeholder="Seleccionar o escribir…"
                 />
+                <datalist id="servicios-list">
+                  {SERVICIOS.map((s) => <option key={s} value={s} />)}
+                </datalist>
               </div>
 
-              {/* Tipo de propiedad — Combobox */}
+              {/* Tipo de propiedad: input + datalist */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <ComboBox
+                <input
+                  list="tipos-prop-list"
                   value={tipo}
-                  onChange={setTipo}
-                  options={TIPO_PROPIEDAD}
+                  onChange={(e) => setTipo(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
                   placeholder="Seleccionar o escribir…"
                 />
+                <datalist id="tipos-prop-list">
+                  {['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'].map((t) => <option key={t} value={t} />)}
+                </datalist>
               </div>
 
-              {/* Región — input + datalist con romanos */}
+              {/* Región / Comuna con display romano – nombre (input + datalist) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <input
@@ -565,7 +531,6 @@ export default function HomePage() {
                 </datalist>
               </div>
 
-              {/* Comuna dependiente */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <input
@@ -629,19 +594,3 @@ export default function HomePage() {
     </main>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
