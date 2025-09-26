@@ -1,158 +1,169 @@
-// project/app/api/propiedades/route.ts
 import { NextResponse } from 'next/server';
+import {
+  featuredApiPath,
+  featuredList, // <- tus 3 destacadas; respeta coverImage/títulos/fotos existentes
+} from '../../../lib/featured';
 
-// Evita cualquier cache/optimización estática del handler
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+// catálogo de fotos libres para NO destacadas (todas distintas)
+const stockPhotos = [
+  'https://images.unsplash.com/photo-1505691723518-36a5ac3b2a59?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1600585154340-1e4ce9a7a8c8?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1502005229762-cf1b2da7c89a?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1598928506311-9b6c3e57f36a?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1565183997392-2f6f122e5912?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1475855581690-80accde3ae2b?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1486304873000-235643847519?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1505692952047-1a78307da8f3?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1493809842364-78817add7ffc?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1505691723518-36a5ac3b2a59?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1444419988131-046ed4e5ffd6?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1445510861639-5651173bc5d5?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1459535653751-d571815e906b?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1505692794403-34d4982ae5e9?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1448630360428-65456885c650?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1523217582562-09d0def993a6?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1451976426598-a7593bd6d0b2?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?q=80&w=1600&auto=format&fit=crop',
+];
 
-/* ------- helpers ------- */
-const toNum = (v: any) => {
-  if (v == null) return null;
-  const n = Number(String(v).replace(/\./g, ''));
-  return Number.isFinite(n) ? n : null;
+const pick = <T,>(arr: T[], i: number) => arr[i % arr.length];
+
+type Prop = {
+  id: string;
+  titulo: string;
+  comuna: string;
+  region: string;
+  operacion: 'venta' | 'arriendo';
+  tipo: string;
+  precio_uf?: number | null;
+  precio_clp?: number | null;
+  dormitorios?: number | null;
+  banos?: number | null;
+  superficie_util_m2?: number | null;
+  coverImage?: string;
+  destacada?: boolean;
 };
-const capFirst = (s?: string | null) => {
-  if (!s) return '';
-  const lower = String(s).toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
-};
 
-/* ------- fallback local (3 destacadas + 30 normales) ------- */
-function fallbackData() {
-  const FEATURED = [
-    {
-      id: 'f1',
-      titulo: 'Depto luminoso en Vitacura',
-      comuna: 'Vitacura',
-      region: 'Metropolitana de Santiago',
-      operacion: 'venta',
-      tipo: 'departamento',
-      precio_uf: 10500,
-      precio_clp: null,
-      dormitorios: 2,
-      banos: 2,
-      superficie_util_m2: 78,
-      coverImage:
-        'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1400&auto=format&fit=crop',
-      destacada: true,
-    },
-    {
-      id: 'f2',
-      titulo: 'Casa familiar en Lo Barnechea',
-      comuna: 'Lo Barnechea',
-      region: 'Metropolitana de Santiago',
-      operacion: 'venta',
-      tipo: 'casa',
-      precio_uf: 23000,
-      precio_clp: 908169950,
-      dormitorios: 4,
-      banos: 3,
-      superficie_util_m2: 180,
-      coverImage:
-        'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1400&auto=format&fit=crop',
-      destacada: true,
-    },
-    {
-      id: 'f3',
-      titulo: 'Oficina en Providencia',
-      comuna: 'Providencia',
-      region: 'Metropolitana de Santiago',
-      operacion: 'arriendo',
-      tipo: 'oficina',
-      precio_uf: 4000, // precio ficticio pedido
-      precio_clp: null,
-      dormitorios: 0,
-      banos: 1,
-      superficie_util_m2: 55,
-      coverImage:
-        'https://images.unsplash.com/photo-1507209696998-3c532be9b2b1?q=80&w=1400&auto=format&fit=crop',
-      destacada: true,
-    },
+function capFirst(s: string) {
+  const l = s.toLowerCase();
+  return l.charAt(0).toUpperCase() + l.slice(1);
+}
+
+function makeNonFeatured(count = 30): Prop[] {
+  const comunas = [
+    'Vitacura', 'Providencia', 'Ñuñoa', 'Santiago', 'Las Condes', 'La Reina',
+    'Lo Barnechea', 'Huechuraba', 'La Florida', 'Maipú', 'Colina',
   ];
+  const tipos = ['Departamento', 'Casa', 'Oficina', 'Local comercial', 'Bodega', 'Terreno'];
+  const ops: Array<'venta' | 'arriendo'> = ['venta', 'arriendo'];
 
-  const OTHERS = Array.from({ length: 30 }).map((_, i) => ({
-    id: `n${i + 1}`,
-    titulo: `Propiedad ${i + 1}`,
-    comuna: 'Santiago',
-    region: 'Metropolitana de Santiago',
-    operacion: i % 3 === 0 ? 'arriendo' : 'venta',
-    tipo: i % 2 ? 'departamento' : 'casa',
-    precio_uf: 3000 + i * 120,
-    precio_clp: null,
-    dormitorios: (i % 4) + 1,
-    banos: (i % 2) + 1,
-    superficie_util_m2: 60 + (i % 6) * 10,
-    coverImage:
-      'https://images.unsplash.com/photo-1505691723518-36a5ac3b2d95?q=80&w=1400&auto=format&fit=crop',
-    destacada: false,
+  const arr: Prop[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const tipo = pick(tipos, i);
+    const operacion = pick(ops, i);
+    const comuna = pick(comunas, i);
+    const uf = operacion === 'venta' ? 3500 + i * 120 : 45 + (i % 8) * 5;
+    const dorm = tipo === 'Departamento' || tipo === 'Casa' ? 1 + (i % 4) : 0;
+    const banos = tipo === 'Departamento' || tipo === 'Casa' ? 1 + (i % 3) : 1;
+    const m2 = tipo === 'Terreno' ? 400 + i * 30 : 60 + (i % 6) * 20;
+
+    arr.push({
+      id: `nf-${i + 1}`,
+      titulo: `${tipo} en ${comuna} #${i + 1}`,
+      comuna,
+      region: 'Metropolitana de Santiago',
+      operacion,
+      tipo, // ya viene Capitalizado
+      precio_uf: uf,
+      // precio_clp se calcula abajo si hace falta
+      dormitorios: dorm,
+      banos,
+      superficie_util_m2: m2,
+      coverImage: pick(stockPhotos, i),
+      destacada: false,
+    });
+  }
+  return arr;
+}
+
+export async function GET(req: Request) {
+  // 1) Destacadas desde lib/featured (se respetan títulos/fotos/originales)
+  const featured: Prop[] = featuredList.map((p) => ({
+    id: p.id,
+    titulo: p.titulo || 'Propiedad destacada',
+    comuna: p.comuna || '',
+    region: p.region || 'Metropolitana de Santiago',
+    operacion: (p.operacion || 'venta'),
+    tipo: p.tipo ? capFirst(p.tipo) : 'Propiedad',
+    precio_uf: p.precio_uf ?? null,
+    precio_clp: p.precio_clp ?? null,
+    dormitorios: p.dormitorios ?? null,
+    banos: p.banos ?? null,
+    superficie_util_m2: p.superficie_util_m2 ?? null,
+    coverImage: p.coverImage, // <-- mantiene la foto original si existe
+    destacada: true,
   }));
 
-  return { ALL: [...FEATURED, ...OTHERS] };
-}
+  // 2) No destacadas
+  const nonFeatured = makeNonFeatured(30);
 
-/* ------- filtros ------- */
-function applyFilters(list: any[], p: URLSearchParams) {
-  const operacion = String(p.get('operacion') || '').trim().toLowerCase();
-  const tipo = String(p.get('tipo') || '').trim().toLowerCase();
-  const region = String(p.get('region') || '').trim().toLowerCase();
-  const comuna = String(p.get('comuna') || '').trim().toLowerCase();
-  const onlyFeatured = String(p.get('destacada') || '').toLowerCase() === 'true';
-
-  const minUF = toNum(p.get('minUF'));
-  const maxUF = toNum(p.get('maxUF'));
-  const minCLP = toNum(p.get('minCLP'));
-  const maxCLP = toNum(p.get('maxCLP'));
-
-  let out = list.slice();
-
-  if (operacion) out = out.filter((x) => String(x.operacion || '').toLowerCase() === operacion);
-  if (tipo) out = out.filter((x) => String(x.tipo || '').toLowerCase() === tipo);
-  if (region) out = out.filter((x) => String(x.region || '').toLowerCase() === region);
-  if (comuna) out = out.filter((x) => String(x.comuna || '').toLowerCase() === comuna);
-  if (onlyFeatured) out = out.filter((x) => !!x.destacada);
-
-  if (minUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! >= minUF);
-  if (maxUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! <= maxUF);
-  if (minCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! >= minCLP);
-  if (maxCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! <= maxCLP);
-
-  // normalizar capitalización del tipo
-  out = out.map((x) => ({ ...x, tipo: capFirst(x.tipo) }));
-
-  return out;
-}
-
-/* ------- handler ------- */
-export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const params = url.searchParams;
-  const limit = Math.max(0, Math.min(100, Number(params.get('limit') || '0'))) || undefined;
-
-  // 1) Intentar cargar el dataset real
-  let ALL: any[] | null = null;
+  // 3) UF del día para calcular CLP si falta
+  let uf: number | null = null;
   try {
-    // ruta correcta desde app/api/propiedades/route.ts a project/lib/featured.ts
-    const mod = await import('../../../lib/featured');
-    const candidate = ((mod as any).ALL || (mod as any).default || []) as any[];
-    // si el módulo trae items, los usamos; si no, fallback
-    if (Array.isArray(candidate) && candidate.length > 0) {
-      ALL = candidate;
-    }
+    const r = await fetch(new URL('/api/uf', req.url), { cache: 'no-store' });
+    const j = await r.json().catch(() => ({} as any));
+    uf = typeof j?.uf === 'number' ? j.uf : null;
   } catch {
-    // ignoramos y pasamos a fallback
+    uf = null;
   }
 
-  // 2) Fallback si no hay datos del módulo
-  if (!ALL) {
-    ALL = fallbackData().ALL;
-  }
+  const all = [...featured, ...nonFeatured].map((p) => {
+    if ((!p.precio_clp || p.precio_clp <= 0) && p.precio_uf && uf) {
+      return { ...p, precio_clp: Math.round(p.precio_uf * uf) };
+    }
+    return p;
+  });
 
-  // 3) Aplicar filtros
-  let filtered = applyFilters(ALL, params);
+  // filtros básicos (soporta vacíos)
+  const { searchParams } = new URL(req.url);
+  const q = (searchParams.get('q') || '').trim().toLowerCase();
+  const operacion = (searchParams.get('operacion') || '').toLowerCase();
+  const tipo = (searchParams.get('tipo') || '').toLowerCase();
+  const region = (searchParams.get('region') || '').toLowerCase();
+  const comuna = (searchParams.get('comuna') || '').toLowerCase();
+  const barrio = (searchParams.get('barrio') || '').toLowerCase();
+  const minUF = parseInt(searchParams.get('minUF') || '', 10);
+  const maxUF = parseInt(searchParams.get('maxUF') || '', 10);
+  const minCLP = parseInt(searchParams.get('minCLP') || '', 10);
+  const maxCLP = parseInt(searchParams.get('maxCLP') || '', 10);
 
-  // 4) Límite
-  if (limit) filtered = filtered.slice(0, limit);
+  const filtered = all.filter((p) => {
+    if (q && !(`${p.titulo} ${p.comuna}`.toLowerCase().includes(q))) return false;
+    if (operacion && p.operacion.toLowerCase() !== operacion) return false;
+    if (tipo && p.tipo.toLowerCase() !== tipo) return false;
+    if (region && p.region.toLowerCase() !== region) return false;
+    if (comuna && p.comuna.toLowerCase() !== comuna) return false;
+    if (barrio) { /* placeholder para futuro */ }
 
-  return NextResponse.json({ data: filtered });
+    if (!Number.isNaN(minUF) && p.precio_uf != null && p.precio_uf < minUF) return false;
+    if (!Number.isNaN(maxUF) && p.precio_uf != null && p.precio_uf > maxUF) return false;
+    if (!Number.isNaN(minCLP) && p.precio_clp != null && p.precio_clp < minCLP) return false;
+    if (!Number.isNaN(maxCLP) && p.precio_clp != null && p.precio_clp > maxCLP) return false;
+
+    return true;
+  });
+
+  return NextResponse.json({ data: filtered, total: filtered.length });
 }
