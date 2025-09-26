@@ -1,6 +1,10 @@
 // project/lib/featured.ts
 
-export const featuredApiPath = '/api/featured';
+// Ahora es función para ser compatible con los imports existentes en tus páginas.
+// Ignora el argumento y siempre devuelve el endpoint único de destacadas.
+export function featuredApiPath(_fallback?: string): string {
+  return '/api/featured';
+}
 
 export type Property = {
   id: string;
