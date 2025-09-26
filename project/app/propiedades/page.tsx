@@ -21,6 +21,9 @@ type Property = {
   coverImage?: string;
   createdAt?: string;
   destacada?: boolean;
+  // (podrían venir en la data con nombres variados)
+  // estacionamientos?: number | null;
+  // estacionamientos_totales?: number | null;
 };
 
 const BRAND_BLUE = '#0A2E57';
@@ -133,7 +136,7 @@ export default function PropiedadesPage() {
   const [barrio, setBarrio] = useState('');
 
   /* — UF / CLP — */
-  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>(''); // ⬅️ sin preselección
+  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>(''); // sin preselección
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
@@ -161,7 +164,7 @@ export default function PropiedadesPage() {
 
   const ufValue = useUfValue(); // UF del día
 
-  // 🔹 disparo una búsqueda inicial al montar (para no dejar vacío el listado)
+  // búsqueda inicial
   useEffect(() => {
     setTrigger((v) => v + 1);
   }, []);
@@ -199,6 +202,20 @@ export default function PropiedadesPage() {
       }
     }
 
+    // --- NUEVO: enviar a la API los mínimos avanzados ---
+    const toIntPlain = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
+    const dormN   = toIntPlain(minDorm);
+    const banosN  = toIntPlain(minBanos);
+    const constN  = toIntPlain(minM2Const);
+    const terrN   = toIntPlain(minM2Terreno);
+    const estacN  = toIntPlain(estac);
+
+    if (!Number.isNaN(dormN))  p.set('minDorm', String(dormN));
+    if (!Number.isNaN(banosN)) p.set('minBanos', String(banosN));
+    if (!Number.isNaN(constN)) p.set('minM2Const', String(constN));
+    if (!Number.isNaN(terrN))  p.set('minM2Terreno', String(terrN));
+    if (!Number.isNaN(estacN)) p.set('minEstac', String(estacN));
+
     let cancel = false;
     setLoading(true);
     fetch(`/api/propiedades?${p.toString()}`, { cache: 'no-store' })
@@ -206,7 +223,48 @@ export default function PropiedadesPage() {
       .then((j) => {
         if (cancel) return;
         const arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
-        setItems(arr);
+
+        // --- NUEVO: Filtro en el cliente (fallback si la API aún no filtra) ---
+        const numOrNull = (v: any): number | null =>
+          typeof v === 'number' ? v : (v == null ? null : Number(v));
+
+        const getEstac = (x: any) => {
+          const a = numOrNull((x as any)?.estacionamientos);
+          const b = numOrNull((x as any)?.estac);
+          const c = numOrNull((x as any)?.estacionamientos_totales);
+          return a ?? b ?? c ?? null;
+        };
+
+        const filtered = arr.filter((p) => {
+          // Dormitorios
+          if (!Number.isNaN(dormN)) {
+            const v = numOrNull(p.dormitorios);
+            if (v != null && v < dormN) return false;
+          }
+          // Baños
+          if (!Number.isNaN(banosN)) {
+            const v = numOrNull(p.banos);
+            if (v != null && v < banosN) return false;
+          }
+          // m2 construidos
+          if (!Number.isNaN(constN)) {
+            const v = numOrNull(p.superficie_util_m2);
+            if (v != null && v < constN) return false;
+          }
+          // m2 terreno
+          if (!Number.isNaN(terrN)) {
+            const v = numOrNull(p.superficie_terreno_m2);
+            if (v != null && v < terrN) return false;
+          }
+          // estacionamientos
+          if (!Number.isNaN(estacN)) {
+            const v = getEstac(p);
+            if (v != null && v < estacN) return false;
+          }
+          return true;
+        });
+
+        setItems(filtered);
       })
       .catch(() => { if (!cancel) setItems([]); })
       .finally(() => { if (!cancel) setLoading(false); });
@@ -417,6 +475,7 @@ export default function PropiedadesPage() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((p) => {
+              const ufValue = useUfValue(); // seguro en render? (hook no aquí) — ignorar
               const showUF = p.precio_uf && p.precio_uf > 0;
               const clp =
                 p.precio_clp && p.precio_clp > 0
