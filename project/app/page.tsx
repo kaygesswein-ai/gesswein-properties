@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
-import useUf from './hooks/useUf'; // mantiene tu hook actual (number | null)
+import useUf from '../hooks/useUf';
 import { featuredApiPath } from '../lib/featured'; // canal único para destacadas
 
 /* -------------------- Tipos -------------------- */
