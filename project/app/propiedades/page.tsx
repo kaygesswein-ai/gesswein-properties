@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Bed, ShowerHead, Ruler, Search, Filter } from 'lucide-react';
+import SmartSelect from '../../components/SmartSelect';
 
 type Property = {
   id: string;
@@ -284,82 +285,65 @@ export default function PropiedadesPage() {
           {advancedMode === 'rapida' && (
             <>
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <input
-                  list="dl-operacion"
+                {/* Operación */}
+                <SmartSelect
+                  options={['Venta', 'Arriendo']}
                   value={operacion}
-                  onChange={(e) => setOperacion(e.target.value)}
+                  onChange={(v) => setOperacion(v)}
                   placeholder="Operación"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  className="w-full"
                 />
-                <datalist id="dl-operacion">
-                  <option value="Venta" />
-                  <option value="Arriendo" />
-                </datalist>
 
-                <input
-                  list="dl-tipos"
+                {/* Tipo */}
+                <SmartSelect
+                  options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']}
                   value={tipo}
-                  onChange={(e) => setTipo(e.target.value)}
+                  onChange={(v) => setTipo(v)}
                   placeholder="Tipo de propiedad"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  className="w-full"
                 />
-                <datalist id="dl-tipos">
-                  {['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno'].map((t) => (
-                    <option key={t} value={t} />
-                  ))}
-                </datalist>
 
-                <input
-                  list="dl-regiones"
+                {/* Región */}
+                <SmartSelect
+                  options={REGIONES.map((r) => regionDisplay(r))}
                   value={regionInput}
-                  onChange={(e) => { setRegionInput(e.target.value); setComuna(''); setBarrio(''); }}
+                  onChange={(v) => { setRegionInput(v); setComuna(''); setBarrio(''); }}
                   placeholder="Región"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  className="w-full"
                 />
-                <datalist id="dl-regiones">
-                  {REGIONES.map((r) => <option key={r} value={regionDisplay(r)} />)}
-                </datalist>
 
-                <input
-                  list="dl-comunas"
+                {/* Comuna */}
+                <SmartSelect
+                  options={region ? (COMUNAS[region] || []) : []}
                   value={comuna}
-                  onChange={(e) => { setComuna(e.target.value); setBarrio(''); }}
+                  onChange={(v) => { setComuna(v); setBarrio(''); }}
                   placeholder="Comuna"
                   disabled={!region}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+                  className="w-full"
                 />
-                <datalist id="dl-comunas">
-                  {region && (COMUNAS[region] || []).map((c) => <option key={c} value={c} />)}
-                </datalist>
 
-                <input
-                  list="dl-barrios"
+                {/* Barrio */}
+                <SmartSelect
+                  options={comuna ? (BARRIOS[comuna] || []) : []}
                   value={barrio}
-                  onChange={(e) => setBarrio(e.target.value)}
+                  onChange={(v) => setBarrio(v)}
                   placeholder="Barrio"
                   disabled={!comuna || !BARRIOS[comuna]}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400"
+                  className="w-full"
                 />
-                <datalist id="dl-barrios">
-                  {comuna && (BARRIOS[comuna] || []).map((b) => <option key={b} value={b} />)}
-                </datalist>
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                {/* === ahora permite CLP además de UF === */}
-                <input
-                  list="dl-moneda"
+                {/* Moneda */}
+                <SmartSelect
+                  options={['UF', 'CLP', 'CLP$']}
                   value={moneda}
-                  onChange={(e) => setMoneda((e.target.value as any) || 'UF')}
+                  onChange={(v) => setMoneda((v as any) || 'UF')}
                   placeholder="UF"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  className="w-full"
                 />
-                <datalist id="dl-moneda">
-                  <option value="UF" />
-                  <option value="CLP" />
-                  <option value="CLP$" />
-                </datalist>
 
+                {/* Mín / Máx (SIN cambios) */}
                 <input
                   value={minValor}
                   onChange={(e) => setMinValor(fmtMiles(e.target.value))}
@@ -390,29 +374,59 @@ export default function PropiedadesPage() {
             </>
           )}
 
-          {/* === AVANZADA (sin cambios visuales) === */}
+          {/* === AVANZADA (mismos cambios de formato) === */}
           {advancedMode === 'avanzada' && (
             <>
               <div className="pl-2 sm:pl-4"><div className="h-px bg-slate-200 my-4" /></div>
 
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <input list="dl-operacion" value={operacion} onChange={(e) => setOperacion(e.target.value)}
-                  placeholder="Operación" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                <input list="dl-tipos" value={tipo} onChange={(e) => setTipo(e.target.value)}
-                  placeholder="Tipo de propiedad" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                <input list="dl-regiones" value={regionInput} onChange={(e) => { setRegionInput(e.target.value); setComuna(''); setBarrio(''); }}
-                  placeholder="Región" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                <input list="dl-comunas" value={comuna} onChange={(e) => { setComuna(e.target.value); setBarrio(''); }}
-                  placeholder="Comuna" disabled={!region}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400" />
-                <input list="dl-barrios" value={barrio} onChange={(e) => setBarrio(e.target.value)}
-                  placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400 disabled:bg-gray-100 disabled:text-slate-400" />
+                <SmartSelect
+                  options={['Venta', 'Arriendo']}
+                  value={operacion}
+                  onChange={(v) => setOperacion(v)}
+                  placeholder="Operación"
+                  className="w-full"
+                />
+                <SmartSelect
+                  options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']}
+                  value={tipo}
+                  onChange={(v) => setTipo(v)}
+                  placeholder="Tipo de propiedad"
+                  className="w-full"
+                />
+                <SmartSelect
+                  options={REGIONES.map((r) => regionDisplay(r))}
+                  value={regionInput}
+                  onChange={(v) => { setRegionInput(v); setComuna(''); setBarrio(''); }}
+                  placeholder="Región"
+                  className="w-full"
+                />
+                <SmartSelect
+                  options={region ? (COMUNAS[region] || []) : []}
+                  value={comuna}
+                  onChange={(v) => { setComuna(v); setBarrio(''); }}
+                  placeholder="Comuna"
+                  disabled={!region}
+                  className="w-full"
+                />
+                <SmartSelect
+                  options={comuna ? (BARRIOS[comuna] || []) : []}
+                  value={barrio}
+                  onChange={(v) => setBarrio(v)}
+                  placeholder="Barrio"
+                  disabled={!comuna || !BARRIOS[comuna]}
+                  className="w-full"
+                />
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <input list="dl-moneda" value={moneda} onChange={(e) => setMoneda((e.target.value as any) || 'UF')}
-                  placeholder="UF" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <SmartSelect
+                  options={['UF', 'CLP', 'CLP$']}
+                  value={moneda}
+                  onChange={(v) => setMoneda((v as any) || 'UF')}
+                  placeholder="UF"
+                  className="w-full"
+                />
                 <input value={minValor} onChange={(e) => setMinValor(fmtMiles(e.target.value))} inputMode="numeric"
                   placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={maxValor} onChange={(e) => setMaxValor(fmtMiles(e.target.value))} inputMode="numeric"
@@ -458,11 +472,12 @@ export default function PropiedadesPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((p) => {
               const showUF = p.precio_uf && p.precio_uf > 0;
+              const ufValue = useUfValue();
               const clp =
                 p.precio_clp && p.precio_clp > 0
                   ? p.precio_clp
                   : showUF && ufValue
-                  ? Math.round((p.precio_uf as number) * ufValue)
+                  ? Math.round((p.precio_uf as number) * (ufValue as number))
                   : null;
 
               return (
