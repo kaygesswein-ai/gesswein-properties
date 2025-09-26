@@ -39,7 +39,6 @@ const FEATURED: Property[] = [
     superficie_util_m2: 78,
     superficie_terreno_m2: null,
     estacionamientos: 1,
-    // Foto que ya te gustaba (estética de “depto luminoso”)
     coverImage:
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop',
     destacada: true,
@@ -58,7 +57,6 @@ const FEATURED: Property[] = [
     superficie_util_m2: 180,
     superficie_terreno_m2: null,
     estacionamientos: 2,
-    // Foto que ya te gustaba para “casa familiar”
     coverImage:
       'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1600&auto=format&fit=crop',
     destacada: true,
@@ -78,7 +76,7 @@ const FEATURED: Property[] = [
     superficie_util_m2: 55,
     superficie_terreno_m2: null,
     estacionamientos: 2,
-    // Foto de interior de oficina (Unsplash, libre de uso) — SIN fallback
+    // Foto de interior de oficina (sin fallback)
     coverImage:
       'https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=1600&auto=format&fit=crop',
     destacada: true,
@@ -114,7 +112,6 @@ const EXTRA: Property[] = (() => {
     'Lampa',
   ];
 
-  // Banco de imágenes neutras (arquitectura/interior) para publicaciones NO destacadas
   const imgs = [
     'https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1600&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1448630360428-65456885c650?q=80&w=1600&auto=format&fit=crop',
@@ -129,13 +126,11 @@ const EXTRA: Property[] = (() => {
     const comuna = comunas[i % comunas.length];
     const operacion: Property['operacion'] = i % 5 === 0 ? 'Arriendo' : 'Venta';
 
-    // Lógica de atributos según tipo
     const dormitorios =
       tipo === 'Oficina' || tipo === 'Bodega' || tipo === 'Local comercial' || tipo === 'Terreno'
         ? 0
         : 1 + (i % 4);
-    const banos =
-      tipo === 'Terreno' ? 0 : 1 + (i % 3);
+    const banos = tipo === 'Terreno' ? 0 : 1 + (i % 3);
     const m2 = 45 + ((i * 7) % 160);
 
     const precioUF =
@@ -182,3 +177,6 @@ export async function getFeaturedProperties(): Promise<Property[]> {
 export async function getAllProperties(): Promise<Property[]> {
   return ALL;
 }
+
+// *** NUEVO: export con el nombre que espera tu API ***
+export const featuredItems = FEATURED;
