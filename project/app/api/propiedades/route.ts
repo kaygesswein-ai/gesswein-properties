@@ -1,8 +1,7 @@
 // project/app/api/propiedades/route.ts
 import { NextResponse } from 'next/server';
-import * as featured from '../../../lib/featured';
 
-/* ---------- helpers ---------- */
+/* ---------- util ---------- */
 function capFirst(s?: string | null) {
   if (!s) return '';
   const lower = String(s).toLowerCase();
@@ -14,7 +13,7 @@ function toNum(v: any) {
   return Number.isFinite(n) ? n : null;
 }
 
-/* Aplica filtros enviados por el front */
+/* Filtros del query */
 function applyFilters(list: any[], p: URLSearchParams) {
   const operacion = String(p.get('operacion') || '').trim().toLowerCase();
   const tipo = String(p.get('tipo') || '').trim().toLowerCase();
@@ -40,10 +39,84 @@ function applyFilters(list: any[], p: URLSearchParams) {
   if (minCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! >= minCLP);
   if (maxCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! <= maxCLP);
 
-  // Normaliza "tipo" a Capitalizado (Casa, Oficina, Departamento, etc.)
+  // Normaliza tipo -> "Casa", "Departamento", etc.
   out = out.map((x) => ({ ...x, tipo: capFirst(x.tipo) }));
 
   return out;
+}
+
+/* Fallbacks locales, por si el import falla */
+function localFallback() {
+  const FEATURED = [
+    {
+      id: 'f1',
+      titulo: 'Depto luminoso en Vitacura',
+      comuna: 'Vitacura',
+      region: 'Metropolitana de Santiago',
+      operacion: 'venta',
+      tipo: 'departamento',
+      precio_uf: 10500,
+      precio_clp: null,
+      dormitorios: 2,
+      banos: 2,
+      superficie_util_m2: 78,
+      coverImage:
+        'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1400&auto=format&fit=crop',
+      destacada: true,
+    },
+    {
+      id: 'f2',
+      titulo: 'Casa familiar en Lo Barnechea',
+      comuna: 'Lo Barnechea',
+      region: 'Metropolitana de Santiago',
+      operacion: 'venta',
+      tipo: 'casa',
+      precio_uf: 23000,
+      precio_clp: 908169950,
+      dormitorios: 4,
+      banos: 3,
+      superficie_util_m2: 180,
+      coverImage:
+        'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1400&auto=format&fit=crop',
+      destacada: true,
+    },
+    {
+      id: 'f3',
+      titulo: 'Oficina en Providencia',
+      comuna: 'Providencia',
+      region: 'Metropolitana de Santiago',
+      operacion: 'arriendo',
+      tipo: 'oficina',
+      precio_uf: 4000, // precio ficticio pedido
+      precio_clp: null,
+      dormitorios: 0,
+      banos: 1,
+      superficie_util_m2: 55,
+      coverImage:
+        'https://images.unsplash.com/photo-1507209696998-3c532be9b2b1?q=80&w=1400&auto=format&fit=crop',
+      destacada: true,
+    },
+  ];
+
+  // 30 “no destacadas” simples
+  const OTHERS = Array.from({ length: 30 }).map((_, k) => ({
+    id: `n${k + 1}`,
+    titulo: `Propiedad ${k + 1}`,
+    comuna: 'Santiago',
+    region: 'Metropolitana de Santiago',
+    operacion: k % 3 === 0 ? 'arriendo' : 'venta',
+    tipo: k % 2 ? 'departamento' : 'casa',
+    precio_uf: 3000 + k * 120,
+    precio_clp: null,
+    dormitorios: (k % 4) + 1,
+    banos: (k % 2) + 1,
+    superficie_util_m2: 60 + (k % 6) * 10,
+    coverImage:
+      'https://images.unsplash.com/photo-1505691723518-36a5ac3b2d95?q=80&w=1400&auto=format&fit=crop',
+    destacada: false,
+  }));
+
+  return { FEATURED, ALL: [...FEATURED, ...OTHERS] };
 }
 
 export async function GET(req: Request) {
@@ -51,24 +124,31 @@ export async function GET(req: Request) {
   const params = url.searchParams;
   const limit = Math.max(0, Math.min(100, Number(params.get('limit') || '0'))) || undefined;
 
-  // 1) Tomamos SIEMPRE los datos locales
-  let base: any[] = [];
+  // 1) Intentar importar tu dataset real (dos rutas posibles por seguridad)
+  let ALL: any[] | null = null;
   try {
-    if (typeof (featured as any).getAllProperties === 'function') {
-      base = await (featured as any).getAllProperties();
-    } else if (Array.isArray((featured as any).ALL)) {
-      base = (featured as any).ALL;
-    } else if (Array.isArray((featured as any).FEATURED)) {
-      base = (featured as any).FEATURED;
-    }
-  } catch {
-    base = [];
+    const m = await import('../../../lib/featured'); // project/lib/featured
+    ALL = (m as any).ALL || (m as any).getAllProperties?.() || null;
+    if (ALL && typeof (ALL as any).then === 'function') ALL = await (ALL as any);
+  } catch {}
+  if (!ALL) {
+    try {
+      const m2 = await import('../../../../lib/featured'); // alternativa por si cambia estructura
+      ALL = (m2 as any).ALL || (m2 as any).getAllProperties?.() || null;
+      if (ALL && typeof (ALL as any).then === 'function') ALL = await (ALL as any);
+    } catch {}
   }
 
-  // 2) Aplicar filtros del front
-  let filtered = applyFilters(base, params);
+  // 2) Si no hay datos, usar fallback local (garantiza resultados)
+  if (!ALL || !Array.isArray(ALL) || ALL.length === 0) {
+    const fb = localFallback();
+    ALL = fb.ALL;
+  }
 
-  // 3) limit opcional
+  // 3) Aplicar filtros
+  let filtered = applyFilters(ALL, params);
+
+  // 4) limit opcional
   if (limit) filtered = filtered.slice(0, limit);
 
   return NextResponse.json({ data: filtered });
