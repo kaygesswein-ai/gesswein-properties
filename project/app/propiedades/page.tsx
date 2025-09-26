@@ -323,7 +323,7 @@ export default function PropiedadesPage() {
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <SmartSelect
-                  options={['UF', 'CLP', 'CLP$']}
+                  options={['UF', 'CLP$']}
                   value={moneda}
                   onChange={(v) => setMoneda((v as any) || 'UF')}
                   placeholder="UF"
