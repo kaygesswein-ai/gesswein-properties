@@ -133,7 +133,7 @@ export default function PropiedadesPage() {
   const [barrio, setBarrio] = useState('');
 
   /* — UF / CLP — */
-  const [moneda, setMoneda] = useState<'UF' | 'CLP$' | 'CLP'>('UF');
+  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>(''); // ⬅️ sin preselección
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
@@ -184,13 +184,11 @@ export default function PropiedadesPage() {
     if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
       const isCLP = moneda === 'CLP' || moneda === 'CLP$';
       if (isCLP && typeof ufValue === 'number' && ufValue > 0) {
-        // convierto CLP -> UF para que el backend filtre por UF
         const minUF = !Number.isNaN(minN) ? Math.round(minN / ufValue) : NaN;
         const maxUF = !Number.isNaN(maxN) ? Math.round(maxN / ufValue) : NaN;
         if (!Number.isNaN(minUF)) p.set('minUF', String(minUF));
         if (!Number.isNaN(maxUF)) p.set('maxUF', String(maxUF));
       } else {
-        // UF directo, o fallback CLP directo si el backend lo soporta
         if (isCLP) {
           if (!Number.isNaN(minN)) p.set('minCLP', String(minN));
           if (!Number.isNaN(maxN)) p.set('maxCLP', String(maxN));
@@ -388,7 +386,7 @@ export default function PropiedadesPage() {
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect options={['UF','CLP','CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'UF')} placeholder="UF" />
+                <SmartSelect options={['UF','CLP','CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minDorm} onChange={(e)=>setMinDorm(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
