@@ -55,7 +55,7 @@ export async function GET(req: Request) {
 
   let data: any[] = [];
 
-  // 1) Intento contra supabase-rest (igual que antes)
+  // 1) Intento contra supabase-rest (como antes)
   try {
     const qs = new URLSearchParams();
     if (params.get('comuna')) qs.set('comuna', params.get('comuna')!);
@@ -78,8 +78,8 @@ export async function GET(req: Request) {
   // 2) Fallback a dataset local si BD no entregó nada
   if (!Array.isArray(data) || data.length === 0) {
     try {
-      // **RUTA RELATIVA CORRECTA** desde project/app/api/propiedades/route.ts
-      const mod: any = await import('../../lib/featured');
+      // *** RUTA CORRECTA (tres niveles) ***
+      const mod: any = await import('../../../lib/featured');
       if (typeof mod.getAllProperties === 'function') {
         data = await mod.getAllProperties();
       } else if (Array.isArray(mod.ALL)) {
