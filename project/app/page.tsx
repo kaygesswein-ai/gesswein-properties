@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
 import useUf from '../hooks/useUf';
-import { featuredApiPath } from '../lib/featured'; // canal único para destacadas
+import SmartSelect from '../components/SmartSelect';
 
 /* -------------------- Tipos -------------------- */
 type Property = {
@@ -43,7 +43,7 @@ function capFirst(s?: string | null) {
 }
 
 /* -------------------- Datos Chile (para formulario de referidos) -------------------- */
-const REGIONES = [
+const REGIONES: readonly string[] = [
   'Arica y Parinacota',
   'Tarapacá',
   'Antofagasta',
@@ -60,8 +60,8 @@ const REGIONES = [
   'Aysén',
   'Magallanes',
   'Metropolitana de Santiago',
-] as const;
-type Region = typeof REGIONES[number];
+];
+type Region = (typeof REGIONES)[number];
 
 const COMUNAS_POR_REGION: Record<Region, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
@@ -116,6 +116,7 @@ const displayRegion = (r: Region) => {
   return roman ? `${roman} - ${r}` : r;
 };
 const extractRegionName = (value: string): Region | '' => {
+  // admite "X - Nombre" o "Nombre"
   const v = value.includes(' - ') ? (value.split(' - ').slice(1).join(' - ')) : value;
   const match = REGIONES.find((r) => r.toLowerCase() === v.trim().toLowerCase());
   return (match as Region) || '';
@@ -136,17 +137,23 @@ export default function HomePage() {
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
 
-  // Carga destacadas DESDE LA MISMA FUENTE QUE PROPIEDADES
+  // Carga destacadas
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const url = featuredApiPath('/api/propiedades');
-        const res = await fetch(url, { cache: 'no-store' });
-        const json = await res.json().catch(() => ({} as any));
+        const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' });
+        const json = await res.json();
         if (!mounted) return;
         const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        setDestacadas(data);
+        // si viene "Consultar", asigno 2300 UF para no dejar el precio vacío (solo display)
+        const fixed = data.map((p) => {
+          if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
+            return { ...p, precio_uf: 2300 };
+          }
+          return p;
+        });
+        setDestacadas(fixed);
       } catch {
         if (mounted) setDestacadas([]);
       }
@@ -249,7 +256,7 @@ export default function HomePage() {
   }, [active]);
 
   /* --------- Estado formulario referidos --------- */
-  const [regionInput, setRegionInput] = useState('');
+  const [regionInput, setRegionInput] = useState('');   // muestra "X - Nombre" o vacío
   const [comunaInput, setComunaInput] = useState('');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
@@ -486,64 +493,53 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio: input + datalist (escribible y seleccionable) */}
+              {/* Servicio: SmartSelect (escribible + lista completa al abrir) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
-                <input
-                  list="servicios-list"
+                <SmartSelect
+                  options={SERVICIOS.map(s => ({ label: s, value: s }))}
                   value={servicio}
-                  onChange={(e) => setServicio(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                  onChange={(v) => setServicio(v)}
                   placeholder="Seleccionar o escribir…"
+                  className="w-full"
                 />
-                <datalist id="servicios-list">
-                  {SERVICIOS.map((s) => <option key={s} value={s} />)}
-                </datalist>
               </div>
 
-              {/* Tipo de propiedad: input + datalist */}
+              {/* Tipo de propiedad: SmartSelect */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <input
-                  list="tipos-prop-list"
+                <SmartSelect
+                  options={TIPO_PROPIEDAD.map(t => ({ label: t, value: t }))}
                   value={tipo}
-                  onChange={(e) => setTipo(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                  onChange={(v) => setTipo(v)}
                   placeholder="Seleccionar o escribir…"
+                  className="w-full"
                 />
-                <datalist id="tipos-prop-list">
-                  {['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'].map((t) => <option key={t} value={t} />)}
-                </datalist>
               </div>
 
-              {/* Región / Comuna con display romano – nombre (input + datalist) */}
+              {/* Región: SmartSelect con display romano – nombre */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
-                <input
-                  list="regiones-list"
+                <SmartSelect
+                  options={REGIONES.map(r => ({ label: displayRegion(r as Region), value: displayRegion(r as Region) }))}
                   value={regionInput}
-                  onChange={(e) => { setRegionInput(e.target.value); setComunaInput(''); }}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                  onChange={(v) => { setRegionInput(v); setComunaInput(''); }}
                   placeholder="Seleccionar o escribir…"
+                  className="w-full"
                 />
-                <datalist id="regiones-list">
-                  {REGIONES.map((r) => <option key={r} value={displayRegion(r as Region)} />)}
-                </datalist>
               </div>
 
+              {/* Comuna: SmartSelect condicionado por región */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
-                <input
-                  list="comunas-list"
+                <SmartSelect
+                  options={(regionSel ? (COMUNAS_POR_REGION[regionSel] || []) : []).map(c => ({ label: c, value: c }))}
                   value={comunaInput}
-                  onChange={(e) => setComunaInput(e.target.value)}
-                  disabled={!regionSel}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 bg-gray-50 text-slate-700 disabled:bg-gray-100 disabled:text-slate-400"
+                  onChange={(v) => setComunaInput(v)}
                   placeholder={regionSel ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
+                  disabled={!regionSel}
+                  className="w-full"
                 />
-                <datalist id="comunas-list">
-                  {regionSel && (COMUNAS_POR_REGION[regionSel] || []).map((c) => <option key={c} value={c} />)}
-                </datalist>
               </div>
 
               {/* Presupuestos UF */}
@@ -553,7 +549,7 @@ export default function HomePage() {
                   value={minUF}
                   onChange={(e) => setMinUF(formatUFinput(e.target.value))}
                   inputMode="numeric"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                   placeholder="0"
                 />
               </div>
@@ -563,7 +559,7 @@ export default function HomePage() {
                   value={maxUF}
                   onChange={(e) => setMaxUF(formatUFinput(e.target.value))}
                   inputMode="numeric"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                   placeholder="0"
                 />
               </div>
