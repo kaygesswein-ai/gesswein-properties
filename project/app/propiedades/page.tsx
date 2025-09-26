@@ -340,7 +340,7 @@ export default function PropiedadesPage() {
                 <SmartSelect
                   options={['UF', 'CLP$']}
                   value={moneda}
-                  onChange={(v) => setMoneda((v as any) || 'UF')}
+                  onChange={(v) => setMoneda((v as any) || '')}
                   placeholder="UF/CLP$"
                 />
 
