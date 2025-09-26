@@ -251,8 +251,8 @@ export default function HomePage() {
   const [comunaInput, setComunaInput] = useState('');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
-  const [servicio, setServicio] = useState('Comprar');
-  const [tipo, setTipo] = useState('Casa');
+  const [servicio, setServicio] = useState(''); // ⬅️ ahora sin preselección
+  const [tipo, setTipo] = useState('');        // ⬅️ ahora sin preselección
 
   const regionSel = extractRegionName(regionInput);
   const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
@@ -477,7 +477,7 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio: SmartSelect -> options string[] */}
+              {/* Servicio */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <SmartSelect
@@ -489,7 +489,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Tipo de propiedad: SmartSelect -> options string[] */}
+              {/* Tipo de propiedad */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <SmartSelect
@@ -501,7 +501,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Región: SmartSelect con display "X - Nombre" -> options string[] */}
+              {/* Región */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
@@ -513,7 +513,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Comuna: SmartSelect dependiente de región -> options string[] */}
+              {/* Comuna */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
