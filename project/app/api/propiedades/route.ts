@@ -1,33 +1,31 @@
 // project/app/api/propiedades/route.ts
 import { NextResponse } from 'next/server';
+import * as featured from '../../../lib/featured';
 
-/** Capitaliza primera letra */
-function capFirst(s: string | null | undefined) {
+/* ---------- helpers ---------- */
+function capFirst(s?: string | null) {
   if (!s) return '';
   const lower = String(s).toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
-
-/** Number seguro (UF/CLP) */
 function toNum(v: any) {
   if (v == null) return null;
   const n = Number(String(v).replace(/\./g, ''));
   return Number.isFinite(n) ? n : null;
 }
 
-/** Aplica filtros que envía el front */
+/* Aplica filtros enviados por el front */
 function applyFilters(list: any[], p: URLSearchParams) {
   const operacion = String(p.get('operacion') || '').trim().toLowerCase();
   const tipo = String(p.get('tipo') || '').trim().toLowerCase();
   const region = String(p.get('region') || '').trim().toLowerCase();
   const comuna = String(p.get('comuna') || '').trim().toLowerCase();
+  const destacada = String(p.get('destacada') || '').toLowerCase() === 'true';
 
   const minUF = toNum(p.get('minUF'));
   const maxUF = toNum(p.get('maxUF'));
   const minCLP = toNum(p.get('minCLP'));
   const maxCLP = toNum(p.get('maxCLP'));
-
-  const destacada = String(p.get('destacada') || '').toLowerCase() === 'true';
 
   let out = list.slice();
 
@@ -42,7 +40,7 @@ function applyFilters(list: any[], p: URLSearchParams) {
   if (minCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! >= minCLP);
   if (maxCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! <= maxCLP);
 
-  // Normaliza “tipo” en mayúscula inicial
+  // Normaliza "tipo" a Capitalizado (Casa, Oficina, Departamento, etc.)
   out = out.map((x) => ({ ...x, tipo: capFirst(x.tipo) }));
 
   return out;
@@ -53,51 +51,24 @@ export async function GET(req: Request) {
   const params = url.searchParams;
   const limit = Math.max(0, Math.min(100, Number(params.get('limit') || '0'))) || undefined;
 
-  let data: any[] = [];
-
-  // 1) Intento contra supabase-rest (como antes)
+  // 1) Tomamos SIEMPRE los datos locales
+  let base: any[] = [];
   try {
-    const qs = new URLSearchParams();
-    if (params.get('comuna')) qs.set('comuna', params.get('comuna')!);
-    if (params.get('operacion')) qs.set('operacion', params.get('operacion')!);
-    if (params.get('tipo')) qs.set('tipo', params.get('tipo')!);
-
-    const r = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_REST_URL}/properties?${qs.toString()}`,
-      { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '' } },
-    );
-
-    if (r.ok) {
-      const j = await r.json().catch(() => []);
-      if (Array.isArray(j)) data = j;
+    if (typeof (featured as any).getAllProperties === 'function') {
+      base = await (featured as any).getAllProperties();
+    } else if (Array.isArray((featured as any).ALL)) {
+      base = (featured as any).ALL;
+    } else if (Array.isArray((featured as any).FEATURED)) {
+      base = (featured as any).FEATURED;
     }
   } catch {
-    // silencioso
+    base = [];
   }
 
-  // 2) Fallback a dataset local si BD no entregó nada
-  if (!Array.isArray(data) || data.length === 0) {
-    try {
-      // *** RUTA CORRECTA (tres niveles) ***
-      const mod: any = await import('../../../lib/featured');
-      if (typeof mod.getAllProperties === 'function') {
-        data = await mod.getAllProperties();
-      } else if (Array.isArray(mod.ALL)) {
-        data = mod.ALL;
-      } else if (Array.isArray(mod.FEATURED)) {
-        data = mod.FEATURED;
-      } else {
-        data = [];
-      }
-    } catch {
-      data = [];
-    }
-  }
+  // 2) Aplicar filtros del front
+  let filtered = applyFilters(base, params);
 
-  // 3) Filtros del front
-  let filtered = applyFilters(data, params);
-
-  // 4) limit opcional
+  // 3) limit opcional
   if (limit) filtered = filtered.slice(0, limit);
 
   return NextResponse.json({ data: filtered });
