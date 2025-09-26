@@ -159,9 +159,17 @@ export default function PropiedadesPage() {
     else setRegion('');
   }, [regionInput]);
 
-  /* Build params + fetch reales (sin caché) */
+  const ufValue = useUfValue(); // UF del día
+
+  // 🔹 disparo una búsqueda inicial al montar (para no dejar vacío el listado)
+  useEffect(() => {
+    setTrigger((v) => v + 1);
+  }, []);
+
+  /* Build params + fetch reales (sin caché) — SOLO cuando cambia "trigger" */
   useEffect(() => {
     const p = new URLSearchParams();
+
     if (qTop.trim()) p.set('q', qTop.trim());
     if (operacion) p.set('operacion', operacion);
     if (tipo) p.set('tipo', tipo);
@@ -169,16 +177,28 @@ export default function PropiedadesPage() {
     if (comuna) p.set('comuna', comuna);
     if (barrio) p.set('barrio', barrio);
 
-    const monedaKey = (moneda === 'CLP' || moneda === 'CLP$') ? 'CLP' : 'UF';
-    if (minValor) p.set(monedaKey === 'UF' ? 'minUF' : 'minCLP', minValor.replace(/\./g, ''));
-    if (maxValor) p.set(monedaKey === 'UF' ? 'maxUF' : 'maxCLP', maxValor.replace(/\./g, ''));
-
-    if (advancedMode === 'avanzada') {
-      if (minDorm) p.set('minDorm', minDorm);
-      if (minBanos) p.set('minBanos', minBanos);
-      if (minM2Const) p.set('minM2Const', minM2Const.replace(/\./g, ''));
-      if (minM2Terreno) p.set('minM2Terreno', minM2Terreno.replace(/\./g, ''));
-      if (estac) p.set('estacionamientos', estac);
+    // --- MIN/MAX con UF o CLP ---
+    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
+    const minN = toInt(minValor);
+    const maxN = toInt(maxValor);
+    if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
+      const isCLP = moneda === 'CLP' || moneda === 'CLP$';
+      if (isCLP && typeof ufValue === 'number' && ufValue > 0) {
+        // convierto CLP -> UF para que el backend filtre por UF
+        const minUF = !Number.isNaN(minN) ? Math.round(minN / ufValue) : NaN;
+        const maxUF = !Number.isNaN(maxN) ? Math.round(maxN / ufValue) : NaN;
+        if (!Number.isNaN(minUF)) p.set('minUF', String(minUF));
+        if (!Number.isNaN(maxUF)) p.set('maxUF', String(maxUF));
+      } else {
+        // UF directo, o fallback CLP directo si el backend lo soporta
+        if (isCLP) {
+          if (!Number.isNaN(minN)) p.set('minCLP', String(minN));
+          if (!Number.isNaN(maxN)) p.set('maxCLP', String(maxN));
+        } else {
+          if (!Number.isNaN(minN)) p.set('minUF', String(minN));
+          if (!Number.isNaN(maxN)) p.set('maxUF', String(maxN));
+        }
+      }
     }
 
     let cancel = false;
@@ -194,12 +214,7 @@ export default function PropiedadesPage() {
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [
-    trigger, advancedMode, qTop, operacion, tipo, region, comuna, barrio,
-    minValor, maxValor, moneda, minDorm, minBanos, minM2Const, minM2Terreno, estac,
-  ]);
-
-  const ufValue = useUfValue(); // UF del día
+  }, [trigger]); // ← solo al apretar Buscar (o carga inicial)
 
   return (
     <main className="bg-white">
@@ -409,7 +424,7 @@ export default function PropiedadesPage() {
                 p.precio_clp && p.precio_clp > 0
                   ? p.precio_clp
                   : showUF && ufValue
-                  ? Math.round((p.precio_uf as number) * ufValue)
+                  ? Math.round((p.precio_uf as number) * (ufValue ?? 0))
                   : null;
 
               return (
