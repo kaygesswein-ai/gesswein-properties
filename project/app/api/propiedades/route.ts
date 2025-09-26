@@ -1,51 +1,20 @@
+// project/app/api/propiedades/route.ts
 import { NextResponse } from 'next/server';
 
-/* ---------- utils ---------- */
-function capFirst(s?: string | null) {
-  if (!s) return '';
-  const lower = String(s).toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
-}
-function toNum(v: any) {
+/* ------- helpers ------- */
+const toNum = (v: any) => {
   if (v == null) return null;
   const n = Number(String(v).replace(/\./g, ''));
   return Number.isFinite(n) ? n : null;
-}
+};
+const capFirst = (s?: string | null) => {
+  if (!s) return '';
+  const lower = String(s).toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+};
 
-/* filtros */
-function applyFilters(list: any[], p: URLSearchParams) {
-  const operacion = String(p.get('operacion') || '').trim().toLowerCase();
-  const tipo = String(p.get('tipo') || '').trim().toLowerCase();
-  const region = String(p.get('region') || '').trim().toLowerCase();
-  const comuna = String(p.get('comuna') || '').trim().toLowerCase();
-  const destacada = String(p.get('destacada') || '').toLowerCase() === 'true';
-
-  const minUF = toNum(p.get('minUF'));
-  const maxUF = toNum(p.get('maxUF'));
-  const minCLP = toNum(p.get('minCLP'));
-  const maxCLP = toNum(p.get('maxCLP'));
-
-  let out = list.slice();
-
-  if (operacion) out = out.filter((x) => String(x.operacion || '').toLowerCase() === operacion);
-  if (tipo) out = out.filter((x) => String(x.tipo || '').toLowerCase() === tipo);
-  if (region) out = out.filter((x) => String(x.region || '').toLowerCase() === region);
-  if (comuna) out = out.filter((x) => String(x.comuna || '').toLowerCase() === comuna);
-  if (destacada) out = out.filter((x) => !!x.destacada);
-
-  if (minUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! >= minUF);
-  if (maxUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! <= maxUF);
-  if (minCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! >= minCLP);
-  if (maxCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! <= maxCLP);
-
-  // normaliza tipo -> Capitalizado
-  out = out.map((x) => ({ ...x, tipo: capFirst(x.tipo) }));
-
-  return out;
-}
-
-/* fallback local: 3 destacadas + 30 no destacadas */
-function localFallback() {
+/* ------- fallback local (3 destacadas + 30 normales) ------- */
+function fallbackData() {
   const FEATURED = [
     {
       id: 'f1',
@@ -97,18 +66,18 @@ function localFallback() {
     },
   ];
 
-  const OTHERS = Array.from({ length: 30 }).map((_, k) => ({
-    id: `n${k + 1}`,
-    titulo: `Propiedad ${k + 1}`,
+  const OTHERS = Array.from({ length: 30 }).map((_, i) => ({
+    id: `n${i + 1}`,
+    titulo: `Propiedad ${i + 1}`,
     comuna: 'Santiago',
     region: 'Metropolitana de Santiago',
-    operacion: k % 3 === 0 ? 'arriendo' : 'venta',
-    tipo: k % 2 ? 'departamento' : 'casa',
-    precio_uf: 3000 + k * 120,
+    operacion: i % 3 === 0 ? 'arriendo' : 'venta',
+    tipo: i % 2 ? 'departamento' : 'casa',
+    precio_uf: 3000 + i * 120,
     precio_clp: null,
-    dormitorios: (k % 4) + 1,
-    banos: (k % 2) + 1,
-    superficie_util_m2: 60 + (k % 6) * 10,
+    dormitorios: (i % 4) + 1,
+    banos: (i % 2) + 1,
+    superficie_util_m2: 60 + (i % 6) * 10,
     coverImage:
       'https://images.unsplash.com/photo-1505691723518-36a5ac3b2d95?q=80&w=1400&auto=format&fit=crop',
     destacada: false,
@@ -117,49 +86,65 @@ function localFallback() {
   return { FEATURED, ALL: [...FEATURED, ...OTHERS] };
 }
 
+/* ------- filtros ------- */
+function applyFilters(list: any[], p: URLSearchParams) {
+  const operacion = String(p.get('operacion') || '').trim().toLowerCase();
+  const tipo = String(p.get('tipo') || '').trim().toLowerCase();
+  const region = String(p.get('region') || '').trim().toLowerCase();
+  const comuna = String(p.get('comuna') || '').trim().toLowerCase();
+  const destacada = String(p.get('destacada') || '').toLowerCase() === 'true';
+
+  const minUF = toNum(p.get('minUF'));
+  const maxUF = toNum(p.get('maxUF'));
+  const minCLP = toNum(p.get('minCLP'));
+  const maxCLP = toNum(p.get('maxCLP'));
+
+  let out = list.slice();
+
+  if (operacion) out = out.filter((x) => String(x.operacion || '').toLowerCase() === operacion);
+  if (tipo) out = out.filter((x) => String(x.tipo || '').toLowerCase() === tipo);
+  if (region) out = out.filter((x) => String(x.region || '').toLowerCase() === region);
+  if (comuna) out = out.filter((x) => String(x.comuna || '').toLowerCase() === comuna);
+  if (destacada) out = out.filter((x) => !!x.destacada);
+
+  if (minUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! >= minUF);
+  if (maxUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! <= maxUF);
+  if (minCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! >= minCLP);
+  if (maxCLP != null) out = out.filter((x) => toNum(x.precio_clp) != null && toNum(x.precio_clp)! <= maxCLP);
+
+  // normalizar capitalización del tipo
+  out = out.map((x) => ({ ...x, tipo: capFirst(x.tipo) }));
+
+  return out;
+}
+
+/* ------- handler ------- */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const params = url.searchParams;
   const limit = Math.max(0, Math.min(100, Number(params.get('limit') || '0'))) || undefined;
 
-  // 1) Intentar cargar tu dataset real desde project/lib/featured.ts
+  // 1) Intentar cargar el dataset real desde project/lib/featured.ts
   let ALL: any[] | null = null;
 
-  // a) con alias @/
   try {
-    const m = await import('@/lib/featured');
-    ALL = (m as any).ALL || (m as any).getAllProperties?.() || null;
+    // *** ruta correcta desde app/api/propiedades/route.ts ***
+    const mod = await import('../../../lib/featured');
+    ALL = (mod as any).ALL || (mod as any).default || null;
     if (ALL && typeof (ALL as any).then === 'function') ALL = await (ALL as any);
-  } catch {}
-
-  // b) ruta correcta desde app/api/propiedades/route.ts  -> ../../../lib/featured
-  if (!ALL) {
-    try {
-      const m2 = await import('../../../lib/featured');
-      ALL = (m2 as any).ALL || (m2 as any).getAllProperties?.() || null;
-      if (ALL && typeof (ALL as any).then === 'function') ALL = await (ALL as any);
-    } catch {}
+  } catch {
+    // ignorar; usaremos fallback
   }
 
-  // c) alternativa si mueves el endpoint a /app/api  -> ../../lib/featured
-  if (!ALL) {
-    try {
-      const m3 = await import('../../lib/featured');
-      ALL = (m3 as any).ALL || (m3 as any).getAllProperties?.() || null;
-      if (ALL && typeof (ALL as any).then === 'function') ALL = await (ALL as any);
-    } catch {}
-  }
-
-  // 2) Si no hay datos, fallback local (garantiza resultados)
+  // 2) Fallback local si no hay datos
   if (!ALL || !Array.isArray(ALL) || ALL.length === 0) {
-    const fb = localFallback();
-    ALL = fb.ALL;
+    ALL = fallbackData().ALL;
   }
 
-  // 3) aplicar filtros
+  // 3) Aplicar filtros
   let filtered = applyFilters(ALL, params);
 
-  // 4) limitar si corresponde
+  // 4) Límite
   if (limit) filtered = filtered.slice(0, limit);
 
   return NextResponse.json({ data: filtered });
