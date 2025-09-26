@@ -1,6 +1,11 @@
 // project/app/api/propiedades/route.ts
 import { NextResponse } from 'next/server';
 
+// Evita cualquier cache/optimización estática del handler
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 /* ------- helpers ------- */
 const toNum = (v: any) => {
   if (v == null) return null;
@@ -55,7 +60,7 @@ function fallbackData() {
       region: 'Metropolitana de Santiago',
       operacion: 'arriendo',
       tipo: 'oficina',
-      precio_uf: 4000, // precio ficticio solicitado
+      precio_uf: 4000, // precio ficticio pedido
       precio_clp: null,
       dormitorios: 0,
       banos: 1,
@@ -83,7 +88,7 @@ function fallbackData() {
     destacada: false,
   }));
 
-  return { FEATURED, ALL: [...FEATURED, ...OTHERS] };
+  return { ALL: [...FEATURED, ...OTHERS] };
 }
 
 /* ------- filtros ------- */
@@ -92,7 +97,7 @@ function applyFilters(list: any[], p: URLSearchParams) {
   const tipo = String(p.get('tipo') || '').trim().toLowerCase();
   const region = String(p.get('region') || '').trim().toLowerCase();
   const comuna = String(p.get('comuna') || '').trim().toLowerCase();
-  const destacada = String(p.get('destacada') || '').toLowerCase() === 'true';
+  const onlyFeatured = String(p.get('destacada') || '').toLowerCase() === 'true';
 
   const minUF = toNum(p.get('minUF'));
   const maxUF = toNum(p.get('maxUF'));
@@ -105,7 +110,7 @@ function applyFilters(list: any[], p: URLSearchParams) {
   if (tipo) out = out.filter((x) => String(x.tipo || '').toLowerCase() === tipo);
   if (region) out = out.filter((x) => String(x.region || '').toLowerCase() === region);
   if (comuna) out = out.filter((x) => String(x.comuna || '').toLowerCase() === comuna);
-  if (destacada) out = out.filter((x) => !!x.destacada);
+  if (onlyFeatured) out = out.filter((x) => !!x.destacada);
 
   if (minUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! >= minUF);
   if (maxUF != null) out = out.filter((x) => toNum(x.precio_uf) != null && toNum(x.precio_uf)! <= maxUF);
@@ -124,20 +129,22 @@ export async function GET(req: Request) {
   const params = url.searchParams;
   const limit = Math.max(0, Math.min(100, Number(params.get('limit') || '0'))) || undefined;
 
-  // 1) Intentar cargar el dataset real desde project/lib/featured.ts
+  // 1) Intentar cargar el dataset real
   let ALL: any[] | null = null;
-
   try {
-    // *** ruta correcta desde app/api/propiedades/route.ts ***
+    // ruta correcta desde app/api/propiedades/route.ts a project/lib/featured.ts
     const mod = await import('../../../lib/featured');
-    ALL = (mod as any).ALL || (mod as any).default || null;
-    if (ALL && typeof (ALL as any).then === 'function') ALL = await (ALL as any);
+    const candidate = ((mod as any).ALL || (mod as any).default || []) as any[];
+    // si el módulo trae items, los usamos; si no, fallback
+    if (Array.isArray(candidate) && candidate.length > 0) {
+      ALL = candidate;
+    }
   } catch {
-    // ignorar; usaremos fallback
+    // ignoramos y pasamos a fallback
   }
 
-  // 2) Fallback local si no hay datos
-  if (!ALL || !Array.isArray(ALL) || ALL.length === 0) {
+  // 2) Fallback si no hay datos del módulo
+  if (!ALL) {
     ALL = fallbackData().ALL;
   }
 
