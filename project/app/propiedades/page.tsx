@@ -160,7 +160,7 @@ export default function PropiedadesPage() {
   const [minBanos, setMinBanos] = useState('');
   const [minM2Const, setMinM2Const] = useState('');
   const [minM2Terreno, setMinM2Terreno] = useState('');
-  const [estac, setEstac] = useState('');
+  const [estac, setEstac] = useState(''); // ← mínimo de estacionamientos
 
   /* — Resultados — */
   const [items, setItems] = useState<Property[]>([]);
@@ -176,12 +176,9 @@ export default function PropiedadesPage() {
     else setRegion('');
   }, [regionInput]);
 
-  const ufValue = useUfValue(); // UF del día
+  const ufValue = useUfValue();
 
-  // búsqueda inicial
-  useEffect(() => {
-    setTrigger((v) => v + 1);
-  }, []);
+  useEffect(() => { setTrigger((v) => v + 1); }, []);
 
   /* Construcción + filtro local SOBRE LA LISTA ESTÁTICA — solo cuando cambia "trigger" */
   useEffect(() => {
@@ -217,10 +214,15 @@ export default function PropiedadesPage() {
       const b = p.banos ?? undefined;
       const m2c = p.superficie_util_m2 ?? undefined;
       const m2t = p.superficie_terreno_m2 ?? undefined;
+      const e = p.estacionamientos ?? undefined;
+
       if (minDorm && d !== undefined && d < parseInt(minDorm, 10)) return false;
       if (minBanos && b !== undefined && b < parseInt(minBanos, 10)) return false;
       if (minM2Const && m2c !== undefined && m2c < parseInt(minM2Const.replace(/\./g, ''), 10)) return false;
       if (minM2Terreno && m2t !== undefined && m2t < parseInt(minM2Terreno.replace(/\./g, ''), 10)) return false;
+
+      // ✅ NUEVO: mínimo de estacionamientos
+      if (estac && e !== undefined && e < parseInt(estac, 10)) return false;
 
       return true;
     };
@@ -246,7 +248,7 @@ export default function PropiedadesPage() {
     setMinBanos('');
     setMinM2Const('');
     setMinM2Terreno('');
-    setEstac('');
+    setEstac(''); // ← reset estacionamientos
     setTrigger((v) => v + 1);
   };
 
@@ -357,7 +359,6 @@ export default function PropiedadesPage() {
                 <SmartSelect options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']} value={tipo} onChange={(v)=>setTipo(v)} placeholder="Tipo de propiedad" />
                 <SmartSelect options={REGIONES.map((r)=>regionDisplay(r))} value={regionInput} onChange={(v)=>{ setRegionInput(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
                 <SmartSelect options={region ? (COMUNAS[region]||[]) : []} value={comuna} onChange={(v)=>{ setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
-                {/* FIX AQUÍ: AND lógico correcto */}
                 <SmartSelect options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []} value={barrio} onChange={(v)=>setBarrio(v)} placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]} />
               </div>
 
@@ -423,7 +424,6 @@ export default function PropiedadesPage() {
                       {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
-                    {/* Stats */}
                     {isLand ? (
                       <div className="mt-3 grid grid-cols-4 text-center">
                         <div className="border border-slate-200 p-2">
