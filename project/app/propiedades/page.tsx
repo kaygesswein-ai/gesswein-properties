@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -62,12 +61,15 @@ function useUfValue() {
   return uf;
 }
 
-/* ==== Datos base (display regiones con romanos) ==== */
+/* ==== Datos base ==== */
+/** Metropolitana PRIMERO para que aparezca arriba del listado */
 const REGIONES = [
+  'Metropolitana de Santiago',
   'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',"O'Higgins",
-  'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes','Metropolitana de Santiago',
+  'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes',
 ] as const;
 
+/** Mapa numérico (solo lo usamos para mostrar romanos en el resto) */
 const REG_N_ARABIC: Record<string, number> = {
   'Arica y Parinacota': 15, Tarapacá: 1, Antofagasta: 2, Atacama: 3, Coquimbo: 4, Valparaíso: 5,
   "O'Higgins": 6, Maule: 7, Ñuble: 16, Biobío: 8, 'La Araucanía': 9, 'Los Ríos': 14, 'Los Lagos': 10,
@@ -78,7 +80,9 @@ const toRoman = (n?: number) => {
   const m: [number, string][]= [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
   let s = '', x = n; for (const [v,r] of m) while (x>=v){s+=r;x-=v;} return s;
 };
+/** Mostrar “RM - …” para Metropolitana; para el resto, romanos */
 const regionDisplay = (r: string) => {
+  if (r === 'Metropolitana de Santiago') return `RM - ${r}`;
   const num = REG_N_ARABIC[r];
   const roman = toRoman(num);
   return roman ? `${roman} - ${r}` : r;
@@ -160,10 +164,11 @@ export default function PropiedadesPage() {
 
   const [trigger, setTrigger] = useState(0);
 
-  /* Region: parsea "X - Nombre" a "Nombre" */
+  /* Region: acepta "RM - Nombre" o "X - Nombre" y también solo "Nombre" */
   useEffect(() => {
-    const m = (regionInput || '').match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
-    const name = (m ? m[1] : regionInput) as string;
+    const cleaned = (regionInput || '').trim();
+    const m = cleaned.match(/^\s*(?:[IVXLCDM]+|RM)\s*-\s*(.+)$/i);
+    const name = (m ? m[1] : cleaned) as string;
     if (name && REG_N_ARABIC[name] != null) setRegion(name);
     else setRegion('');
   }, [regionInput]);
@@ -406,8 +411,8 @@ export default function PropiedadesPage() {
                 return null;
               })();
 
-              const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
-              const bodega = (p.tipo || '').toLowerCase().includes('bodega');
+              const terreno = isTerreno(p);
+              const bodega = isBodega(p);
 
               return (
                 <Link
@@ -433,39 +438,29 @@ export default function PropiedadesPage() {
                       {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
-                    {/* Métricas (sin cambios respecto a la versión anterior) */}
+                    {/* Métricas */}
                     {!terreno && !bodega ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Bed className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">{p.dormitorios ?? '—'}</div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <ShowerHead className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">{p.banos ?? '—'}</div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Car className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">{p.estacionamientos ?? '—'}</div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Ruler className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">
                             {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
                           </div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Square className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">
                             {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
                           </div>
@@ -474,40 +469,47 @@ export default function PropiedadesPage() {
                     ) : terreno ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Square className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div>
+                          <div className="text-sm">—</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div>
+                          <div className="text-sm">—</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div>
+                          <div className="text-sm">—</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div>
+                          <div className="text-sm">—</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">
                             {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
                           </div>
                         </div>
                       </div>
                     ) : (
+                      /* bodega u otros casos especiales: dejamos la cuadricula previa */
                       <div className="mt-3 grid grid-cols-4 text-center">
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Bed className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">{p.dormitorios ?? '—'}</div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <ShowerHead className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">{p.banos ?? '—'}</div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Ruler className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">
                             {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
                           </div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Car className="h-4 w-4" />
-                          </div>
+                          <div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div>
                           <div className="text-sm">{p.estacionamientos ?? '—'}</div>
                         </div>
                       </div>
