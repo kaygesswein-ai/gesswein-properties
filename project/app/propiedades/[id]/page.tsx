@@ -1,9 +1,12 @@
 // app/propiedades/[id]/page.tsx
-import { notFound } from 'next/navigation';
-import { supaRest } from '@/lib/supabase-rest';
+import { notFound, redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { Bed, ShowerHead, Ruler, Car, Square } from 'lucide-react';
 
 const BRAND_BLUE = '#0A2E57';
+const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
 type Property = {
   id: string;
@@ -24,30 +27,49 @@ type Property = {
   destacada?: boolean;
 };
 
-const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+// Evita caching en esta página (HTML + fetch)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-export const dynamic = 'force-dynamic';   // evita caché del HTML en producción
-export const revalidate = 0;              // evita caché de fetch en esta página
+function getBaseUrl() {
+  // Preferimos variable si la tienes definida (opcional):
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/,'');
+  if (envUrl) return envUrl;
 
-async function getProperty(id: string): Promise<Property | null> {
-  const qs = new URLSearchParams();
-  qs.set('select', '*');
-  qs.set('id', `eq.${id}`);
-  qs.set('limit', '1');
+  // Si no, construimos desde los headers del request (Vercel friendly)
+  const h = headers();
+  const host = h.get('x-forwarded-host') || h.get('host');
+  const proto = h.get('x-forwarded-proto') || 'https';
+  if (!host) {
+    // Si no tenemos host en el server (raro), mandamos al home
+    return '';
+  }
+  return `${proto}://${host}`;
+}
 
-  const res = await supaRest(`propiedades?${qs.toString()}`);
+async function getPropertyById(id: string): Promise<Property | null> {
+  const base = getBaseUrl();
+  if (!base) return null; // fallback muy defensivo
+
+  // Llamamos a tu API interna con URL ABSOLUTA
+  const url = `${base}/api/propiedades/${encodeURIComponent(id)}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, { cache: 'no-store' });
+  } catch {
+    return null;
+  }
   if (!res.ok) return null;
 
-  const data = await res.json();
-  if (!Array.isArray(data) || data.length === 0) return null;
-
-  return data[0] as Property;
+  // Tu API devuelve { data: {...} }
+  const payload = await res.json().catch(() => null) as { data?: Property } | null;
+  const prop = payload?.data || null;
+  return prop;
 }
 
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
-  const prop = await getProperty(params.id);
+  const prop = await getPropertyById(params.id);
   if (!prop) notFound();
 
   const showUF = !!(prop.precio_uf && prop.precio_uf > 0);
@@ -57,7 +79,6 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
       {/* HERO / imagen */}
       <section className="relative">
         <div className="aspect-[16/9] w-full bg-slate-100">
-          {/* Usamos <img> simple para evitar exigir dominios en next/image */}
           <img
             src={
               prop.coverImage ||
@@ -126,13 +147,12 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
           <div className="lg:col-span-2">
             <h2 className="text-lg font-semibold text-slate-900">Descripción</h2>
             <p className="text-slate-700 mt-2 leading-relaxed">
-              Ficha de propiedad en {prop.comuna || '—'}. Puedes completar aquí el detalle real:
-              características, terminaciones, entorno, conectividad, y cualquier información comercial
+              Ficha de propiedad en {prop.comuna || '—'}. Completa aquí el detalle real:
+              características, terminaciones, entorno, conectividad y cualquier información comercial
               relevante (gastos comunes, contribuciones, etc.).
             </p>
           </div>
 
-          {/* CTA / datos rápidos */}
           <aside className="border border-slate-200 p-4">
             <h3 className="text-sm font-semibold tracking-wide text-slate-900 uppercase">
               Información rápida
