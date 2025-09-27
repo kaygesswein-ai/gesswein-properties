@@ -541,7 +541,7 @@ export default function PropiedadesPage() {
               return (
                 <Link
                   key={p.id}
-                  href="#"
+                  href={`/propiedades/${p.id}`}
                   className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
                 >
                   <div className="aspect-[4/3] bg-slate-100">
