@@ -18,7 +18,7 @@ type Property = {
   banos?: number | null;
   superficie_util_m2?: number | null;
   superficie_terreno_m2?: number | null;
-  estacionamientos?: number | null; // ⬅️ NUEVO
+  estacionamientos?: number | null;
   coverImage?: string;
   createdAt?: string;
   destacada?: boolean;
@@ -212,7 +212,7 @@ export default function PropiedadesPage() {
       if (minUF !== undefined && !Number.isNaN(minUF) && pUF !== undefined && pUF < minUF) return false;
       if (maxUF !== undefined && !Number.isNaN(maxUF) && pUF !== undefined && pUF > maxUF) return false;
 
-      // avanzados (mínimos)
+      // mínimos avanzados
       const d = p.dormitorios ?? undefined;
       const b = p.banos ?? undefined;
       const m2c = p.superficie_util_m2 ?? undefined;
@@ -228,7 +228,7 @@ export default function PropiedadesPage() {
     const locals = STATIC_PROPS.filter(localFilter);
     setItems(locals);
     setLoading(false);
-  }, [trigger]); // ← solo al apretar Buscar (o carga inicial)
+  }, [trigger]);
 
   // —— LIMPIAR —— //
   const handleReset = () => {
@@ -357,7 +357,8 @@ export default function PropiedadesPage() {
                 <SmartSelect options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']} value={tipo} onChange={(v)=>setTipo(v)} placeholder="Tipo de propiedad" />
                 <SmartSelect options={REGIONES.map((r)=>regionDisplay(r))} value={regionInput} onChange={(v)=>{ setRegionInput(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
                 <SmartSelect options={region ? (COMUNAS[region]||[]) : []} value={comuna} onChange={(v)=>{ setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
-                <SmartSelect options={comuna y BARRIOS[comuna] ? BARRIOS[comuna] : []} value={barrio} onChange={(v)=>setBarrio(v)} placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]} />
+                {/* FIX AQUÍ: AND lógico correcto */}
+                <SmartSelect options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []} value={barrio} onChange={(v)=>setBarrio(v)} placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]} />
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
@@ -425,7 +426,6 @@ export default function PropiedadesPage() {
                     {/* Stats */}
                     {isLand ? (
                       <div className="mt-3 grid grid-cols-4 text-center">
-                        {/* SOLO el primer cuadrado visible */}
                         <div className="border border-slate-200 p-2">
                           <div className="flex items-center justify-center gap-1 text-[10px] md:text-xs text-slate-500">
                             <Square className="h-4 w-4" /> m²
