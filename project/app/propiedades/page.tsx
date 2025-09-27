@@ -181,6 +181,9 @@ export default function PropiedadesPage() {
   /* — Control de búsqueda manual — */
   const [trigger, setTrigger] = useState(0);
 
+  /* — Filtro especial (dropdown a la derecha del título) — */
+  const [filtroEspecial, setFiltroEspecial] = useState<string>('');
+
   /* Parsear la región elegida en el selector, sin disparar búsqueda */
   useEffect(() => {
     setRegion(parseRegionInput(regionInput));
@@ -243,7 +246,7 @@ export default function PropiedadesPage() {
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [trigger]); // ⬅️ Solo cambia al apretar "Buscar" (o en la carga inicial)
+  }, [trigger]); // Solo cambia al apretar "Buscar" (o en la carga inicial)
 
   // botón LIMPIAR
   const handleClear = () => {
@@ -262,10 +265,28 @@ export default function PropiedadesPage() {
     setMinM2Const('');
     setMinM2Terreno('');
     setEstac('');
+    setFiltroEspecial('');
     setTrigger((v) => v + 1);
   };
 
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
+
+  /* — Aplicar filtro especial en cliente (solo orden por precio desc por ahora) — */
+  const shownItems = useMemo(() => {
+    let arr = [...(items || [])];
+
+    if (filtroEspecial === 'Precio: mayor a menor') {
+      arr.sort((a, b) => {
+        const au = a.precio_uf ?? -Infinity;
+        const bu = b.precio_uf ?? -Infinity;
+        return (bu as number) - (au as number);
+      });
+    }
+    // Las demás opciones quedan declaradas pero sin lógica aún,
+    // para activarlas cuando tengamos esos datos calculados.
+
+    return arr;
+  }, [items, filtroEspecial]);
 
   return (
     <main className="bg-white">
@@ -396,19 +417,37 @@ export default function PropiedadesPage() {
 
       {/* LISTADO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-4">
+        {/* Título + filtro especial alineados */}
+        <div className="flex items-center justify-between mb-4 gap-4">
           <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
             PROPIEDADES DISPONIBLES
           </h2>
+
+          {/* Dropdown de filtro especial (un solo control con todas las opciones) */}
+          <div className="min-w-[240px]">
+            <SmartSelect
+              options={[
+                'Precio: mayor a menor',
+                'Oportunidades',
+                'Noción hipotecaria',
+                'Oportunidad de flipping',
+                'Oportunidad de subdivisión',
+              ]}
+              value={filtroEspecial}
+              onChange={setFiltroEspecial}
+              placeholder="Filtrar / ordenar…"
+              className="w-full"
+            />
+          </div>
         </div>
 
         {loading ? (
           <p className="text-slate-600">Cargando propiedades…</p>
-        ) : (items ?? []).length === 0 ? (
+        ) : (shownItems ?? []).length === 0 ? (
           <p className="text-slate-600">No se encontraron propiedades.</p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {(items ?? []).map((p) => {
+            {(shownItems ?? []).map((p) => {
               const showUF = !!(p.precio_uf && p.precio_uf > 0);
               const clp = (() => {
                 if (p.precio_clp && p.precio_clp > 0) return p.precio_clp;
