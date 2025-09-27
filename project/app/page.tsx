@@ -2,27 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2, SquareParking } from 'lucide-react';
 import useUf from '../hooks/useUf';
 import SmartSelect from '../components/SmartSelect';
 
-/* -------------------- Tipos -------------------- */
-type Property = {
-  id: string;
-  titulo?: string;
-  comuna?: string;
-  operacion?: 'venta' | 'arriendo';
-  tipo?: string;
-  precio_uf?: number | null;
-  precio_clp?: number | null;
-  dormitorios?: number | null;
-  banos?: number | null;
-  superficie_util_m2?: number | null;
-  imagenes?: string[];
-  images?: string[];
-  coverImage?: string;
-  destacada?: boolean;
-};
+// ⬇️ NUEVO: usamos la fuente centralizada
+import { getFeaturedProperties, type Property } from '@/lib/properties';
 
 /* -------------------- Utilidades -------------------- */
 function fmtUF(n: number) {
@@ -134,26 +119,16 @@ export default function HomePage() {
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
 
+  // ⬇️ CAMBIADO: obtenemos destacadas desde la fuente centralizada
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' });
-        const json = await res.json();
-        if (!mounted) return;
-        const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        const fixed = data.map((p) => {
-          if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
-            return { ...p, precio_uf: 2300 };
-          }
-          return p;
-        });
-        setDestacadas(fixed);
-      } catch {
-        if (mounted) setDestacadas([]);
+    const data: Property[] = getFeaturedProperties(6);
+    const fixed = data.map((p) => {
+      if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
+        return { ...p, precio_uf: 2300 };
       }
-    })();
-    return () => { mounted = false; };
+      return p;
+    });
+    setDestacadas(fixed);
   }, []);
 
   useEffect(() => {
@@ -251,8 +226,8 @@ export default function HomePage() {
   const [comunaInput, setComunaInput] = useState('');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
-  const [servicio, setServicio] = useState(''); // ⬅️ ahora sin preselección
-  const [tipo, setTipo] = useState('');        // ⬅️ ahora sin preselección
+  const [servicio, setServicio] = useState('Comprar');
+  const [tipo, setTipo] = useState('Casa');
 
   const regionSel = extractRegionName(regionInput);
   const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
@@ -477,7 +452,7 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio */}
+              {/* Servicio: SmartSelect -> options string[] */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <SmartSelect
@@ -489,7 +464,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Tipo de propiedad */}
+              {/* Tipo de propiedad: SmartSelect -> options string[] */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <SmartSelect
@@ -501,7 +476,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Región */}
+              {/* Región: SmartSelect con display "X - Nombre" -> options string[] */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
@@ -513,7 +488,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Comuna */}
+              {/* Comuna: SmartSelect dependiente de región -> options string[] */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
