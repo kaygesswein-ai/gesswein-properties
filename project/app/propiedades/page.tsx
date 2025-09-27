@@ -4,7 +4,25 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bed, ShowerHead, Ruler, Search, Filter, Square, Car } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
-import { getAllProperties, type Property } from '@/lib/properties'
+
+type Property = {
+  id: string;
+  titulo?: string;
+  comuna?: string;
+  region?: string;
+  operacion?: 'venta' | 'arriendo';
+  tipo?: string;
+  precio_uf?: number | null;
+  precio_clp?: number | null;
+  dormitorios?: number | null;
+  banos?: number | null;
+  superficie_util_m2?: number | null;
+  superficie_terreno_m2?: number | null;
+  estacionamientos?: number | null;
+  coverImage?: string;
+  createdAt?: string;
+  destacada?: boolean;
+};
 
 const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
@@ -14,13 +32,14 @@ const HERO_IMG =
 const fmtMiles = (raw: string) => {
   const digits = raw.replace(/\D+/g, '');
   if (!digits) return '';
-  return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(parseInt(digits, 10));
+  return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(
+    parseInt(digits, 10),
+  );
 };
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const capFirst = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
-/* ==== Hook UF ==== */
+/* ==== Hook para leer UF del día desde /api/uf ==== */
 function useUfValue() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -40,7 +59,7 @@ function useUfValue() {
   return uf;
 }
 
-/* ==== regiones + comunas (display con romanos) ==== */
+/* ==== Datos base (display regiones con romanos) ==== */
 const REGIONES = [
   'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',"O'Higgins",
   'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes','Metropolitana de Santiago',
@@ -133,71 +152,83 @@ export default function PropiedadesPage() {
 
   const [trigger, setTrigger] = useState(0);
 
-  /* Region: parse "X - Nombre" -> Nombre */
+  /* Region: parsea "X - Nombre" a "Nombre" */
   useEffect(() => {
     const m = regionInput.match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
     const name = (m ? m[1] : regionInput) as string;
-    if (name && (REG_N_ARABIC as any)[name] != null) setRegion(name);
+    if (name && REG_N_ARABIC[name] != null) setRegion(name);
     else setRegion('');
   }, [regionInput]);
 
-  const ufValue = useUfValue();
+  const ufValue = useUfValue(); // UF del día
 
-  useEffect(() => { setTrigger((v) => v + 1); }, []);
-
-  /* Filtro local sobre la fuente centralizada */
+  // Búsqueda inicial
   useEffect(() => {
-    setLoading(true);
+    setTrigger((v) => v + 1);
+  }, []);
 
-    const base = getAllProperties();
+  /* Build params + fetch — SOLO cuando cambia "trigger" */
+  useEffect(() => {
+    const p = new URLSearchParams();
 
+    if (qTop.trim()) p.set('q', qTop.trim());
+    if (operacion) p.set('operacion', operacion);
+    if (tipo) p.set('tipo', tipo);
+    if (region) p.set('region', region);
+    if (comuna) p.set('comuna', comuna);
+    if (barrio) p.set('barrio', barrio);
+
+    // --- MIN/MAX con UF o CLP ---
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(minValor);
     const maxN = toInt(maxValor);
-    const isCLP = moneda === 'CLP' || moneda === 'CLP$';
-    const hasUF = typeof ufValue === 'number' && ufValue > 0;
-
-    let minUF: number | undefined;
-    let maxUF: number | undefined;
-    if (!Number.isNaN(minN)) minUF = isCLP && hasUF ? Math.round(minN / (ufValue as number)) : minN;
-    if (!Number.isNaN(maxN)) maxUF = isCLP && hasUF ? Math.round(maxN / (ufValue as number)) : maxN;
-
-    const filtered = base.filter((p) => {
-      if (operacion && (p.operacion || '').toLowerCase() !== operacion.toLowerCase()) return false;
-      if (tipo && (p.tipo || '').toLowerCase() !== tipo.toLowerCase()) return false;
-      if (region && (p.region || '').toLowerCase() !== region.toLowerCase()) return false;
-      if (comuna && (p.comuna || '').toLowerCase() !== comuna.toLowerCase()) return false;
-
-      if (qTop.trim()) {
-        const q = qTop.trim().toLowerCase();
-        const hit = (p.titulo || '').toLowerCase().includes(q) || (p.comuna || '').toLowerCase().includes(q);
-        if (!hit) return false;
+    if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
+      const isCLP = moneda === 'CLP' || moneda === 'CLP$';
+      if (isCLP && typeof ufValue === 'number' && ufValue > 0) {
+        const minUF = !Number.isNaN(minN) ? Math.round(minN / ufValue) : NaN;
+        const maxUF = !Number.isNaN(maxN) ? Math.round(maxN / ufValue) : NaN;
+        if (!Number.isNaN(minUF)) p.set('minUF', String(minUF));
+        if (!Number.isNaN(maxUF)) p.set('maxUF', String(maxUF));
+      } else {
+        if (isCLP) {
+          if (!Number.isNaN(minN)) p.set('minCLP', String(minN));
+          if (!Number.isNaN(maxN)) p.set('maxCLP', String(maxN));
+        } else {
+          if (!Number.isNaN(minN)) p.set('minUF', String(minN));
+          if (!Number.isNaN(maxN)) p.set('maxUF', String(maxN));
+        }
       }
+    }
 
-      const pUF = typeof p.precio_uf === 'number' ? p.precio_uf : undefined;
-      if (minUF !== undefined && !Number.isNaN(minUF) && pUF !== undefined && pUF < minUF) return false;
-      if (maxUF !== undefined && !Number.isNaN(maxUF) && pUF !== undefined && pUF > maxUF) return false;
+    // — mínimos avanzados —
+    const toIntRaw = (s: string) => (s ? parseInt(s.replace(/\D+/g, ''), 10) : NaN);
+    const d = toIntRaw(minDorm);
+    const b = toIntRaw(minBanos);
+    const c = toInt(minM2Const);
+    const t = toInt(minM2Terreno);
+    const e = toIntRaw(estac);
+    if (!Number.isNaN(d)) p.set('minDorm', String(d));
+    if (!Number.isNaN(b)) p.set('minBanos', String(b));
+    if (!Number.isNaN(c)) p.set('minM2Const', String(c));
+    if (!Number.isNaN(t)) p.set('minM2Terreno', String(t));
+    if (!Number.isNaN(e)) p.set('minEstac', String(e));
 
-      const d = p.dormitorios ?? undefined;
-      const b = p.banos ?? undefined;
-      const m2c = p.superficie_util_m2 ?? undefined;
-      const m2t = p.superficie_terreno_m2 ?? undefined;
-      const e = p.estacionamientos ?? undefined;
+    let cancel = false;
+    setLoading(true);
+    fetch(`/api/propiedades?${p.toString()}`, { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((j) => {
+        if (cancel) return;
+        const arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
+        setItems(arr);
+      })
+      .catch(() => { if (!cancel) setItems([]); })
+      .finally(() => { if (!cancel) setLoading(false); });
 
-      if (minDorm && d !== undefined && d < parseInt(minDorm, 10)) return false;
-      if (minBanos && b !== undefined && b < parseInt(minBanos, 10)) return false;
-      if (minM2Const && m2c !== undefined && m2c < parseInt(minM2Const.replace(/\./g, ''), 10)) return false;
-      if (minM2Terreno && m2t !== undefined && m2t < parseInt(minM2Terreno.replace(/\./g, ''), 10)) return false;
-      if (estac && e !== undefined && e < parseInt(estac, 10)) return false;
-
-      return true;
-    });
-
-    setItems(filtered);
-    setLoading(false);
+    return () => { cancel = true; };
   }, [trigger]);
 
-  const handleReset = () => {
+  const resetAll = () => {
     setQTop('');
     setOperacion('');
     setTipo('');
@@ -237,7 +268,9 @@ export default function PropiedadesPage() {
               </div>
               <div className="mt-4 max-w-2xl">
                 <div className="relative">
-                  <Search className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-white/90" />
+                  <Search
+                    className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-white/90"
+                  />
                   <input
                     value={qTop}
                     onChange={(e) => setQTop(e.target.value)}
@@ -246,10 +279,17 @@ export default function PropiedadesPage() {
                   />
                   <button
                     onClick={() => setTrigger((v) => v + 1)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-none"
+                    className="absolute right-[110px] top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-none"
                     style={{ background: BRAND_BLUE }}
                   >
                     Buscar
+                  </button>
+                  <button
+                    onClick={resetAll}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm rounded-none border"
+                    style={{ color: BRAND_BLUE, borderColor: BRAND_BLUE, background: '#fff' }}
+                  >
+                    Limpiar
                   </button>
                 </div>
               </div>
@@ -295,20 +335,80 @@ export default function PropiedadesPage() {
           {/* === RÁPIDA === */}
           {advancedMode === 'rapida' && (
             <>
-              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={(v) => setOperacion(v)} placeholder="Operación" />
-                <SmartSelect options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']} value={tipo} onChange={(v) => setTipo(v)} placeholder="Tipo de propiedad" />
-                <SmartSelect options={REGIONES.map((r) => regionDisplay(r))} value={regionInput} onChange={(v) => { setRegionInput(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
-                <SmartSelect options={region ? (COMUNAS[region] || []) : []} value={comuna} onChange={(v) => { setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
-                <SmartSelect options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []} value={barrio} onChange={(v) => setBarrio(v)} placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]} />
-              </div>
-
-              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v) => setMoneda((v as any) || '')} placeholder="UF/CLP$" />
-                <input value={minValor} onChange={(e) => setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                <input value={maxValor} onChange={(e) => setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                <button onClick={handleReset} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: BRAND_BLUE, borderColor: BRAND_BLUE, background: '#fff', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95)' }}>Limpiar</button>
-                <button onClick={() => setTrigger((v) => v + 1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
+              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-7 gap-3">
+                <SmartSelect
+                  options={['Venta', 'Arriendo']}
+                  value={operacion}
+                  onChange={(v) => setOperacion(v)}
+                  placeholder="Operación"
+                />
+                <SmartSelect
+                  options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
+                  value={tipo}
+                  onChange={(v) => setTipo(v)}
+                  placeholder="Tipo de propiedad"
+                />
+                <SmartSelect
+                  options={REGIONES.map((r) => regionDisplay(r))}
+                  value={regionInput}
+                  onChange={(v) => { setRegionInput(v); setComuna(''); setBarrio(''); }}
+                  placeholder="Región"
+                />
+                <SmartSelect
+                  options={region ? (COMUNAS[region] || []) : []}
+                  value={comuna}
+                  onChange={(v) => { setComuna(v); setBarrio(''); }}
+                  placeholder="Comuna"
+                  disabled={!region}
+                />
+                <SmartSelect
+                  options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []}
+                  value={barrio}
+                  onChange={(v) => setBarrio(v)}
+                  placeholder="Barrio"
+                  disabled={!comuna || !BARRIOS[comuna]}
+                />
+                <SmartSelect
+                  options={['UF', 'CLP$']}
+                  value={moneda}
+                  onChange={(v) => setMoneda((v as any) || '')}
+                  placeholder="UF/CLP$"
+                />
+                <div className="grid grid-cols-3 gap-3 lg:col-span-2 lg:grid-cols-3">
+                  <input
+                    value={minValor}
+                    onChange={(e) => setMinValor(fmtMiles(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="Mín"
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  />
+                  <input
+                    value={maxValor}
+                    onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="Máx"
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={resetAll}
+                      className="w-full px-5 py-2 text-sm rounded-none border"
+                      style={{ color: BRAND_BLUE, borderColor: BRAND_BLUE, background: '#fff' }}
+                    >
+                      Limpiar
+                    </button>
+                    <button
+                      onClick={() => setTrigger((v) => v + 1)}
+                      className="w-full px-5 py-2 text-sm text-white rounded-none"
+                      style={{
+                        background: BRAND_BLUE,
+                        boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+                      }}
+                    >
+                      Buscar
+                    </button>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -318,28 +418,28 @@ export default function PropiedadesPage() {
             <>
               <div className="pl-2 sm:pl-4"><div className="h-px bg-slate-200 my-4" /></div>
 
-              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-7 gap-3">
                 <SmartSelect options={['Venta','Arriendo']} value={operacion} onChange={(v)=>setOperacion(v)} placeholder="Operación" />
                 <SmartSelect options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']} value={tipo} onChange={(v)=>setTipo(v)} placeholder="Tipo de propiedad" />
                 <SmartSelect options={REGIONES.map((r)=>regionDisplay(r))} value={regionInput} onChange={(v)=>{ setRegionInput(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
                 <SmartSelect options={region ? (COMUNAS[region]||[]) : []} value={comuna} onChange={(v)=>{ setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
                 <SmartSelect options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []} value={barrio} onChange={(v)=>setBarrio(v)} placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]} />
+                <SmartSelect options={['UF','CLP','CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
+                <div className="hidden lg:block" />
               </div>
 
-              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect options={['UF','CLP','CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
+              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-8 gap-3">
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minDorm} onChange={(e)=>setMinDorm(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minBanos} onChange={(e)=>setMinBanos(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-              </div>
-
-              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <input value={estac} onChange={(e)=>setEstac(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <button onClick={handleReset} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: BRAND_BLUE, borderColor: BRAND_BLUE, background: '#fff', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95)' }}>Limpiar</button>
-                <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
+                <input value={estac} onChange={(e)=>setEstac(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos (mín.)" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <div className="flex gap-2">
+                  <button onClick={resetAll} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: BRAND_BLUE, borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
+                  <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
+                </div>
               </div>
             </>
           )}
@@ -362,22 +462,29 @@ export default function PropiedadesPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((p) => {
               const showUF = p.precio_uf && p.precio_uf > 0;
-              const ufValueLocal = ufValue ?? 0;
+              const ufValue = useUfValue();
               const clp =
-                (p.precio_clp && p.precio_clp > 0)
+                p.precio_clp && p.precio_clp > 0
                   ? p.precio_clp
-                  : (showUF && ufValueLocal > 0)
-                    ? Math.round((p.precio_uf as number) * ufValueLocal)
-                    : null;
+                  : showUF && ufValue
+                  ? Math.round((p.precio_uf as number) * (ufValue ?? 0))
+                  : null;
 
-              const isLand = (p.tipo || '').toLowerCase() === 'terreno' || (p.tipo || '').toLowerCase() === 'sitio';
+              const isTerreno = (p.tipo || '').toLowerCase() === 'terreno' || (p.tipo || '').toLowerCase() === 'sitio';
 
               return (
-                <Link key={p.id} href="#" className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition">
+                <Link
+                  key={p.id}
+                  href="#"
+                  className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
+                >
                   <div className="aspect-[4/3] bg-slate-100">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={p.coverImage || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop'}
+                      src={
+                        p.coverImage ||
+                        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop'
+                      }
                       alt={p.titulo || 'Propiedad'}
                       className="w-full h-full object-cover group-hover:opacity-95 transition"
                     />
@@ -387,52 +494,56 @@ export default function PropiedadesPage() {
                       {p.titulo || 'Propiedad'}
                     </h3>
                     <p className="mt-1 text-sm text-slate-600">
-                      {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
+                      {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? String(p.operacion).replace(/^([va])/, (m)=>m.toUpperCase()) : ''].filter(Boolean).join(' · ')}
                     </p>
 
-                    {isLand ? (
+                    {/* Stats */}
+                    {!isTerreno ? (
                       <div className="mt-3 grid grid-cols-4 text-center">
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-[10px] md:text-xs text-slate-500">
-                            <Square className="h-4 w-4" /> m²
-                          </div>
-                          <div className="text-sm">{p.superficie_terreno_m2 ?? '—'}</div>
-                        </div>
-                        <div className="p-2" />
-                        <div className="p-2" />
-                        <div className="p-2" />
-                      </div>
-                    ) : (
-                      <div className="mt-3 grid grid-cols-4 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-[10px] md:text-xs text-slate-500">
+                          <div className="flex items-center justify-center gap-1 text-[11px] text-slate-500">
                             <Bed className="h-4 w-4" /> Dorm.
                           </div>
                           <div className="text-sm">{p.dormitorios ?? '—'}</div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-[10px] md:text-xs text-slate-500">
+                          <div className="flex items-center justify-center gap-1 text-[11px] text-slate-500">
                             <ShowerHead className="h-4 w-4" /> Baños
                           </div>
                           <div className="text-sm">{p.banos ?? '—'}</div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-[10px] md:text-xs text-slate-500">
+                          <div className="flex items-center justify-center gap-1 text-[11px] text-slate-500">
                             <Ruler className="h-4 w-4" /> m²
                           </div>
                           <div className="text-sm">{p.superficie_util_m2 ?? '—'}</div>
                         </div>
                         <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-[10px] md:text-xs text-slate-500">
+                          <div className="flex items-center justify-center gap-1 text-[11px] text-slate-500">
                             <Car className="h-4 w-4" /> Estac.
                           </div>
                           <div className="text-sm">{p.estacionamientos ?? '—'}</div>
                         </div>
                       </div>
+                    ) : (
+                      <div className="mt-3 grid grid-cols-4 text-center">
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-[11px] text-slate-500">
+                            <Square className="h-4 w-4" /> m²
+                          </div>
+                          <div className="text-sm">{p.superficie_terreno_m2 ?? '—'}</div>
+                        </div>
+                        <div className="border border-slate-200 p-2 opacity-0">.</div>
+                        <div className="border border-slate-200 p-2 opacity-0">.</div>
+                        <div className="border border-slate-200 p-2 opacity-0">.</div>
+                      </div>
                     )}
 
                     <div className="mt-4 flex items-center justify-between">
-                      <span className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>
+                      <span
+                        className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
+                        style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                      >
                         Ver más
                       </span>
 
