@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bed, ShowerHead, Ruler, Search, Filter } from 'lucide-react';
+import { Bed, ShowerHead, Ruler, Search, Filter, Square } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
 
 type Property = {
@@ -52,6 +52,8 @@ const fmtMiles = (raw: string) => {
 };
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const capFirst = (s?: string | null) =>
+  s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
 /* ==== Hook: UF del día desde /api/uf ==== */
 function useUfValue() {
@@ -185,7 +187,6 @@ export default function PropiedadesPage() {
   useEffect(() => {
     setLoading(true);
 
-    // normales
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(minValor);
     const maxN = toInt(maxValor);
@@ -224,7 +225,6 @@ export default function PropiedadesPage() {
       return true;
     };
 
-    // **Solo estáticas**
     const locals = STATIC_PROPS.filter(localFilter);
     setItems(locals);
     setLoading(false);
@@ -394,13 +394,14 @@ export default function PropiedadesPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((p) => {
               const showUF = p.precio_uf && p.precio_uf > 0;
-              // 💡 CLP: si no viene, lo calculo desde UF con la UF del día
               const clp =
                 (p.precio_clp && p.precio_clp > 0)
                   ? p.precio_clp
                   : (showUF && ufValue)
                     ? Math.round((p.precio_uf as number) * (ufValue ?? 0))
                     : null;
+
+              const isLand = (p.tipo || '').toLowerCase() === 'terreno' || (p.tipo || '').toLowerCase() === 'sitio';
 
               return (
                 <Link key={p.id} href="#" className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition">
@@ -413,25 +414,45 @@ export default function PropiedadesPage() {
                     />
                   </div>
                   <div className="p-4 flex flex-col">
-                    <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">{p.titulo || 'Propiedad'}</h3>
+                    <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
+                      {p.titulo || 'Propiedad'}
+                    </h3>
                     <p className="mt-1 text-sm text-slate-600">
-                      {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? String(p.operacion) : ''].filter(Boolean).join(' · ')}
+                      {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
-                    <div className="mt-3 grid grid-cols-3 text-center">
-                      <div className="border border-slate-200 p-2">
-                        <div className="flex items-center justify-center gap-1 text-xs text-slate-500"><Bed className="h-4 w-4" /> Dorm.</div>
-                        <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                    {/* Stats: Terreno/Sitio muestra solo m² terreno */}
+                    {isLand ? (
+                      <div className="mt-3 grid grid-cols-1 text-center">
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Square className="h-4 w-4" /> m² terreno
+                          </div>
+                          <div className="text-sm">{p.superficie_terreno_m2 ?? '—'}</div>
+                        </div>
                       </div>
-                      <div className="border border-slate-200 p-2">
-                        <div className="flex items-center justify-center gap-1 text-xs text-slate-500"><ShowerHead className="h-4 w-4" /> Baños</div>
-                        <div className="text-sm">{p.banos ?? '—'}</div>
+                    ) : (
+                      <div className="mt-3 grid grid-cols-3 text-center">
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Bed className="h-4 w-4" /> Dorm.
+                          </div>
+                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <ShowerHead className="h-4 w-4" /> Baños
+                          </div>
+                          <div className="text-sm">{p.banos ?? '—'}</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Ruler className="h-4 w-4" /> m²
+                          </div>
+                          <div className="text-sm">{p.superficie_util_m2 ?? '—'}</div>
+                        </div>
                       </div>
-                      <div className="border border-slate-200 p-2">
-                        <div className="flex items-center justify-center gap-1 text-xs text-slate-500"><Ruler className="h-4 w-4" /> m²</div>
-                        <div className="text-sm">{p.superficie_util_m2 ?? '—'}</div>
-                      </div>
-                    </div>
+                    )}
 
                     <div className="mt-4 flex items-center justify-between">
                       <span className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>
