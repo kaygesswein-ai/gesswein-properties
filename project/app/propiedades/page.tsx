@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bed, ShowerHead, Ruler, Search, Filter, Square, Car } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
-import { getAllProperties, type Property } from '@/lib/properties';
+import { getAllProperties, type Property } from '@/lib/properties'
 
 const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
