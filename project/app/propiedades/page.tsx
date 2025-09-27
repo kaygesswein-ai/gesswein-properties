@@ -28,7 +28,7 @@ const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=2000';
 
-/* ==== Helpers numéricos / texto ==== */
+/* ==== Helpers ==== */
 const fmtMiles = (raw: string) => {
   const digits = (raw || '').replace(/\D+/g, '');
   if (!digits) return '';
@@ -36,7 +36,7 @@ const fmtMiles = (raw: string) => {
     parseInt(digits, 10),
   );
 };
-const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
@@ -87,27 +87,26 @@ const regionDisplay = (r: string) => {
   return roman ? `${roman} - ${r}` : r;
 };
 
-/* ==== Normalización robusta para filtrar región en cliente ==== */
-const normalizeRegionName = (s?: string) =>
-  (s || '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // sin tildes
-    .toLowerCase()
-    .replace(/\bregion\b/g, '')
-    .replace(/\brm\b/g, 'metropolitana')                // RM -> metropolitana
-    .replace(/\bde\b|\bdel\b|\bla\b|\bel\b|\bde\s+santiago\b/g, '')
-    .replace(/^\s*(?:[ivxlcdm]+)\s*-\s*/i, '')          // “X - …”
-    .replace(/\s+/g, ' ')
-    .trim();
+/* ==== Normalización y utilidades de región ==== */
+const stripDiacritics = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-/** Compara nombres aunque la data tenga variantes: “Región Metropolitana”, “RM”, etc. */
-const isSameRegion = (a?: string, b?: string) => {
-  const na = normalizeRegionName(a);
-  const nb = normalizeRegionName(b);
+const normalize = (s?: string) => stripDiacritics((s || '').toLowerCase())
+  .replace(/regi[oó]n/g, '')
+  .replace(/\bmetropolitana(?:\s+de\s+santiago)?/g, 'metropolitana')
+  .replace(/\brm\b/g, 'metropolitana')
+  .replace(/\bde\b|\bdel\b|\bla\b|\bel\b/g, '')
+  .replace(/^\s*(?:[ivxlcdm]+)\s*-\s*/i, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const sameRegion = (a?: string, b?: string) => {
+  const na = normalize(a), nb = normalize(b);
   if (!na || !nb) return false;
-  // match amplio: “metropolitana”, “valparaiso”, etc.
-  return na.includes(nb) || nb.includes(na);
+  return na === nb || na.includes(nb) || nb.includes(na);
 };
 
+/* Para inferir región desde la comuna si la ficha no trae region */
 const COMUNAS: Record<string, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
   'Tarapacá': ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica'],
@@ -153,6 +152,17 @@ const BARRIOS: Record<string, string[]> = {
   'Valdivia': ['Isla Teja','Torreones','Las Ánimas','Regional'],
 };
 
+/** Devuelve la región “confiable” de una ficha (prop.region o inferida por comuna) */
+function inferRegion(prop: Property): string | undefined {
+  if (prop.region && normalize(prop.region)) return prop.region!;
+  const c = prop.comuna ? normalize(prop.comuna) : '';
+  if (!c) return undefined;
+  for (const [reg, comunas] of Object.entries(COMUNAS)) {
+    if (comunas.some(co => normalize(co) === c)) return reg;
+  }
+  return undefined;
+}
+
 export default function PropiedadesPage() {
   /* — Buscador superior — */
   const [qTop, setQTop] = useState('');
@@ -161,7 +171,7 @@ export default function PropiedadesPage() {
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [regionInput, setRegionInput] = useState('');
-  const [region, setRegion] = useState<string>('');
+  const [region, setRegion] = useState<string>(''); // nombre “bonito” (p.ej. “Metropolitana de Santiago”)
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
@@ -198,15 +208,14 @@ export default function PropiedadesPage() {
   // búsqueda inicial
   useEffect(() => { setTrigger((v) => v + 1); }, []);
 
-  /* Build params + fetch reales (sin caché) — SOLO cuando cambia "trigger" */
+  /* Build params + fetch (sin caché) — SOLO cuando cambia "trigger" */
   useEffect(() => {
     const p = new URLSearchParams();
 
     if (qTop.trim()) p.set('q', qTop.trim());
     if (operacion) p.set('operacion', operacion);
     if (tipo) p.set('tipo', tipo);
-    // Enviamos igual el nombre al backend (por si lo soporta)
-    if (region) p.set('region', region);
+    if (region) p.set('region', region); // volvemos a enviar al backend
     if (comuna) p.set('comuna', comuna);
     if (barrio) p.set('barrio', barrio);
     if (minDorm) p.set('minDorm', minDorm);
@@ -245,9 +254,12 @@ export default function PropiedadesPage() {
         if (cancel) return;
         let arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
 
-        // >>>>>>>>>>>  POST-FILTRO POR REGIÓN EN CLIENTE  <<<<<<<<<<
+        // Respaldo: filtro en el cliente por región (usa inferencia por comuna y normalización)
         if (region) {
-          arr = arr.filter((prop) => isSameRegion(prop.region, region));
+          arr = arr.filter((prop) => {
+            const effectiveRegion = inferRegion(prop);
+            return sameRegion(effectiveRegion, region);
+          });
         }
 
         setItems(arr);
@@ -256,7 +268,7 @@ export default function PropiedadesPage() {
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [trigger, ufValue]); // ufValue por si cambia conversión
+  }, [trigger, ufValue, region]); // si cambia región, vuelve a ejecutar
 
   // botón LIMPIAR
   const handleClear = () => {
@@ -314,7 +326,6 @@ export default function PropiedadesPage() {
                     placeholder="Buscar por calle"
                     className="w-full rounded-md bg-white/95 backdrop-blur pl-8 pr-24 py-3 text-slate-900 placeholder-slate-500"
                   />
-                  {/* Solo BOTÓN BUSCAR, pegado a la derecha */}
                   <button
                     onClick={() => setTrigger((v) => v + 1)}
                     className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-none"
@@ -463,7 +474,6 @@ export default function PropiedadesPage() {
                       {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
-                    {/* Métricas */}
                     {!terreno && !bodega ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
                         <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
