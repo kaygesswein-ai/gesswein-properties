@@ -1,6 +1,3 @@
-// Fuente única de propiedades para toda la app
-// Reemplaza COMPLETO este archivo.
-
 export type Property = {
   id: string;
   titulo?: string;
@@ -12,187 +9,210 @@ export type Property = {
   precio_clp?: number | null;
   dormitorios?: number | null;
   banos?: number | null;
-  superficie_util_m2?: number | null;      // construidos/útiles
-  superficie_terreno_m2?: number | null;   // terrenos
+  superficie_util_m2?: number | null;
+  superficie_terreno_m2?: number | null;
   estacionamientos?: number | null;
   coverImage?: string;
-  images?: string[];
   destacada?: boolean;
 };
 
-// Helper para placeholder de imagen bonita si no hay foto aún
-const PH = (w = 1600, h = 1066) =>
-  `https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=${w}&h=${h}`;
+function slugify(s: string) {
+  return s.toLowerCase()
+    .replace(/[áàä]/g, 'a')
+    .replace(/[éèë]/g, 'e')
+    .replace(/[íìï]/g, 'i')
+    .replace(/[óòö]/g, 'o')
+    .replace(/[úùü]/g, 'u')
+    .replace(/ñ/g, 'n')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Helpers para crear ID
+function idFrom(titulo: string) {
+  return slugify(titulo) || Math.random().toString(36).slice(2);
+}
+
+// Imagen por defecto (puedes reemplazar individualmente con coverImage)
+const DEFAULT_IMG =
+  'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1200';
 
 export const PROPERTIES: Property[] = [
-  /* === DESTACADAS (primeras 3) === */
+  // 1) DESTACADA
   {
-    id: 'los-dominicos-remodelada-gds',
+    id: idFrom('Maravillosa casa remodelada, jardín naturalista, Los Dominicos Antiguo (GDS)'),
     titulo: 'Maravillosa casa remodelada, jardín naturalista, Los Dominicos Antiguo (GDS)',
     comuna: 'Las Condes',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Casa',
     operacion: 'venta',
+    tipo: 'Casa',
     precio_uf: 26000,
-    dormitorios: 6, banos: 5, estacionamientos: 2,
+    dormitorios: 6,
+    banos: 5,
     superficie_util_m2: 200,
     superficie_terreno_m2: 805,
-    coverImage: PH(),
+    estacionamientos: 2,
+    coverImage: DEFAULT_IMG,
     destacada: true,
   },
+  // 2) DESTACADA
   {
-    id: 'los-dominicos-arboles-ia',
+    id: idFrom('Casa en Venta con árboles grandes, Los Dominicos Antiguo (IA)'),
     titulo: 'Casa en Venta con árboles grandes, Los Dominicos Antiguo (IA)',
     comuna: 'Las Condes',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Casa',
     operacion: 'venta',
+    tipo: 'Casa',
     precio_uf: 27350,
-    dormitorios: 5, banos: 4, estacionamientos: 6,
+    dormitorios: 5,
+    banos: 4,
     superficie_util_m2: 270,
     superficie_terreno_m2: 1563,
-    coverImage: PH(),
+    estacionamientos: 6,
+    coverImage: DEFAULT_IMG,
     destacada: true,
   },
+  // 3) DESTACADA
   {
-    id: 'los-dominicos-remodelar-ia-m',
+    id: idFrom('Casa remodelar Los Dominicos Antiguo (IA M)'),
     titulo: 'Casa para remodelar, Los Dominicos Antiguo (IA M)',
     comuna: 'Las Condes',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Casa',
     operacion: 'venta',
+    tipo: 'Casa',
     precio_uf: 26500,
-    dormitorios: 5, banos: 3, estacionamientos: 6,
+    dormitorios: 5,
+    banos: 3,
     superficie_util_m2: 200,
     superficie_terreno_m2: 1515,
-    coverImage: PH(),
+    estacionamientos: 6,
+    coverImage: DEFAULT_IMG,
     destacada: true,
   },
 
-  /* === Restantes del portafolio que nos pasaste === */
+  // Resto del portafolio (no destacadas)
   {
-    id: 'los-dominicos-terreno-ia-m',
+    id: idFrom('Terreno en Venta, árboles grandes, Los Dominicos Antiguo (IA M)'),
     titulo: 'Terreno en Venta, árboles grandes, Los Dominicos Antiguo (IA M)',
     comuna: 'Las Condes',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Terreno',
     operacion: 'venta',
+    tipo: 'Terreno',
     precio_uf: 53850,
-    dormitorios: null, banos: null, estacionamientos: null,
     superficie_terreno_m2: 3070,
-    coverImage: PH(),
+    coverImage: DEFAULT_IMG,
   },
   {
-    id: 'los-dominicos-agua-cd',
+    id: idFrom('Terreno en Venta, derechos de agua, Los Dominicos Antiguo (CD)'),
     titulo: 'Terreno en Venta, derechos de agua, Los Dominicos Antiguo (CD)',
     comuna: 'Las Condes',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Terreno',
     operacion: 'venta',
+    tipo: 'Terreno',
     precio_uf: 49950,
     superficie_terreno_m2: 2780,
-    coverImage: PH(),
+    coverImage: DEFAULT_IMG,
   },
   {
-    id: 'lo-barnechea-vista-fenomenal',
+    id: idFrom('Excelente Casa en Venta con vista fenomenal, Lo Barnechea'),
     titulo: 'Excelente Casa en Venta con vista fenomenal, Lo Barnechea',
     comuna: 'Lo Barnechea',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Casa',
     operacion: 'venta',
+    tipo: 'Casa',
     precio_uf: 45000,
-    dormitorios: 6, banos: 4, estacionamientos: 5,
+    dormitorios: 6,
+    banos: 4,
     superficie_util_m2: 527,
     superficie_terreno_m2: 1090,
-    coverImage: PH(),
+    estacionamientos: 5,
+    coverImage: DEFAULT_IMG,
   },
   {
-    id: 'la-reina-alta-condominio-seguro',
+    id: idFrom('Casa en Venta, bien mantenida, Condominio seguro Reina Alta'),
     titulo: 'Casa bien mantenida, condominio seguro, La Reina Alta',
     comuna: 'La Reina',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Casa',
     operacion: 'venta',
+    tipo: 'Casa',
     precio_uf: 13950,
-    dormitorios: 6, banos: 4, estacionamientos: 2,
+    dormitorios: 6,
+    banos: 4,
     superficie_util_m2: 162,
     superficie_terreno_m2: 330,
-    coverImage: PH(),
+    estacionamientos: 2,
+    coverImage: DEFAULT_IMG,
   },
   {
-    id: 'la-reina-alta-mediterranea-rr',
+    id: idFrom('Casa mediterránea en Venta, calle segura, La Reina Alta (RR)'),
     titulo: 'Casa mediterránea, calle segura, La Reina Alta (RR)',
     comuna: 'La Reina',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Casa',
     operacion: 'venta',
+    tipo: 'Casa',
     precio_uf: 29000,
-    dormitorios: 4, banos: 4, estacionamientos: 4,
+    dormitorios: 5,
+    banos: 4,
     superficie_util_m2: 324,
     superficie_terreno_m2: 1105,
-    coverImage: PH(),
+    estacionamientos: 4,
+    coverImage: DEFAULT_IMG,
   },
   {
-    id: 'vitacura-sector-sport-frances',
+    id: idFrom('Casa en Venta cerca Sector Sport Francés y colegios'),
     titulo: 'Casa en Venta cerca Sector Sport Francés y colegios',
     comuna: 'Vitacura',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Casa',
     operacion: 'venta',
+    tipo: 'Casa',
     precio_uf: 12600,
-    dormitorios: 4, banos: 2, estacionamientos: 2,
+    dormitorios: 4,
+    banos: 2,
     superficie_util_m2: 100,
     superficie_terreno_m2: 286,
-    coverImage: PH(),
+    estacionamientos: 2,
+    coverImage: DEFAULT_IMG,
   },
   {
-    id: 'las-condes-townhouses-nuevo',
+    id: idFrom('Casa nueva en Venta Proyecto Townhouses'),
     titulo: 'Casa nueva en Venta · Proyecto Townhouses',
     comuna: 'Las Condes',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Casa',
     operacion: 'venta',
+    tipo: 'Casa en construcción',
     precio_uf: 14900,
-    dormitorios: 3, banos: 3, estacionamientos: 2,
+    dormitorios: 3,
+    banos: 3,
     superficie_util_m2: 139,
     superficie_terreno_m2: 150,
-    coverImage: PH(),
+    estacionamientos: 2,
+    coverImage: DEFAULT_IMG,
   },
   {
-    id: 'las-condes-departamento-manquehue-sur',
+    id: idFrom('Departamento en Venta, vista despejada, Manquehue Sur'),
     titulo: 'Departamento en Venta, vista despejada, Manquehue Sur',
     comuna: 'Las Condes',
-    region: 'Metropolitana de Santiago',
-    tipo: 'Departamento',
     operacion: 'venta',
+    tipo: 'Departamento',
     precio_uf: 10500,
-    dormitorios: 4, banos: 3, estacionamientos: 2,
+    dormitorios: 4,
+    banos: 3,
     superficie_util_m2: 150,
-    coverImage: PH(),
+    estacionamientos: 2,
+    coverImage: DEFAULT_IMG,
   },
   {
-    id: 'tunquen-casa-borde-mar',
+    id: idFrom('Casa borde mar en Venta El Rosario de Tunquén'),
     titulo: 'Casa borde mar en Venta · El Rosario de Tunquén',
     comuna: 'Tunquén',
-    region: 'Valparaíso',
-    tipo: 'Casa',
     operacion: 'venta',
+    tipo: 'Casa',
     precio_uf: 21000,
-    dormitorios: 5, banos: 3, estacionamientos: 10,
+    dormitorios: 5,
+    banos: 3,
     superficie_util_m2: 312,
     superficie_terreno_m2: 5000,
-    coverImage: PH(),
+    estacionamientos: 10,
+    coverImage: DEFAULT_IMG,
   },
   {
-    id: 'tunquen-sitio-bajada-playa',
+    id: idFrom('Sitio bajada playa en Venta El Rosario de Tunquén'),
     titulo: 'Sitio bajada playa en Venta · El Rosario de Tunquén',
     comuna: 'Tunquén',
-    region: 'Valparaíso',
-    tipo: 'Sitio',
     operacion: 'venta',
+    tipo: 'Sitio',
     precio_uf: 11000,
-    dormitorios: null, banos: null, estacionamientos: null,
     superficie_terreno_m2: 6080,
-    coverImage: PH(),
+    coverImage: DEFAULT_IMG,
   },
 ];
