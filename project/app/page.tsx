@@ -41,6 +41,26 @@ function capFirst(s?: string | null) {
   const lower = s.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
+const HERO_FALLBACK =
+  'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
+
+// Imagen robusta para el hero (acepta distintos esquemas de datos)
+function getHeroImage(p?: Property) {
+  if (!p) return HERO_FALLBACK;
+  const anyP: any = p as any;
+  const candList: (string | undefined)[] = [
+    p.coverImage,
+    anyP.imagen,
+    anyP.image,
+    anyP.foto,
+    p.images?.[0],
+    p.imagenes?.[0],
+  ];
+  const src = candList.find((s) => typeof s === 'string' && s.trim().length > 4);
+  if (!src) return HERO_FALLBACK;
+  // si llega a venir una ruta relativa, igual funciona como bg-image en Next
+  return src;
+}
 
 /* -------------------- Datos Chile (para formulario de referidos) -------------------- */
 const REGIONES: readonly string[] = [
@@ -84,29 +104,15 @@ const COMUNAS_POR_REGION: Record<Region, string[]> = {
     'Macul', 'Peñalolén', 'La Florida', 'Puente Alto', 'San Joaquín', 'San Miguel', 'La Cisterna',
     'Cerrillos', 'Estación Central', 'Quinta Normal', 'Recoleta', 'Independencia', 'Huechuraba',
     'Conchalí', 'Renca', 'Quilicura', 'Pudahuel', 'Lo Prado', 'Cerro Navia', 'Maipú',
-    'Pedro Aguirre Cerda', 'San Ramón', 'El Bosque', 'La Granja', 'Lo Espejo', 'San Bernardo',
+    'Pedro Aguirre Cerda', 'San Ramón', 'El Bosque', 'La Granja', 'San Bernardo',
     'Buin', 'Paine', 'Calera de Tango', 'Talagante', 'Peñaflor', 'Isla de Maipo', 'El Monte',
     'Padre Hurtado', 'Colina', 'Lampa', 'Tiltil', 'Melipilla', 'Curacaví', 'María Pinto',
     'San José de Maipo', 'Pirque'
   ],
 };
 
-const SERVICIOS = [
-  'Comprar',
-  'Vender',
-  'Arrendar',
-  'Gestionar un arriendo',
-  'Consultoría específica',
-];
-
-const TIPO_PROPIEDAD = [
-  'Casa',
-  'Departamento',
-  'Bodega',
-  'Oficina',
-  'Local comercial',
-  'Terreno',
-];
+const SERVICIOS = ['Comprar','Vender','Arrendar','Gestionar un arriendo','Consultoría específica'];
+const TIPO_PROPIEDAD = ['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno'];
 
 /* ===== util: romanos para regiones (solo display) ===== */
 const ROMANOS = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI'];
@@ -125,7 +131,7 @@ const extractRegionName = (value: string): Region | '' => {
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const statDormRef = useRef<HTMLDivElement | null>(null);
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
@@ -142,12 +148,9 @@ export default function HomePage() {
         const json = await res.json();
         if (!mounted) return;
         const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        const fixed = data.map((p) => {
-          if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
-            return { ...p, precio_uf: 2300 };
-          }
-          return p;
-        });
+        const fixed = data.map((p) =>
+          (p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0 ? { ...p, precio_uf: 2300 } : p
+        );
         setDestacadas(fixed);
       } catch {
         if (mounted) setDestacadas([]);
@@ -195,12 +198,7 @@ export default function HomePage() {
   };
 
   const active = destacadas[i];
-  const bg = useMemo(() => {
-    if (!active)
-      return 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
-    const imgs = active.coverImage || active.imagenes?.[0] || active.images?.[0];
-    return imgs || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
-  }, [active]);
+  const bg = useMemo(() => getHeroImage(active), [active]);
 
   const lineaSecundaria = [
     capFirst(active?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -234,16 +232,28 @@ export default function HomePage() {
     const a = verMasRef.current;
     if (a && w) a.style.width = `${w}px`;
     if (a && h) a.style.height = `${h}px`;
-    if (a) a.style.display = 'inline-flex';
-    if (a) a.style.alignItems = 'center';
-    if (a) a.style.justifyContent = 'center';
+    if (a) {
+      a.style.display = 'inline-flex';
+      a.style.alignItems = 'center';
+      a.style.justifyContent = 'center';
+    }
   };
   useEffect(() => {
     applyButtonSize();
-    const ro = new ResizeObserver(applyButtonSize);
-    if (statDormRef.current) ro.observe(statDormRef.current);
-    if (priceBoxRef.current) ro.observe(priceBoxRef.current);
-    return () => ro.disconnect();
+    // Protegemos ResizeObserver para evitar errores en ciertos navegadores
+    let ro: ResizeObserver | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
+        ro = new ResizeObserver(applyButtonSize);
+        if (statDormRef.current) ro.observe(statDormRef.current);
+        if (priceBoxRef.current) ro.observe(priceBoxRef.current);
+      }
+    } catch {
+      // no-op (mejor no romper la página)
+    }
+    return () => {
+      try { ro?.disconnect(); } catch {}
+    };
   }, [active]);
 
   /* --------- Estado formulario referidos --------- */
@@ -251,8 +261,8 @@ export default function HomePage() {
   const [comunaInput, setComunaInput] = useState('');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
-  const [servicio, setServicio] = useState(''); // ⬅️ ahora sin preselección
-  const [tipo, setTipo] = useState('');        // ⬅️ ahora sin preselección
+  const [servicio, setServicio] = useState('');
+  const [tipo, setTipo] = useState('');
 
   const regionSel = extractRegionName(regionInput);
   const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
@@ -421,7 +431,7 @@ export default function HomePage() {
                 <div className="w-full p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
                   <p className="text-sm mt-1">{m.cargo}</p>
-                  <p className="mt-1 text-xs text白/90">{m.profesion}</p>
+                  <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
                 </div>
               </div>
             </article>
@@ -515,7 +525,7 @@ export default function HomePage() {
 
               {/* Comuna */}
               <div>
-                <label className="block text sm text-slate-700 mb-1">Comuna</label>
+                <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
                   options={regionSel ? (COMUNAS_POR_REGION[regionSel] || []) : []}
                   value={comunaInput}
