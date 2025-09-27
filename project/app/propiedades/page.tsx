@@ -28,7 +28,7 @@ const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=2000';
 
-/* ==== Helpers ==== */
+/* ==== Helpers numéricos / texto ==== */
 const fmtMiles = (raw: string) => {
   const digits = (raw || '').replace(/\D+/g, '');
   if (!digits) return '';
@@ -41,7 +41,7 @@ const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
-/* ==== Hook para leer UF del día desde /api/uf ==== */
+/* ==== Hook UF ==== */
 function useUfValue() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -61,15 +61,14 @@ function useUfValue() {
   return uf;
 }
 
-/* ==== Datos base ==== */
-/** Metropolitana PRIMERO para que aparezca arriba del listado */
+/* ==== Regiones (UI) ==== */
+/** Metropolitana primero */
 const REGIONES = [
   'Metropolitana de Santiago',
   'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',"O'Higgins",
   'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes',
 ] as const;
 
-/** Mapa numérico (solo lo usamos para mostrar romanos en el resto) */
 const REG_N_ARABIC: Record<string, number> = {
   'Arica y Parinacota': 15, Tarapacá: 1, Antofagasta: 2, Atacama: 3, Coquimbo: 4, Valparaíso: 5,
   "O'Higgins": 6, Maule: 7, Ñuble: 16, Biobío: 8, 'La Araucanía': 9, 'Los Ríos': 14, 'Los Lagos': 10,
@@ -80,12 +79,33 @@ const toRoman = (n?: number) => {
   const m: [number, string][]= [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
   let s = '', x = n; for (const [v,r] of m) while (x>=v){s+=r;x-=v;} return s;
 };
-/** Mostrar “RM - …” para Metropolitana; para el resto, romanos */
+/** Mostrar “RM - …” para Metropolitana; resto con romanos */
 const regionDisplay = (r: string) => {
   if (r === 'Metropolitana de Santiago') return `RM - ${r}`;
   const num = REG_N_ARABIC[r];
   const roman = toRoman(num);
   return roman ? `${roman} - ${r}` : r;
+};
+
+/* ==== Normalización robusta para filtrar región en cliente ==== */
+const normalizeRegionName = (s?: string) =>
+  (s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // sin tildes
+    .toLowerCase()
+    .replace(/\bregion\b/g, '')
+    .replace(/\brm\b/g, 'metropolitana')                // RM -> metropolitana
+    .replace(/\bde\b|\bdel\b|\bla\b|\bel\b|\bde\s+santiago\b/g, '')
+    .replace(/^\s*(?:[ivxlcdm]+)\s*-\s*/i, '')          // “X - …”
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/** Compara nombres aunque la data tenga variantes: “Región Metropolitana”, “RM”, etc. */
+const isSameRegion = (a?: string, b?: string) => {
+  const na = normalizeRegionName(a);
+  const nb = normalizeRegionName(b);
+  if (!na || !nb) return false;
+  // match amplio: “metropolitana”, “valparaiso”, etc.
+  return na.includes(nb) || nb.includes(na);
 };
 
 const COMUNAS: Record<string, string[]> = {
@@ -164,7 +184,7 @@ export default function PropiedadesPage() {
 
   const [trigger, setTrigger] = useState(0);
 
-  /* Region: acepta "RM - Nombre" o "X - Nombre" y también solo "Nombre" */
+  /* Region: acepta “RM - …”, “X - …” o solo el nombre */
   useEffect(() => {
     const cleaned = (regionInput || '').trim();
     const m = cleaned.match(/^\s*(?:[IVXLCDM]+|RM)\s*-\s*(.+)$/i);
@@ -185,6 +205,7 @@ export default function PropiedadesPage() {
     if (qTop.trim()) p.set('q', qTop.trim());
     if (operacion) p.set('operacion', operacion);
     if (tipo) p.set('tipo', tipo);
+    // Enviamos igual el nombre al backend (por si lo soporta)
     if (region) p.set('region', region);
     if (comuna) p.set('comuna', comuna);
     if (barrio) p.set('barrio', barrio);
@@ -222,7 +243,13 @@ export default function PropiedadesPage() {
       .then((r) => r.json())
       .then((j) => {
         if (cancel) return;
-        const arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
+        let arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
+
+        // >>>>>>>>>>>  POST-FILTRO POR REGIÓN EN CLIENTE  <<<<<<<<<<
+        if (region) {
+          arr = arr.filter((prop) => isSameRegion(prop.region, region));
+        }
+
         setItems(arr);
       })
       .catch(() => { if (!cancel) setItems([]); })
@@ -351,7 +378,6 @@ export default function PropiedadesPage() {
                 <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any) || '')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                {/* Orden: Limpiar (izquierda) y Buscar (derecha) */}
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
                 <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
@@ -380,7 +406,6 @@ export default function PropiedadesPage() {
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                {/* Orden final: Limpiar - Buscar */}
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
                 <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
@@ -441,88 +466,31 @@ export default function PropiedadesPage() {
                     {/* Métricas */}
                     {!terreno && !bodega ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">{p.banos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">
-                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                          </div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">
-                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                          </div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
                       </div>
                     ) : terreno ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">
-                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                          </div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
                       </div>
                     ) : (
-                      /* bodega u otros casos especiales: dejamos la cuadricula previa */
                       <div className="mt-3 grid grid-cols-4 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">{p.banos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">
-                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                          </div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div>
-                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
                       </div>
                     )}
 
                     <div className="mt-4 flex items-center justify-between">
-                      <span
-                        className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
-                        style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                      >
-                        Ver más
-                      </span>
-
+                      <span className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Ver más</span>
                       <div className="text-right">
                         <div className="font-semibold" style={{ color: BRAND_BLUE }}>
                           {showUF ? `UF ${nfUF.format(p.precio_uf as number)}` : 'Consultar'}
