@@ -36,12 +36,12 @@ const fmtMiles = (raw: string) => {
     parseInt(digits, 10),
   );
 };
-const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
-/* ==== Hook para leer UF del día desde /api/uf ==== */
+/* ==== Hook UF ==== */
 function useUfValue() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -61,10 +61,12 @@ function useUfValue() {
   return uf;
 }
 
-/* ==== Datos base (display regiones con romanos) ==== */
+/* ==== Regiones (UI) ==== */
+/** Metropolitana primero */
 const REGIONES = [
+  'Metropolitana de Santiago',
   'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',"O'Higgins",
-  'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes','Metropolitana de Santiago',
+  'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes',
 ] as const;
 
 const REG_N_ARABIC: Record<string, number> = {
@@ -77,12 +79,24 @@ const toRoman = (n?: number) => {
   const m: [number, string][]= [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
   let s = '', x = n; for (const [v,r] of m) while (x>=v){s+=r;x-=v;} return s;
 };
+/** Mostrar “RM - …” para Metropolitana; resto con romanos */
 const regionDisplay = (r: string) => {
+  if (r === 'Metropolitana de Santiago') return `RM - ${r}`;
   const num = REG_N_ARABIC[r];
   const roman = toRoman(num);
   return roman ? `${roman} - ${r}` : r;
 };
 
+/* ==== Normalización y utilidades de región (para parsear la selección de UI) ==== */
+const parseRegionInput = (input: string) => {
+  const cleaned = (input || '').trim();
+  // acepta: "RM - Metropolitana...", "X - Nombre", o solo "Nombre"
+  const m = cleaned.match(/^\s*(?:[IVXLCDM]+|RM)\s*-\s*(.+)$/i);
+  const name = (m ? m[1] : cleaned) as string;
+  return REG_N_ARABIC[name] != null ? name : '';
+};
+
+/* Para comunas dependientes de región */
 const COMUNAS: Record<string, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
   'Tarapacá': ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica'],
@@ -128,6 +142,13 @@ const BARRIOS: Record<string, string[]> = {
   'Valdivia': ['Isla Teja','Torreones','Las Ánimas','Regional'],
 };
 
+/* ==== Helpers de tipo de propiedad ==== */
+const isTerreno = (p: Property) =>
+  (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
+
+const isBodega = (p: Property) =>
+  (p.tipo || '').toLowerCase().includes('bodega');
+
 export default function PropiedadesPage() {
   /* — Buscador superior — */
   const [qTop, setQTop] = useState('');
@@ -136,7 +157,7 @@ export default function PropiedadesPage() {
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [regionInput, setRegionInput] = useState('');
-  const [region, setRegion] = useState<string>('');
+  const [region, setRegion] = useState<string>(''); // nombre “bonito” (p.ej. “Metropolitana de Santiago”)
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
@@ -157,29 +178,28 @@ export default function PropiedadesPage() {
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
 
+  /* — Control de búsqueda manual — */
   const [trigger, setTrigger] = useState(0);
 
-  /* Region: parsea "X - Nombre" a "Nombre" */
+  /* Parsear la región elegida en el selector, sin disparar búsqueda */
   useEffect(() => {
-    const m = (regionInput || '').match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
-    const name = (m ? m[1] : regionInput) as string;
-    if (name && REG_N_ARABIC[name] != null) setRegion(name);
-    else setRegion('');
+    setRegion(parseRegionInput(regionInput));
+    // NO hacemos fetch aquí: solo parseamos y dejamos listo para "Buscar".
   }, [regionInput]);
 
   const ufValue = useUfValue();
 
-  // búsqueda inicial
+  /* Búsqueda inicial una vez montado */
   useEffect(() => { setTrigger((v) => v + 1); }, []);
 
-  /* Build params + fetch reales — SOLO cuando cambia "trigger" */
+  /* Build params + fetch (sin caché) — SOLO cuando cambia "trigger" */
   useEffect(() => {
     const p = new URLSearchParams();
 
     if (qTop.trim()) p.set('q', qTop.trim());
     if (operacion) p.set('operacion', operacion);
     if (tipo) p.set('tipo', tipo);
-    if (region) p.set('region', region);
+    if (region) p.set('region', region); // se envía solo si está seteada
     if (comuna) p.set('comuna', comuna);
     if (barrio) p.set('barrio', barrio);
     if (minDorm) p.set('minDorm', minDorm);
@@ -223,7 +243,7 @@ export default function PropiedadesPage() {
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [trigger]); // ⬅️ solo cambia al apretar "Buscar" (o carga inicial)
+  }, [trigger]); // ⬅️ Solo cambia al apretar "Buscar" (o en la carga inicial)
 
   // botón LIMPIAR
   const handleClear = () => {
@@ -275,7 +295,6 @@ export default function PropiedadesPage() {
                     placeholder="Buscar por calle"
                     className="w-full rounded-md bg-white/95 backdrop-blur pl-8 pr-24 py-3 text-slate-900 placeholder-slate-500"
                   />
-                  {/* Solo BOTÓN BUSCAR, pegado a la derecha */}
                   <button
                     onClick={() => setTrigger((v) => v + 1)}
                     className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-none"
@@ -339,7 +358,6 @@ export default function PropiedadesPage() {
                 <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any) || '')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                {/* Orden: Limpiar (izquierda) y Buscar (derecha) */}
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
                 <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
@@ -368,7 +386,6 @@ export default function PropiedadesPage() {
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                {/* Orden final: Limpiar - Buscar */}
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
                 <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
@@ -399,8 +416,8 @@ export default function PropiedadesPage() {
                 return null;
               })();
 
-              const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
-              const bodega = (p.tipo || '').toLowerCase().includes('bodega');
+              const terreno = isTerreno(p);
+              const bodega = isBodega(p);
 
               return (
                 <Link
@@ -426,94 +443,33 @@ export default function PropiedadesPage() {
                       {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
-                    {/* Métricas */}
                     {!terreno && !bodega ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Bed className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <ShowerHead className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">{p.banos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Car className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Ruler className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                          </div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Square className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                          </div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
                       </div>
                     ) : terreno ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Square className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                          </div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
                       </div>
                     ) : (
                       <div className="mt-3 grid grid-cols-4 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Bed className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <ShowerHead className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">{p.banos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Ruler className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                          </div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Car className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
                       </div>
                     )}
 
                     <div className="mt-4 flex items-center justify-between">
-                      <span
-                        className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
-                        style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                      >
-                        Ver más
-                      </span>
-
+                      <span className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Ver más</span>
                       <div className="text-right">
                         <div className="font-semibold" style={{ color: BRAND_BLUE }}>
                           {showUF ? `UF ${nfUF.format(p.precio_uf as number)}` : 'Consultar'}
