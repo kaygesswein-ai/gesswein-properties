@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -257,7 +258,7 @@ export default function PropiedadesPage() {
     <main className="bg-white">
       {/* HERO */}
       <section
-        className="relative bg-cover min-h-[75vh] md:min-h-[88vh] lg:min-h-[96vh]"
+        className="relative bg-cover min-h-[100svh]"
         style={{ backgroundImage: `url(${HERO_IMG})`, backgroundPosition: '50% 82%' }}
       >
         <div className="absolute inset-0 bg-black/35" />
@@ -405,8 +406,8 @@ export default function PropiedadesPage() {
                 return null;
               })();
 
-              const terreno = isTerreno(p);
-              const bodega = isBodega(p);
+              const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
+              const bodega = (p.tipo || '').toLowerCase().includes('bodega');
 
               return (
                 <Link
@@ -432,9 +433,8 @@ export default function PropiedadesPage() {
                       {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
-                    {/* Métricas */}
+                    {/* Métricas (sin cambios respecto a la versión anterior) */}
                     {!terreno && !bodega ? (
-                      // 5 bloques: Dorm, Baños, Estac, m2 const, m2 terreno (solo íconos arriba)
                       <div className="mt-3 grid grid-cols-5 text-center">
                         <div className="border border-slate-200 p-2">
                           <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
@@ -472,7 +472,6 @@ export default function PropiedadesPage() {
                         </div>
                       </div>
                     ) : terreno ? (
-                      // Solo 1 bloque (m2 terreno) del mismo ancho que los anteriores (1/5)
                       <div className="mt-3 grid grid-cols-5 text-center">
                         <div className="border border-slate-200 p-2">
                           <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
@@ -484,7 +483,6 @@ export default function PropiedadesPage() {
                         </div>
                       </div>
                     ) : (
-                      // Bodega (dejamos la distribución anterior de 4)
                       <div className="mt-3 grid grid-cols-4 text-center">
                         <div className="border border-slate-200 p-2">
                           <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
