@@ -4,46 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bed, ShowerHead, Ruler, Search, Filter, Square, Car } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
-
-type Property = {
-  id: string;
-  titulo?: string;
-  comuna?: string;
-  region?: string;
-  operacion?: 'venta' | 'arriendo';
-  tipo?: string;
-  precio_uf?: number | null;
-  precio_clp?: number | null;
-  dormitorios?: number | null;
-  banos?: number | null;
-  superficie_util_m2?: number | null;
-  superficie_terreno_m2?: number | null;
-  estacionamientos?: number | null;
-  coverImage?: string;
-  createdAt?: string;
-  destacada?: boolean;
-};
+import { getAllProperties, type Property } from '@/lib/properties';
 
 const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
   'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=2000&auto=format&fit=crop';
-
-/* =================== LISTA ESTÁTICA (solo tus propiedades) =================== */
-const STATIC_PROPS: Property[] = [
-  { id: 'static-001', titulo: 'Maravillosa casa remodelada, jardín naturalista, Los Dominicos Antiguo (GDS)', comuna: 'Las Condes', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Casa', superficie_terreno_m2: 805, superficie_util_m2: 200, dormitorios: 6, banos: 5, estacionamientos: 2, precio_uf: 26000, destacada: true },
-  { id: 'static-002', titulo: 'Casa en Venta con árboles grandes, Los Dominicos Antiguo (IA)', comuna: 'Las Condes', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Casa', superficie_terreno_m2: 1563, superficie_util_m2: 270, dormitorios: 5, banos: 4, estacionamientos: 6, precio_uf: 27350, destacada: true },
-  { id: 'static-003', titulo: 'Casa para remodelar, Los Dominicos Antiguo (IA M)', comuna: 'Las Condes', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Casa', superficie_terreno_m2: 1515, superficie_util_m2: 200, dormitorios: 5, banos: 3, estacionamientos: 6, precio_uf: 26500, destacada: true },
-  { id: 'static-004', titulo: 'Terreno en Venta, árboles grandes, Los Dominicos Antiguo (IA M)', comuna: 'Las Condes', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Terreno', superficie_terreno_m2: 3070, precio_uf: 53850 },
-  { id: 'static-005', titulo: 'Terreno en Venta, derechos de agua, Los Dominicos Antiguo (CD)', comuna: 'Las Condes', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Terreno', superficie_terreno_m2: 2780, precio_uf: 49950 },
-  { id: 'static-006', titulo: 'Excelente Casa con vista fenomenal, Lo Barnechea', comuna: 'Lo Barnechea', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Casa', superficie_terreno_m2: 1090, superficie_util_m2: 527, dormitorios: 6, banos: 4, estacionamientos: 5, precio_uf: 45000 },
-  { id: 'static-007', titulo: 'Casa bien mantenida, condominio seguro, La Reina Alta', comuna: 'La Reina', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Casa', superficie_terreno_m2: 330, superficie_util_m2: 162, dormitorios: 6, banos: 4, estacionamientos: 2, precio_uf: 13950 },
-  { id: 'static-008', titulo: 'Casa mediterránea, calle segura, La Reina Alta (RR)', comuna: 'La Reina', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Casa', superficie_terreno_m2: 1105, superficie_util_m2: 324, dormitorios: 5, banos: 4, estacionamientos: 4, precio_uf: 29000 },
-  { id: 'static-009', titulo: 'Casa cerca Sector Sport Francés y colegios', comuna: 'Vitacura', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Casa', superficie_terreno_m2: 286, superficie_util_m2: 100, dormitorios: 4, banos: 2, estacionamientos: 2, precio_uf: 12600 },
-  { id: 'static-010', titulo: 'Casa nueva – Proyecto Townhouses (en construcción)', comuna: 'Las Condes', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Casa', superficie_terreno_m2: 150, superficie_util_m2: 139, dormitorios: 3, banos: 3, estacionamientos: 2, precio_uf: 14900 },
-  { id: 'static-011', titulo: 'Departamento con vista despejada, Manquehue Sur', comuna: 'Las Condes', region: 'Metropolitana de Santiago', operacion: 'venta', tipo: 'Departamento', superficie_util_m2: 150, dormitorios: 4, banos: 3, estacionamientos: 2, precio_uf: 10500 },
-  { id: 'static-012', titulo: 'Casa borde mar, El Rosario de Tunquén', comuna: 'Tunquén', region: 'Valparaíso', operacion: 'venta', tipo: 'Casa', superficie_terreno_m2: 5000, superficie_util_m2: 312, dormitorios: 5, banos: 3, estacionamientos: 10, precio_uf: 21000 },
-  { id: 'static-013', titulo: 'Sitio bajada playa, El Rosario de Tunquén', comuna: 'Tunquén', region: 'Valparaíso', operacion: 'venta', tipo: 'Terreno', superficie_terreno_m2: 6080, precio_uf: 11000 },
-];
 
 /* ==== Helpers ==== */
 const fmtMiles = (raw: string) => {
@@ -55,7 +20,7 @@ const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const capFirst = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
-/* ==== Hook para leer UF del día desde /api/uf ==== */
+/* ==== Hook UF ==== */
 function useUfValue() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -75,7 +40,7 @@ function useUfValue() {
   return uf;
 }
 
-/* ==== Datos base (display regiones con romanos) ==== */
+/* ==== regiones + comunas (display con romanos) ==== */
 const REGIONES = [
   'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',"O'Higgins",
   'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes','Metropolitana de Santiago',
@@ -160,7 +125,7 @@ export default function PropiedadesPage() {
   const [minBanos, setMinBanos] = useState('');
   const [minM2Const, setMinM2Const] = useState('');
   const [minM2Terreno, setMinM2Terreno] = useState('');
-  const [estac, setEstac] = useState(''); // ← mínimo de estacionamientos
+  const [estac, setEstac] = useState('');
 
   /* — Resultados — */
   const [items, setItems] = useState<Property[]>([]);
@@ -168,7 +133,7 @@ export default function PropiedadesPage() {
 
   const [trigger, setTrigger] = useState(0);
 
-  /* Region: parsea "X - Nombre" a "Nombre" */
+  /* Region: parse "X - Nombre" -> Nombre */
   useEffect(() => {
     const m = regionInput.match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
     const name = (m ? m[1] : regionInput) as string;
@@ -180,9 +145,11 @@ export default function PropiedadesPage() {
 
   useEffect(() => { setTrigger((v) => v + 1); }, []);
 
-  /* Construcción + filtro local SOBRE LA LISTA ESTÁTICA — solo cuando cambia "trigger" */
+  /* Filtro local sobre la fuente centralizada */
   useEffect(() => {
     setLoading(true);
+
+    const base = getAllProperties();
 
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(minValor);
@@ -195,21 +162,22 @@ export default function PropiedadesPage() {
     if (!Number.isNaN(minN)) minUF = isCLP && hasUF ? Math.round(minN / (ufValue as number)) : minN;
     if (!Number.isNaN(maxN)) maxUF = isCLP && hasUF ? Math.round(maxN / (ufValue as number)) : maxN;
 
-    const localFilter = (p: Property) => {
+    const filtered = base.filter((p) => {
       if (operacion && (p.operacion || '').toLowerCase() !== operacion.toLowerCase()) return false;
       if (tipo && (p.tipo || '').toLowerCase() !== tipo.toLowerCase()) return false;
       if (region && (p.region || '').toLowerCase() !== region.toLowerCase()) return false;
       if (comuna && (p.comuna || '').toLowerCase() !== comuna.toLowerCase()) return false;
+
       if (qTop.trim()) {
         const q = qTop.trim().toLowerCase();
-        const hay = (p.titulo || '').toLowerCase().includes(q) || (p.comuna || '').toLowerCase().includes(q);
-        if (!hay) return false;
+        const hit = (p.titulo || '').toLowerCase().includes(q) || (p.comuna || '').toLowerCase().includes(q);
+        if (!hit) return false;
       }
+
       const pUF = typeof p.precio_uf === 'number' ? p.precio_uf : undefined;
       if (minUF !== undefined && !Number.isNaN(minUF) && pUF !== undefined && pUF < minUF) return false;
       if (maxUF !== undefined && !Number.isNaN(maxUF) && pUF !== undefined && pUF > maxUF) return false;
 
-      // mínimos avanzados
       const d = p.dormitorios ?? undefined;
       const b = p.banos ?? undefined;
       const m2c = p.superficie_util_m2 ?? undefined;
@@ -220,19 +188,15 @@ export default function PropiedadesPage() {
       if (minBanos && b !== undefined && b < parseInt(minBanos, 10)) return false;
       if (minM2Const && m2c !== undefined && m2c < parseInt(minM2Const.replace(/\./g, ''), 10)) return false;
       if (minM2Terreno && m2t !== undefined && m2t < parseInt(minM2Terreno.replace(/\./g, ''), 10)) return false;
-
-      // ✅ NUEVO: mínimo de estacionamientos
       if (estac && e !== undefined && e < parseInt(estac, 10)) return false;
 
       return true;
-    };
+    });
 
-    const locals = STATIC_PROPS.filter(localFilter);
-    setItems(locals);
+    setItems(filtered);
     setLoading(false);
   }, [trigger]);
 
-  // —— LIMPIAR —— //
   const handleReset = () => {
     setQTop('');
     setOperacion('');
@@ -248,7 +212,7 @@ export default function PropiedadesPage() {
     setMinBanos('');
     setMinM2Const('');
     setMinM2Terreno('');
-    setEstac(''); // ← reset estacionamientos
+    setEstac('');
     setTrigger((v) => v + 1);
   };
 
@@ -385,7 +349,9 @@ export default function PropiedadesPage() {
       {/* LISTADO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">PROPIEDADES DISPONIBLES</h2>
+          <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
+            PROPIEDADES DISPONIBLES
+          </h2>
         </div>
 
         {loading ? (
