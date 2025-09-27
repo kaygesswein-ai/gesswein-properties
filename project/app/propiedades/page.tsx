@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -38,6 +39,8 @@ const fmtMiles = (raw: string) => {
 };
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
 /* ==== Hook para leer UF del día desde /api/uf ==== */
 function useUfValue() {
@@ -60,17 +63,15 @@ function useUfValue() {
 }
 
 /* ==== Datos base (display regiones con romanos) ==== */
-// Metropolitana PRIMERO
 const REGIONES = [
-  'Metropolitana de Santiago',
   'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',"O'Higgins",
-  'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes',
+  'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos','Aysén','Magallanes','Metropolitana de Santiago',
 ] as const;
 
 const REG_N_ARABIC: Record<string, number> = {
-  'Arica y Parinacota': 1, Tarapacá: 2, Antofagasta: 3, Atacama: 4, Coquimbo: 5, Valparaíso: 6,
-  "O'Higgins": 7, Maule: 8, Ñuble: 16, Biobío: 12, 'La Araucanía': 9, 'Los Ríos': 14, 'Los Lagos': 10,
-  Aysén: 11, Magallanes: 15, 'Metropolitana de Santiago': 13,
+  'Arica y Parinacota': 15, Tarapacá: 1, Antofagasta: 2, Atacama: 3, Coquimbo: 4, Valparaíso: 5,
+  "O'Higgins": 6, Maule: 7, Ñuble: 16, Biobío: 8, 'La Araucanía': 9, 'Los Ríos': 14, 'Los Lagos': 10,
+  Aysén: 11, Magallanes: 12, 'Metropolitana de Santiago': 13,
 };
 const toRoman = (n?: number) => {
   if (!n || Number.isNaN(n)) return '';
@@ -159,11 +160,10 @@ export default function PropiedadesPage() {
 
   const [trigger, setTrigger] = useState(0);
 
-  /* Region: parsea "X - Nombre" o solo "Nombre" */
+  /* Region: parsea "X - Nombre" a "Nombre" */
   useEffect(() => {
-    const cleaned = (regionInput || '').trim();
-    const match = cleaned.match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
-    const name = (match ? match[1] : cleaned) as string;
+    const m = (regionInput || '').match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
+    const name = (m ? m[1] : regionInput) as string;
     if (name && REG_N_ARABIC[name] != null) setRegion(name);
     else setRegion('');
   }, [regionInput]);
@@ -249,13 +249,16 @@ export default function PropiedadesPage() {
   const isTerreno = (p: Property) =>
     (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
 
+  const isBodega = (p: Property) =>
+    (p.tipo || '').toLowerCase().includes('bodega');
+
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
 
   return (
     <main className="bg-white">
       {/* HERO */}
       <section
-        className="relative bg-cover min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh]"
+        className="relative bg-cover min-h-[100svh]"
         style={{ backgroundImage: `url(${HERO_IMG})`, backgroundPosition: '50% 82%' }}
       >
         <div className="absolute inset-0 bg-black/35" />
@@ -279,6 +282,7 @@ export default function PropiedadesPage() {
                     placeholder="Buscar por calle"
                     className="w-full rounded-md bg-white/95 backdrop-blur pl-8 pr-24 py-3 text-slate-900 placeholder-slate-500"
                   />
+                  {/* Solo BOTÓN BUSCAR, pegado a la derecha */}
                   <button
                     onClick={() => setTrigger((v) => v + 1)}
                     className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-none"
@@ -342,8 +346,9 @@ export default function PropiedadesPage() {
                 <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any) || '')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
+                {/* Orden: Limpiar (izquierda) y Buscar (derecha) */}
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
+                <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
@@ -370,8 +375,9 @@ export default function PropiedadesPage() {
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
+                {/* Orden final: Limpiar - Buscar */}
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
+                <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
@@ -400,7 +406,8 @@ export default function PropiedadesPage() {
                 return null;
               })();
 
-              const terreno = isTerreno(p);
+              const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
+              const bodega = (p.tipo || '').toLowerCase().includes('bodega');
 
               return (
                 <Link
@@ -423,49 +430,88 @@ export default function PropiedadesPage() {
                       {p.titulo || 'Propiedad'}
                     </h3>
                     <p className="mt-1 text-sm text-slate-600">
-                      {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? String(p.operacion) : ''].filter(Boolean).join(' · ')}
+                      {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
-                    <div className={`mt-3 grid ${terreno ? 'grid-cols-5' : 'grid-cols-5'} text-center`}>
-                      {terreno ? (
-                        <>
-                          <div className="border border-slate-200 p-2">
-                            <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                              <Square className="h-4 w-4" />
-                            </div>
-                            <div className="text-sm">{p.superficie_terreno_m2 != null ? nfCLP.format(p.superficie_terreno_m2).replace(/\$/,'') : '—'}</div>
+                    {/* Métricas (sin cambios respecto a la versión anterior) */}
+                    {!terreno && !bodega ? (
+                      <div className="mt-3 grid grid-cols-5 text-center">
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Bed className="h-4 w-4" />
                           </div>
-                          {/* cuatro placeholders vacíos para mantener el ancho igualado */}
-                          <div className="border border-slate-200 p-2 bg-slate-50 text-xs text-slate-500"></div>
-                          <div className="border border-slate-200 p-2 bg-slate-50 text-xs text-slate-500"></div>
-                          <div className="border border-slate-200 p-2 bg-slate-50 text-xs text-slate-500"></div>
-                          <div className="border border-slate-200 p-2 bg-slate-50 text-xs text-slate-500"></div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="border border-slate-200 p-2">
-                            <div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div>
-                            <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <ShowerHead className="h-4 w-4" />
                           </div>
-                          <div className="border border-slate-200 p-2">
-                            <div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div>
-                            <div className="text-sm">{p.banos ?? '—'}</div>
+                          <div className="text-sm">{p.banos ?? '—'}</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Car className="h-4 w-4" />
                           </div>
-                          <div className="border border-slate-200 p-2">
-                            <div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div>
-                            <div className="text-sm">{p.estacionamientos ?? '—'}</div>
+                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Ruler className="h-4 w-4" />
                           </div>
-                          <div className="border border-slate-200 p-2">
-                            <div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div>
-                            <div className="text-sm">{p.superficie_util_m2 ?? '—'}</div>
+                          <div className="text-sm">
+                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
                           </div>
-                          <div className="border border-slate-200 p-2">
-                            <div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div>
-                            <div className="text-sm">{p.superficie_terreno_m2 != null ? nfCLP.format(p.superficie_terreno_m2).replace(/\$/,'') : '—'}</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Square className="h-4 w-4" />
                           </div>
-                        </>
-                      )}
-                    </div>
+                          <div className="text-sm">
+                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
+                          </div>
+                        </div>
+                      </div>
+                    ) : terreno ? (
+                      <div className="mt-3 grid grid-cols-5 text-center">
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Square className="h-4 w-4" />
+                          </div>
+                          <div className="text-sm">
+                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 grid grid-cols-4 text-center">
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Bed className="h-4 w-4" />
+                          </div>
+                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <ShowerHead className="h-4 w-4" />
+                          </div>
+                          <div className="text-sm">{p.banos ?? '—'}</div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Ruler className="h-4 w-4" />
+                          </div>
+                          <div className="text-sm">
+                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
+                          </div>
+                        </div>
+                        <div className="border border-slate-200 p-2">
+                          <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                            <Car className="h-4 w-4" />
+                          </div>
+                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="mt-4 flex items-center justify-between">
                       <span
