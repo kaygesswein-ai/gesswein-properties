@@ -2,12 +2,26 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2, SquareParking } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
 import useUf from '../hooks/useUf';
 import SmartSelect from '../components/SmartSelect';
 
-// ⬇️ NUEVO: usamos la fuente centralizada
-import { getFeaturedProperties, type Property } from '@/lib/properties';
+/* -------------------- Tipos -------------------- */
+type Property = {
+  id: string;
+  titulo?: string;
+  comuna?: string;
+  operacion?: 'venta' | 'arriendo';
+  tipo?: string;
+  precio_uf?: number | null;
+  precio_clp?: number | null;
+  dormitorios?: number | null;
+  banos?: number | null;
+  superficie_util_m2?: number | null;
+  images?: string[];
+  coverImage?: string;
+  destacada?: boolean;
+};
 
 /* -------------------- Utilidades -------------------- */
 function fmtUF(n: number) {
@@ -119,16 +133,26 @@ export default function HomePage() {
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
 
-  // ⬇️ CAMBIADO: obtenemos destacadas desde la fuente centralizada
   useEffect(() => {
-    const data: Property[] = getFeaturedProperties(6);
-    const fixed = data.map((p) => {
-      if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
-        return { ...p, precio_uf: 2300 };
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' });
+        const json = await res.json();
+        if (!mounted) return;
+        const data: Property[] = Array.isArray(json?.data) ? json.data : [];
+        const fixed = data.map((p) => {
+          if ((p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0) {
+            return { ...p, precio_uf: 2300 };
+          }
+          return p;
+        });
+        setDestacadas(fixed);
+      } catch {
+        if (mounted) setDestacadas([]);
       }
-      return p;
-    });
-    setDestacadas(fixed);
+    })();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -170,11 +194,19 @@ export default function HomePage() {
   };
 
   const active = destacadas[i];
+
+  // ⬇️ FIX: compatibilidad para "imagenes" legacy sin romper tipos
   const bg = useMemo(() => {
     if (!active)
       return 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
-    const imgs = active.coverImage || active.imagenes?.[0] || active.images?.[0];
-    return imgs || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
+
+    const legacyImgs = (active as any)?.imagenes as string[] | undefined;
+    const firstLegacy = Array.isArray(legacyImgs) ? legacyImgs[0] : undefined;
+    const firstModern = Array.isArray(active.images) ? active.images[0] : undefined;
+
+    const img = active.coverImage || firstLegacy || firstModern;
+
+    return img || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
   }, [active]);
 
   const lineaSecundaria = [
@@ -343,7 +375,6 @@ export default function HomePage() {
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
-          <h2 className="text-2xl md:text-3xl uppercase tracking-[0.25em]">EQUIPO</h2>
         </div>
 
         <p className="mt-3 max-w-4xl text-slate-700">
@@ -452,7 +483,7 @@ export default function HomePage() {
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio: SmartSelect -> options string[] */}
+              {/* Servicio */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <SmartSelect
@@ -464,7 +495,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Tipo de propiedad: SmartSelect -> options string[] */}
+              {/* Tipo de propiedad */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <SmartSelect
@@ -476,7 +507,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Región: SmartSelect con display "X - Nombre" -> options string[] */}
+              {/* Región */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
@@ -488,7 +519,7 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Comuna: SmartSelect dependiente de región -> options string[] */}
+              {/* Comuna */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
