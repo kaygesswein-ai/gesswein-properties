@@ -27,6 +27,172 @@ const BRAND_BLUE = '#0A2E57';
 const HERO_IMG =
   'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=2000&auto=format&fit=crop';
 
+/* =================== TUS PROPIEDADES (copiadas) =================== */
+const STATIC_PROPS: Property[] = [
+  {
+    id: 'static-001',
+    titulo: 'Maravillosa casa remodelada, jardín naturalista, Los Dominicos Antiguo (GDS)',
+    comuna: 'Las Condes',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Casa',
+    superficie_terreno_m2: 805,
+    superficie_util_m2: 200,
+    dormitorios: 6,
+    banos: 5,
+    precio_uf: 26000,
+    destacada: true,
+  },
+  {
+    id: 'static-002',
+    titulo: 'Casa en Venta con árboles grandes, Los Dominicos Antiguo (IA)',
+    comuna: 'Las Condes',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Casa',
+    superficie_terreno_m2: 1563,
+    superficie_util_m2: 270,
+    dormitorios: 5,
+    banos: 4,
+    precio_uf: 27350,
+    destacada: true,
+  },
+  {
+    id: 'static-003',
+    titulo: 'Casa para remodelar, Los Dominicos Antiguo (IA M)',
+    comuna: 'Las Condes',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Casa',
+    superficie_terreno_m2: 1515,
+    superficie_util_m2: 200,
+    dormitorios: 5,
+    banos: 3,
+    precio_uf: 26500,
+    destacada: true,
+  },
+  {
+    id: 'static-004',
+    titulo: 'Terreno en Venta, árboles grandes, Los Dominicos Antiguo (IA M)',
+    comuna: 'Las Condes',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Terreno',
+    superficie_terreno_m2: 3070,
+    precio_uf: 53850,
+  },
+  {
+    id: 'static-005',
+    titulo: 'Terreno en Venta, derechos de agua, Los Dominicos Antiguo (CD)',
+    comuna: 'Las Condes',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Terreno',
+    superficie_terreno_m2: 2780,
+    precio_uf: 49950,
+  },
+  {
+    id: 'static-006',
+    titulo: 'Excelente Casa con vista fenomenal, Lo Barnechea',
+    comuna: 'Lo Barnechea',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Casa',
+    superficie_terreno_m2: 1090,
+    superficie_util_m2: 527,
+    dormitorios: 6,
+    banos: 4,
+    precio_uf: 45000,
+  },
+  {
+    id: 'static-007',
+    titulo: 'Casa bien mantenida, condominio seguro, La Reina Alta',
+    comuna: 'La Reina',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Casa',
+    superficie_terreno_m2: 330,
+    superficie_util_m2: 162,
+    dormitorios: 6,
+    banos: 4,
+    precio_uf: 13950,
+  },
+  {
+    id: 'static-008',
+    titulo: 'Casa mediterránea, calle segura, La Reina Alta (RR)',
+    comuna: 'La Reina',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Casa',
+    superficie_terreno_m2: 1105,
+    superficie_util_m2: 324,
+    dormitorios: 5,
+    banos: 4,
+    precio_uf: 29000,
+  },
+  {
+    id: 'static-009',
+    titulo: 'Casa cerca Sector Sport Francés y colegios',
+    comuna: 'Vitacura',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Casa',
+    superficie_terreno_m2: 286,
+    superficie_util_m2: 100,
+    dormitorios: 4,
+    banos: 2,
+    precio_uf: 12600,
+  },
+  {
+    id: 'static-010',
+    titulo: 'Casa nueva – Proyecto Townhouses (en construcción)',
+    comuna: 'Las Condes',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Casa',
+    superficie_terreno_m2: 150,
+    superficie_util_m2: 139,
+    dormitorios: 3,
+    banos: 3,
+    precio_uf: 14900,
+  },
+  {
+    id: 'static-011',
+    titulo: 'Departamento con vista despejada, Manquehue Sur',
+    comuna: 'Las Condes',
+    region: 'Metropolitana de Santiago',
+    operacion: 'venta',
+    tipo: 'Departamento',
+    superficie_util_m2: 150,
+    dormitorios: 4,
+    banos: 3,
+    precio_uf: 10500,
+  },
+  {
+    id: 'static-012',
+    titulo: 'Casa borde mar, El Rosario de Tunquén',
+    comuna: 'Tunquén',
+    region: 'Valparaíso',
+    operacion: 'venta',
+    tipo: 'Casa',
+    superficie_terreno_m2: 5000,
+    superficie_util_m2: 312,
+    dormitorios: 5,
+    banos: 3,
+    precio_uf: 21000,
+  },
+  {
+    id: 'static-013',
+    titulo: 'Sitio bajada playa, El Rosario de Tunquén',
+    comuna: 'Tunquén',
+    region: 'Valparaíso',
+    operacion: 'venta',
+    tipo: 'Terreno',
+    superficie_terreno_m2: 6080,
+    precio_uf: 11000,
+  },
+];
+
 /* ==== Helpers ==== */
 const fmtMiles = (raw: string) => {
   const digits = raw.replace(/\D+/g, '');
@@ -133,7 +299,7 @@ export default function PropiedadesPage() {
   const [barrio, setBarrio] = useState('');
 
   /* — UF / CLP — */
-  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>(''); // sin preselección
+  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
@@ -143,7 +309,7 @@ export default function PropiedadesPage() {
   const [minBanos, setMinBanos] = useState('');
   const [minM2Const, setMinM2Const] = useState('');
   const [minM2Terreno, setMinM2Terreno] = useState('');
-  const [estac, setEstac] = useState('');
+  const [estac, setEstac] = useState(''); // presente para compatibilidad futura
 
   /* — Resultados — */
   const [items, setItems] = useState<Property[]>([]);
@@ -166,52 +332,88 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   }, []);
 
-  // construir params + fetch (solo cuando cambia trigger)
+  /* Build params + fetch reales (sin caché) — SOLO cuando cambia "trigger" */
   useEffect(() => {
-    const p = new URLSearchParams();
+    // Armamos equivalentes de filtros para aplicar a las estáticas
+    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
+    const minN = toInt(minValor);
+    const maxN = toInt(maxValor);
+    const isCLP = moneda === 'CLP' || moneda === 'CLP$';
+    const hasUF = typeof ufValue === 'number' && ufValue > 0;
 
+    let minUF: number | undefined;
+    let maxUF: number | undefined;
+    if (!Number.isNaN(minN)) {
+      minUF = isCLP && hasUF ? Math.round(minN / (ufValue as number)) : minN;
+    }
+    if (!Number.isNaN(maxN)) {
+      maxUF = isCLP && hasUF ? Math.round(maxN / (ufValue as number)) : maxN;
+    }
+
+    const localFilter = (p: Property) => {
+      if (operacion && (p.operacion || '').toLowerCase() !== operacion.toLowerCase()) return false;
+      if (tipo && (p.tipo || '').toLowerCase() !== tipo.toLowerCase()) return false;
+      if (region && (p.region || '').toLowerCase() !== region.toLowerCase()) return false;
+      if (comuna && (p.comuna || '').toLowerCase() !== comuna.toLowerCase()) return false;
+      if (qTop.trim()) {
+        const q = qTop.trim().toLowerCase();
+        const hay = (p.titulo || '').toLowerCase().includes(q) || (p.comuna || '').toLowerCase().includes(q);
+        if (!hay) return false;
+      }
+      // precio en UF
+      const pUF = typeof p.precio_uf === 'number' ? p.precio_uf : undefined;
+      if (minUF !== undefined && !Number.isNaN(minUF) && pUF !== undefined && pUF < minUF) return false;
+      if (maxUF !== undefined && !Number.isNaN(maxUF) && pUF !== undefined && pUF > maxUF) return false;
+
+      // avanzados (mínimos)
+      const d = p.dormitorios ?? undefined;
+      const b = p.banos ?? undefined;
+      const m2c = p.superficie_util_m2 ?? undefined;
+      const m2t = p.superficie_terreno_m2 ?? undefined;
+      if (minDorm && d !== undefined && d < parseInt(minDorm, 10)) return false;
+      if (minBanos && b !== undefined && b < parseInt(minBanos, 10)) return false;
+      if (minM2Const && m2c !== undefined && m2c < parseInt(minM2Const.replace(/\./g, ''), 10)) return false;
+      if (minM2Terreno && m2t !== undefined && m2t < parseInt(minM2Terreno.replace(/\./g, ''), 10)) return false;
+
+      return true;
+    };
+
+    const p = new URLSearchParams();
     if (qTop.trim()) p.set('q', qTop.trim());
     if (operacion) p.set('operacion', operacion);
     if (tipo) p.set('tipo', tipo);
     if (region) p.set('region', region);
     if (comuna) p.set('comuna', comuna);
     if (barrio) p.set('barrio', barrio);
-
-    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
-    const minN = toInt(minValor);
-    const maxN = toInt(maxValor);
-    if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
-      const isCLP = moneda === 'CLP' || moneda === 'CLP$';
-      if (isCLP && typeof ufValue === 'number' && ufValue > 0) {
-        const minUF = !Number.isNaN(minN) ? Math.round(minN / ufValue) : NaN;
-        const maxUF = !Number.isNaN(maxN) ? Math.round(maxN / ufValue) : NaN;
-        if (!Number.isNaN(minUF)) p.set('minUF', String(minUF));
-        if (!Number.isNaN(maxUF)) p.set('maxUF', String(maxUF));
-      } else {
-        if (isCLP) {
-          if (!Number.isNaN(minN)) p.set('minCLP', String(minN));
-          if (!Number.isNaN(maxN)) p.set('maxCLP', String(maxN));
-        } else {
-          if (!Number.isNaN(minN)) p.set('minUF', String(minN));
-          if (!Number.isNaN(maxN)) p.set('maxUF', String(maxN));
-        }
-      }
+    if (minUF !== undefined && !Number.isNaN(minUF)) p.set('minUF', String(minUF));
+    if (maxUF !== undefined && !Number.isNaN(maxUF)) p.set('maxUF', String(maxUF));
+    if (isCLP && !hasUF) { // fallback si no hay UF del día
+      if (!Number.isNaN(minN)) p.set('minCLP', String(minN));
+      if (!Number.isNaN(maxN)) p.set('maxCLP', String(maxN));
     }
 
     let cancel = false;
     setLoading(true);
+
     fetch(`/api/propiedades?${p.toString()}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => {
         if (cancel) return;
         const arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
-        setItems(arr);
+        const locals = STATIC_PROPS.filter(localFilter);
+        // Mostramos primero las estáticas (con destacadas incluidas) y luego las del backend
+        setItems([...locals, ...arr]);
       })
-      .catch(() => { if (!cancel) setItems([]); })
+      .catch(() => {
+        if (!cancel) {
+          const locals = STATIC_PROPS.filter(localFilter);
+          setItems(locals);
+        }
+      })
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [trigger]);
+  }, [trigger]); // ← solo al apretar Buscar (o carga inicial)
 
   // —— LIMPIAR —— //
   const handleReset = () => {
@@ -230,7 +432,7 @@ export default function PropiedadesPage() {
     setMinM2Const('');
     setMinM2Terreno('');
     setEstac('');
-    setTrigger((v) => v + 1); // recargar listado completo
+    setTrigger((v) => v + 1);
   };
 
   return (
@@ -254,9 +456,7 @@ export default function PropiedadesPage() {
               </div>
               <div className="mt-4 max-w-2xl">
                 <div className="relative">
-                  <Search
-                    className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-white/90"
-                  />
+                  <Search className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-white/90" />
                   <input
                     value={qTop}
                     onChange={(e) => setQTop(e.target.value)}
@@ -314,95 +514,20 @@ export default function PropiedadesPage() {
           {/* === RÁPIDA === */}
           {advancedMode === 'rapida' && (
             <>
-              {/* fila 1 (5 columnas) */}
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect
-                  options={['Venta', 'Arriendo']}
-                  value={operacion}
-                  onChange={(v) => setOperacion(v)}
-                  placeholder="Operación"
-                />
-
-                <SmartSelect
-                  options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
-                  value={tipo}
-                  onChange={(v) => setTipo(v)}
-                  placeholder="Tipo de propiedad"
-                />
-
-                <SmartSelect
-                  options={REGIONES.map((r) => regionDisplay(r))}
-                  value={regionInput}
-                  onChange={(v) => { setRegionInput(v); setComuna(''); setBarrio(''); }}
-                  placeholder="Región"
-                />
-
-                <SmartSelect
-                  options={region ? (COMUNAS[region] || []) : []}
-                  value={comuna}
-                  onChange={(v) => { setComuna(v); setBarrio(''); }}
-                  placeholder="Comuna"
-                  disabled={!region}
-                />
-
-                <SmartSelect
-                  options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []}
-                  value={barrio}
-                  onChange={(v) => setBarrio(v)}
-                  placeholder="Barrio"
-                  disabled={!comuna || !BARRIOS[comuna]}
-                />
+                <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={(v) => setOperacion(v)} placeholder="Operación" />
+                <SmartSelect options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']} value={tipo} onChange={(v) => setTipo(v)} placeholder="Tipo de propiedad" />
+                <SmartSelect options={REGIONES.map((r) => regionDisplay(r))} value={regionInput} onChange={(v) => { setRegionInput(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
+                <SmartSelect options={region ? (COMUNAS[region] || []) : []} value={comuna} onChange={(v) => { setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
+                <SmartSelect options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []} value={barrio} onChange={(v) => setBarrio(v)} placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]} />
               </div>
 
-              {/* fila 2 (5 columnas, termina con Limpiar + Buscar) */}
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect
-                  options={['UF', 'CLP$']}
-                  value={moneda}
-                  onChange={(v) => setMoneda((v as any) || '')}
-                  placeholder="UF/CLP$"
-                />
-
-                <input
-                  value={minValor}
-                  onChange={(e) => setMinValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Mín"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                />
-                <input
-                  value={maxValor}
-                  onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Máx"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                />
-
-                {/* LIMPIAR */}
-                <button
-                  onClick={handleReset}
-                  className="w-full px-5 py-2 text-sm rounded-none border"
-                  style={{
-                    color: BRAND_BLUE,
-                    borderColor: BRAND_BLUE,
-                    background: '#fff',
-                    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95)',
-                  }}
-                >
-                  Limpiar
-                </button>
-
-                {/* BUSCAR */}
-                <button
-                  onClick={() => setTrigger((v) => v + 1)}
-                  className="w-full px-5 py-2 text-sm text-white rounded-none"
-                  style={{
-                    background: BRAND_BLUE,
-                    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
-                  }}
-                >
-                  Buscar
-                </button>
+                <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v) => setMoneda((v as any) || '')} placeholder="UF/CLP$" />
+                <input value={minValor} onChange={(e) => setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input value={maxValor} onChange={(e) => setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <button onClick={handleReset} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: BRAND_BLUE, borderColor: BRAND_BLUE, background: '#fff', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95)' }}>Limpiar</button>
+                <button onClick={() => setTrigger((v) => v + 1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
@@ -412,7 +537,6 @@ export default function PropiedadesPage() {
             <>
               <div className="pl-2 sm:pl-4"><div className="h-px bg-slate-200 my-4" /></div>
 
-              {/* fila 1 (5 columnas) */}
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <SmartSelect options={['Venta','Arriendo']} value={operacion} onChange={(v)=>setOperacion(v)} placeholder="Operación" />
                 <SmartSelect options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']} value={tipo} onChange={(v)=>setTipo(v)} placeholder="Tipo de propiedad" />
@@ -421,7 +545,6 @@ export default function PropiedadesPage() {
                 <SmartSelect options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []} value={barrio} onChange={(v)=>setBarrio(v)} placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]} />
               </div>
 
-              {/* fila 2 (5 columnas) */}
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <SmartSelect options={['UF','CLP','CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
@@ -430,30 +553,12 @@ export default function PropiedadesPage() {
                 <input value={minBanos} onChange={(e)=>setMinBanos(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
               </div>
 
-              {/* fila 3 (5 columnas, termina con Limpiar + Buscar) */}
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={estac} onChange={(e)=>setEstac(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-
-                {/* LIMPIAR */}
-                <button
-                  onClick={handleReset}
-                  className="w-full px-5 py-2 text-sm rounded-none border"
-                  style={{
-                    color: BRAND_BLUE,
-                    borderColor: BRAND_BLUE,
-                    background: '#fff',
-                    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95)',
-                  }}
-                >
-                  Limpiar
-                </button>
-
-                {/* BUSCAR */}
-                <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>
-                  Buscar
-                </button>
+                <button onClick={handleReset} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: BRAND_BLUE, borderColor: BRAND_BLUE, background: '#fff', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95)' }}>Limpiar</button>
+                <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
@@ -463,9 +568,7 @@ export default function PropiedadesPage() {
       {/* LISTADO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
-            PROPIEDADES DISPONIBLES
-          </h2>
+          <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">PROPIEDADES DISPONIBLES</h2>
         </div>
 
         {loading ? (
@@ -476,64 +579,41 @@ export default function PropiedadesPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((p) => {
               const showUF = p.precio_uf && p.precio_uf > 0;
-              const clp =
-                p.precio_clp && p.precio_clp > 0
-                  ? p.precio_clp
-                  : showUF && ufValue
-                  ? Math.round((p.precio_uf as number) * (ufValue ?? 0))
-                  : null;
+              const clp = p.precio_clp && p.precio_clp > 0 ? p.precio_clp : null;
 
               return (
-                <Link
-                  key={p.id}
-                  href="#"
-                  className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
-                >
+                <Link key={p.id} href="#" className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition">
                   <div className="aspect-[4/3] bg-slate-100">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={
-                        p.coverImage ||
-                        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop'
-                      }
+                      src={p.coverImage || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop'}
                       alt={p.titulo || 'Propiedad'}
                       className="w-full h-full object-cover group-hover:opacity-95 transition"
                     />
                   </div>
                   <div className="p-4 flex flex-col">
-                    <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
-                      {p.titulo || 'Propiedad'}
-                    </h3>
+                    <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">{p.titulo || 'Propiedad'}</h3>
                     <p className="mt-1 text-sm text-slate-600">
                       {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? String(p.operacion) : ''].filter(Boolean).join(' · ')}
                     </p>
 
                     <div className="mt-3 grid grid-cols-3 text-center">
                       <div className="border border-slate-200 p-2">
-                        <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                          <Bed className="h-4 w-4" /> Dorm.
-                        </div>
+                        <div className="flex items-center justify-center gap-1 text-xs text-slate-500"><Bed className="h-4 w-4" /> Dorm.</div>
                         <div className="text-sm">{p.dormitorios ?? '—'}</div>
                       </div>
                       <div className="border border-slate-200 p-2">
-                        <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                          <ShowerHead className="h-4 w-4" /> Baños
-                        </div>
+                        <div className="flex items-center justify-center gap-1 text-xs text-slate-500"><ShowerHead className="h-4 w-4" /> Baños</div>
                         <div className="text-sm">{p.banos ?? '—'}</div>
                       </div>
                       <div className="border border-slate-200 p-2">
-                        <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                          <Ruler className="h-4 w-4" /> m²
-                        </div>
+                        <div className="flex items-center justify-center gap-1 text-xs text-slate-500"><Ruler className="h-4 w-4" /> m²</div>
                         <div className="text-sm">{p.superficie_util_m2 ?? '—'}</div>
                       </div>
                     </div>
 
                     <div className="mt-4 flex items-center justify-between">
-                      <span
-                        className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
-                        style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                      >
+                      <span className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>
                         Ver más
                       </span>
 
