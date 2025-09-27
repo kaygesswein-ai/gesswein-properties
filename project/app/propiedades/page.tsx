@@ -69,9 +69,9 @@ const REGIONES = [
 ] as const;
 
 const REG_N_ARABIC: Record<string, number> = {
-  'Arica y Parinacota': 1, Tarapacá: 2, Antofagasta: 3, Atacama: 4, Coquimbo: 5, Valparaíso: 6,
-  "O'Higgins": 7, Maule: 8, Ñuble: 16, Biobío: 12, 'La Araucanía': 9, 'Los Ríos': 14, 'Los Lagos': 10,
-  Aysén: 11, Magallanes: 15, 'Metropolitana de Santiago': 13,
+  'Arica y Parinacota': 15, Tarapacá: 1, Antofagasta: 2, Atacama: 3, Coquimbo: 4, Valparaíso: 5,
+  "O'Higgins": 6, Maule: 7, Ñuble: 16, Biobío: 8, 'La Araucanía': 9, 'Los Ríos': 14, 'Los Lagos': 10,
+  Aysén: 11, Magallanes: 12, 'Metropolitana de Santiago': 13,
 };
 const toRoman = (n?: number) => {
   if (!n || Number.isNaN(n)) return '';
