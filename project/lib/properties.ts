@@ -18,27 +18,15 @@ export type Property = {
 
 function slugify(s: string) {
   return s.toLowerCase()
-    .replace(/[áàä]/g, 'a')
-    .replace(/[éèë]/g, 'e')
-    .replace(/[íìï]/g, 'i')
-    .replace(/[óòö]/g, 'o')
-    .replace(/[úùü]/g, 'u')
-    .replace(/ñ/g, 'n')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[áàä]/g, 'a').replace(/[éèë]/g, 'e').replace(/[íìï]/g, 'i')
+    .replace(/[óòö]/g, 'o').replace(/[úùü]/g, 'u').replace(/ñ/g, 'n')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
-
-// Helpers para crear ID
-function idFrom(titulo: string) {
-  return slugify(titulo) || Math.random().toString(36).slice(2);
-}
-
-// Imagen por defecto (puedes reemplazar individualmente con coverImage)
+const idFrom = (t: string) => slugify(t) || Math.random().toString(36).slice(2);
 const DEFAULT_IMG =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1200';
 
 export const PROPERTIES: Property[] = [
-  // 1) DESTACADA
   {
     id: idFrom('Maravillosa casa remodelada, jardín naturalista, Los Dominicos Antiguo (GDS)'),
     titulo: 'Maravillosa casa remodelada, jardín naturalista, Los Dominicos Antiguo (GDS)',
@@ -54,7 +42,6 @@ export const PROPERTIES: Property[] = [
     coverImage: DEFAULT_IMG,
     destacada: true,
   },
-  // 2) DESTACADA
   {
     id: idFrom('Casa en Venta con árboles grandes, Los Dominicos Antiguo (IA)'),
     titulo: 'Casa en Venta con árboles grandes, Los Dominicos Antiguo (IA)',
@@ -70,7 +57,6 @@ export const PROPERTIES: Property[] = [
     coverImage: DEFAULT_IMG,
     destacada: true,
   },
-  // 3) DESTACADA
   {
     id: idFrom('Casa remodelar Los Dominicos Antiguo (IA M)'),
     titulo: 'Casa para remodelar, Los Dominicos Antiguo (IA M)',
@@ -87,7 +73,6 @@ export const PROPERTIES: Property[] = [
     destacada: true,
   },
 
-  // Resto del portafolio (no destacadas)
   {
     id: idFrom('Terreno en Venta, árboles grandes, Los Dominicos Antiguo (IA M)'),
     titulo: 'Terreno en Venta, árboles grandes, Los Dominicos Antiguo (IA M)',
