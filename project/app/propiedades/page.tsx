@@ -252,7 +252,7 @@ export default function PropiedadesPage() {
     <main className="bg-white">
       {/* HERO */}
       <section
-        className="relative bg-cover min-h-[72vh]"
+        className="relative bg-cover min-h-[100vh]"
         style={{ backgroundImage: `url(${HERO_IMG})`, backgroundPosition: '50% 82%' }}
       >
         <div className="absolute inset-0 bg-black/35" />
