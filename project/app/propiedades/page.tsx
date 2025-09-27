@@ -21,9 +21,6 @@ type Property = {
   coverImage?: string;
   createdAt?: string;
   destacada?: boolean;
-  // Algunos feeds usan otros nombres para estacionamientos:
-  // estacionamientos?: number | null;
-  // estacionamientos_totales?: number | null;
 };
 
 const BRAND_BLUE = '#0A2E57';
@@ -164,10 +161,30 @@ export default function PropiedadesPage() {
 
   const ufValue = useUfValue(); // UF del día
 
-  // disparo una búsqueda inicial al montar
+  // 🔹 disparo una búsqueda inicial al montar
   useEffect(() => {
     setTrigger((v) => v + 1);
   }, []);
+
+  // 🔹 LIMPIAR (resetea TODO y hace búsqueda inicial)
+  const clearAll = () => {
+    setQTop('');
+    setOperacion('');
+    setTipo('');
+    setRegionInput('');
+    setRegion('');
+    setComuna('');
+    setBarrio('');
+    setMoneda('');
+    setMinValor('');
+    setMaxValor('');
+    setMinDorm('');
+    setMinBanos('');
+    setMinM2Const('');
+    setMinM2Terreno('');
+    setEstac('');
+    setTrigger((v) => v + 1);
+  };
 
   /* Build params + fetch — SOLO cuando cambia "trigger" */
   useEffect(() => {
@@ -202,7 +219,7 @@ export default function PropiedadesPage() {
       }
     }
 
-    // --- NUEVO: parámetros avanzados ---
+    // --- parámetros avanzados ---
     const toN = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const dormN  = toN(minDorm);
     const banN   = toN(minBanos);
@@ -225,13 +242,12 @@ export default function PropiedadesPage() {
         if (cancel) return;
         const arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
 
-        // --- NUEVO: Filtro en cliente (fallback) ---
-        // Si el usuario pide mínimos, excluimos items que no tengan dato o que no cumplan.
+        // Filtro en cliente (fallback)
         const getNum = (v: unknown) =>
           typeof v === 'number' && !Number.isNaN(v) ? v : null;
         const getEstac = (it: any) => {
           const a = getNum(it?.estacionamientos);
-          const b = getNum(it?.estac);
+          const b = getNum((it as any)?.estac);
           const c = getNum(it?.estacionamientos_totales);
           return a ?? b ?? c;
         };
@@ -289,7 +305,9 @@ export default function PropiedadesPage() {
               </div>
               <div className="mt-4 max-w-2xl">
                 <div className="relative">
-                  <Search className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-white/90" />
+                  <Search
+                    className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-white/90"
+                  />
                   <input
                     value={qTop}
                     onChange={(e) => setQTop(e.target.value)}
@@ -386,7 +404,8 @@ export default function PropiedadesPage() {
                 />
               </div>
 
-              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+              {/* fila valores + botones */}
+              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-6 gap-3">
                 <SmartSelect
                   options={['UF', 'CLP$']}
                   value={moneda}
@@ -419,6 +438,16 @@ export default function PropiedadesPage() {
                 >
                   Buscar
                 </button>
+
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="w-full inline-flex items-center justify-center px-3 py-2 text-sm rounded-none border"
+                  style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                >
+                  Limpiar
+                </button>
+
                 <div className="hidden lg:block" />
               </div>
             </>
@@ -437,17 +466,27 @@ export default function PropiedadesPage() {
                 <SmartSelect options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []} value={barrio} onChange={(v)=>setBarrio(v)} placeholder="Barrio" disabled={!comuna || !BARRIOS[comuna]} />
               </div>
 
-              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-6 gap-3">
                 <SmartSelect options={['UF','CLP','CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minDorm} onChange={(e)=>setMinDorm(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minBanos} onChange={(e)=>setMinBanos(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+
+                <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
+
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="w-full inline-flex items-center justify-center px-3 py-2 text-sm rounded-none border"
+                  style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                >
+                  Limpiar
+                </button>
+
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={estac} onChange={(e)=>setEstac(e.target.value.replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <button onClick={()=>setTrigger((v)=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
-                <div className="hidden lg:block" />
               </div>
             </>
           )}
