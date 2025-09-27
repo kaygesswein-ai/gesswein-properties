@@ -2,7 +2,7 @@
 // Reemplaza COMPLETO este archivo.
 
 import { NextResponse } from 'next/server';
-import { PROPERTIES, Property } from '@/project/lib/properties';
+import { PROPERTIES, Property } from '../../../project/lib/properties';
 
 function toInt(v: string | null) {
   if (!v) return NaN;
