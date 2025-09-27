@@ -18,6 +18,7 @@ type Property = {
   dormitorios?: number | null;
   banos?: number | null;
   superficie_util_m2?: number | null;
+  imagenes?: string[];
   images?: string[];
   coverImage?: string;
   destacada?: boolean;
@@ -194,19 +195,11 @@ export default function HomePage() {
   };
 
   const active = destacadas[i];
-
-  // ⬇️ FIX: compatibilidad para "imagenes" legacy sin romper tipos
   const bg = useMemo(() => {
     if (!active)
       return 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
-
-    const legacyImgs = (active as any)?.imagenes as string[] | undefined;
-    const firstLegacy = Array.isArray(legacyImgs) ? legacyImgs[0] : undefined;
-    const firstModern = Array.isArray(active.images) ? active.images[0] : undefined;
-
-    const img = active.coverImage || firstLegacy || firstModern;
-
-    return img || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
+    const imgs = active.coverImage || active.imagenes?.[0] || active.images?.[0];
+    return imgs || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
   }, [active]);
 
   const lineaSecundaria = [
@@ -258,8 +251,8 @@ export default function HomePage() {
   const [comunaInput, setComunaInput] = useState('');
   const [minUF, setMinUF] = useState('');
   const [maxUF, setMaxUF] = useState('');
-  const [servicio, setServicio] = useState('Comprar');
-  const [tipo, setTipo] = useState('Casa');
+  const [servicio, setServicio] = useState(''); // ⬅️ ahora sin preselección
+  const [tipo, setTipo] = useState('');        // ⬅️ ahora sin preselección
 
   const regionSel = extractRegionName(regionInput);
   const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
@@ -375,6 +368,7 @@ export default function HomePage() {
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
+          <h2 className="text-2xl md:text-3xl uppercase tracking-[0.25em]">EQUIPO</h2>
         </div>
 
         <p className="mt-3 max-w-4xl text-slate-700">
