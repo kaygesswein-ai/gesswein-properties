@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Bed, ShowerHead, Ruler, Search, Filter, Car, Square } from 'lucide-react';
+import { Bed, ShowerHead, Ruler, Search, Filter, Car, Square, SlidersHorizontal } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
 
 type Property = {
@@ -87,16 +87,26 @@ const regionDisplay = (r: string) => {
   return roman ? `${roman} - ${r}` : r;
 };
 
-/* ==== Normalización y utilidades de región (para parsear la selección de UI) ==== */
-const parseRegionInput = (input: string) => {
-  const cleaned = (input || '').trim();
-  // acepta: "RM - Metropolitana...", "X - Nombre", o solo "Nombre"
-  const m = cleaned.match(/^\s*(?:[IVXLCDM]+|RM)\s*-\s*(.+)$/i);
-  const name = (m ? m[1] : cleaned) as string;
-  return REG_N_ARABIC[name] != null ? name : '';
+/* ==== Normalización y utilidades de región ==== */
+const stripDiacritics = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+const normalize = (s?: string) => stripDiacritics((s || '').toLowerCase())
+  .replace(/regi[oó]n/g, '')
+  .replace(/\bmetropolitana(?:\s+de\s+santiago)?/g, 'metropolitana')
+  .replace(/\brm\b/g, 'metropolitana')
+  .replace(/\bde\b|\bdel\b|\bla\b|\bel\b/g, '')
+  .replace(/^\s*(?:[ivxlcdm]+)\s*-\s*/i, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const sameRegion = (a?: string, b?: string) => {
+  const na = normalize(a), nb = normalize(b);
+  if (!na || !nb) return false;
+  return na === nb || na.includes(nb) || nb.includes(na);
 };
 
-/* Para comunas dependientes de región */
+/* Para inferir región desde la comuna si la ficha no trae region */
 const COMUNAS: Record<string, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
   'Tarapacá': ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica'],
@@ -142,12 +152,16 @@ const BARRIOS: Record<string, string[]> = {
   'Valdivia': ['Isla Teja','Torreones','Las Ánimas','Regional'],
 };
 
-/* ==== Helpers de tipo de propiedad ==== */
-const isTerreno = (p: Property) =>
-  (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
-
-const isBodega = (p: Property) =>
-  (p.tipo || '').toLowerCase().includes('bodega');
+/** Devuelve la región “confiable” de una ficha (prop.region o inferida por comuna) */
+function inferRegion(prop: Property): string | undefined {
+  if (prop.region && normalize(prop.region)) return prop.region!;
+  const c = prop.comuna ? normalize(prop.comuna) : '';
+  if (!c) return undefined;
+  for (const [reg, comunas] of Object.entries(COMUNAS)) {
+    if (comunas.some(co => normalize(co) === c)) return reg;
+  }
+  return undefined;
+}
 
 export default function PropiedadesPage() {
   /* — Buscador superior — */
@@ -157,7 +171,7 @@ export default function PropiedadesPage() {
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [regionInput, setRegionInput] = useState('');
-  const [region, setRegion] = useState<string>(''); // nombre “bonito” (p.ej. “Metropolitana de Santiago”)
+  const [region, setRegion] = useState<string>(''); // nombre “bonito”
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
@@ -178,21 +192,24 @@ export default function PropiedadesPage() {
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
 
-  /* — Control de búsqueda manual — */
   const [trigger, setTrigger] = useState(0);
 
-  /* — Filtro especial (dropdown a la derecha del título) — */
-  const [filtroEspecial, setFiltroEspecial] = useState<string>('');
-
-  /* Parsear la región elegida en el selector, sin disparar búsqueda */
-  useEffect(() => {
-    setRegion(parseRegionInput(regionInput));
-    // NO hacemos fetch aquí: solo parseamos y dejamos listo para "Buscar".
-  }, [regionInput]);
+  /* ==== NUEVO: Ordenamiento / menú === */
+  const [sortMode, setSortMode] = useState<'price-desc'|'price-asc'|'hipoteca'|'flipping'|'subdivision'|''>('');
+  const [sortOpen, setSortOpen] = useState(false);
 
   const ufValue = useUfValue();
 
-  /* Búsqueda inicial una vez montado */
+  /* Region: acepta “RM - …”, “X - …” o solo el nombre */
+  useEffect(() => {
+    const cleaned = (regionInput || '').trim();
+    const m = cleaned.match(/^\s*(?:[IVXLCDM]+|RM)\s*-\s*(.+)$/i);
+    const name = (m ? m[1] : cleaned) as string;
+    if (name && REG_N_ARABIC[name] != null) setRegion(name);
+    else setRegion('');
+  }, [regionInput]);
+
+  // búsqueda inicial
   useEffect(() => { setTrigger((v) => v + 1); }, []);
 
   /* Build params + fetch (sin caché) — SOLO cuando cambia "trigger" */
@@ -202,7 +219,7 @@ export default function PropiedadesPage() {
     if (qTop.trim()) p.set('q', qTop.trim());
     if (operacion) p.set('operacion', operacion);
     if (tipo) p.set('tipo', tipo);
-    if (region) p.set('region', region); // se envía solo si está seteada
+    if (region) p.set('region', region);
     if (comuna) p.set('comuna', comuna);
     if (barrio) p.set('barrio', barrio);
     if (minDorm) p.set('minDorm', minDorm);
@@ -239,14 +256,23 @@ export default function PropiedadesPage() {
       .then((r) => r.json())
       .then((j) => {
         if (cancel) return;
-        const arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
+        let arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
+
+        // Respaldo: filtro en el cliente por región
+        if (region) {
+          arr = arr.filter((prop) => {
+            const effectiveRegion = inferRegion(prop);
+            return sameRegion(effectiveRegion, region);
+          });
+        }
+
         setItems(arr);
       })
       .catch(() => { if (!cancel) setItems([]); })
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [trigger]); // Solo cambia al apretar "Buscar" (o en la carga inicial)
+  }, [trigger, ufValue, region]);
 
   // botón LIMPIAR
   const handleClear = () => {
@@ -265,28 +291,34 @@ export default function PropiedadesPage() {
     setMinM2Const('');
     setMinM2Terreno('');
     setEstac('');
-    setFiltroEspecial('');
     setTrigger((v) => v + 1);
   };
 
+  const isTerreno = (p: Property) =>
+    (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
+
+  const isBodega = (p: Property) =>
+    (p.tipo || '').toLowerCase().includes('bodega');
+
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
 
-  /* — Aplicar filtro especial en cliente (solo orden por precio desc por ahora) — */
-  const shownItems = useMemo(() => {
-    let arr = [...(items || [])];
+  /* ====== ORDENAMIENTO aplicado a los items ====== */
+  const getComparablePriceUF = (p: Property) => {
+    if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
+    if (p.precio_clp && p.precio_clp > 0 && CLPfromUF) return p.precio_clp / CLPfromUF;
+    return -Infinity; // sin precio
+  };
 
-    if (filtroEspecial === 'Precio: mayor a menor') {
-      arr.sort((a, b) => {
-        const au = a.precio_uf ?? -Infinity;
-        const bu = b.precio_uf ?? -Infinity;
-        return (bu as number) - (au as number);
-      });
+  const displayedItems = useMemo(() => {
+    const arr = items.slice();
+    if (sortMode === 'price-desc') {
+      arr.sort((a,b) => (getComparablePriceUF(b) - getComparablePriceUF(a)));
+    } else if (sortMode === 'price-asc') {
+      arr.sort((a,b) => (getComparablePriceUF(a) - getComparablePriceUF(b)));
     }
-    // Las demás opciones quedan declaradas pero sin lógica aún,
-    // para activarlas cuando tengamos esos datos calculados.
-
+    // otros modos (hipoteca, flipping, subdivision) quedan como placeholders
     return arr;
-  }, [items, filtroEspecial]);
+  }, [items, sortMode, CLPfromUF]);
 
   return (
     <main className="bg-white">
@@ -417,37 +449,75 @@ export default function PropiedadesPage() {
 
       {/* LISTADO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Título + filtro especial alineados */}
-        <div className="flex items-center justify-between mb-4 gap-4">
+        {/* Título + botón de filtro/orden */}
+        <div className="flex items-center justify-between mb-4 relative">
           <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
             PROPIEDADES DISPONIBLES
           </h2>
 
-          {/* Dropdown de filtro especial (un solo control con todas las opciones) */}
-          <div className="min-w-[240px]">
-            <SmartSelect
-              options={[
-                'Precio: mayor a menor',
-                'Oportunidades',
-                'Noción hipotecaria',
-                'Oportunidad de flipping',
-                'Oportunidad de subdivisión',
-              ]}
-              value={filtroEspecial}
-              onChange={setFiltroEspecial}
-              placeholder="Filtrar / ordenar…"
-              className="w-full"
-            />
+          {/* Botón icono */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setSortOpen((s) => !s)}
+              className="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 bg-white text-slate-700 rounded-none"
+              aria-haspopup="menu"
+              aria-expanded={sortOpen}
+              title="Filtrar / ordenar"
+            >
+              <SlidersHorizontal className="h-5 w-5" />
+              <span className="hidden sm:inline">Filtrar / ordenar</span>
+            </button>
+
+            {/* Menú desplegable */}
+            {sortOpen && (
+              <div
+                className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 shadow-lg z-10"
+                role="menu"
+              >
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => { setSortMode('price-desc'); setSortOpen(false); }}
+                >
+                  Precio: mayor a menor
+                </button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => { setSortMode('price-asc'); setSortOpen(false); }}
+                >
+                  Precio: menor a mayor
+                </button>
+                <div className="h-px bg-slate-200 my-1" />
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => { setSortMode('hipoteca'); setSortOpen(false); }}
+                >
+                  Noción hipotecaria
+                </button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => { setSortMode('flipping'); setSortOpen(false); }}
+                >
+                  Oportunidad de flipping
+                </button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => { setSortMode('subdivision'); setSortOpen(false); }}
+                >
+                  Oportunidad de subdivisión
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {loading ? (
           <p className="text-slate-600">Cargando propiedades…</p>
-        ) : (shownItems ?? []).length === 0 ? (
+        ) : (displayedItems ?? []).length === 0 ? (
           <p className="text-slate-600">No se encontraron propiedades.</p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {(shownItems ?? []).map((p) => {
+            {(displayedItems ?? []).map((p) => {
               const showUF = !!(p.precio_uf && p.precio_uf > 0);
               const clp = (() => {
                 if (p.precio_clp && p.precio_clp > 0) return p.precio_clp;
