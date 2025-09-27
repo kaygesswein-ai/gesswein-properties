@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PROPERTIES, Property } from '@/project/lib/properties';
+import { PROPERTIES, Property } from '../../../project/lib/properties'; // 👈 ruta relativa estable
 
 type Q = {
   q?: string;
@@ -31,7 +31,6 @@ type Q = {
 function norm(s?: string | null) {
   return (s ?? '').trim().toLowerCase();
 }
-
 function toInt(s?: string) {
   if (!s) return NaN;
   const n = parseInt(String(s).replace(/\D+/g, ''), 10);
@@ -44,68 +43,42 @@ export async function GET(req: Request) {
 
   let items: Property[] = PROPERTIES.slice();
 
-  // texto libre (en título y comuna/tipo)
+  // texto libre
   if (q.q) {
     const needle = norm(q.q);
-    items = items.filter((p) =>
-      norm(p.titulo).includes(needle) ||
-      norm(p.comuna).includes(needle) ||
-      norm(p.tipo).includes(needle)
+    items = items.filter(
+      (p) =>
+        norm(p.titulo).includes(needle) ||
+        norm(p.comuna).includes(needle) ||
+        norm(p.tipo).includes(needle),
     );
   }
 
-  // filtros básicos
-  if (q.operacion) {
-    const op = norm(q.operacion);
-    items = items.filter((p) => norm(p.operacion) === op);
-  }
-  if (q.tipo) {
-    const t = norm(q.tipo);
-    items = items.filter((p) => norm(p.tipo) === t);
-  }
-  if (q.region) {
-    const r = norm(q.region);
-    items = items.filter((p) => norm((p as any).region) === r);
-  }
-  if (q.comuna) {
-    const c = norm(q.comuna);
-    items = items.filter((p) => norm(p.comuna) === c);
-  }
-  if (q.barrio) {
-    const b = norm(q.barrio);
-    items = items.filter((p) => norm((p as any).barrio).includes(b));
-  }
+  // básicos
+  if (q.operacion) items = items.filter((p) => norm(p.operacion) === norm(q.operacion));
+  if (q.tipo) items = items.filter((p) => norm(p.tipo) === norm(q.tipo));
+  if (q.region) items = items.filter((p) => norm((p as any).region) === norm(q.region));
+  if (q.comuna) items = items.filter((p) => norm(p.comuna) === norm(q.comuna));
+  if (q.barrio) items = items.filter((p) => norm((p as any).barrio).includes(norm(q.barrio)));
 
-  // precios (UF)
+  // precios UF
   const minUF = toInt(q.minUF);
   const maxUF = toInt(q.maxUF);
-  if (!Number.isNaN(minUF)) {
-    items = items.filter((p) => (p.precio_uf ?? Infinity) >= minUF);
-  }
-  if (!Number.isNaN(maxUF)) {
-    items = items.filter((p) => (p.precio_uf ?? -Infinity) <= maxUF);
-  }
+  if (!Number.isNaN(minUF)) items = items.filter((p) => (p.precio_uf ?? Infinity) >= minUF);
+  if (!Number.isNaN(maxUF)) items = items.filter((p) => (p.precio_uf ?? -Infinity) <= maxUF);
 
-  // precios (CLP)
+  // precios CLP
   const minCLP = toInt(q.minCLP);
   const maxCLP = toInt(q.maxCLP);
-  if (!Number.isNaN(minCLP)) {
-    items = items.filter((p) => (p.precio_clp ?? Infinity) >= minCLP);
-  }
-  if (!Number.isNaN(maxCLP)) {
-    items = items.filter((p) => (p.precio_clp ?? -Infinity) <= maxCLP);
-  }
+  if (!Number.isNaN(minCLP)) items = items.filter((p) => (p.precio_clp ?? Infinity) >= minCLP);
+  if (!Number.isNaN(maxCLP)) items = items.filter((p) => (p.precio_clp ?? -Infinity) <= maxCLP);
 
   // avanzados
   const minDorm = toInt(q.minDorm);
-  if (!Number.isNaN(minDorm)) {
-    items = items.filter((p) => (p.dormitorios ?? 0) >= minDorm);
-  }
+  if (!Number.isNaN(minDorm)) items = items.filter((p) => (p.dormitorios ?? 0) >= minDorm);
 
   const minBanos = toInt(q.minBanos);
-  if (!Number.isNaN(minBanos)) {
-    items = items.filter((p) => (p.banos ?? 0) >= minBanos);
-  }
+  if (!Number.isNaN(minBanos)) items = items.filter((p) => (p.banos ?? 0) >= minBanos);
 
   const minM2Const = toInt(q.minM2Const);
   if (!Number.isNaN(minM2Const)) {
@@ -123,13 +96,11 @@ export async function GET(req: Request) {
   }
 
   // solo destacadas
-  if (norm(q.destacada) === 'true') {
-    items = items.filter((p) => !!p.destacada);
-  }
+  if (norm(q.destacada) === 'true') items = items.filter((p) => !!p.destacada);
 
-  // orden básico: destacadas primero, luego por precio UF desc
+  // orden
   items.sort((a, b) => {
-    if (!!b.destacada - +!!a.destacada !== 0) return (!!b.destacada ? 1 : 0) - (!!a.destacada ? 1 : 0);
+    if (!!b.destacada !== !!a.destacada) return Number(!!b.destacada) - Number(!!a.destacada);
     return (b.precio_uf ?? 0) - (a.precio_uf ?? 0);
   });
 
