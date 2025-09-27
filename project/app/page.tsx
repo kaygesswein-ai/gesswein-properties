@@ -421,7 +421,7 @@ export default function HomePage() {
                 <div className="w-full p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
                   <p className="text-sm mt-1">{m.cargo}</p>
-                  <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
+                  <p className="mt-1 text-xs text白/90">{m.profesion}</p>
                 </div>
               </div>
             </article>
@@ -515,7 +515,7 @@ export default function HomePage() {
 
               {/* Comuna */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Comuna</label>
+                <label className="block text sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
                   options={regionSel ? (COMUNAS_POR_REGION[regionSel] || []) : []}
                   value={comunaInput}
