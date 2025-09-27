@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Bed, ShowerHead, Ruler, Search, Filter, Car, Square, SlidersHorizontal } from 'lucide-react';
+import { Bed, ShowerHead, Ruler, Search, Filter, Car, Square, SlidersHorizontal, Trash2 } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
 
 type Property = {
@@ -62,7 +62,6 @@ function useUfValue() {
 }
 
 /* ==== Regiones (UI) ==== */
-/** Metropolitana primero */
 const REGIONES = [
   'Metropolitana de Santiago',
   'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',"O'Higgins",
@@ -79,7 +78,6 @@ const toRoman = (n?: number) => {
   const m: [number, string][]= [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
   let s = '', x = n; for (const [v,r] of m) while (x>=v){s+=r;x-=v;} return s;
 };
-/** Mostrar “RM - …” para Metropolitana; resto con romanos */
 const regionDisplay = (r: string) => {
   if (r === 'Metropolitana de Santiago') return `RM - ${r}`;
   const num = REG_N_ARABIC[r];
@@ -87,7 +85,7 @@ const regionDisplay = (r: string) => {
   return roman ? `${roman} - ${r}` : r;
 };
 
-/* ==== Normalización y utilidades de región ==== */
+/* ==== Normalización región ==== */
 const stripDiacritics = (s: string) =>
   s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -106,7 +104,7 @@ const sameRegion = (a?: string, b?: string) => {
   return na === nb || na.includes(nb) || nb.includes(na);
 };
 
-/* Para inferir región desde la comuna si la ficha no trae region */
+/* Para inferir región desde comuna si la ficha no trae region */
 const COMUNAS: Record<string, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
   'Tarapacá': ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica'],
@@ -152,7 +150,7 @@ const BARRIOS: Record<string, string[]> = {
   'Valdivia': ['Isla Teja','Torreones','Las Ánimas','Regional'],
 };
 
-/** Devuelve la región “confiable” de una ficha (prop.region o inferida por comuna) */
+/** Devuelve región confiable de una ficha */
 function inferRegion(prop: Property): string | undefined {
   if (prop.region && normalize(prop.region)) return prop.region!;
   const c = prop.comuna ? normalize(prop.comuna) : '';
@@ -171,7 +169,7 @@ export default function PropiedadesPage() {
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [regionInput, setRegionInput] = useState('');
-  const [region, setRegion] = useState<string>(''); // nombre “bonito”
+  const [region, setRegion] = useState<string>('');
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
@@ -194,7 +192,7 @@ export default function PropiedadesPage() {
 
   const [trigger, setTrigger] = useState(0);
 
-  /* ==== NUEVO: Ordenamiento / menú === */
+  /* ==== Ordenamiento / menú ==== */
   const [sortMode, setSortMode] = useState<'price-desc'|'price-asc'|'hipoteca'|'flipping'|'subdivision'|''>('');
   const [sortOpen, setSortOpen] = useState(false);
 
@@ -258,7 +256,7 @@ export default function PropiedadesPage() {
         if (cancel) return;
         let arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
 
-        // Respaldo: filtro en el cliente por región
+        // Respaldo: filtro cliente por región
         if (region) {
           arr = arr.filter((prop) => {
             const effectiveRegion = inferRegion(prop);
@@ -306,7 +304,7 @@ export default function PropiedadesPage() {
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
     if (p.precio_clp && p.precio_clp > 0 && CLPfromUF) return p.precio_clp / CLPfromUF;
-    return -Infinity; // sin precio
+    return -Infinity;
   };
 
   const displayedItems = useMemo(() => {
@@ -316,7 +314,6 @@ export default function PropiedadesPage() {
     } else if (sortMode === 'price-asc') {
       arr.sort((a,b) => (getComparablePriceUF(a) - getComparablePriceUF(b)));
     }
-    // otros modos (hipoteca, flipping, subdivision) quedan como placeholders
     return arr;
   }, [items, sortMode, CLPfromUF]);
 
@@ -449,24 +446,37 @@ export default function PropiedadesPage() {
 
       {/* LISTADO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Título + botón de filtro/orden */}
+        {/* Título + botones de orden */}
         <div className="flex items-center justify-between mb-4 relative">
           <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
             PROPIEDADES DISPONIBLES
           </h2>
 
-          {/* Botón icono */}
-          <div className="relative">
+          {/* Acciones: limpiar orden + abrir menú */}
+          <div className="relative flex items-center gap-2">
+            {/* Botón basurero (reset orden) */}
+            <button
+              type="button"
+              aria-label="Limpiar orden"
+              onClick={() => { setSortMode(''); setSortOpen(false); }}
+              className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
+              style={{ background: BRAND_BLUE }}
+              title="Limpiar orden"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+
+            {/* Botón de filtro (solo icono) */}
             <button
               type="button"
               onClick={() => setSortOpen((s) => !s)}
-              className="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 bg-white text-slate-700 rounded-none"
+              className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
+              style={{ background: BRAND_BLUE }}
               aria-haspopup="menu"
               aria-expanded={sortOpen}
               title="Filtrar / ordenar"
             >
               <SlidersHorizontal className="h-5 w-5" />
-              <span className="hidden sm:inline">Filtrar / ordenar</span>
             </button>
 
             {/* Menú desplegable */}
@@ -525,8 +535,8 @@ export default function PropiedadesPage() {
                 return null;
               })();
 
-              const terreno = isTerreno(p);
-              const bodega = isBodega(p);
+              const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
+              const bodega = (p.tipo || '').toLowerCase().includes('bodega');
 
               return (
                 <Link
