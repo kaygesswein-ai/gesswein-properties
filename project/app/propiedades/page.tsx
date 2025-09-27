@@ -52,10 +52,9 @@ const fmtMiles = (raw: string) => {
 };
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const capFirst = (s?: string | null) =>
-  s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+const capFirst = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
-/* ==== Hook: UF del día desde /api/uf ==== */
+/* ==== Hook para leer UF del día desde /api/uf ==== */
 function useUfValue() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -172,7 +171,7 @@ export default function PropiedadesPage() {
   useEffect(() => {
     const m = regionInput.match(/^\s*[IVXLCDM]+\s*-\s*(.+)$/i);
     const name = (m ? m[1] : regionInput) as string;
-    if (name && REG_N_ARABIC[name] != null) setRegion(name);
+    if (name && (REG_N_ARABIC as any)[name] != null) setRegion(name);
     else setRegion('');
   }, [regionInput]);
 
@@ -421,15 +420,18 @@ export default function PropiedadesPage() {
                       {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
-                    {/* Stats: Terreno/Sitio muestra solo m² terreno */}
+                    {/* Stats */}
                     {isLand ? (
-                      <div className="mt-3 grid grid-cols-1 text-center">
+                      <div className="mt-3 grid grid-cols-3 text-center">
+                        {/* SOLO el primer rectángulo visible */}
                         <div className="border border-slate-200 p-2">
                           <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                            <Square className="h-4 w-4" /> m² terreno
+                            <Square className="h-4 w-4" /> m²
                           </div>
                           <div className="text-sm">{p.superficie_terreno_m2 ?? '—'}</div>
                         </div>
+                        <div className="p-2" />
+                        <div className="p-2" />
                       </div>
                     ) : (
                       <div className="mt-3 grid grid-cols-3 text-center">
