@@ -2,7 +2,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Bed, ShowerHead, Car, Ruler, Square, ArrowLeft } from 'lucide-react';
-import { supaRest } from '@/lib/supabase-rest';
+
+export const revalidate = 0;                // sin cache
+export const dynamic = 'force-dynamic';     // siempre SSR
 
 const BRAND_BLUE = '#0A2E57';
 
@@ -31,16 +33,23 @@ const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
 async function getProperty(id: string): Promise<Property | null> {
-  const qs = new URLSearchParams();
-  qs.set('select', '*');
-  qs.set('id', `eq.${id}`);
-  qs.set('limit', '1');
+  try {
+    // Usamos la API interna para evitar credenciales/SDK en el server page
+    const res = await fetch(`/api/propiedades/${id}`, {
+      // importante: no cachear
+      cache: 'no-store',
+      // Next permite fetch relativo en server components
+      // Si en tu plataforma necesitas absoluto, usa:
+      // new URL(`/api/propiedades/${id}`, process.env.NEXT_PUBLIC_SITE_URL)
+    });
 
-  const res = await supaRest(`propiedades?${qs.toString()}`, { cache: 'no-store' as any });
-  if (!res.ok) return null;
-  const data = await res.json();
-  if (!Array.isArray(data) || data.length === 0) return null;
-  return data[0] as Property;
+    if (!res.ok) return null;
+
+    const j = await res.json().catch(() => null as any);
+    return (j && j.data) ? (j.data as Property) : null;
+  } catch {
+    return null;
+  }
 }
 
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
@@ -57,7 +66,7 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
 
   return (
     <main className="bg-white">
-      {/* HERO */}
+      {/* BARRA SUPERIOR / VOLVER */}
       <section className="relative bg-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link href="/propiedades" className="inline-flex items-center gap-2 text-sm" style={{ color: BRAND_BLUE }}>
@@ -80,10 +89,10 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
         </div>
       </section>
 
-      {/* BODY */}
+      {/* CUERPO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Columna principal */}
+          {/* Principal */}
           <div className="lg:col-span-2">
             <h1 className="text-2xl md:text-3xl text-slate-900">{prop.titulo || 'Propiedad'}</h1>
             <p className="text-slate-600 mt-1">
