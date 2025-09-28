@@ -1,6 +1,6 @@
 // app/propiedades/[id]/page.tsx
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { Bed, ShowerHead, Car, Ruler, Square, ArrowLeft } from 'lucide-react';
 
 export const revalidate = 0;
@@ -32,39 +32,78 @@ const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-/** URL absoluta segura para local y Vercel */
+/** URL absoluta segura (funciona en local y en Vercel) */
 function getBaseUrl() {
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    // e.g. https://gesswein.cl
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, '');
-  }
-  if (process.env.VERCEL_URL) {
-    // e.g. gessweins-projects.vercel.app (sin protocolo)
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  // Dev local
+  const h = headers();
+  const proto = h.get('x-forwarded-proto') || 'https';
+  const host  = h.get('host');
+  if (host) return `${proto}://${host}`;
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/,'');
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return 'http://localhost:3000';
 }
 
-async function fetchProperty(id: string): Promise<Property | null> {
+async function fetchPropertyWithDebug(id: string) {
+  const base = getBaseUrl();
+  const url  = `${base}/api/propiedades/${encodeURIComponent(id)}`;
+
   try {
-    const base = getBaseUrl();
-    const res = await fetch(`${base}/api/propiedades/${encodeURIComponent(id)}`, {
-      cache: 'no-store',
-      // pequeño header para diferenciar tráfico interno en logs si quieres
-      headers: { 'x-internal-fetch': '1' },
-    });
-    if (!res.ok) return null;
-    const j = await res.json().catch(() => null as any);
-    return j?.data ?? null;
-  } catch {
-    return null;
+    const res = await fetch(url, { cache: 'no-store', headers: { 'x-internal-fetch': '1' } });
+    const text = await res.text(); // leemos texto para poder mostrarlo si falla
+    let json: any = null;
+    try { json = text ? JSON.parse(text) : null; } catch {}
+    return {
+      ok: res.ok,
+      status: res.status,
+      url,
+      data: json?.data ?? null,
+      raw: text,
+    };
+  } catch (e: any) {
+    return {
+      ok: false,
+      status: 0,
+      url,
+      data: null,
+      raw: String(e?.message || e),
+    };
   }
 }
 
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
-  const prop = await fetchProperty(params.id);
-  if (!prop) notFound();
+  const dbg = await fetchPropertyWithDebug(params.id);
+
+  // Si NO hay data, mostramos diagnóstico en vez de 404 para encontrar la causa.
+  if (!dbg.data) {
+    return (
+      <main className="bg-white">
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <Link href="/propiedades" className="inline-flex items-center gap-2 text-sm" style={{ color: BRAND_BLUE }}>
+            <ArrowLeft className="h-4 w-4" />
+            Volver a propiedades
+          </Link>
+
+          <h1 className="text-2xl md:text-3xl text-slate-900 mt-6">Diagnóstico detalle de propiedad</h1>
+
+          <div className="mt-4 border border-amber-300 bg-amber-50 text-amber-900 p-4 rounded">
+            <p><b>ID/slug recibido:</b> <code>{params.id}</code></p>
+            <p className="mt-2"><b>URL llamada:</b> <code>{dbg.url}</code></p>
+            <p className="mt-2"><b>Status de la API:</b> <code>{dbg.status}</code> {dbg.ok ? '(OK)' : '(ERROR)'}</p>
+            <p className="mt-2"><b>Body crudo de la API:</b></p>
+            <pre className="whitespace-pre-wrap text-xs bg-white p-3 border rounded max-h-72 overflow-auto">{dbg.raw || '(vacío)'}</pre>
+          </div>
+
+          <p className="mt-6 text-slate-700">
+            Si <code>status</code> es 404, la tabla no devolvió filas para ese{' '}
+            <code>id</code> o <code>slug</code>. Si es 500/0, puede ser URL base
+            incorrecta, variables de entorno, RLS en Supabase o error de PostgREST.
+          </p>
+        </section>
+      </main>
+    );
+  }
+
+  const prop = dbg.data as Property;
 
   const showUF = !!(prop.precio_uf && prop.precio_uf > 0);
   const clp = prop.precio_clp && prop.precio_clp > 0 ? prop.precio_clp : null;
