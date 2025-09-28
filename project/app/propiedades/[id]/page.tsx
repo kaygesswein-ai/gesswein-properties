@@ -1,10 +1,11 @@
 // app/propiedades/[id]/page.tsx
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Bed, ShowerHead, Car, Ruler, Square, ArrowLeft } from 'lucide-react';
 
-export const revalidate = 0;                // sin cache
-export const dynamic = 'force-dynamic';     // siempre SSR
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 const BRAND_BLUE = '#0A2E57';
 
@@ -32,19 +33,25 @@ const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-async function getProperty(id: string): Promise<Property | null> {
+function getBaseUrl() {
+  // 1) si definiste NEXT_PUBLIC_SITE_URL en el deploy, úsala
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  // 2) si no, toma el host actual de la request
+  const h = headers();
+  const proto = h.get('x-forwarded-proto') || 'https';
+  const host  = h.get('host');
+  return `${proto}://${host}`;
+}
+
+async function fetchProperty(id: string): Promise<Property | null> {
   try {
-    // Usamos la API interna para evitar credenciales/SDK en el server page
-    const res = await fetch(`/api/propiedades/${id}`, {
-      // importante: no cachear
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/api/propiedades/${encodeURIComponent(id)}`, {
       cache: 'no-store',
-      // Next permite fetch relativo en server components
-      // Si en tu plataforma necesitas absoluto, usa:
-      // new URL(`/api/propiedades/${id}`, process.env.NEXT_PUBLIC_SITE_URL)
+      // En algunos hosts ayuda enviar el header Host explícito:
+      headers: { 'x-internal-fetch': '1' },
     });
-
     if (!res.ok) return null;
-
     const j = await res.json().catch(() => null as any);
     return (j && j.data) ? (j.data as Property) : null;
   } catch {
@@ -53,7 +60,7 @@ async function getProperty(id: string): Promise<Property | null> {
 }
 
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
-  const prop = await getProperty(params.id);
+  const prop = await fetchProperty(params.id);
   if (!prop) notFound();
 
   const showUF = !!(prop.precio_uf && prop.precio_uf > 0);
@@ -66,7 +73,7 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
 
   return (
     <main className="bg-white">
-      {/* BARRA SUPERIOR / VOLVER */}
+      {/* HEADER / VOLVER */}
       <section className="relative bg-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link href="/propiedades" className="inline-flex items-center gap-2 text-sm" style={{ color: BRAND_BLUE }}>
@@ -89,10 +96,9 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
         </div>
       </section>
 
-      {/* CUERPO */}
+      {/* CONTENIDO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Principal */}
           <div className="lg:col-span-2">
             <h1 className="text-2xl md:text-3xl text-slate-900">{prop.titulo || 'Propiedad'}</h1>
             <p className="text-slate-600 mt-1">
@@ -126,7 +132,6 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
             </div>
           </div>
 
-          {/* Sidebar */}
           <aside className="lg:col-span-1">
             <div className="border border-slate-200 rounded-md p-4">
               <div className="text-sm text-slate-500">Precio</div>
