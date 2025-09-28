@@ -1,34 +1,38 @@
-// project/app/api/propiedades/[id]/route.ts
+
+// app/api/propiedades/[id]/route.ts
 import { NextResponse } from 'next/server';
 import { supaRest } from '@/lib/supabase-rest';
 
-async function fetchBy(column: string, value: string) {
+type Row = Record<string, any> | null;
+
+async function fetchBy(column: 'id' | 'slug', value: string): Promise<Row> {
   const qs = new URLSearchParams();
   qs.set('select', '*');
   qs.set(column, `eq.${value}`);
   qs.set('limit', '1');
 
-  const res = await supaRest(`propiedades?${qs.toString()}`, { cache: 'no-store' });
+  const res = await supaRest(`propiedades?${qs.toString()}`);
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || `Error al consultar por ${column}`);
+    const errText = await res.text().catch(() => '');
+    throw new Error(errText || `PostgREST error (${res.status})`);
   }
-  const data = await res.json();
-  return Array.isArray(data) && data.length > 0 ? data[0] : null;
+  const data = await res.json().catch(() => null);
+  return Array.isArray(data) && data.length > 0 ? (data[0] as Row) : null;
 }
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const idOrSlug = decodeURIComponent(params.id);
+  try {
+    const raw = decodeURIComponent(params.id || '');
+    let row = await fetchBy('id', raw).catch(() => null);
+    if (!row) row = await fetchBy('slug', raw).catch(() => null);
 
-  let row = await fetchBy('id', idOrSlug).catch(() => null);
-
-  if (!row) {
-    // si tienes columna slug en la tabla, habilita esto
-    row = await fetchBy('slug', idOrSlug).catch(() => null);
+    if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json({ data: row }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: 'Internal error', details: String(err?.message || err) },
+      { status: 500 },
+    );
   }
-
-  if (!row) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-  return NextResponse.json({ data: row });
 }
+// export const runtime = 'edge'; // opcional
