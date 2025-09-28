@@ -1,18 +1,25 @@
-// project/lib/supabase-rest.ts
-export function supaRest(path: string, init?: RequestInit) {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!base || !anon) {
-    throw new Error('Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY');
-  }
+// lib/supabase-rest.ts
+const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const service = process.env.SUPABASE_SERVICE_ROLE!;
 
-  const url = `${base.replace(/\/+$/, '')}/rest/v1/${path.replace(/^\/+/, '')}`;
-  const headers = {
+type RestInit = RequestInit & { useServiceRole?: boolean };
+
+export async function supaRest(path: string, init: RestInit = {}) {
+  const headers: Record<string, string> = {
     apikey: anon,
-    Authorization: `Bearer ${anon}`,
-    ...(init?.headers as Record<string, string> | undefined),
+    'Content-Type': 'application/json',
+    ...(init.headers as Record<string, string> | undefined),
   };
+  const token = init.useServiceRole ? service : anon;
+  headers.Authorization = `Bearer ${token}`;
 
-  return fetch(url, { ...init, headers });
+  const url = `${baseUrl}/rest/v1/${path}`;
+  const res = await fetch(url, { ...init, headers });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Supabase REST ${res.status}: ${text}`);
+  }
+  return res;
 }
