@@ -2,7 +2,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Bed, ShowerHead, Car, Ruler, Square, ArrowLeft } from 'lucide-react';
-import { supaRest } from '@/lib/supabase-rest';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -33,31 +32,53 @@ const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-// ---- Consulta directa a Supabase/PostgREST (sin pasar por /api) ----
-async function fetchPropertyDirect(idOrSlug: string): Promise<Property | null> {
-  // helper para reusar
-  async function by(col: 'id' | 'slug', val: string) {
-    const qs = new URLSearchParams();
-    qs.set('select', '*');
-    qs.set(col, `eq.${val}`);
-    qs.set('limit', '1');
-    const res = await supaRest(`propiedades?${qs.toString()}`, { // usa tu wrapper
-      // no-cache aquí no es crítico porque pegamos directo a PostgREST
-    });
-    if (!res.ok) return null;
-    const data = await res.json().catch(() => null as any);
-    return Array.isArray(data) && data.length > 0 ? (data[0] as Property) : null;
-  }
+/** ===== PostgREST (Supabase) directo, sin helper ===== */
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, '');
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // 1) prueba por id
-  let row = await by('id', idOrSlug);
-  // 2) si no, por slug
-  if (!row) row = await by('slug', idOrSlug);
-  return row ?? null;
+function postgrest(path: string) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    throw new Error('Faltan env NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  }
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    // no-store para evitar cachés del SSR
+    cache: 'no-store',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      Accept: 'application/json',
+    },
+  });
+}
+
+async function getBy(column: 'id' | 'slug', value: string): Promise<Property | null> {
+  const qs = new URLSearchParams();
+  qs.set('select', '*');
+  qs.set(column, `eq.${value}`);
+  qs.set('limit', '1');
+  const res = await postgrest(`propiedades?${qs.toString()}`);
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null as any);
+  return Array.isArray(data) && data.length > 0 ? (data[0] as Property) : null;
+}
+
+async function fetchProperty(idOrSlug: string): Promise<Property | null> {
+  // 1) por id
+  let row = await getBy('id', idOrSlug);
+  // 2) por slug
+  if (!row) row = await getBy('slug', idOrSlug);
+  return row;
 }
 
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
-  const prop = await fetchPropertyDirect(params.id);
+  let prop: Property | null = null;
+  try {
+    prop = await fetchProperty(params.id);
+  } catch (e) {
+    // Si hay error de env o red, no revientes la app — manda a 404
+    // (puedes loguear en consola del server si lo deseas)
+    console.error('Detalle propiedad error:', e);
+  }
   if (!prop) notFound();
 
   const showUF = !!(prop.precio_uf && prop.precio_uf > 0);
