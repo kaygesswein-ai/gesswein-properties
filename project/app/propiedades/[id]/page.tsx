@@ -2,34 +2,49 @@
 import { NextResponse } from 'next/server';
 import { supaRest } from '@/lib/supabase-rest';
 
-async function fetchBy(column: string, value: string) {
+type Row = Record<string, any> | null;
+
+async function fetchBy(column: 'id' | 'slug', value: string): Promise<Row> {
   const qs = new URLSearchParams();
   qs.set('select', '*');
   qs.set(column, `eq.${value}`);
   qs.set('limit', '1');
+
   const res = await supaRest(`propiedades?${qs.toString()}`);
   if (!res.ok) {
-    // si PostgREST devuelve error, lo propagamos
-    const err = await res.text();
-    throw new Error(err || `Error al consultar por ${column}`);
+    const errText = await res.text().catch(() => '');
+    throw new Error(errText || `PostgREST error (${res.status})`);
   }
-  const data = await res.json();
-  return Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+  const data = await res.json().catch(() => null);
+  return Array.isArray(data) && data.length > 0 ? (data[0] as Row) : null;
 }
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+  try {
+    // el [id] puede ser un UUID, un entero o un slug
+    const raw = decodeURIComponent(params.id || '');
 
-  // 1) intenta por columna "id"
-  let row = await fetchBy('id', id).catch(() => null);
+    // 1) intenta por "id"
+    let row = await fetchBy('id', raw).catch(() => null);
 
-  // 2) si no hay resultado, intenta por columna "slug"
-  if (!row) {
-    row = await fetchBy('slug', id).catch(() => null);
+    // 2) si no existe, intenta por "slug"
+    if (!row) {
+      row = await fetchBy('slug', raw).catch(() => null);
+    }
+
+    if (!row) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: row }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: 'Internal error', details: String(err?.message || err) },
+      { status: 500 },
+    );
   }
-
-  if (!row) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-  return NextResponse.json({ data: row });
 }
+
+// Opcional: si quieres forzar edge/runtime, descomenta:
+// export const runtime = 'edge';
