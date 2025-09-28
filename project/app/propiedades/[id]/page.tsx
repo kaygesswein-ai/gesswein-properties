@@ -1,7 +1,8 @@
 // app/propiedades/[id]/page.tsx
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { headers } from 'next/headers';
 import { Bed, ShowerHead, Car, Ruler, Square, ArrowLeft } from 'lucide-react';
+import { supaRest } from '@/lib/supabase-rest';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -32,78 +33,32 @@ const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-/** URL absoluta segura (funciona en local y en Vercel) */
-function getBaseUrl() {
-  const h = headers();
-  const proto = h.get('x-forwarded-proto') || 'https';
-  const host  = h.get('host');
-  if (host) return `${proto}://${host}`;
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/,'');
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return 'http://localhost:3000';
-}
-
-async function fetchPropertyWithDebug(id: string) {
-  const base = getBaseUrl();
-  const url  = `${base}/api/propiedades/${encodeURIComponent(id)}`;
-
-  try {
-    const res = await fetch(url, { cache: 'no-store', headers: { 'x-internal-fetch': '1' } });
-    const text = await res.text(); // leemos texto para poder mostrarlo si falla
-    let json: any = null;
-    try { json = text ? JSON.parse(text) : null; } catch {}
-    return {
-      ok: res.ok,
-      status: res.status,
-      url,
-      data: json?.data ?? null,
-      raw: text,
-    };
-  } catch (e: any) {
-    return {
-      ok: false,
-      status: 0,
-      url,
-      data: null,
-      raw: String(e?.message || e),
-    };
+// ---- Consulta directa a Supabase/PostgREST (sin pasar por /api) ----
+async function fetchPropertyDirect(idOrSlug: string): Promise<Property | null> {
+  // helper para reusar
+  async function by(col: 'id' | 'slug', val: string) {
+    const qs = new URLSearchParams();
+    qs.set('select', '*');
+    qs.set(col, `eq.${val}`);
+    qs.set('limit', '1');
+    const res = await supaRest(`propiedades?${qs.toString()}`, { // usa tu wrapper
+      // no-cache aquí no es crítico porque pegamos directo a PostgREST
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null as any);
+    return Array.isArray(data) && data.length > 0 ? (data[0] as Property) : null;
   }
+
+  // 1) prueba por id
+  let row = await by('id', idOrSlug);
+  // 2) si no, por slug
+  if (!row) row = await by('slug', idOrSlug);
+  return row ?? null;
 }
 
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
-  const dbg = await fetchPropertyWithDebug(params.id);
-
-  // Si NO hay data, mostramos diagnóstico en vez de 404 para encontrar la causa.
-  if (!dbg.data) {
-    return (
-      <main className="bg-white">
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <Link href="/propiedades" className="inline-flex items-center gap-2 text-sm" style={{ color: BRAND_BLUE }}>
-            <ArrowLeft className="h-4 w-4" />
-            Volver a propiedades
-          </Link>
-
-          <h1 className="text-2xl md:text-3xl text-slate-900 mt-6">Diagnóstico detalle de propiedad</h1>
-
-          <div className="mt-4 border border-amber-300 bg-amber-50 text-amber-900 p-4 rounded">
-            <p><b>ID/slug recibido:</b> <code>{params.id}</code></p>
-            <p className="mt-2"><b>URL llamada:</b> <code>{dbg.url}</code></p>
-            <p className="mt-2"><b>Status de la API:</b> <code>{dbg.status}</code> {dbg.ok ? '(OK)' : '(ERROR)'}</p>
-            <p className="mt-2"><b>Body crudo de la API:</b></p>
-            <pre className="whitespace-pre-wrap text-xs bg-white p-3 border rounded max-h-72 overflow-auto">{dbg.raw || '(vacío)'}</pre>
-          </div>
-
-          <p className="mt-6 text-slate-700">
-            Si <code>status</code> es 404, la tabla no devolvió filas para ese{' '}
-            <code>id</code> o <code>slug</code>. Si es 500/0, puede ser URL base
-            incorrecta, variables de entorno, RLS en Supabase o error de PostgREST.
-          </p>
-        </section>
-      </main>
-    );
-  }
-
-  const prop = dbg.data as Property;
+  const prop = await fetchPropertyDirect(params.id);
+  if (!prop) notFound();
 
   const showUF = !!(prop.precio_uf && prop.precio_uf > 0);
   const clp = prop.precio_clp && prop.precio_clp > 0 ? prop.precio_clp : null;
