@@ -2,7 +2,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Bed, ShowerHead, Car, Ruler, Square, ArrowLeft } from 'lucide-react';
-import { supaRest } from '@/lib/supabase-rest'; // usamos la misma helper del API
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -33,23 +32,38 @@ const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-async function getProperty(id: string): Promise<Property | null> {
-  // Hacemos el mismo query que tu API, pero directo aquí (menos posibilidades de 500)
-  const qs = new URLSearchParams();
-  qs.set('select', '*');
-  qs.set('id', `eq.${id}`);
-  qs.set('limit', '1');
+/** URL absoluta segura para local y Vercel */
+function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    // e.g. https://gesswein.cl
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, '');
+  }
+  if (process.env.VERCEL_URL) {
+    // e.g. gessweins-projects.vercel.app (sin protocolo)
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // Dev local
+  return 'http://localhost:3000';
+}
 
-  const res = await supaRest(`propiedades?${qs.toString()}`);
-  if (!res.ok) return null;
-
-  const data = await res.json().catch(() => null as any);
-  if (!Array.isArray(data) || data.length === 0) return null;
-  return data[0] as Property;
+async function fetchProperty(id: string): Promise<Property | null> {
+  try {
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/api/propiedades/${encodeURIComponent(id)}`, {
+      cache: 'no-store',
+      // pequeño header para diferenciar tráfico interno en logs si quieres
+      headers: { 'x-internal-fetch': '1' },
+    });
+    if (!res.ok) return null;
+    const j = await res.json().catch(() => null as any);
+    return j?.data ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
-  const prop = await getProperty(params.id);
+  const prop = await fetchProperty(params.id);
   if (!prop) notFound();
 
   const showUF = !!(prop.precio_uf && prop.precio_uf > 0);
