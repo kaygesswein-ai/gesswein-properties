@@ -1,18 +1,23 @@
 // app/(web)/propiedades/[id]/page.tsx
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, headers } from "next/navigation";
 
-// Evita que Next cachee la página y te muestre mocks viejos
 export const dynamic = "force-dynamic";
 
 type Row = Record<string, any> | null;
 
 async function fetchProperty(idOrSlug: string): Promise<Row> {
-  // Llamamos a tu API interna (que ya probaste en el navegador)
-  const res = await fetch(`/api/propiedades/${encodeURIComponent(idOrSlug)}`, {
-    cache: "no-store",
-  });
+  // Construimos una URL ABSOLUTA para que funcione en el servidor
+  const h = headers();
+  const host = h.get("host") || process.env.VERCEL_URL || "localhost:3000";
+  const isProd = !!process.env.VERCEL_URL || host.includes("vercel.app");
+  const base = `${isProd ? "https" : "http"}://${host}`;
+
+  const url = `${base}/api/propiedades/${encodeURIComponent(idOrSlug)}`;
+
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return null;
+
   const json = await res.json().catch(() => null);
   return (json?.data as Row) ?? null;
 }
@@ -25,7 +30,6 @@ export default async function PropertyPage({
   const row = await fetchProperty(params.id);
   if (!row) return notFound();
 
-  // En DB el campo es "imagenes" (text[]). También aceptamos "images" por si acaso.
   const imagenes: string[] = (row.imagenes ?? row.images ?? []) as string[];
   const cover = row.coverImage ?? imagenes[0] ?? null;
 
@@ -72,7 +76,7 @@ export default async function PropertyPage({
         )}
       </div>
 
-      {/* Galería simple debajo (opcional) */}
+      {/* Galería simple */}
       {imagenes.length > 1 && (
         <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3">
           {imagenes.slice(0, 12).map((src, i) => (
