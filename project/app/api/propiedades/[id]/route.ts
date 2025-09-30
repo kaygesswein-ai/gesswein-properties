@@ -55,3 +55,4 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 }
 // export const runtime = 'edge'; // opcional
+export const dynamic = 'force-dynamic'; // evita que Next cachee esta ruta
