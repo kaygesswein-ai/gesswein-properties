@@ -1,13 +1,14 @@
-// app/(web)/propiedades/[id]/page.tsx
+// app/propiedades/[id]/page.tsx
 import Image from "next/image";
-import { notFound, headers } from "next/navigation";
+import { notFound } from "next/navigation";   // <-- solo notFound aquí
+import { headers } from "next/headers";       // <-- headers viene de next/headers
 
 export const dynamic = "force-dynamic";
 
 type Row = Record<string, any> | null;
 
 async function fetchProperty(idOrSlug: string): Promise<Row> {
-  // Construimos una URL ABSOLUTA para que funcione en el servidor
+  // Construir URL ABSOLUTA para que el fetch funcione en el server
   const h = headers();
   const host = h.get("host") || process.env.VERCEL_URL || "localhost:3000";
   const isProd = !!process.env.VERCEL_URL || host.includes("vercel.app");
@@ -51,7 +52,7 @@ export default async function PropertyPage({
         {row.region ? `, ${row.region}` : ""}
       </p>
 
-      {/* Chips rápidos */}
+      {/* Chips */}
       <div className="mt-4 flex flex-wrap gap-2 text-sm">
         {row.operacion && <span className="rounded bg-gray-100 px-2 py-1">{row.operacion}</span>}
         {row.tipo && <span className="rounded bg-gray-100 px-2 py-1">{row.tipo}</span>}
@@ -76,7 +77,7 @@ export default async function PropertyPage({
         )}
       </div>
 
-      {/* Galería simple */}
+      {/* Galería */}
       {imagenes.length > 1 && (
         <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3">
           {imagenes.slice(0, 12).map((src, i) => (
@@ -97,3 +98,5 @@ export default async function PropertyPage({
     </main>
   );
 }
+
+
