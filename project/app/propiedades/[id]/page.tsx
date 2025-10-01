@@ -7,7 +7,7 @@ import {
   X, ChevronLeft, ChevronRight, Compass, TrendingUp, Droplets,
 } from 'lucide-react';
 
-/* ---------------- Tipos y formateadores (sin cambios) --------------- */
+/* ======================= Tipos ======================= */
 type Property = {
   id: string;
   slug?: string | null;
@@ -32,23 +32,25 @@ type Property = {
   derechos_agua?: boolean | null;
 };
 
+/* =================== Formateadores =================== */
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-/* ---------------- Util ---------------- */
+/* ===================== Utilidades ==================== */
 const cls = (...s: (string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
-
-const capFirst = (s?: string | null) => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : '';
-const capWords = (s?: string | null) => (s ?? '').split(' ').map(capFirst).join(' ').trim();
 
 function getHeroImage(p?: Property | null) {
   const src = p?.imagenes?.[0];
   return src && src.trim().length > 4 ? src : HERO_FALLBACK;
 }
 
+const capFirst = (s?: string | null) => (s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : '');
+const capWords = (s?: string | null) => (s ?? '').split(' ').map(capFirst).join(' ').trim();
+
+/** adivina categoría por nombre de archivo (para tabs de galería) */
 function guessCategory(url: string): 'exterior' | 'interior' {
   const u = url.toLowerCase();
   const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
@@ -58,6 +60,7 @@ function guessCategory(url: string): 'exterior' | 'interior' {
   return 'exterior';
 }
 
+/* ========= UF local ========= */
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -75,7 +78,7 @@ function useUf() {
   return uf;
 }
 
-/* ---------------- Lightbox (sin cambios) --------------- */
+/* =================== Lightbox =================== */
 function Lightbox({ open, images, index, onClose, onPrev, onNext }: {
   open: boolean; images: string[]; index: number;
   onClose: () => void; onPrev: () => void; onNext: () => void;
@@ -108,7 +111,7 @@ function Lightbox({ open, images, index, onClose, onPrev, onNext }: {
   );
 }
 
-/* ---------------- HeroStatTiles (texto más pequeño) --------------- */
+/* ===== Tiles de stats (5) ===== */
 function HeroStatTiles({ p }: { p: Property | null }) {
   const dash = '—';
   const vals = [
@@ -134,7 +137,26 @@ function HeroStatTiles({ p }: { p: Property | null }) {
   );
 }
 
-/* ---------------- Página principal ---------------- */
+/* ====== Features dinámicas ====== */
+function buildFeatures(p: Property | null) {
+  if (!p) return [];
+  const txt = `${p.titulo ?? ''} ${p.descripcion ?? ''}`.toLowerCase();
+  const feats: { icon: JSX.Element; text: string }[] = [];
+
+  const orient = (p as any)?.orientacion as string | undefined;
+  if (orient?.trim()) feats.push({ icon: <Compass className="h-4 w-4 text-slate-600" />, text: `Orientación ${orient}` });
+  else if (/\bnorte\b/.test(txt)) feats.push({ icon: <Compass className="h-4 w-4 text-slate-600" />, text: 'Orientación norte' });
+
+  const plus = (p as any)?.plusvalia === true || /plusval[íi]a|inversi[oó]n/.test(txt);
+  if (plus) feats.push({ icon: <TrendingUp className="h-4 w-4 text-slate-600" />, text: 'Potencial de plusvalía' });
+
+  const water = (p as any)?.derechos_agua === true || /derechos? de agua/.test(txt);
+  if (water) feats.push({ icon: <Droplets className="h-4 w-4 text-slate-600" />, text: 'Derechos de agua' });
+
+  return feats;
+}
+
+/* ======================= Página ======================= */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
   const ufHoy = useUf();
@@ -157,11 +179,10 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     capFirst(prop?.operacion),
   ].filter(Boolean).join(' · ');
 
-  const uf = prop?.precio_uf
-    ?? (prop?.precio_clp && ufHoy ? Math.round(prop.precio_clp / ufHoy) : null);
-  const clp = prop?.precio_clp
-    ?? (prop?.precio_uf && ufHoy ? Math.round(prop.precio_uf * ufHoy) : null);
+  const uf = prop?.precio_uf ?? (prop?.precio_clp && ufHoy ? Math.round(prop.precio_clp / ufHoy) : null);
+  const clp = prop?.precio_clp ?? (prop?.precio_uf && ufHoy ? Math.round(prop.precio_uf * ufHoy) : null);
 
+  /* ---------------- Render ---------------- */
   return (
     <main className="bg-white">
       {/* ---------------- HERO ---------------- */}
@@ -170,8 +191,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16">
-          <div className="w-full relative">
-            {/* tarjeta */}
+          <div className="w-full">
             <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[420px]">
               {/* título sin negrita */}
               <h1 className="text-[18px] md:text-[20px] text-slate-800">
@@ -184,15 +204,13 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </div>
 
               <div className="mt-4 flex items-end gap-3">
-                {/* botón */}
                 <Link
                   href="/contacto"
-                  className="inline-flex text-sm rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white px-3 py-[6px]"
+                  className="inline-flex px-3 py-[6px] text-sm rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
                 >
                   Solicitar información
                 </Link>
 
-                {/* precios */}
                 <div className="ml-auto text-right">
                   <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
                     {uf ? `UF ${nfUF.format(uf)}` : 'Consultar'}
@@ -207,8 +225,128 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* ---- resto sin cambios: Galería, Descripción, etc. ---- */}
-      {/* (puedes dejar el mismo código que ya tenías para esas secciones) */}
+      {/* ---------------- GALERÍA + DETALLES (igual que antes) ---------------- */}
+      <GalleryAndDetails prop={prop} />
     </main>
+  );
+}
+
+/* ---------- Galería + Descripción + Features + Mapa (sin cambios) ---------- */
+function GalleryAndDetails({ prop }: { prop: Property | null }) {
+  const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
+  const [lbOpen, setLbOpen] = useState(false);
+  const [lbIndex, setLbIndex] = useState(0);
+
+  const images = useMemo(() => {
+    const arr = (prop?.imagenes ?? []).filter(Boolean);
+    return arr.length ? arr : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop'];
+  }, [prop]);
+
+  const imagesByCat = useMemo(() => {
+    const all = images.map((url) => ({ url, cat: guessCategory(url) }));
+    return {
+      todas: all,
+      exterior: all.filter((i) => i.cat === 'exterior'),
+      interior: all.filter((i) => i.cat === 'interior'),
+    };
+  }, [images]);
+
+  const list = imagesByCat[tab];
+  const openLb = (i: number) => { setLbIndex(i); setLbOpen(true); };
+  const closeLb = () => setLbOpen(false);
+  const prevLb = () => setLbIndex((i) => (i - 1 + list.length) % list.length);
+  const nextLb = () => setLbIndex((i) => (i + 1) % list.length);
+
+  return (
+    <>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionTitle>Galería</SectionTitle>
+
+        <div className="flex items-center gap-2 mb-4">
+          {(['todas','exterior','interior'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cls(
+                'px-4 py-2 border rounded-md text-sm',
+                tab === t ? 'bg-[var(--brand-50,#E9EFF6)] border-[var(--brand-200,#BFD0E6)] text-slate-900' : 'bg-white border-slate-200 text-slate-700'
+              )}
+            >
+              {t === 'todas' ? 'Todas' : t[0].toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+          <span className="ml-auto text-sm text-slate-500">{list.length} {list.length === 1 ? 'foto' : 'fotos'}</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {list.map((it, i) => (
+            <button
+              key={i}
+              onClick={() => openLb(i)}
+              className="relative aspect-[4/3] overflow-hidden group border border-slate-200"
+            >
+              <img src={it.url} alt="" className="w-full h-full object-cover group-hover:scale-[1.02] transition" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionTitle>Descripción</SectionTitle>
+        <p className="text-slate-700 leading-relaxed">
+          {prop?.descripcion || 'Descripción no disponible por el momento.'}
+        </p>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionTitle>Características destacadas</SectionTitle>
+        {(() => {
+          const feats = buildFeatures(prop);
+          if (!feats.length) return <p className="text-slate-500">Información próximamente.</p>;
+          return (
+            <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
+              {feats.map((f, idx) => (
+                <li key={idx} className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+                    {f.icon}
+                  </span>
+                  <span>{f.text}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <SectionTitle>Explora el sector</SectionTitle>
+        <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
+          <div className="pointer-events-none absolute z-10 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[55%] aspect-square rounded-full border border-white/60 shadow-[0_0_0_2000px_rgba(255,255,255,0.25)]" />
+          <iframe
+            title="mapa"
+            className="w-full h-full"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2scl!4v1713000000000"
+          />
+        </div>
+      </section>
+
+      <Lightbox
+        open={lbOpen}
+        images={list.map((x) => x.url)}
+        index={lbIndex}
+        onClose={closeLb}
+        onPrev={prevLb}
+        onNext={nextLb}
+      />
+    </>
   );
 }
