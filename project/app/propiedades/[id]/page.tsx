@@ -5,7 +5,6 @@ import Link from 'next/link';
 import {
   Bed, ShowerHead, Car, Ruler, Square, MapPin, X, ChevronLeft, ChevronRight,
 } from 'lucide-react';
-import useUf from '../../hooks/useUf'; // ⬅️ igual que en Home, pero ruta relativa a /app/propiedades/[id]/
 
 const BRAND_BLUE = '#0A2E57';
 const BRAND_DARK = '#0f172a';
@@ -54,6 +53,26 @@ function guessCategory(url: string): 'exterior' | 'interior' {
   if (ext.test(u)) return 'exterior';
   if (int.test(u)) return 'interior';
   return /(\d{1,2}\s*)?(a|b)?\.(jpg|png|jpeg)/.test(u) ? 'exterior' : 'interior';
+}
+
+/* ========= useUf LOCAL (para no depender de imports) ========= */
+function useUf() {
+  const [uf, setUf] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch('https://mindicador.cl/api/uf', { cache: 'no-store' });
+        const json = await res.json().catch(() => null);
+        const v = Number(json?.serie?.[0]?.valor);
+        if (alive && Number.isFinite(v)) setUf(v);
+      } catch {
+        // si falla, dejamos uf en null y mostramos solo UF
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+  return uf;
 }
 
 /* ========= Lightbox simple ========= */
@@ -128,7 +147,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ========= Chips con íconos (se mantienen para más adelante) ========= */
+/* ========= Chips con íconos (como las cards) ========= */
 function FeatureChips({ p }: { p: Property }) {
   const Item = ({ icon, label }: { icon: React.ReactNode; label: string }) => (
     <span
@@ -155,15 +174,15 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [prop, setProp] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ====== NUEVO: refs para “igualar” el botón y caja de precio (como en Home)
+  // ====== refs para igualar botón/caja precio (como en Home)
   const statDormRef = useRef<HTMLDivElement | null>(null);
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const actionRef   = useRef<HTMLAnchorElement | null>(null);
 
-  // ====== UF del día para calcular CLP si viene solo UF (mismo patrón que Home)
+  // UF del día (local)
   const ufHoy = useUf();
 
-  // fetch desde tu API (estaba funcionando)
+  // fetch desde tu API
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -180,10 +199,15 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const bg = useMemo(() => getHeroImage(prop), [prop]);
 
   // Línea secundaria (igual idea que Home)
+  const capFirst = (s?: string | null) => {
+    if (!s) return '';
+    const lower = s.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  };
   const lineaSecundaria = [
-    prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea'),
-    prop?.tipo,
-    prop?.operacion,
+    capFirst(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
+    capFirst(prop?.tipo),
+    capFirst(prop?.operacion),
   ].filter(Boolean).join(' · ');
 
   // Precios estilo Home
@@ -228,7 +252,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         if (priceBoxRef.current) ro.observe(priceBoxRef.current);
       }
     } catch {}
-    return () => { try { ro?.disconnect(); } catch {} };
   }, [prop]);
 
   /* ===================  HERO (full viewport + tarjeta igual a Home)  =================== */
@@ -309,7 +332,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 }
 
 /* ---------- Lo de abajo es tu contenido existente (galería, secciones, etc.) ---------- */
-/* Para no duplicar un archivo gigante, lo empaqueto en un componente debajo. */
 function GalleryAndDetails({ prop }: { prop: Property | null }) {
   const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
   const [lbOpen, setLbOpen] = useState(false);
@@ -391,8 +413,6 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-px bg-slate-200 my-10" />
       </div>
-
-      {/* (el mapa y otras secciones las ajustamos en el siguiente paso si quieres) */}
 
       {/* Lightbox */}
       <Lightbox
