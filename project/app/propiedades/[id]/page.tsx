@@ -1,195 +1,299 @@
-// app/propiedades/[id]/page.tsx
-import { notFound } from "next/navigation";
-import { headers } from "next/headers";
+// project/app/propiedades/[id]/page.tsx
+'use client';
 
-export const dynamic = "force-dynamic";
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import {
+  ArrowLeft, Bed, ShowerHead, Car, Ruler, Square, MapPin, Plus, Minus, X, ChevronLeft, ChevronRight
+} from 'lucide-react';
 
-/** ===== helpers de data (robustos) ===== */
-type Row = Record<string, any> | null;
+const BRAND_BLUE = '#0A2E57';
+const BRAND_DARK = '#0f172a';
 
-async function fetchFromApi(idOrSlug: string): Promise<Row> {
-  const h = headers();
-  const host = h.get("host") || process.env.VERCEL_URL || "localhost:3000";
-  const proto = host.includes("localhost") ? "http" : "https";
-  const base = `${proto}://${host}`;
-  const res = await fetch(`${base}/api/propiedades/${encodeURIComponent(idOrSlug)}`, { cache: "no-store" }).catch(() => null as any);
+type Property = {
+  id: string;
+  slug?: string | null;
+  titulo?: string | null;
+  comuna?: string | null;
+  region?: string | null;
+  operacion?: 'venta' | 'arriendo' | null;
+  tipo?: string | null;
+  precio_uf?: number | null;
+  precio_clp?: number | null;
+  dormitorios?: number | null;
+  banos?: number | null;
+  superficie_util_m2?: number | null;
+  superficie_terreno_m2?: number | null;
+  estacionamientos?: number | null;
+  imagenes?: string[] | null;
+  descripcion?: string | null;
+};
+
+const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const nfCLP = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
+function classNames(...s: (string|false|undefined|null)[]) { return s.filter(Boolean).join(' '); }
+
+async function fetchProp(idOrSlug: string): Promise<Property | null> {
+  const res = await fetch(`/api/propiedades/${encodeURIComponent(idOrSlug)}`, { cache: 'no-store' }).catch(() => null as any);
   if (!res || !res.ok) return null;
-  const json = await res.json().catch(() => null);
-  return (json?.data as Row) ?? null;
+  const j = await res.json().catch(() => null as any);
+  return j?.data ?? null;
 }
 
-async function fetchFromPostgrest(idOrSlug: string): Promise<Row> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, "");
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
+export default function PropertyDetailPage({ params }: { params: { id: string } }) {
+  const [prop, setProp] = useState<Property | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const head = { apikey: key, Authorization: `Bearer ${key}`, Accept: "application/json" };
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      setLoading(true);
+      const raw = decodeURIComponent(params.id || '');
+      const p = await fetchProp(raw);
+      if (!cancel) {
+        setProp(p);
+        setLoading(false);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [params.id]);
 
-  // 1) por slug
-  let qs = new URLSearchParams();
-  qs.set("select", "*"); qs.set("slug", `eq.${idOrSlug}`); qs.set("limit", "1");
-  let r = await fetch(`${url}/rest/v1/propiedades?${qs.toString()}`, { headers: head, cache: "no-store" }).catch(() => null as any);
-  if (r && r.ok) { const a = await r.json().catch(() => null); if (Array.isArray(a) && a.length) return a[0] as Row; }
+  const images = useMemo(() => (prop?.imagenes ?? []).filter(Boolean), [prop]);
 
-  // 2) por id
-  qs = new URLSearchParams();
-  qs.set("select", "*"); qs.set("id", `eq.${idOrSlug}`); qs.set("limit", "1");
-  r = await fetch(`${url}/rest/v1/propiedades?${qs.toString()}`, { headers: head, cache: "no-store" }).catch(() => null as any);
-  if (r && r.ok) { const a = await r.json().catch(() => null); if (Array.isArray(a) && a.length) return a[0] as Row; }
+  /* --------------- LIGHTBOX --------------- */
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightIndex, setLightIndex] = useState(0);
+  const [zoom, setZoom] = useState(1);
+  const imgWrap = useRef<HTMLDivElement>(null);
 
-  return null;
-}
+  const openAt = (i: number) => { setLightIndex(i); setZoom(1); setLightboxOpen(true); };
+  const prev = () => setLightIndex(i => (i - 1 + images.length) % images.length);
+  const next = () => setLightIndex(i => (i + 1) % images.length);
 
-/** ===== colores corporativos ===== */
-const BRAND_BLUE = "#0A2E57";
-const BRAND_DARK = "#0f172a";
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxOpen(false);
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightboxOpen, images.length]);
 
-/** ===== página ===== */
-export default async function Page({ params }: { params: { id: string } }) {
-  const raw = decodeURIComponent(params.id || "");
-  let row = await fetchFromApi(raw);
-  if (!row) row = await fetchFromPostgrest(raw);
-  if (!row) return notFound();
+  /* --------------- RENDER --------------- */
+  const showUF = !!(prop?.precio_uf && prop.precio_uf > 0);
+  const showCLP = !!(prop?.precio_clp && prop.precio_clp > 0);
 
-  const nfUF = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
-  const nfINT = new Intl.NumberFormat("es-CL");
-
-  const imgs: string[] = Array.isArray(row.imagenes) ? row.imagenes.filter(Boolean) : [];
-  const hero = imgs[0] || "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop";
-
-  // datos rápidos
-  const chips: Array<{label: string}> = [];
-  if (row.operacion) chips.push({ label: cap(row.operacion) });
-  if (row.tipo) chips.push({ label: String(row.tipo) });
-  if (row.dormitorios != null) chips.push({ label: `${row.dormitorios || "—"} Dorm.` });
-  if (row.banos != null) chips.push({ label: `${row.banos || "—"} Baños` });
-  if (row.estacionamientos != null) chips.push({ label: `${row.estacionamientos || "—"} Estac.` });
-  if (row.superficie_util_m2 != null) chips.push({ label: `${nfINT.format(Number(row.superficie_util_m2))} m² const.` });
-  if (row.superficie_terreno_m2 != null) chips.push({ label: `${nfINT.format(Number(row.superficie_terreno_m2))} m² terreno` });
-
-  const showUF = Number(row.precio_uf) > 0;
+  const hero = images[0] ?? 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop';
 
   return (
-    <main className="bg-white text-slate-900">
-      {/* ===== HERO FULL BLEED (hasta arriba) ===== */}
-      <section className="relative w-full">
-        <div
-          className="w-full h-[64vh] md:h-[72vh] lg:h-[78vh] bg-center bg-cover"
-          style={{ backgroundImage: `url(${hero})` }}
-        />
-        {/* overlay con título y ubicación */}
-        <div className="absolute inset-x-0 bottom-0">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-6">
-            <div className="rounded-sm bg-white/90 backdrop-blur px-4 py-3 shadow-sm">
-              <h1 className="text-xl md:text-2xl font-semibold">{row.titulo ?? "Propiedad"}</h1>
-              <p className="mt-1 text-sm text-slate-600">
-                {[row.comuna, row.region].filter(Boolean).join(", ")}
-              </p>
-              {/* chips */}
-              <div className="mt-3 flex flex-wrap gap-2">
-                {chips.map((c, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center px-3 py-1.5 border text-sm rounded-none"
-                    style={{ borderColor: BRAND_BLUE, color: BRAND_DARK }}
-                  >
-                    {c.label}
-                  </span>
-                ))}
-              </div>
+    <main className="bg-white">
+      {/* NAV superior: link atrás */}
+      <div className="border-b border-slate-200 bg-white/70 backdrop-blur sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
+          <Link href="/propiedades" className="inline-flex items-center gap-2 text-sm" style={{ color: BRAND_BLUE }}>
+            <ArrowLeft className="h-4 w-4" />
+            Volver a propiedades
+          </Link>
+        </div>
+      </div>
+
+      {/* HERO full-bleed (80vh) con tarjeta superpuesta */}
+      <section className="relative w-full" style={{ height: '80vh' }}>
+        <img src={hero} alt={prop?.titulo ?? 'Propiedad'} className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/0 to-black/0" />
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[min(1200px,92vw)]">
+          <div className="backdrop-blur bg-white/80 shadow-sm px-5 py-4">
+            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">
+              {loading ? 'Cargando…' : (prop?.titulo ?? 'Propiedad')}
+            </h1>
+            <p className="mt-1 text-slate-700 flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              {loading ? '—' : [prop?.comuna, prop?.region].filter(Boolean).join(', ')}
+            </p>
+            {/* chips */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Chip label={prop?.operacion ? cap(prop.operacion) : '—'} />
+              <Chip label={prop?.tipo ?? '—'} />
+              {prop?.superficie_terreno_m2 != null && <Chip label={`${nfINT.format(prop.superficie_terreno_m2)} m² terreno`} />}
+              {prop?.superficie_util_m2 != null && <Chip label={`${nfINT.format(prop.superficie_util_m2)} m² const.`} />}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== cuerpo principal estilo “JE”, sin like/views/ask ===== */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Columna izquierda (contenido) */}
+      {/* MOSAICO inicial: 1 grande + 2 pequeñas (si hay) */}
+      {images.length > 1 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+          <div className="grid grid-cols-3 gap-3">
+            <button onClick={() => openAt(0)} className="col-span-2 aspect-[16/9] overflow-hidden">
+              <img src={images[0]} alt="" className="w-full h-full object-cover" />
+            </button>
+            <div className="grid grid-rows-2 gap-3">
+              <button onClick={() => openAt(1)} className="aspect-[16/9] overflow-hidden">
+                <img src={images[1] ?? images[0]} alt="" className="w-full h-full object-cover" />
+              </button>
+              <button onClick={() => openAt(2)} className="aspect-[16/9] overflow-hidden">
+                <img src={images[2] ?? images[0]} alt="" className="w-full h-full object-cover" />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* CONTENIDO principal */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Galería en miniaturas */}
           <div className="lg:col-span-2">
-            {/* mini galería en mosaico (primeras 12) */}
-            {imgs.length > 1 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {imgs.slice(0, 12).map((src, i) => (
-                  <div key={i} className="aspect-[4/3] w-full overflow-hidden bg-slate-100">
-                    <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
+            <h2 className="gp-section">GALERÍA</h2>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {images.map((url, i) => (
+                <button key={i} onClick={() => openAt(i)} className="aspect-[4/3] overflow-hidden">
+                  <img src={url} alt={`Foto ${i+1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
 
             {/* Descripción */}
-            {row.descripcion && (
-              <section className="mt-10">
-                <h2 className="text-xl font-semibold">Descripción</h2>
-                <p className="mt-3 text-slate-700 leading-relaxed whitespace-pre-line">
-                  {row.descripcion}
-                </p>
-              </section>
-            )}
+            <h2 className="gp-section mt-10">DESCRIPCIÓN</h2>
+            <p className="mt-3 text-slate-700 leading-relaxed">
+              {loading ? 'Cargando…' : (prop?.descripcion || 'Descripción no disponible por el momento.')}
+            </p>
 
-            {/* Características (ejemplo – puedes ligar a BD si luego agregamos campos) */}
-            <section className="mt-10">
-              <h2 className="text-xl font-semibold">Características destacadas</h2>
-              <ul className="mt-3 grid sm:grid-cols-2 gap-x-8 gap-y-2 text-slate-700">
-                <li>• Orientación predominante: Norte</li>
-                <li>• Terminaciones de alto estándar</li>
-                <li>• Conectividad y servicios cercanos</li>
-                <li>• Excelente potencial de renta/plusvalía</li>
-              </ul>
-            </section>
+            {/* Destacados */}
+            <h2 className="gp-section mt-10">CARACTERÍSTICAS DESTACADAS</h2>
+            <ul className="mt-3 grid sm:grid-cols-2 gap-x-8 gap-y-2 text-slate-700">
+              <li>• Orientación predominante: Norte</li>
+              <li>• Terminaciones de alto estándar</li>
+              <li>• Conectividad y servicios cercanos</li>
+              <li>• Excelente potencial de renta/plusvalía</li>
+            </ul>
 
-            {/* Explora el sector (cierre de la página) */}
-            <section className="mt-12">
-              <h2 className="text-xl font-semibold">Explora el sector</h2>
-              <div className="mt-3 h-72 w-full bg-slate-100 flex items-center justify-center text-slate-500">
-                <span className="text-sm">Mapa próximamente</span>
-              </div>
-            </section>
+            {/* Mapa */}
+            <h2 className="gp-section mt-10">EXPLORA EL SECTOR</h2>
+            <div className="mt-3 w-full h-80 bg-slate-200 overflow-hidden">
+              {(!loading && (prop?.comuna || prop?.region)) ? (
+                <>
+                  <iframe
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps?q=${encodeURIComponent([prop?.comuna, prop?.region].filter(Boolean).join(', '))}&output=embed`}
+                  />
+                  <div className="mt-2 text-sm">
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([prop?.comuna, prop?.region].filter(Boolean).join(', '))}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="underline"
+                      style={{ color: BRAND_BLUE }}
+                    >
+                      Ver en Google Maps
+                    </a>
+                    <span className="text-slate-500 ml-2">(ubicación referencial)</span>
+                  </div>
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm">Mapa próximamente</div>
+              )}
+            </div>
           </div>
 
-          {/* Columna derecha (CTA/Precio) */}
+          {/* Aside: precio + CTA (limpio, sin ID) */}
           <aside className="lg:col-span-1">
-            <div className="sticky top-24 border border-slate-200 p-5">
+            <div className="sticky top-[88px] border border-slate-200 p-4">
               <div className="text-sm text-slate-500">Precio</div>
-              <div className="mt-1 text-3xl font-semibold" style={{ color: BRAND_BLUE }}>
-                {showUF ? `UF ${nfUF.format(Number(row.precio_uf))}` : "Consultar"}
+              <div className="text-3xl font-semibold" style={{ color: BRAND_BLUE }}>
+                {loading ? '—' : (showUF ? `UF ${nfUF.format(prop!.precio_uf as number)}` : 'Consultar')}
               </div>
-              {/* CLP oculto por ahora (no lo estás calculando) */}
+              {(!loading && showCLP) && (
+                <div className="text-sm text-slate-500 mt-1">{nfCLP.format(prop!.precio_clp as number)}</div>
+              )}
               <div className="h-px bg-slate-200 my-4" />
-              <a
+              <Link
                 href="/contacto"
-                className="block text-center px-4 py-3 text-white rounded-none"
+                className="block text-center px-4 py-3 text-white"
                 style={{ background: BRAND_BLUE }}
               >
                 Solicitar información
-              </a>
+              </Link>
 
-              {/* Ficha rápida al estilo “JE” */}
-              <div className="mt-6 space-y-2 text-sm">
-                <Row label="ID" value={String(row.id || "—")} />
-                <Row label="Tipo" value={row.tipo ?? "—"} />
-                <Row label="Operación" value={row.operacion ? cap(row.operacion) : "—"} />
-                <Row label="Comuna" value={row.comuna ?? "—"} />
-                <Row label="Región" value={row.region ?? "—"} />
-                <Row label="Construidos" value={row.superficie_util_m2 != null ? `${nfINT.format(Number(row.superficie_util_m2))} m²` : "—"} />
-                <Row label="Terreno" value={row.superficie_terreno_m2 != null ? `${nfINT.format(Number(row.superficie_terreno_m2))} m²` : "—"} />
-              </div>
+              <dl className="mt-6 space-y-2 text-sm">
+                <Row label="Tipo" value={prop?.tipo ?? '—'} />
+                <Row label="Operación" value={prop?.operacion ? cap(prop.operacion) : '—'} />
+                <Row label="Comuna" value={prop?.comuna ?? '—'} />
+                <Row label="Región" value={prop?.region ?? '—'} />
+                <Row label="Construidos" value={prop?.superficie_util_m2 != null ? `${nfINT.format(prop.superficie_util_m2)} m²` : '—'} />
+                <Row label="Terreno" value={prop?.superficie_terreno_m2 != null ? `${nfINT.format(prop.superficie_terreno_m2)} m²` : '—'} />
+              </dl>
             </div>
           </aside>
         </div>
       </section>
+
+      {/* LIGHTBOX */}
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/90 text-white">
+          <button
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20"
+            aria-label="Cerrar"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          <div className="absolute inset-0 flex items-center justify-center">
+            <button onClick={prev} className="absolute left-4 md:left-8 p-3 bg-white/10 hover:bg-white/20"><ChevronLeft className="h-6 w-6" /></button>
+            <button onClick={next} className="absolute right-4 md:right-8 p-3 bg-white/10 hover:bg-white/20"><ChevronRight className="h-6 w-6" /></button>
+
+            <div ref={imgWrap} className="max-w-[95vw] max-h-[85vh] overflow-hidden">
+              <img
+                key={lightIndex}
+                src={images[lightIndex]}
+                alt=""
+                className="select-none"
+                style={{ transform: `scale(${zoom})`, transformOrigin: 'center center', transition: 'transform 120ms ease' }}
+                draggable={false}
+              />
+            </div>
+
+            <div className="absolute bottom-6 inset-x-0 flex items-center justify-center gap-2">
+              <button onClick={() => setZoom(z => Math.max(1, +(z - 0.1).toFixed(2)))} className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded"><Minus /></button>
+              <button onClick={() => setZoom(1)} className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded">100%</button>
+              <button onClick={() => setZoom(z => +(z + 0.1).toFixed(2))} className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded"><Plus /></button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
 
-/** ===== UI helpers ===== */
+/* ---------- UI helpers ---------- */
+function cap(s: string) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
+
+function Chip({ label }: { label: string }) {
+  return (
+    <span
+      className="inline-flex items-center px-3 py-1.5 border rounded-none text-sm"
+      style={{ borderColor: BRAND_BLUE, color: BRAND_DARK }}
+    >
+      {label}
+    </span>
+  );
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-2">
+    <div className="flex justify-between gap-3">
       <dt className="text-slate-500">{label}</dt>
       <dd className="text-slate-800">{value}</dd>
     </div>
   );
 }
-function cap(s: string) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+/* Título de sección “igual” al estilo del sitio (versión Tailwind) */
+declare module 'react' { interface HTMLAttributes<T> { } }
