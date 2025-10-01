@@ -1,9 +1,18 @@
-
 'use client';
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Bed, ShowerHead, Ruler, Gift, Users2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Bed,
+  ShowerHead,
+  Ruler,
+  Gift,
+  Users2,
+  Car,
+  Square,
+} from 'lucide-react';
 import useUf from '../hooks/useUf';
 import SmartSelect from '../components/SmartSelect';
 
@@ -18,7 +27,9 @@ type Property = {
   precio_clp?: number | null;
   dormitorios?: number | null;
   banos?: number | null;
+  estacionamientos?: number | null;          // NUEVO
   superficie_util_m2?: number | null;
+  superficie_terreno_m2?: number | null;     // NUEVO
   imagenes?: string[];
   images?: string[];
   coverImage?: string;
@@ -59,7 +70,6 @@ function getHeroImage(p?: Property) {
   ];
   const src = candList.find((s) => typeof s === 'string' && s.trim().length > 4);
   if (!src) return HERO_FALLBACK;
-  // si llega a venir una ruta relativa, igual funciona como bg-image en Next
   return src;
 }
 
@@ -87,43 +97,182 @@ type Region = (typeof REGIONES)[number];
 const COMUNAS_POR_REGION: Record<Region, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
   Tarapacá: ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica', 'Huara', 'Camiña', 'Colchane'],
-  Antofagasta: ['Antofagasta', 'Mejillones', 'Taltal', 'Sierra Gorda', 'Calama', 'San Pedro de Atacama', 'María Elena', 'Tocopilla'],
-  Atacama: ['Copiapó', 'Caldera', 'Tierra Amarilla', 'Vallenar', 'Huasco', 'Freirina', 'Chañaral', 'Diego de Almagro'],
-  Coquimbo: ['La Serena', 'Coquimbo', 'Andacollo', 'Vicuña', 'Ovalle', 'Monte Patria', 'Punitaqui', 'Illapel', 'Los Vilos', 'Salamanca'],
-  Valparaíso: ['Valparaíso', 'Viña del Mar', 'Concón', 'Quilpué', 'Villa Alemana', 'Quillota', 'La Calera', 'San Antonio', 'Casablanca', 'Quintero', 'Puchuncaví', 'Limache', 'Olmué'],
-  "O'Higgins": ['Rancagua', 'Machalí', 'Graneros', 'Mostazal', 'Doñihue', 'San Vicente', 'Santa Cruz', 'San Fernando', 'Pichilemu'],
-  Maule: ['Talca', 'Maule', 'San Clemente', 'Cauquenes', 'Curicó', 'Molina', 'Rauco', 'Linares', 'Parral'],
+  Antofagasta: [
+    'Antofagasta',
+    'Mejillones',
+    'Taltal',
+    'Sierra Gorda',
+    'Calama',
+    'San Pedro de Atacama',
+    'María Elena',
+    'Tocopilla',
+  ],
+  Atacama: [
+    'Copiapó',
+    'Caldera',
+    'Tierra Amarilla',
+    'Vallenar',
+    'Huasco',
+    'Freirina',
+    'Chañaral',
+    'Diego de Almagro',
+  ],
+  Coquimbo: [
+    'La Serena',
+    'Coquimbo',
+    'Andacollo',
+    'Vicuña',
+    'Ovalle',
+    'Monte Patria',
+    'Punitaqui',
+    'Illapel',
+    'Los Vilos',
+    'Salamanca',
+  ],
+  Valparaíso: [
+    'Valparaíso',
+    'Viña del Mar',
+    'Concón',
+    'Quilpué',
+    'Villa Alemana',
+    'Quillota',
+    'La Calera',
+    'San Antonio',
+    'Casablanca',
+    'Quintero',
+    'Puchuncaví',
+    'Limache',
+    'Olmué',
+  ],
+  "O'Higgins": [
+    'Rancagua',
+    'Machalí',
+    'Graneros',
+    'Mostazal',
+    'Doñihue',
+    'San Vicente',
+    'Santa Cruz',
+    'San Fernando',
+    'Pichilemu',
+  ],
+  Maule: [
+    'Talca',
+    'Maule',
+    'San Clemente',
+    'Cauquenes',
+    'Curicó',
+    'Molina',
+    'Rauco',
+    'Linares',
+    'Parral',
+  ],
   'Ñuble': ['Chillán', 'Chillán Viejo', 'San Carlos', 'Coihueco', 'Bulnes', 'Quirihue'],
-  'Biobío': ['Concepción', 'Talcahuano', 'Hualpén', 'San Pedro de la Paz', 'Chiguayante', 'Coronel', 'Lota', 'Los Ángeles', 'Arauco', 'Curanilahue'],
-  'La Araucanía': ['Temuco', 'Padre Las Casas', 'Villarrica', 'Pucón', 'Angol', 'Victoria', 'Nueva Imperial'],
+  'Biobío': [
+    'Concepción',
+    'Talcahuano',
+    'Hualpén',
+    'San Pedro de la Paz',
+    'Chiguayante',
+    'Coronel',
+    'Lota',
+    'Los Ángeles',
+    'Arauco',
+    'Curanilahue',
+  ],
+  'La Araucanía': [
+    'Temuco',
+    'Padre Las Casas',
+    'Villarrica',
+    'Pucón',
+    'Angol',
+    'Victoria',
+    'Nueva Imperial',
+  ],
   'Los Ríos': ['Valdivia', 'Lanco', 'Panguipulli', 'Los Lagos', 'La Unión', 'Río Bueno'],
   'Los Lagos': ['Puerto Montt', 'Puerto Varas', 'Frutillar', 'Osorno', 'Castro', 'Ancud', 'Quellón'],
   Aysén: ['Coyhaique', 'Aysén', 'Cisnes', 'Chile Chico'],
   Magallanes: ['Punta Arenas', 'Puerto Natales', 'Porvenir', 'Cabo de Hornos'],
   'Metropolitana de Santiago': [
-    'Santiago', 'Providencia', 'Las Condes', 'Vitacura', 'Lo Barnechea', 'Ñuñoa', 'La Reina',
-    'Macul', 'Peñalolén', 'La Florida', 'Puente Alto', 'San Joaquín', 'San Miguel', 'La Cisterna',
-    'Cerrillos', 'Estación Central', 'Quinta Normal', 'Recoleta', 'Independencia', 'Huechuraba',
-    'Conchalí', 'Renca', 'Quilicura', 'Pudahuel', 'Lo Prado', 'Cerro Navia', 'Maipú',
-    'Pedro Aguirre Cerda', 'San Ramón', 'El Bosque', 'La Granja', 'San Bernardo',
-    'Buin', 'Paine', 'Calera de Tango', 'Talagante', 'Peñaflor', 'Isla de Maipo', 'El Monte',
-    'Padre Hurtado', 'Colina', 'Lampa', 'Tiltil', 'Melipilla', 'Curacaví', 'María Pinto',
-    'San José de Maipo', 'Pirque'
+    'Santiago',
+    'Providencia',
+    'Las Condes',
+    'Vitacura',
+    'Lo Barnechea',
+    'Ñuñoa',
+    'La Reina',
+    'Macul',
+    'Peñalolén',
+    'La Florida',
+    'Puente Alto',
+    'San Joaquín',
+    'San Miguel',
+    'La Cisterna',
+    'Cerrillos',
+    'Estación Central',
+    'Quinta Normal',
+    'Recoleta',
+    'Independencia',
+    'Huechuraba',
+    'Conchalí',
+    'Renca',
+    'Quilicura',
+    'Pudahuel',
+    'Lo Prado',
+    'Cerro Navia',
+    'Maipú',
+    'Pedro Aguirre Cerda',
+    'San Ramón',
+    'El Bosque',
+    'La Granja',
+    'San Bernardo',
+    'Buin',
+    'Paine',
+    'Calera de Tango',
+    'Talagante',
+    'Peñaflor',
+    'Isla de Maipo',
+    'El Monte',
+    'Padre Hurtado',
+    'Colina',
+    'Lampa',
+    'Tiltil',
+    'Melipilla',
+    'Curacaví',
+    'María Pinto',
+    'San José de Maipo',
+    'Pirque',
   ],
 };
 
-const SERVICIOS = ['Comprar','Vender','Arrendar','Gestionar un arriendo','Consultoría específica'];
-const TIPO_PROPIEDAD = ['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno'];
+const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
+const TIPO_PROPIEDAD = ['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'];
 
 /* ===== util: romanos para regiones (solo display) ===== */
-const ROMANOS = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI'];
+const ROMANOS = [
+  'I',
+  'II',
+  'III',
+  'IV',
+  'V',
+  'VI',
+  'VII',
+  'VIII',
+  'IX',
+  'X',
+  'XI',
+  'XII',
+  'XIII',
+  'XIV',
+  'XV',
+  'XVI',
+];
 const displayRegion = (r: Region) => {
   const idx = REGIONES.indexOf(r);
   const roman = ROMANOS[idx] ?? '';
   return roman ? `${roman} - ${r}` : r;
 };
 const extractRegionName = (value: string): Region | '' => {
-  const v = value.includes(' - ') ? (value.split(' - ').slice(1).join(' - ')) : value;
+  const v = value.includes(' - ') ? value.split(' - ').slice(1).join(' - ') : value;
   const match = REGIONES.find((r) => r.toLowerCase() === v.trim().toLowerCase());
   return (match as Region) || '';
 };
@@ -134,7 +283,7 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const statDormRef = useRef<HTMLDivElement | null>(null);
+  const firstTileRef = useRef<HTMLDivElement | null>(null);
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const verMasRef = useRef<HTMLAnchorElement | null>(null);
 
@@ -157,14 +306,18 @@ export default function HomePage() {
         if (mounted) setDestacadas([]);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
     if (!destacadas.length) return;
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, [destacadas.length]);
 
   const go = (dir: -1 | 1) => {
@@ -189,7 +342,8 @@ export default function HomePage() {
     const dx = touchDeltaX.current;
     const TH = 50;
     if (Math.abs(dx) > TH) {
-      if (dx < 0) go(1); else go(-1);
+      if (dx < 0) go(1);
+      else go(-1);
     }
     touchStartX.current = null;
     touchDeltaX.current = 0;
@@ -205,7 +359,9 @@ export default function HomePage() {
     capFirst(active?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
     capFirst(active?.tipo),
     capFirst(active?.operacion),
-  ].filter(Boolean).join(' · ');
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const ufHoy = useUf();
 
@@ -227,53 +383,41 @@ export default function HomePage() {
     return 0;
   }, [active, ufHoy]);
 
+  // Ajusta el tamaño del botón "Ver más" para que calce con el alto del box de precios
   const applyButtonSize = () => {
-    const w = statDormRef.current?.offsetWidth;
     const h = priceBoxRef.current?.offsetHeight;
     const a = verMasRef.current;
-    if (a && w) a.style.width = `${w}px`;
     if (a && h) a.style.height = `${h}px`;
     if (a) {
       a.style.display = 'inline-flex';
       a.style.alignItems = 'center';
       a.style.justifyContent = 'center';
+      a.style.paddingLeft = '16px';
+      a.style.paddingRight = '16px';
     }
   };
   useEffect(() => {
     applyButtonSize();
-    // Protegemos ResizeObserver para evitar errores en ciertos navegadores
     let ro: ResizeObserver | null = null;
     try {
       if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
         ro = new ResizeObserver(applyButtonSize);
-        if (statDormRef.current) ro.observe(statDormRef.current);
         if (priceBoxRef.current) ro.observe(priceBoxRef.current);
       }
     } catch {
-      // no-op (mejor no romper la página)
+      // no-op
     }
     return () => {
-      try { ro?.disconnect(); } catch {}
+      try {
+        ro?.disconnect();
+      } catch {}
     };
   }, [active]);
 
-  /* --------- Estado formulario referidos --------- */
-  const [regionInput, setRegionInput] = useState('');
-  const [comunaInput, setComunaInput] = useState('');
-  const [minUF, setMinUF] = useState('');
-  const [maxUF, setMaxUF] = useState('');
-  const [servicio, setServicio] = useState('');
-  const [tipo, setTipo] = useState('');
-
-  const regionSel = extractRegionName(regionInput);
-  const comunas = (regionSel ? COMUNAS_POR_REGION[regionSel] : []);
-
-  const formatUFinput = (raw: string) => {
-    const digits = raw.replace(/\D+/g, '');
-    if (!digits) return '';
-    const n = parseInt(digits, 10);
-    return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n);
-  };
+  // helpers display
+  const dash = '—';
+  const fmtInt = (n: number | null | undefined) =>
+    typeof n === 'number' ? new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n) : dash;
 
   return (
     <main className="bg-white">
@@ -293,30 +437,43 @@ export default function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[620px]">
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[820px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
               <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
-              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div ref={statDormRef} className="bg-gray-50 p-2.5 md:p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
-                    <Bed className="h-4 w-4" /> Dormitorios
+              {/* ===== Barra de 5 tiles (igual a la de la ficha) ===== */}
+              <div className="mt-4">
+                <div className="grid grid-cols-5 border border-slate-200 bg-white text-center">
+                  {/* Dormitorios */}
+                  <div
+                    ref={firstTileRef}
+                    className="flex flex-col items-center justify-center gap-1 py-3 md:py-4 border-r border-slate-200"
+                  >
+                    <Bed className="h-5 w-5 text-[#6C819B]" />
+                    <div className="text-lg text-slate-800">{active?.dormitorios ?? dash}</div>
                   </div>
-                  <div className="text-base">{active?.dormitorios ?? '—'}</div>
-                </div>
-                <div className="bg-gray-50 p-2.5 md:p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
-                    <ShowerHead className="h-4 w-4" /> Baños
+                  {/* Baños */}
+                  <div className="flex flex-col items-center justify-center gap-1 py-3 md:py-4 border-r border-slate-200">
+                    <ShowerHead className="h-5 w-5 text-[#6C819B]" />
+                    <div className="text-lg text-slate-800">{active?.banos ?? dash}</div>
                   </div>
-                  <div className="text-base">{active?.banos ?? '—'}</div>
-                </div>
-                <div className="bg-gray-50 p-2.5 md:p-3">
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] md:text-xs text-gray-500">
-                    <Ruler className="h-4 w-4" /> Área (m²)
+                  {/* Estacionamientos */}
+                  <div className="flex flex-col items-center justify-center gap-1 py-3 md:py-4 border-r border-slate-200">
+                    <Car className="h-5 w-5 text-[#6C819B]" />
+                    <div className="text-lg text-slate-800">{active?.estacionamientos ?? dash}</div>
                   </div>
-                  <div className="text-base">{active?.superficie_util_m2 ?? '—'}</div>
+                  {/* m² construidos */}
+                  <div className="flex flex-col items-center justify-center gap-1 py-3 md:py-4 border-r border-slate-200">
+                    <Ruler className="h-5 w-5 text-[#6C819B]" />
+                    <div className="text-lg text-slate-800">{fmtInt(active?.superficie_util_m2)}</div>
+                  </div>
+                  {/* m² terreno (solo número) */}
+                  <div className="flex flex-col items-center justify-center gap-1 py-3 md:py-4">
+                    <Square className="h-5 w-5 text-[#6C819B]" />
+                    <div className="text-lg text-slate-800">{fmtInt(active?.superficie_terreno_m2)}</div>
+                  </div>
                 </div>
               </div>
 
@@ -326,7 +483,7 @@ export default function HomePage() {
                     <Link
                       ref={verMasRef}
                       href={`/propiedades/${active.id}`}
-                      className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+                      className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white px-4"
                       style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
                     >
                       Ver más
@@ -336,7 +493,9 @@ export default function HomePage() {
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
                   <div className="text-[1.25rem] md:text-[1.35rem] font-semibold text-[#0A2E57] leading-none">
-                    {precioUfHero > 0 ? fmtUF(precioUfHero) : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
+                    {precioUfHero > 0
+                      ? fmtUF(precioUfHero)
+                      : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
                   </div>
                   <div className="text-sm md:text-base text-slate-600 mt-1">
                     {precioClpHero > 0 ? fmtCLP(precioClpHero) : ''}
@@ -368,7 +527,10 @@ export default function HomePage() {
           {destacadas.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {destacadas.map((_, idx) => (
-                <span key={idx} className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`} />
+                <span
+                  key={idx}
+                  className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`}
+                />
               ))}
             </div>
           )}
@@ -384,15 +546,36 @@ export default function HomePage() {
 
         <p className="mt-3 max-w-4xl text-slate-700">
           En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
-          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera para que cada decisión inmobiliaria sea segura y rentable.
+          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera para que
+          cada decisión inmobiliaria sea segura y rentable.
         </p>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { nombre: 'Carolina San Martín', cargo: 'SOCIA FUNDADORA', profesion: 'Arquitecta', foto: '/team/carolina-san-martin.png' },
-            { nombre: 'Alberto Gesswein', cargo: 'SOCIO', profesion: 'Periodista y gestor de proyectos', foto: '/team/alberto-gesswein.png' },
-            { nombre: 'Jan Gesswein', cargo: 'SOCIO', profesion: 'Abogado', foto: '/team/jan-gesswein.png' },
-            { nombre: 'Kay Gesswein', cargo: 'SOCIO', profesion: 'Ingeniero comercial · Magíster en finanzas', foto: '/team/kay-gesswein.png' },
+            {
+              nombre: 'Carolina San Martín',
+              cargo: 'SOCIA FUNDADORA',
+              profesion: 'Arquitecta',
+              foto: '/team/carolina-san-martin.png',
+            },
+            {
+              nombre: 'Alberto Gesswein',
+              cargo: 'SOCIO',
+              profesion: 'Periodista y gestor de proyectos',
+              foto: '/team/alberto-gesswein.png',
+            },
+            {
+              nombre: 'Jan Gesswein',
+              cargo: 'SOCIO',
+              profesion: 'Abogado',
+              foto: '/team/jan-gesswein.png',
+            },
+            {
+              nombre: 'Kay Gesswein',
+              cargo: 'SOCIO',
+              profesion: 'Ingeniero comercial · Magíster en finanzas',
+              foto: '/team/kay-gesswein.png',
+            },
           ].map((m) => (
             <article
               key={m.nombre}
@@ -404,7 +587,9 @@ export default function HomePage() {
                   src={m.foto}
                   alt={m.nombre}
                   className="h-full w-full object-cover"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = 'none';
+                  }}
                 />
               </div>
 
@@ -458,15 +643,24 @@ export default function HomePage() {
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="Tu nombre completo" />
+                <input
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="Tu nombre completo"
+                />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="tu@email.com" />
+                <input
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="tu@email.com"
+                />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
+                <input
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="+56 9 1234 5678"
+                />
               </div>
             </div>
 
@@ -474,15 +668,24 @@ export default function HomePage() {
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="Nombre del referido" />
+                <input
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="Nombre del referido"
+                />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="correo@referido.com" />
+                <input
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="correo@referido.com"
+                />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
-                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
+                <input
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="+56 9 1234 5678"
+                />
               </div>
             </div>
 
@@ -493,8 +696,8 @@ export default function HomePage() {
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <SmartSelect
                   options={SERVICIOS}
-                  value={servicio}
-                  onChange={(v) => setServicio(v)}
+                  value={''}
+                  onChange={() => {}}
                   placeholder="Seleccionar o escribir…"
                   className="w-full"
                 />
@@ -505,8 +708,8 @@ export default function HomePage() {
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <SmartSelect
                   options={TIPO_PROPIEDAD}
-                  value={tipo}
-                  onChange={(v) => setTipo(v)}
+                  value={''}
+                  onChange={() => {}}
                   placeholder="Seleccionar o escribir…"
                   className="w-full"
                 />
@@ -516,9 +719,9 @@ export default function HomePage() {
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
-                  options={REGIONES.map(r => displayRegion(r as Region))}
-                  value={regionInput}
-                  onChange={(v) => { setRegionInput(v); setComunaInput(''); }}
+                  options={REGIONES.map((r) => displayRegion(r as Region))}
+                  value={''}
+                  onChange={() => {}}
                   placeholder="Seleccionar o escribir…"
                   className="w-full"
                 />
@@ -528,11 +731,11 @@ export default function HomePage() {
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
-                  options={regionSel ? (COMUNAS_POR_REGION[regionSel] || []) : []}
-                  value={comunaInput}
-                  onChange={(v) => setComunaInput(v)}
-                  placeholder={regionSel ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
-                  disabled={!regionSel}
+                  options={[]}
+                  value={''}
+                  onChange={() => {}}
+                  placeholder="Selecciona una región primero"
+                  disabled
                   className="w-full"
                 />
               </div>
@@ -541,8 +744,6 @@ export default function HomePage() {
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
                 <input
-                  value={minUF}
-                  onChange={(e) => setMinUF(formatUFinput(e.target.value))}
                   inputMode="numeric"
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                   placeholder="0"
@@ -551,8 +752,6 @@ export default function HomePage() {
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
                 <input
-                  value={maxUF}
-                  onChange={(e) => setMaxUF(formatUFinput(e.target.value))}
                   inputMode="numeric"
                   className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
                   placeholder="0"
@@ -561,7 +760,11 @@ export default function HomePage() {
 
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
-                <textarea className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700" rows={4} placeholder="Cualquier información adicional que pueda ser útil..." />
+                <textarea
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
+                  rows={4}
+                  placeholder="Cualquier información adicional que pueda ser útil..."
+                />
               </div>
             </div>
 
@@ -569,14 +772,18 @@ export default function HomePage() {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
-                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)' }}
+                style={{
+                  boxShadow:
+                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                }}
               >
                 <Gift className="h-4 w-4" /> Enviar referido
               </button>
             </div>
 
             <p className="mt-3 text-center text-xs text-slate-500">
-              Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
+              Al enviar este formulario, aceptas nuestros términos del programa de referidos y política
+              de privacidad.
             </p>
           </div>
         </div>
