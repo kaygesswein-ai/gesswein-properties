@@ -1,14 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Bed, ShowerHead, Car, Ruler, Square,
   X, ChevronLeft, ChevronRight, Compass, TrendingUp, Droplets,
 } from 'lucide-react';
 
-/* ======================= Tipos ======================= */
+/* ---------------- Tipos ---------------- */
 type Property = {
   id: string;
   slug?: string | null;
@@ -33,86 +33,39 @@ type Property = {
   derechos_agua?: boolean | null;
 };
 
-/* =================== Formateadores =================== */
+/* ---------------- Nº formatters ---------------- */
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-/* ===================== Utilidades ==================== */
-const cls = (...s: (string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
+/* ---------------- Utils ---------------- */
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
+const cls = (...s: (string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
+const cap = (s?: string | null) => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : '';
+const capWords = (s?: string | null) => (s ?? '').split(' ').map(cap).join(' ').trim();
+const getHeroImage = (p?: Property | null) =>
+  p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
 
-function getHeroImage(p?: Property | null) {
-  const src = p?.imagenes?.[0];
-  return src && src.trim().length > 4 ? src : HERO_FALLBACK;
-}
-
-const capFirst = (s?: string | null) => (s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : '');
-const capWords = (s?: string | null) => (s ?? '').split(' ').map(capFirst).join(' ').trim();
-
-/** adivina categoría por nombre de archivo (para tabs de galería) */
-function guessCategory(url: string): 'exterior' | 'interior' {
-  const u = url.toLowerCase();
-  const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
-  const int = /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
-  if (ext.test(u)) return 'exterior';
-  if (int.test(u)) return 'interior';
-  return 'exterior';
-}
-
-/* ========= UF local ========= */
+/* ---------------- UF local hook ---------------- */
 function useUf() {
-  const [uf, setUf] = useState<number | null>(null);
+  const [v, setV] = useState<number | null>(null);
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
         const r = await fetch('https://mindicador.cl/api/uf', { cache: 'no-store' });
         const j = await r.json().catch(() => null);
-        const v = Number(j?.serie?.[0]?.valor);
-        if (alive && Number.isFinite(v)) setUf(v);
+        const num = Number(j?.serie?.[0]?.valor);
+        if (alive && Number.isFinite(num)) setV(num);
       } catch {}
     })();
     return () => { alive = false; };
   }, []);
-  return uf;
+  return v;
 }
 
-/* =================== Lightbox =================== */
-function Lightbox({ open, images, index, onClose, onPrev, onNext }: {
-  open: boolean; images: string[]; index: number;
-  onClose: () => void; onPrev: () => void; onNext: () => void;
-}) {
-  useEffect(() => {
-    if (!open) return;
-    const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') onPrev();
-      if (e.key === 'ArrowRight') onNext();
-    };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
-  }, [open, onClose, onPrev, onNext]);
-
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
-      <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded">
-        <X className="text-white h-6 w-6" />
-      </button>
-      <button onClick={onPrev}  className="absolute left-3 md:left-6  p-2 bg-white/10 hover:bg-white/20 rounded">
-        <ChevronLeft className="text-white h-8 w-8" />
-      </button>
-      <img src={images[index]} alt="" className="max-h-[90vh] max-w-[92vw] object-contain" />
-      <button onClick={onNext}  className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded">
-        <ChevronRight className="text-white h-8 w-8" />
-      </button>
-    </div>
-  );
-}
-
-/* ===== Encabezado de sección (reincorporado) ===== */
+/* ---------------- SectionTitle ---------------- */
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2
@@ -124,52 +77,70 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ===== Tiles de stats (5) ===== */
-function HeroStatTiles({ p }: { p: Property | null }) {
+/* ---------------- Stat tiles ---------------- */
+function StatTiles({ p }: { p: Property | null }) {
   const dash = '—';
-  const vals = [
-    { icon: <Bed className="h-5 w-5" />,       v: p?.dormitorios },
+  const items = [
+    { icon: <Bed className="h-5 w-5" />,  v: p?.dormitorios },
     { icon: <ShowerHead className="h-5 w-5" />, v: p?.banos },
-    { icon: <Car className="h-5 w-5" />,        v: p?.estacionamientos },
-    { icon: <Ruler className="h-5 w-5" />,      v: p?.superficie_util_m2 ? nfINT.format(p.superficie_util_m2) : null },
-    { icon: <Square className="h-5 w-5" />,     v: p?.superficie_terreno_m2 ? nfINT.format(p.superficie_terreno_m2) : null },
+    { icon: <Car className="h-5 w-5" />, v: p?.estacionamientos },
+    { icon: <Ruler className="h-5 w-5" />, v: p?.superficie_util_m2 ? nfINT.format(p.superficie_util_m2) : null },
+    { icon: <Square className="h-5 w-5" />, v: p?.superficie_terreno_m2 ? nfINT.format(p.superficie_terreno_m2) : null },
   ];
 
   return (
     <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
-      {vals.map((t, i) => (
-        <div key={i} className={cls(
-          'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
-          i < 4 && 'border-r border-slate-200'
-        )}>
-          <div className="text-[#6C819B]">{t.icon}</div>
-          <div className="text-sm text-slate-800 leading-none">{t.v ?? dash}</div>
+      {items.map((it, i) => (
+        <div
+          key={i}
+          className={cls(
+            'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
+            i < 4 && 'border-r border-slate-200'
+          )}
+        >
+          <div className="text-[#6C819B]">{it.icon}</div>
+          <div className="text-sm text-slate-800 leading-none">{it.v ?? dash}</div>
         </div>
       ))}
     </div>
   );
 }
 
-/* ====== Features dinámicas ====== */
-function buildFeatures(p: Property | null) {
-  if (!p) return [];
-  const txt = `${p.titulo ?? ''} ${p.descripcion ?? ''}`.toLowerCase();
-  const feats: { icon: JSX.Element; text: string }[] = [];
+/* ---------------- Lightbox (idéntico) ---------------- */
+function Lightbox(props: {
+  open: boolean; images: string[]; index: number;
+  onClose: () => void; onPrev: () => void; onNext: () => void;
+}) {
+  const { open, images, index, onClose, onPrev, onNext } = props;
+  useEffect(() => {
+    if (!open) return;
+    const k = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') onPrev();
+      if (e.key === 'ArrowRight') onNext();
+    };
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [open, onClose, onPrev, onNext]);
 
-  const orient = (p as any)?.orientacion as string | undefined;
-  if (orient?.trim()) feats.push({ icon: <Compass className="h-4 w-4 text-slate-600" />, text: `Orientación ${orient}` });
-  else if (/\bnorte\b/.test(txt)) feats.push({ icon: <Compass className="h-4 w-4 text-slate-600" />, text: 'Orientación norte' });
-
-  const plus = (p as any)?.plusvalia === true || /plusval[íi]a|inversi[oó]n/.test(txt);
-  if (plus) feats.push({ icon: <TrendingUp className="h-4 w-4 text-slate-600" />, text: 'Potencial de plusvalía' });
-
-  const water = (p as any)?.derechos_agua === true || /derechos? de agua/.test(txt);
-  if (water) feats.push({ icon: <Droplets className="h-4 w-4 text-slate-600" />, text: 'Derechos de agua' });
-
-  return feats;
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
+      <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded">
+        <X className="text-white h-6 w-6" />
+      </button>
+      <button onClick={onPrev} className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded">
+        <ChevronLeft className="text-white h-8 w-8" />
+      </button>
+      <img src={images[index]} alt="" className="max-h-[90vh] max-w-[92vw] object-contain" />
+      <button onClick={onNext} className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded">
+        <ChevronRight className="text-white h-8 w-8" />
+      </button>
+    </div>
+  );
 }
 
-/* ======================= Página ======================= */
+/* ---------------- Página ---------------- */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
   const ufHoy = useUf();
@@ -184,21 +155,20 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { cancel = true; };
   }, [params.id]);
 
-  /* ---------- cálculos ---------- */
+  /* ----- hero helpers ----- */
   const bg = useMemo(() => getHeroImage(prop), [prop]);
   const linea = [
     capWords(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
-    capFirst(prop?.tipo),
-    capFirst(prop?.operacion),
+    cap(prop?.tipo),
+    cap(prop?.operacion),
   ].filter(Boolean).join(' · ');
 
   const uf = prop?.precio_uf ?? (prop?.precio_clp && ufHoy ? Math.round(prop.precio_clp / ufHoy) : null);
   const clp = prop?.precio_clp ?? (prop?.precio_uf && ufHoy ? Math.round(prop.precio_uf * ufHoy) : null);
 
-  /* ---------------- Render ---------------- */
   return (
     <main className="bg-white">
-      {/* ---------------- HERO ---------------- */}
+      {/* HERO */}
       <section className="relative w-full isolate overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-cover bg-center" style={{ backgroundImage: `url(${bg})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
@@ -206,15 +176,10 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16">
           <div className="w-full">
             <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[420px]">
-              {/* título sin negrita */}
-              <h1 className="text-[18px] md:text-[20px] text-slate-800">
-                {prop?.titulo ?? 'Propiedad'}
-              </h1>
+              <h1 className="text-[18px] md:text-[20px] text-slate-800">{prop?.titulo ?? 'Propiedad'}</h1>
               <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
 
-              <div className="mt-4">
-                <HeroStatTiles p={prop} />
-              </div>
+              <div className="mt-4"><StatTiles p={prop} /></div>
 
               <div className="mt-4 flex items-end gap-3">
                 <Link
@@ -223,14 +188,11 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 >
                   Solicitar información
                 </Link>
-
                 <div className="ml-auto text-right">
                   <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
                     {uf ? `UF ${nfUF.format(uf)}` : 'Consultar'}
                   </div>
-                  {clp && (
-                    <div className="text-sm text-slate-600 mt-[2px]">$ {nfCLP.format(clp)}</div>
-                  )}
+                  {clp && <div className="text-sm text-slate-600 mt-[2px]">$ {nfCLP.format(clp)}</div>}
                 </div>
               </div>
             </div>
@@ -238,13 +200,13 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* ---------------- GALERÍA + DETALLES (sin cambios) ---------------- */}
+      {/* Galería + resto (idéntico) */}
       <GalleryAndDetails prop={prop} />
     </main>
   );
 }
 
-/* ---------- Galería + Descripción + Features + Mapa (sin cambios) ---------- */
+/* ---------- Galería + Descripción + Features + Mapa ---------- */
 function GalleryAndDetails({ prop }: { prop: Property | null }) {
   const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
   const [lbOpen, setLbOpen] = useState(false);
@@ -270,6 +232,7 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
   const prevLb = () => setLbIndex((i) => (i - 1 + list.length) % list.length);
   const nextLb = () => setLbIndex((i) => (i + 1) % list.length);
 
+  /* ---- render ---- */
   return (
     <>
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -288,7 +251,9 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
               {t === 'todas' ? 'Todas' : t[0].toUpperCase() + t.slice(1)}
             </button>
           ))}
-          <span className="ml-auto text-sm text-slate-500">{list.length} {list.length === 1 ? 'foto' : 'fotos'}</span>
+          <span className="ml-auto text-sm text-slate-500">
+            {list.length} {list.length === 1 ? 'foto' : 'fotos'}
+          </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -305,7 +270,8 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
+      {/* separador */}
+      <hr className="max-w-7xl mx-auto my-10 border-slate-200" />
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
@@ -314,7 +280,8 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         </p>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
+      {/* separador */}
+      <hr className="max-w-7xl mx-auto my-10 border-slate-200" />
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Características destacadas</SectionTitle>
@@ -336,7 +303,8 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         })()}
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
+      {/* separador */}
+      <hr className="max-w-7xl mx-auto my-10 border-slate-200" />
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <SectionTitle>Explora el sector</SectionTitle>
@@ -347,5 +315,19 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
             className="w-full h-full"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768
-::contentReference[oaicite:0]{index=0}
+            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2scl!4v1713000000000"
+          />
+        </div>
+      </section>
+
+      <Lightbox
+        open={lbOpen}
+        images={list.map((x) => x.url)}
+        index={lbIndex}
+        onClose={closeLb}
+        onPrev={prevLb}
+        onNext={nextLb}
+      />
+    </>
+  );
+}
