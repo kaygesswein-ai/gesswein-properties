@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -225,7 +226,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* ---------------- GALERÍA + DETALLES (igual que antes) ---------------- */}
+      {/* ---------------- GALERÍA + DETALLES (sin cambios) ---------------- */}
       <GalleryAndDetails prop={prop} />
     </main>
   );
