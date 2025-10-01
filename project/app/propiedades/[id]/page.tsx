@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   Bed, ShowerHead, Car, Ruler, Square, MapPin, X, ChevronLeft, ChevronRight,
 } from 'lucide-react';
+import { Compass, TrendingUp } from 'lucide-react';
 
 const BRAND_BLUE = '#0A2E57';
 const BRAND_DARK = '#0f172a';
@@ -426,3 +427,120 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
     </>
   );
 }
+{/* ================= DETALLES (tiles como la referencia) ================= */}
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+  <SectionTitle>Detalles</SectionTitle>
+
+  {/* Grid de 5 tiles, bordes finos y mismo look que tu mock */}
+  <div className="
+      grid grid-cols-5
+      border border-slate-200 bg-white
+      text-center
+    ">
+    {/* helper local */}
+    {(() => {
+      const dash = '—';
+      const vDorm = (prop?.dormitorios ?? null) as number | null;
+      const vBanos = (prop?.banos ?? null) as number | null;
+      const vEstac = (prop?.estacionamientos ?? null) as number | null;
+      const vConst = (prop?.superficie_util_m2 ?? null) as number | null;
+      const vTerr = (prop?.superficie_terreno_m2 ?? null) as number | null;
+
+      const tileBase =
+        'flex flex-col items-center justify-center gap-1 py-4 md:py-5 bg-white';
+
+      const IconWrap = ({ children }: { children: React.ReactNode }) => (
+        <div className="text-[#6C819B]">{children}</div>
+      );
+
+      return (
+        <>
+          {/* Dormitorios */}
+          <div className={`${tileBase} border-r border-slate-200`}>
+            <IconWrap><Bed className="h-5 w-5" /></IconWrap>
+            <div className="text-lg text-slate-800">
+              {vDorm ?? dash}
+            </div>
+          </div>
+
+          {/* Baños */}
+          <div className={`${tileBase} border-r border-slate-200`}>
+            <IconWrap><ShowerHead className="h-5 w-5" /></IconWrap>
+            <div className="text-lg text-slate-800">
+              {vBanos ?? dash}
+            </div>
+          </div>
+
+          {/* Estacionamientos */}
+          <div className={`${tileBase} border-r border-slate-200`}>
+            <IconWrap><Car className="h-5 w-5" /></IconWrap>
+            <div className="text-lg text-slate-800">
+              {vEstac ?? dash}
+            </div>
+          </div>
+
+          {/* m² construidos (mantenemos la raya si no hay) */}
+          <div className={`${tileBase} border-r border-slate-200`}>
+            <IconWrap><Ruler className="h-5 w-5" /></IconWrap>
+            <div className="text-lg text-slate-800">
+              {vConst != null ? nfINT.format(vConst) : dash}
+            </div>
+          </div>
+
+          {/* m² terreno — solo número como en tu imagen (sin unidad) */}
+          <div className={`${tileBase}`}>
+            <IconWrap><Square className="h-5 w-5" /></IconWrap>
+            <div className="text-lg text-slate-800">
+              {vTerr != null ? nfINT.format(vTerr) : dash}
+            </div>
+          </div>
+        </>
+      );
+    })()}
+  </div>
+</section>
+
+{/* separador */}
+<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div className="h-px bg-slate-200 my-10" />
+</div>
+
+{/* ================= CARACTERÍSTICAS DESTACADAS ================= */}
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <SectionTitle>Características destacadas</SectionTitle>
+  <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
+    <li className="flex items-center gap-2">
+      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+        <Compass className="h-4 w-4 text-slate-600" />
+      </span>
+      <span>Orientación norte</span>
+    </li>
+    <li className="flex items-center gap-2">
+      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+        <TrendingUp className="h-4 w-4 text-slate-600" />
+      </span>
+      <span>Potencial de plusvalía</span>
+    </li>
+  </ul>
+</section>
+
+{/* separador */}
+<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div className="h-px bg-slate-200 my-10" />
+</div>
+
+{/* ================= EXPLORA EL SECTOR (mapa) ================= */}
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+  <SectionTitle>Explora el sector</SectionTitle>
+  <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
+    {/* círculo referencial como overlay suave */}
+    <div className="pointer-events-none absolute z-10 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[55%] aspect-square rounded-full border border-white/60 shadow-[0_0_0_2000px_rgba(255,255,255,0.25)]" />
+    <iframe
+      title="mapa"
+      className="w-full h-full"
+      loading="lazy"
+      referrerPolicy="no-referrer-when-downgrade"
+      src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2scl!4v1713000000000"
+    />
+  </div>
+</section>
