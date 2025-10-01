@@ -112,6 +112,18 @@ function Lightbox({ open, images, index, onClose, onPrev, onNext }: {
   );
 }
 
+/* ===== Encabezado de sección (reincorporado) ===== */
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2
+      className="mt-10 mb-4 text-[18px] md:text-[20px] tracking-[0.25em] uppercase text-slate-700"
+      style={{ letterSpacing: '0.25em' }}
+    >
+      {children}
+    </h2>
+  );
+}
+
 /* ===== Tiles de stats (5) ===== */
 function HeroStatTiles({ p }: { p: Property | null }) {
   const dash = '—';
@@ -335,19 +347,5 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
             className="w-full h-full"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2scl!4v1713000000000"
-          />
-        </div>
-      </section>
-
-      <Lightbox
-        open={lbOpen}
-        images={list.map((x) => x.url)}
-        index={lbIndex}
-        onClose={closeLb}
-        onPrev={prevLb}
-        onNext={nextLb}
-      />
-    </>
-  );
-}
+            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768
+::contentReference[oaicite:0]{index=0}
