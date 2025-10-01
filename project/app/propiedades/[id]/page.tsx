@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -28,9 +27,8 @@ type Property = {
   descripcion?: string | null;
   imagenes?: string[] | null;
   barrio?: string | null;
-  // opcionales futuros:
-  orientacion?: string | null;   // ej: "norte"
-  plusvalia?: boolean | null;    // true/false
+  orientacion?: string | null;
+  plusvalia?: boolean | null;
   derechos_agua?: boolean | null;
 };
 
@@ -49,6 +47,20 @@ function getHeroImage(p?: Property | null) {
   return (src && src.trim().length > 4) ? src : HERO_FALLBACK;
 }
 
+const capFirst = (s?: string | null) => {
+  if (!s) return '';
+  const lower = s.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+};
+
+/* capitaliza cada palabra (“Las Condes”) */
+const capWords = (s?: string | null) =>
+  (s ?? '')
+    .split(' ')
+    .map((w) => capFirst(w))
+    .join(' ')
+    .trim();
+
 /** adivina categoría por nombre de archivo (para tabs de galería) */
 function guessCategory(url: string): 'exterior' | 'interior' {
   const u = url.toLowerCase();
@@ -59,7 +71,7 @@ function guessCategory(url: string): 'exterior' | 'interior' {
   return /(\d{1,2}\s*)?(a|b)?\.(jpg|png|jpeg)/.test(u) ? 'exterior' : 'interior';
 }
 
-/* ========= UF local (para no depender de imports externos) ========= */
+/* ========= UF local ========= */
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -70,16 +82,14 @@ function useUf() {
         const json = await res.json().catch(() => null);
         const v = Number(json?.serie?.[0]?.valor);
         if (alive && Number.isFinite(v)) setUf(v);
-      } catch {
-        // si falla, dejamos uf en null y mostramos solo UF
-      }
+      } catch {}
     })();
     return () => { alive = false; };
   }, []);
   return uf;
 }
 
-/* =================== Lightbox simple =================== */
+/* =================== Lightbox =================== */
 function Lightbox({
   open, images, index, onClose, onPrev, onNext,
 }: {
@@ -139,7 +149,7 @@ function Lightbox({
   );
 }
 
-/* ===== Encabezado de sección (mismo look que “BÚSQUEDA”) ===== */
+/* ===== Encabezado de sección ===== */
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2
@@ -151,7 +161,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ===== Tiles de stats dentro del HERO (5 columnas) ===== */
+/* ===== Tiles de stats (5) ===== */
 function HeroStatTiles({ p }: { p: Property | null }) {
   const dash = '—';
   const vDorm = p?.dormitorios ?? null;
@@ -161,14 +171,14 @@ function HeroStatTiles({ p }: { p: Property | null }) {
   const vTerr = p?.superficie_terreno_m2 ?? null;
 
   const Tile = ({ icon, value, rightBorder = true }: { icon: React.ReactNode; value: React.ReactNode; rightBorder?: boolean }) => (
-    <div className={`flex flex-col items-center justify-center gap-1 py-2 md:py-3 bg-white ${rightBorder ? 'border-r border-slate-200' : ''}`}>
+    <div className={`flex flex-col items-center justify-center gap-1 py-2 md:py-3 bg-white/70 ${rightBorder ? 'border-r border-slate-200' : ''}`}>
       <div className="text-[#6C819B]">{icon}</div>
-      <div className="text-lg text-slate-800 leading-none">{value}</div>
+      <div className="text-sm text-slate-800 leading-none">{value}</div>
     </div>
   );
 
   return (
-    <div className="grid grid-cols-5 border border-slate-200 bg-white">
+    <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
       <Tile icon={<Bed className="h-5 w-5" />}       value={vDorm ?? dash} />
       <Tile icon={<ShowerHead className="h-5 w-5" />} value={vBanos ?? dash} />
       <Tile icon={<Car className="h-5 w-5" />}        value={vEst  ?? dash} />
@@ -178,7 +188,7 @@ function HeroStatTiles({ p }: { p: Property | null }) {
   );
 }
 
-/* ====== Features dinámicas (lee BD o infiere por texto) ====== */
+/* ====== Features dinámicas ====== */
 function buildFeatures(p: Property | null): { icon: JSX.Element; text: string }[] {
   if (!p) return [];
 
@@ -216,7 +226,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
   const ufHoy = useUf();
 
-  // fetch desde tu API
+  /* fetch */
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -229,22 +239,16 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { cancel = true; };
   }, [params.id]);
 
-  // Imagen hero
   const bg = useMemo(() => getHeroImage(prop), [prop]);
 
-  // Línea secundaria (comuna · tipo · operación)
-  const capFirst = (s?: string | null) => {
-    if (!s) return '';
-    const lower = s.toLowerCase();
-    return lower.charAt(0).toUpperCase() + lower.slice(1);
-  };
+  /* línea secundaria */
   const lineaSecundaria = [
-    capFirst(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
+    capWords(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
     capFirst(prop?.tipo),
     capFirst(prop?.operacion),
   ].filter(Boolean).join(' · ');
 
-  // Precios estilo Home
+  /* precios */
   const precioUfHero = useMemo(() => {
     if (!prop) return 0;
     if (typeof prop.precio_uf === 'number' && prop.precio_uf > 0) return Math.round(prop.precio_uf);
@@ -263,7 +267,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return 0;
   }, [prop, ufHoy]);
 
-  // Igualar tamaño botón/caja precio (como en Home)
+  /* igualar botón */
   const applyButtonSize = () => {
     const w = statDormRef.current?.offsetWidth;
     const h = priceBoxRef.current?.offsetHeight;
@@ -279,20 +283,17 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   useEffect(() => {
     applyButtonSize();
     let ro: ResizeObserver | null = null;
-    try {
-      if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
-        ro = new ResizeObserver(applyButtonSize);
-        if (statDormRef.current) ro.observe(statDormRef.current);
-        if (priceBoxRef.current) ro.observe(priceBoxRef.current);
-      }
-    } catch {}
+    if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
+      ro = new ResizeObserver(applyButtonSize);
+      if (statDormRef.current) ro.observe(statDormRef.current);
+      if (priceBoxRef.current) ro.observe(priceBoxRef.current);
+    }
   }, [prop]);
 
   /* ===================  HERO =================== */
   return (
     <main className="bg-white">
       <section className="relative w-full overflow-hidden isolate">
-        {/* Fondo con imagen (full viewport real) */}
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
           style={{ backgroundImage: `url(${bg})` }}
@@ -300,16 +301,14 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        {/* tarjeta como en Home, y la barra de 5 tiles adentro */}
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[620px]">
-              <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full md:max-w-[310px]">
+              <h1 className="text-[18px] md:text-[20px] font-semibold text-slate-800">
                 {prop?.titulo ?? 'Propiedad'}
               </h1>
               <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
-              {/* Barra de 5 tiles */}
               <div className="mt-4">
                 <HeroStatTiles p={prop} />
               </div>
@@ -338,7 +337,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </div>
             </div>
           </div>
-          {/* Sin flechas ni indicadores (una sola propiedad) */}
         </div>
       </section>
 
@@ -413,12 +411,8 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         </div>
       </section>
 
-      {/* separador */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
-      {/* DESCRIPCIÓN */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
         <p className="text-slate-700 leading-relaxed">
@@ -426,12 +420,8 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         </p>
       </section>
 
-      {/* separador */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
-      {/* CARACTERÍSTICAS DESTACADAS (dinámicas) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Características destacadas</SectionTitle>
         {(() => {
@@ -454,12 +444,8 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         })()}
       </section>
 
-      {/* separador */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
-      {/* EXPLORA EL SECTOR (mapa con overlay circular) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <SectionTitle>Explora el sector</SectionTitle>
         <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
@@ -474,7 +460,6 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         </div>
       </section>
 
-      {/* Lightbox */}
       <Lightbox
         open={lbOpen}
         images={list.map((x) => x.url)}
