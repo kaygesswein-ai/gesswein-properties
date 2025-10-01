@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  Bed, ShowerHead, Car, Ruler, Square, MapPin, X, ChevronLeft, ChevronRight,
+  Bed, ShowerHead, Car, Ruler, Square, MapPin, X, ChevronLeft, ChevronRight, Compass, TrendingUp,
 } from 'lucide-react';
 
 const BRAND_BLUE = '#0A2E57';
@@ -16,6 +16,7 @@ type Property = {
   titulo?: string | null;
   comuna?: string | null;
   region?: string | null;
+  barrio?: string | null;           // <-- agregado para el mapa dinámico
   operacion?: 'venta' | 'arriendo' | null;
   tipo?: string | null;
   precio_uf?: number | null;
@@ -44,8 +45,23 @@ function guessCategory(url: string): 'exterior' | 'interior' {
   const int = /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
   if (ext.test(u)) return 'exterior';
   if (int.test(u)) return 'interior';
-  // fallback: si contiene “png/jpg sin pista” alternamos una heurística simple
   return /(\d{1,2}\s*)?(a|b)?\.(jpg|png|jpeg)/.test(u) ? 'exterior' : 'interior';
+}
+
+/* ==== Helpers para el mapa (barrio -> comuna -> región) ==== */
+function buildMapTarget(p?: { barrio?: string | null; comuna?: string | null; region?: string | null }) {
+  const barrio = (p?.barrio || '').trim();
+  const comuna = (p?.comuna || '').trim();
+  const region = (p?.region || '').trim();
+
+  if (barrio && comuna) return { q: `${barrio}, ${comuna}`, zoom: 14 };
+  if (comuna)           return { q: `${comuna}`,           zoom: 12 };
+  if (region)           return { q: `${region}`,           zoom: 9  };
+  return { q: 'Santiago, Chile', zoom: 11 };
+}
+function mapEmbedSrc(p?: { barrio?: string | null; comuna?: string | null; region?: string | null }) {
+  const { q, zoom } = buildMapTarget(p);
+  return `https://www.google.com/maps?q=${encodeURIComponent(q)}&z=${zoom}&output=embed&hl=es`;
 }
 
 /* ========= Lightbox simple ========= */
@@ -133,10 +149,10 @@ function FeatureChips({ p }: { p: Property }) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Item icon={<Bed className="h-4 w-4" />} label={`${p.dormitorios ?? '—'}`} />
+      <Item icon={<Bed className="h-4 w-4" />}    label={`${p.dormitorios ?? '—'}`} />
       <Item icon={<ShowerHead className="h-4 w-4" />} label={`${p.banos ?? '—'}`} />
-      <Item icon={<Car className="h-4 w-4" />} label={`${p.estacionamientos ?? '—'}`} />
-      <Item icon={<Ruler className="h-4 w-4" />} label={`${p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'} m² const.`} />
+      <Item icon={<Car className="h-4 w-4" />}    label={`${p.estacionamientos ?? '—'}`} />
+      <Item icon={<Ruler className="h-4 w-4" />}  label={`${p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'} m² const.`} />
       <Item icon={<Square className="h-4 w-4" />} label={`${p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'} m² terreno`} />
     </div>
   );
@@ -185,6 +201,9 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const priceUF = prop?.precio_uf ? `UF ${nfUF.format(prop!.precio_uf!)}` : 'Consultar';
   const priceCLP = prop?.precio_clp && prop.precio_clp > 0 ? `$ ${nfCLP.format(prop.precio_clp)}` : '';
 
+  // Mapa dinámico
+  const mapSrc = useMemo(() => mapEmbedSrc(prop ?? undefined), [prop]);
+
   /* ====== Lightbox handlers ====== */
   const openLb = (idx: number) => { setLbIndex(idx); setLbOpen(true); };
   const closeLb = () => setLbOpen(false);
@@ -208,9 +227,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
           <div className="bg-white/80 backdrop-blur-md shadow-sm border border-slate-200 px-4 sm:px-6 py-4 md:py-5">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="min-w-0">
-                <h1
-                  className="text-[22px] md:text-[28px] font-normal text-slate-900"
-                >
+                <h1 className="text-[22px] md:text-[28px] font-normal text-slate-900">
                   {prop?.titulo ?? 'Propiedad'}
                 </h1>
                 <div className="mt-1 flex items-center gap-2 text-slate-600 text-[14px]">
@@ -241,12 +258,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
           </div>
         </div>
 
-        {/* Volver */}
-        <div className="absolute top-3 left-3">
-          <Link href="/propiedades" className="inline-flex items-center gap-2 text-white/90 hover:text-white text-sm">
-            <span>←</span> Volver a propiedades
-          </Link>
-        </div>
+        {/* (se elimina el botón “Volver a propiedades” como pediste) */}
       </section>
 
       {/* GALERÍA con tabs + lightbox */}
@@ -301,11 +313,15 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         <SectionTitle>Características destacadas</SectionTitle>
         <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
           <li className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">🧭</span>
-            <span>Orientación: Norte</span>
+            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+              <Compass className="h-4 w-4 text-slate-600" />
+            </span>
+            <span>Orientación norte</span>
           </li>
           <li className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">📈</span>
+            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+              <TrendingUp className="h-4 w-4 text-slate-600" />
+            </span>
             <span>Potencial de plusvalía</span>
           </li>
         </ul>
@@ -316,7 +332,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* EXPLORA EL SECTOR (mapa con zoom más cercano + “círculo” referencial) */}
+      {/* EXPLORA EL SECTOR (mapa dinámico + “círculo” referencial) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <SectionTitle>Explora el sector</SectionTitle>
         <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
@@ -327,8 +343,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
             className="w-full h-full"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            // centro en Las Condes; zoom 12-13 se ve prolijo
-            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2scl!4v1713000000000"
+            src={mapSrc}
           />
         </div>
       </section>
