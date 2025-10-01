@@ -47,6 +47,16 @@ const capWords = (s?: string | null) => (s ?? '').split(' ').map(cap).join(' ').
 const getHeroImage = (p?: Property | null) =>
   p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
 
+/* ---------- FUNCIÓN QUE FALTABA ---------- */
+function guessCategory(url: string): 'exterior' | 'interior' {
+  const u = url.toLowerCase();
+  const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
+  const int = /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
+  if (ext.test(u)) return 'exterior';
+  if (int.test(u)) return 'interior';
+  return 'exterior';
+}
+
 /* ---------------- UF local hook ---------------- */
 function useUf() {
   const [v, setV] = useState<number | null>(null);
@@ -106,7 +116,7 @@ function StatTiles({ p }: { p: Property | null }) {
   );
 }
 
-/* ---------------- Lightbox (idéntico) ---------------- */
+/* ---------------- Lightbox ---------------- */
 function Lightbox(props: {
   open: boolean; images: string[]; index: number;
   onClose: () => void; onPrev: () => void; onNext: () => void;
@@ -200,7 +210,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* Galería + resto (idéntico) */}
+      {/* Galería + resto */}
       <GalleryAndDetails prop={prop} />
     </main>
   );
@@ -232,7 +242,6 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
   const prevLb = () => setLbIndex((i) => (i - 1 + list.length) % list.length);
   const nextLb = () => setLbIndex((i) => (i + 1) % list.length);
 
-  /* ---- render ---- */
   return (
     <>
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
