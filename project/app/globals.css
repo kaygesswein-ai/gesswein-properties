@@ -104,7 +104,4 @@ html, body {
    A partir de ahora, usa utilidades de Tailwind por componente:
    uppercase / normal-case / font-semibold / font-bold, etc.
 */
-/* Título de sección consistente con “Propiedades” */
-.gp-section {
-  @apply text-sm tracking-widest font-semibold uppercase text-slate-700;
-}
+
