@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Bed, ShowerHead, Car, Ruler, Square,
@@ -33,25 +33,23 @@ type Property = {
   derechos_agua?: boolean | null;
 };
 
-/* =================== Formateadores =================== */
+/* ============ Formateadores ============ */
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-/* ===================== Utilidades ==================== */
+/* ============== Utilidades ============== */
 const cls = (...s: (string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-function getHeroImage(p?: Property | null) {
-  const src = p?.imagenes?.[0];
-  return src && src.trim().length > 4 ? src : HERO_FALLBACK;
-}
-
 const capFirst = (s?: string | null) => (s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : '');
 const capWords = (s?: string | null) => (s ?? '').split(' ').map(capFirst).join(' ').trim();
+const getHeroImage = (p?: Property | null) => {
+  const src = p?.imagenes?.[0];
+  return src && src.trim().length > 4 ? src : HERO_FALLBACK;
+};
 
-/** adivina categoría por nombre de archivo (para tabs de galería) */
 function guessCategory(url: string): 'exterior' | 'interior' {
   const u = url.toLowerCase();
   const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
@@ -68,9 +66,9 @@ function useUf() {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch('https://mindicador.cl/api/uf', { cache: 'no-store' });
+        const res  = await fetch('https://mindicador.cl/api/uf', { cache: 'no-store' });
         const json = await res.json().catch(() => null);
-        const v = Number(json?.serie?.[0]?.valor);
+        const v    = Number(json?.serie?.[0]?.valor);
         if (alive && Number.isFinite(v)) setUf(v);
       } catch {}
     })();
@@ -79,26 +77,21 @@ function useUf() {
   return uf;
 }
 
-/* =================== Lightbox =================== */
-function Lightbox({
-  open, images, index, onClose, onPrev, onNext,
-}: {
-  open: boolean;
-  images: string[];
-  index: number;
-  onClose: () => void;
-  onPrev: () => void;
-  onNext: () => void;
+/* ============ Lightbox ============ */
+function Lightbox(props: {
+  open: boolean; images: string[]; index: number;
+  onClose: () => void; onPrev: () => void; onNext: () => void;
 }) {
+  const { open, images, index, onClose, onPrev, onNext } = props;
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') onPrev();
-      if (e.key === 'ArrowRight') onNext();
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape')      onClose();
+      if (e.key === 'ArrowLeft')   onPrev();
+      if (e.key === 'ArrowRight')  onNext();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
   }, [open, onClose, onPrev, onNext]);
 
   if (!open) return null;
@@ -118,7 +111,7 @@ function Lightbox({
   );
 }
 
-/* ===== Encabezado de sección ===== */
+/* =========== Section Title =========== */
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2
@@ -198,10 +191,8 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     capFirst(prop?.operacion),
   ].filter(Boolean).join(' · ');
 
-  const uf = prop?.precio_uf
-    ?? (prop?.precio_clp && ufHoy ? Math.round(prop.precio_clp / ufHoy) : null);
-  const clp = prop?.precio_clp
-    ?? (prop?.precio_uf && ufHoy ? Math.round(prop.precio_uf * ufHoy) : null);
+  const uf  = prop?.precio_uf ?? (prop?.precio_clp && ufHoy ? Math.round(prop.precio_clp / ufHoy) : null);
+  const clp = prop?.precio_clp ?? (prop?.precio_uf && ufHoy ? Math.round(prop.precio_uf * ufHoy) : null);
 
   return (
     <main className="bg-white">
@@ -221,9 +212,10 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </div>
 
               <div className="mt-4 flex items-end gap-3">
+                {/* BOTÓN CON ALTURA FIJA PARA ALINEAR CON PRECIO */}
                 <Link
                   href="/contacto"
-                  className="inline-flex px-3 py-[6px] text-sm rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+                  className="inline-flex items-center justify-center h-[46px] md:h-[50px] px-4 text-sm rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
                 >
                   Solicitar información
                 </Link>
@@ -240,7 +232,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* ---------------- GALERÍA + DETALLES (todo igual) ---------------- */}
+      {/* ---------------- GALERÍA + DETALLES ---------------- */}
       <GalleryAndDetails prop={prop} />
     </main>
   );
@@ -267,10 +259,10 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
   }, [images]);
 
   const list = imagesByCat[tab];
-  const openLb = (i: number) => { setLbIndex(i); setLbOpen(true); };
+  const openLb  = (i: number) => { setLbIndex(i); setLbOpen(true); };
   const closeLb = () => setLbOpen(false);
-  const prevLb = () => setLbIndex((i) => (i - 1 + list.length) % list.length);
-  const nextLb = () => setLbIndex((i) => (i + 1) % list.length);
+  const prevLb  = () => setLbIndex((i) => (i - 1 + list.length) % list.length);
+  const nextLb  = () => setLbIndex((i) => (i + 1) % list.length);
 
   return (
     <>
