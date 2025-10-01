@@ -1,88 +1,125 @@
 // app/propiedades/[id]/page.tsx
-import Image from "next/image";
-import { notFound } from "next/navigation";   // <-- solo notFound aquí
-import { headers } from "next/headers";       // <-- headers viene de next/headers
+import { notFound, } from "next/navigation";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 type Row = Record<string, any> | null;
 
-async function fetchProperty(idOrSlug: string): Promise<Row> {
-  // Construir URL ABSOLUTA para que el fetch funcione en el server
+async function fetchFromApi(idOrSlug: string): Promise<Row> {
   const h = headers();
   const host = h.get("host") || process.env.VERCEL_URL || "localhost:3000";
-  const isProd = !!process.env.VERCEL_URL || host.includes("vercel.app");
-  const base = `${isProd ? "https" : "http"}://${host}`;
+  const proto = host.includes("localhost") ? "http" : "https";
+  const base = `${proto}://${host}`;
 
-  const url = `${base}/api/propiedades/${encodeURIComponent(idOrSlug)}`;
+  const res = await fetch(
+    `${base}/api/propiedades/${encodeURIComponent(idOrSlug)}`,
+    { cache: "no-store" }
+  ).catch(() => null as any);
 
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) return null;
-
+  if (!res || !res.ok) return null;
   const json = await res.json().catch(() => null);
   return (json?.data as Row) ?? null;
 }
 
-export default async function PropertyPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const row = await fetchProperty(params.id);
+async function fetchFromPostgrest(idOrSlug: string): Promise<Row> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, "");
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+
+  const head = {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    Accept: "application/json",
+  };
+
+  // 1) por slug
+  let qs = new URLSearchParams();
+  qs.set("select", "*");
+  qs.set("slug", `eq.${idOrSlug}`);
+  qs.set("limit", "1");
+
+  let r = await fetch(`${url}/rest/v1/propiedades?${qs.toString()}`, {
+    headers: head,
+    cache: "no-store",
+  }).catch(() => null as any);
+
+  if (r && r.ok) {
+    const a = await r.json().catch(() => null);
+    if (Array.isArray(a) && a.length) return a[0] as Row;
+  }
+
+  // 2) por id
+  qs = new URLSearchParams();
+  qs.set("select", "*");
+  qs.set("id", `eq.${idOrSlug}`);
+  qs.set("limit", "1");
+
+  r = await fetch(`${url}/rest/v1/propiedades?${qs.toString()}`, {
+    headers: head,
+    cache: "no-store",
+  }).catch(() => null as any);
+
+  if (r && r.ok) {
+    const a = await r.json().catch(() => null);
+    if (Array.isArray(a) && a.length) return a[0] as Row;
+  }
+
+  return null;
+}
+
+export default async function Page({ params }: { params: { id: string } }) {
+  const raw = decodeURIComponent(params.id || "");
+
+  // 1) API interna
+  let row = await fetchFromApi(raw);
+
+  // 2) Fallback a PostgREST
+  if (!row) row = await fetchFromPostgrest(raw);
+
   if (!row) return notFound();
 
-  const imagenes: string[] = (row.imagenes ?? row.images ?? []) as string[];
-  const cover = row.coverImage ?? imagenes[0] ?? null;
+  const imgs: string[] = Array.isArray(row.imagenes) ? row.imagenes : [];
+  const cover = imgs[0] ?? null;
+
+  const nf = new Intl.NumberFormat("es-CL");
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      {/* Portada */}
+      {/* Hero */}
       {cover ? (
-        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl">
-          <Image src={cover} alt={row.titulo ?? ""} fill className="object-cover" />
+        <div className="aspect-[16/9] w-full overflow-hidden rounded-md bg-slate-100">
+          <img src={cover} alt={row.titulo ?? ""} className="w-full h-full object-cover" />
         </div>
       ) : (
-        <div className="h-64 w-full rounded-xl bg-gray-100" />
+        <div className="h-64 rounded-md bg-slate-100" />
       )}
 
-      {/* Título y ubicación */}
-      <h1 className="mt-6 text-2xl font-semibold">{row.titulo ?? "Propiedad"}</h1>
-      <p className="text-sm text-gray-500">
-        {row.comuna}
-        {row.region ? `, ${row.region}` : ""}
+      {/* Título / ubicación */}
+      <h1 className="mt-6 text-2xl md:text-3xl font-semibold">
+        {row.titulo ?? "Propiedad"}
+      </h1>
+      <p className="mt-1 text-slate-600">
+        {[row.comuna, row.region].filter(Boolean).join(", ")}
       </p>
 
       {/* Chips */}
       <div className="mt-4 flex flex-wrap gap-2 text-sm">
-        {row.operacion && <span className="rounded bg-gray-100 px-2 py-1">{row.operacion}</span>}
-        {row.tipo && <span className="rounded bg-gray-100 px-2 py-1">{row.tipo}</span>}
-        {Number(row.superficie_util_m2) > 0 && (
-          <span className="rounded bg-gray-100 px-2 py-1">
-            {Number(row.superficie_util_m2).toLocaleString()} m² const.
-          </span>
-        )}
-        {Number(row.superficie_terreno_m2) > 0 && (
-          <span className="rounded bg-gray-100 px-2 py-1">
-            {Number(row.superficie_terreno_m2).toLocaleString()} m² terreno
-          </span>
-        )}
-        {Number(row.dormitorios) > 0 && (
-          <span className="rounded bg-gray-100 px-2 py-1">{row.dormitorios} dorm.</span>
-        )}
-        {Number(row.banos) > 0 && (
-          <span className="rounded bg-gray-100 px-2 py-1">{row.banos} baños</span>
-        )}
-        {Number(row.estacionamientos) > 0 && (
-          <span className="rounded bg-gray-100 px-2 py-1">{row.estacionamientos} estac.</span>
-        )}
+        {row.operacion && <span className="px-3 py-1 border">{row.operacion}</span>}
+        {row.tipo && <span className="px-3 py-1 border">{row.tipo}</span>}
+        {Number(row.dormitorios) > 0 && <span className="px-3 py-1 border">{row.dormitorios} dorm.</span>}
+        {Number(row.banos) > 0 && <span className="px-3 py-1 border">{row.banos} baños</span>}
+        {Number(row.estacionamientos) > 0 && <span className="px-3 py-1 border">{row.estacionamientos} estac.</span>}
+        {Number(row.superficie_util_m2) > 0 && <span className="px-3 py-1 border">{nf.format(Number(row.superficie_util_m2))} m² const.</span>}
+        {Number(row.superficie_terreno_m2) > 0 && <span className="px-3 py-1 border">{nf.format(Number(row.superficie_terreno_m2))} m² terreno</span>}
       </div>
 
       {/* Galería */}
-      {imagenes.length > 1 && (
-        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3">
-          {imagenes.slice(0, 12).map((src, i) => (
-            <div key={i} className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
-              <Image src={src} alt={`Foto ${i + 1}`} fill className="object-cover" />
+      {imgs.length > 1 && (
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+          {imgs.slice(0, 12).map((src, i) => (
+            <div key={i} className="aspect-[4/3] w-full overflow-hidden rounded-md bg-slate-100">
+              <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
             </div>
           ))}
         </div>
@@ -90,13 +127,12 @@ export default async function PropertyPage({
 
       {/* Descripción */}
       {row.descripcion && (
-        <section className="prose mt-8 max-w-none">
-          <h2>Descripción</h2>
-          <p>{row.descripcion}</p>
+        <section className="mt-8">
+          <h2 className="text-xl font-semibold">Descripción</h2>
+          <p className="mt-3 text-slate-700 whitespace-pre-line">{row.descripcion}</p>
         </section>
       )}
     </main>
   );
 }
-
 
