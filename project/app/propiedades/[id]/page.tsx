@@ -3,14 +3,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  Bed, ShowerHead, Car, Ruler, Square, MapPin, X, ChevronLeft, ChevronRight,
+  Bed, ShowerHead, Car, Ruler, Square, MapPin
 } from 'lucide-react';
 
+/* ================= Config / helpers ================= */
 const BRAND_BLUE = '#0A2E57';
 const BRAND_DARK = '#0f172a';
 
-/* ========= Tipos ========= */
-type Property = {
+type PropRow = {
   id: string;
   slug?: string | null;
   titulo?: string | null;
@@ -25,260 +25,154 @@ type Property = {
   superficie_util_m2?: number | null;
   superficie_terreno_m2?: number | null;
   estacionamientos?: number | null;
-  created_at?: string | null;
-  descripcion?: string | null;
   imagenes?: string[] | null;
+  descripcion?: string | null;
+  barrio?: string | null;
+  created_at?: string | null;
 };
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-/* ========= Util ========= */
-const cls = (...s: (string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
+/* ===== Map helpers (dinámico por barrio/comuna) ===== */
+function buildMapTarget(p?: { barrio?: string | null; comuna?: string | null; region?: string | null }) {
+  const barrio = (p?.barrio || '').trim();
+  const comuna = (p?.comuna || '').trim();
+  const region = (p?.region || '').trim();
 
-/** adivina categoría por nombre de archivo */
-function guessCategory(url: string): 'exterior' | 'interior' {
-  const u = url.toLowerCase();
-  const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
-  const int = /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
-  if (ext.test(u)) return 'exterior';
-  if (int.test(u)) return 'interior';
-  // fallback: si contiene “png/jpg sin pista” alternamos una heurística simple
-  return /(\d{1,2}\s*)?(a|b)?\.(jpg|png|jpeg)/.test(u) ? 'exterior' : 'interior';
+  if (barrio && comuna) return { q: `${barrio}, ${comuna}`, zoom: 14 }; // barrio + comuna (cercano)
+  if (comuna)           return { q: `${comuna}`,           zoom: 12 }; // solo comuna
+  if (region)           return { q: `${region}`,           zoom: 9  }; // región
+  return { q: 'Santiago, Chile', zoom: 11 };                             // fallback
 }
 
-/* ========= Lightbox simple ========= */
-function Lightbox({
-  open, images, index, onClose, onPrev, onNext,
-}: {
-  open: boolean;
-  images: string[];
-  index: number;
-  onClose: () => void;
-  onPrev: () => void;
-  onNext: () => void;
-}) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') onPrev();
-      if (e.key === 'ArrowRight') onNext();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose, onPrev, onNext]);
-
-  if (!open) return null;
-  const src = images[index];
-
-  return (
-    <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded"
-        aria-label="Cerrar"
-      >
-        <X className="text-white h-6 w-6" />
-      </button>
-
-      <button
-        onClick={onPrev}
-        aria-label="Anterior"
-        className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded"
-      >
-        <ChevronLeft className="text-white h-8 w-8" />
-      </button>
-
-      <img
-        src={src}
-        alt="foto"
-        className="max-h-[90vh] max-w-[92vw] object-contain select-none"
-      />
-
-      <button
-        onClick={onNext}
-        aria-label="Siguiente"
-        className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded"
-      >
-        <ChevronRight className="text-white h-8 w-8" />
-      </button>
-    </div>
-  );
+function mapSrcFrom(p?: { barrio?: string | null; comuna?: string | null; region?: string | null }) {
+  const { q, zoom } = buildMapTarget(p);
+  return `https://www.google.com/maps?q=${encodeURIComponent(q)}&z=${zoom}&output=embed&hl=es`;
 }
 
-/* ========= Encabezado de sección (mismo look que “BÚSQUEDA”) ========= */
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2
-      className="mt-10 mb-4 text-[18px] md:text-[20px] tracking-[0.25em] uppercase text-slate-700"
-      style={{ letterSpacing: '0.25em' }}
-    >
-      {children}
-    </h2>
-  );
+/* ---------- fetch (usa tu API interna ya creada) ---------- */
+async function fetchPropertyByIdOrSlug(idOrSlug: string): Promise<PropRow | null> {
+  try {
+    const res = await fetch(`/api/propiedades/${encodeURIComponent(idOrSlug)}`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const json = await res.json().catch(() => null);
+    return (json && json.data) ? (json.data as PropRow) : null;
+  } catch {
+    return null;
+  }
 }
 
-/* ========= Chips con íconos (como las cards) ========= */
-function FeatureChips({ p }: { p: Property }) {
-  const Item = ({ icon, label }: { icon: React.ReactNode; label: string }) => (
-    <span
-      className="inline-flex items-center gap-2 px-4 py-2 border rounded-md text-[14px] bg-white/70 backdrop-blur"
-      style={{ borderColor: '#D6DEE8', color: BRAND_DARK }}
-    >
-      {icon}{label}
-    </span>
-  );
+/* ---------- UI helpers ---------- */
+function classNames(...s: (string|false|undefined|null)[]) { return s.filter(Boolean).join(' '); }
 
-  return (
-    <div className="flex flex-wrap gap-2">
-      <Item icon={<Bed className="h-4 w-4" />} label={`${p.dormitorios ?? '—'}`} />
-      <Item icon={<ShowerHead className="h-4 w-4" />} label={`${p.banos ?? '—'}`} />
-      <Item icon={<Car className="h-4 w-4" />} label={`${p.estacionamientos ?? '—'}`} />
-      <Item icon={<Ruler className="h-4 w-4" />} label={`${p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'} m² const.`} />
-      <Item icon={<Square className="h-4 w-4" />} label={`${p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'} m² terreno`} />
-    </div>
-  );
-}
-
-/* ========= Página ========= */
+/* ================= Page ================= */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
-  const [prop, setProp] = useState<Property | null>(null);
+  const [prop, setProp] = useState<PropRow | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
-  const [lbOpen, setLbOpen] = useState(false);
-  const [lbIndex, setLbIndex] = useState(0);
-
-  // fetch desde tu API (ya estaba funcionando)
   useEffect(() => {
     let cancel = false;
     (async () => {
       setLoading(true);
-      const res = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}`).catch(() => null as any);
-      let data: any = null;
-      if (res?.ok) { const j = await res.json().catch(() => null); data = j?.data ?? null; }
-      if (!cancel) { setProp(data); setLoading(false); }
+      const decoded = decodeURIComponent(params.id);
+      const data = await fetchPropertyByIdOrSlug(decoded);
+      if (!cancel) {
+        setProp(data);
+        setLoading(false);
+      }
     })();
     return () => { cancel = true; };
   }, [params.id]);
 
-  const images = useMemo(() => {
-    const arr = (prop?.imagenes ?? []).filter(Boolean);
-    if (!arr.length) {
-      return ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop'];
-    }
-    return arr;
+  const cover = useMemo(() => {
+    if (prop?.imagenes?.length) return prop.imagenes[0]!;
+    // fallback
+    return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop';
   }, [prop]);
 
-  // clasificación por categoría (All / Exterior / Interior)
-  const imagesByCat = useMemo(() => {
-    const all = images.map((url) => ({ url, cat: guessCategory(url) }));
-    return {
-      todas: all,
-      exterior: all.filter((i) => i.cat === 'exterior'),
-      interior: all.filter((i) => i.cat === 'interior'),
-    };
-  }, [images]);
-  const list = imagesByCat[tab];
-  const priceUF = prop?.precio_uf ? `UF ${nfUF.format(prop!.precio_uf!)}` : 'Consultar';
-  const priceCLP = prop?.precio_clp && prop.precio_clp > 0 ? `$ ${nfCLP.format(prop.precio_clp)}` : '';
+  const gallery = useMemo(() => (prop?.imagenes ?? []).slice(0, 32), [prop]);
 
-  /* ====== Lightbox handlers ====== */
-  const openLb = (idx: number) => { setLbIndex(idx); setLbOpen(true); };
-  const closeLb = () => setLbOpen(false);
-  const prevLb = () => setLbIndex((i) => (i - 1 + list.length) % list.length);
-  const nextLb = () => setLbIndex((i) => (i + 1) % list.length);
+  const showUF  = !!(prop?.precio_uf && prop.precio_uf > 0);
+  const showCLP = !!(prop?.precio_clp && prop.precio_clp > 0);
 
   return (
-    <main className="bg-white">
-      {/* HERO full-bleed */}
-      <section className="relative w-full h-[86vh] md:h-[88vh]">
+    <main className="bg-white text-slate-800">
+      {/* HERO: imagen full-bleed */}
+      <section className="relative w-full min-h-[62vh] md:min-h-[70vh] lg:min-h-[76vh]">
         <img
-          src={images[0]}
+          src={cover}
           alt={prop?.titulo ?? 'Propiedad'}
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* overlay para legibilidad */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/30" />
 
-        {/* Tarjeta superior tipo “destacada” */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-6 w-[95%] md:w-[92%]">
-          <div className="bg-white/80 backdrop-blur-md shadow-sm border border-slate-200 px-4 sm:px-6 py-4 md:py-5">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="min-w-0">
-                <h1
-                  className="text-[22px] md:text-[28px] font-normal text-slate-900"
-                >
-                  {prop?.titulo ?? 'Propiedad'}
-                </h1>
-                <div className="mt-1 flex items-center gap-2 text-slate-600 text-[14px]">
-                  <MapPin className="h-4 w-4" />
-                  <span className="truncate">
-                    {[prop?.comuna, prop?.region].filter(Boolean).join(', ')}
-                  </span>
-                  <span className="mx-2">•</span>
-                  <span className="font-medium" style={{ color: BRAND_BLUE }}>{priceUF}</span>
-                  {priceCLP ? <span className="text-slate-500 ml-2">{priceCLP}</span> : null}
+        {/* overlay degradé sutil para legibilidad */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/0 to-black/20" />
+
+        {/* Caja estilo “destacado” (similar a home) */}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div
+            className="w-full md:max-w-[92%] lg:max-w-[86%] mt-[44vh] md:mt-[48vh] lg:mt-[52vh]
+                       bg-white/85 backdrop-blur border border-slate-200 shadow-sm"
+          >
+            <div className="px-5 py-4 md:px-6 md:py-5 lg:px-8 lg:py-6">
+              {/* Título + CTA */}
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div>
+                  <h1 className="text-[clamp(22px,3vw,34px)] font-medium text-slate-900">
+                    {loading ? 'Cargando…' : (prop?.titulo ?? 'Propiedad')}
+                  </h1>
+                  <p className="mt-1.5 flex items-center gap-2 text-slate-600">
+                    <MapPin className="h-4 w-4" />
+                    {loading ? '—' : [prop?.comuna, prop?.region].filter(Boolean).join(', ')}
+                    {prop?.operacion ? (
+                      <span className="mx-2">· {prop.tipo ?? '—'} · {prop.operacion[0].toUpperCase()+prop.operacion.slice(1)}</span>
+                    ) : null}
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div className="text-[clamp(20px,2.5vw,28px)] font-semibold" style={{ color: BRAND_BLUE }}>
+                    {loading ? '—' : (showUF ? `UF ${nfUF.format(prop!.precio_uf as number)}` : 'Consultar')}
+                  </div>
+                  {showCLP ? (
+                    <div className="text-sm text-slate-600">
+                      $ {nfCLP.format(prop!.precio_clp as number)}
+                    </div>
+                  ) : null}
+                  <Link
+                    href="/contacto"
+                    className="mt-1 inline-flex items-center justify-center px-4 py-2 text-white rounded-none"
+                    style={{ background: BRAND_BLUE }}
+                  >
+                    Solicitar información
+                  </Link>
                 </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <Link
-                  href="/contacto"
-                  className="px-5 py-3 text-white rounded-none"
-                  style={{ background: BRAND_BLUE }}
-                >
-                  Solicitar información
-                </Link>
-              </div>
-            </div>
 
-            {/* chips (como cards) */}
-            <div className="mt-4">
-              <FeatureChips p={prop ?? { id: '' }} />
+              {/* KPIs (idéntico lenguaje visual que listados) */}
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                <Kpi icon={<Bed className="h-4 w-4" />}    label="Dormitorios" value={prop?.dormitorios} />
+                <Kpi icon={<ShowerHead className="h-4 w-4" />} label="Baños" value={prop?.banos} />
+                <Kpi icon={<Car className="h-4 w-4" />}    label="Estac." value={prop?.estacionamientos} />
+                <Kpi icon={<Ruler className="h-4 w-4" />}  label="m² const." value={prop?.superficie_util_m2} />
+                <Kpi icon={<Square className="h-4 w-4" />} label="m² terreno" value={prop?.superficie_terreno_m2} />
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Volver */}
-        <div className="absolute top-3 left-3">
-          <Link href="/propiedades" className="inline-flex items-center gap-2 text-white/90 hover:text-white text-sm">
-            <span>←</span> Volver a propiedades
-          </Link>
-        </div>
       </section>
 
-      {/* GALERÍA con tabs + lightbox */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionTitle>Galería</SectionTitle>
-
-        <div className="flex items-center gap-2 mb-4">
-          {(['todas','exterior','interior'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cls(
-                'px-4 py-2 border rounded-md text-sm',
-                tab === t ? 'bg-[var(--brand-50,#E9EFF6)] border-[var(--brand-200,#BFD0E6)] text-slate-900' : 'bg-white border-slate-200 text-slate-700'
-              )}
-            >
-              {t === 'todas' ? 'Todas' : t[0].toUpperCase() + t.slice(1)}
-            </button>
-          ))}
-          <span className="ml-auto text-sm text-slate-500">{list.length} {list.length === 1 ? 'foto' : 'fotos'}</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {list.map((it, i) => (
-            <button
-              key={i}
-              onClick={() => openLb(i)}
-              className="relative aspect-[4/3] overflow-hidden group border border-slate-200"
-            >
-              <img src={it.url} alt={`img ${i+1}`} className="w-full h-full object-cover group-hover:scale-[1.02] transition" />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
-            </button>
+      {/* G A L E R Í A */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+        <h2 className="text-[clamp(20px,2.2vw,28px)] tracking-[0.2em] font-semibold text-slate-800">GALERÍA</h2>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {(gallery.length ? gallery : [cover]).map((src, i) => (
+            <a key={i} href={src} target="_blank" rel="noreferrer"
+               className="block relative w-full aspect-[4/3] overflow-hidden bg-slate-200">
+              <img src={src} alt={`Foto ${i+1}`} className="absolute inset-0 w-full h-full object-cover hover:scale-[1.015] transition-transform" />
+            </a>
           ))}
         </div>
       </section>
@@ -288,26 +182,32 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* DESCRIPCIÓN */}
+      {/* D E S C R I P C I Ó N */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionTitle>Descripción</SectionTitle>
+        <h2 className="text-[clamp(20px,2.2vw,28px)] tracking-[0.2em] font-semibold text-slate-800 mb-2">
+          DESCRIPCIÓN
+        </h2>
         <p className="text-slate-700 leading-relaxed">
-          {prop?.descripcion || 'Descripción no disponible por el momento.'}
+          {loading
+            ? 'Cargando…'
+            : (prop?.descripcion
+                ?? 'Propiedad con gran potencial en un sector consolidado. Entorno residencial, conectividad y servicios a minutos. Ideal para quienes buscan tranquilidad, áreas verdes y una proyección de plusvalía en el tiempo. Solicita más información para coordinar visita.')}
         </p>
       </section>
 
-      {/* CARACTERÍSTICAS DESTACADAS */}
+      {/* separador */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-slate-200 my-10" />
+      </div>
+
+      {/* C A R A C T E R Í S T I C A S  D E S T A C A D A S */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionTitle>Características destacadas</SectionTitle>
-        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
-          <li className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">🧭</span>
-            <span>Orientación: Norte</span>
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">📈</span>
-            <span>Potencial de plusvalía</span>
-          </li>
+        <h2 className="text-[clamp(20px,2.2vw,28px)] tracking-[0.2em] font-semibold text-slate-800 mb-4">
+          CARACTERÍSTICAS DESTACADAS
+        </h2>
+        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-slate-700">
+          <li>• Orientación norte</li>
+          <li>• Potencial de plusvalía</li>
         </ul>
       </section>
 
@@ -316,32 +216,52 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* EXPLORA EL SECTOR (mapa con zoom más cercano + “círculo” referencial) */}
+      {/* M A P A  dinámico: barrio -> comuna -> región */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-        <SectionTitle>Explora el sector</SectionTitle>
-        <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
-          {/* círculo referencial */}
-          <div className="pointer-events-none absolute z-10 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[55%] aspect-square rounded-full border border-white/60 shadow-[0_0_0_2000px_rgba(255,255,255,0.25)]" />
+        <h2 className="text-[clamp(20px,2.2vw,28px)] tracking-[0.2em] font-semibold text-slate-800 mb-4">
+          EXPLORA EL SECTOR
+        </h2>
+
+        <div className="relative w-full aspect-[16/9] overflow-hidden border border-slate-200">
           <iframe
-            title="mapa"
-            className="w-full h-full"
-            loading="lazy"
+            title="Ubicación referencial"
+            src={mapSrcFrom(prop ?? undefined)}
+            className="absolute inset-0 w-full h-full"
             referrerPolicy="no-referrer-when-downgrade"
-            // centro en Las Condes; zoom 12-13 se ve prolijo
-            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2scl!4v1713000000000"
+            loading="lazy"
           />
+          {/* Overlay tipo radio + pin (no bloquea interacción) */}
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div
+              className="rounded-full"
+              style={{
+                width: '48%',
+                aspectRatio: '1 / 1',
+                background: 'radial-gradient(closest-side, rgba(10,46,87,0.12), rgba(10,46,87,0.04) 60%, rgba(10,46,87,0) 70%)',
+              }}
+            />
+            <div className="absolute flex items-center justify-center"
+                style={{ width: 56, height: 56, borderRadius: 9999, background: BRAND_BLUE }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+                <path d="M12 2.25c-3.6 0-6.5 2.9-6.5 6.5 0 4.5 6.5 13 6.5 13s6.5-8.5 6.5-13c0-3.6-2.9-6.5-6.5-6.5Zm0 9.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Z"/>
+              </svg>
+            </div>
+          </div>
         </div>
       </section>
-
-      {/* Lightbox */}
-      <Lightbox
-        open={lbOpen}
-        images={list.map((x) => x.url)}
-        index={lbIndex}
-        onClose={closeLb}
-        onPrev={prevLb}
-        onNext={nextLb}
-      />
     </main>
+  );
+}
+
+/* ============ Subcomponentes ============ */
+function Kpi({ icon, label, value }: { icon: React.ReactNode; label: string; value?: number | null }) {
+  return (
+    <div className="border border-slate-200 px-3 py-2 bg-white/90 flex items-center gap-2">
+      <span className="text-slate-600">{icon}</span>
+      <div className="flex-1">
+        <div className="text-xs text-slate-500">{label}</div>
+        <div className="text-slate-800">{value != null ? nfINT.format(value) : '—'}</div>
+      </div>
+    </div>
   );
 }
