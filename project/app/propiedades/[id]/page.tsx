@@ -27,9 +27,8 @@ type Property = {
   descripcion?: string | null;
   imagenes?: string[] | null;
   barrio?: string | null;
-  // opcionales futuros:
-  orientacion?: string | null;   // ej: "norte"
-  plusvalia?: boolean | null;    // true/false
+  orientacion?: string | null;
+  plusvalia?: boolean | null;
   derechos_agua?: boolean | null;
 };
 
@@ -70,7 +69,7 @@ function useUf() {
         const v = Number(json?.serie?.[0]?.valor);
         if (alive && Number.isFinite(v)) setUf(v);
       } catch {
-        // si falla, dejamos uf en null y mostramos solo UF
+        /* ignore */
       }
     })();
     return () => { alive = false; };
@@ -262,7 +261,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return 0;
   }, [prop, ufHoy]);
 
-  // Igualar tamaño botón/caja precio (como en Home)
+  // Igualar tamaño botón/caja precio
   const applyButtonSize = () => {
     const w = statDormRef.current?.offsetWidth;
     const h = priceBoxRef.current?.offsetHeight;
@@ -299,10 +298,10 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        {/* tarjeta como en Home, y la barra de 5 tiles adentro */}
+        {/* tarjeta principal */}
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[620px]">
+            <div className="bg-transparent backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full md:max-w-[310px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {prop?.titulo ?? 'Propiedad'}
               </h1>
@@ -337,7 +336,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </div>
             </div>
           </div>
-          {/* Sin flechas ni indicadores (una sola propiedad) */}
+          {/* sin flechas */}
         </div>
       </section>
 
@@ -412,12 +411,8 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         </div>
       </section>
 
-      {/* separador */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
-      {/* DESCRIPCIÓN */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
         <p className="text-slate-700 leading-relaxed">
@@ -425,12 +420,8 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         </p>
       </section>
 
-      {/* separador */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
-      {/* CARACTERÍSTICAS DESTACADAS (dinámicas) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Características destacadas</SectionTitle>
         {(() => {
@@ -453,12 +444,8 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         })()}
       </section>
 
-      {/* separador */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
-      {/* EXPLORA EL SECTOR (mapa con overlay circular) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <SectionTitle>Explora el sector</SectionTitle>
         <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
@@ -473,7 +460,6 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         </div>
       </section>
 
-      {/* Lightbox */}
       <Lightbox
         open={lbOpen}
         images={list.map((x) => x.url)}
