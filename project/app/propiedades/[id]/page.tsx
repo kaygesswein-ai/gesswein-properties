@@ -4,11 +4,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Bed, ShowerHead, Car, Ruler, Square, MapPin, X, ChevronLeft, ChevronRight,
+  Compass, TrendingUp,
 } from 'lucide-react';
-import { Compass, TrendingUp } from 'lucide-react';
 
 const BRAND_BLUE = '#0A2E57';
-const BRAND_DARK = '#0f172a';
 
 /* ========= Tipos ========= */
 type Property = {
@@ -17,6 +16,7 @@ type Property = {
   titulo?: string | null;
   comuna?: string | null;
   region?: string | null;
+  barrio?: string | null;
   operacion?: 'venta' | 'arriendo' | null;
   tipo?: string | null;
   precio_uf?: number | null;
@@ -29,7 +29,6 @@ type Property = {
   created_at?: string | null;
   descripcion?: string | null;
   imagenes?: string[] | null;
-  barrio?: string | null;
 };
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
@@ -56,7 +55,7 @@ function guessCategory(url: string): 'exterior' | 'interior' {
   return /(\d{1,2}\s*)?(a|b)?\.(jpg|png|jpeg)/.test(u) ? 'exterior' : 'interior';
 }
 
-/* ========= useUf LOCAL (para no depender de imports) ========= */
+/* ========= UF local (sin imports externos) ========= */
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -136,7 +135,7 @@ function Lightbox({
   );
 }
 
-/* ========= Encabezado de sección (mismo look que “BÚSQUEDA”) ========= */
+/* ========= Encabezado de sección (look “BÚSQUEDA”) ========= */
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2
@@ -148,39 +147,16 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ========= Chips con íconos (como las cards) ========= */
-function FeatureChips({ p }: { p: Property }) {
-  const Item = ({ icon, label }: { icon: React.ReactNode; label: string }) => (
-    <span
-      className="inline-flex items-center gap-2 px-4 py-2 border rounded-md text-[14px] bg-white/70 backdrop-blur"
-      style={{ borderColor: '#D6DEE8', color: BRAND_DARK }}
-    >
-      {icon}{label}
-    </span>
-  );
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      <Item icon={<Bed className="h-4 w-4" />}    label={`${p.dormitorios ?? '—'}`} />
-      <Item icon={<ShowerHead className="h-4 w-4" />} label={`${p.banos ?? '—'}`} />
-      <Item icon={<Car className="h-4 w-4" />}    label={`${p.estacionamientos ?? '—'}`} />
-      <Item icon={<Ruler className="h-4 w-4" />}  label={`${p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'} m² const.`} />
-      <Item icon={<Square className="h-4 w-4" />} label={`${p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'} m² terreno`} />
-    </div>
-  );
-}
-
 /* ========= Página ========= */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ====== refs para igualar botón/caja precio (como en Home)
+  // refs para igualar botón/caja precio (como en Home)
   const statDormRef = useRef<HTMLDivElement | null>(null);
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const actionRef   = useRef<HTMLAnchorElement | null>(null);
 
-  // UF del día (local)
   const ufHoy = useUf();
 
   // fetch desde tu API
@@ -211,7 +187,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     capFirst(prop?.operacion),
   ].filter(Boolean).join(' · ');
 
-  // Precios estilo Home
+  // Precios
   const precioUfHero = useMemo(() => {
     if (!prop) return 0;
     if (typeof prop.precio_uf === 'number' && prop.precio_uf > 0) return Math.round(prop.precio_uf);
@@ -255,9 +231,23 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     } catch {}
   }, [prop]);
 
-  /* ===================  HERO (full viewport + tarjeta igual a Home)  =================== */
+  // Mapa: si hay barrio, apúntalo; si no, la comuna; si no, la región; fallback Santiago.
+  const mapQuery = useMemo(() => {
+    const q = [prop?.barrio, prop?.comuna, 'Chile']
+      .filter(Boolean)
+      .join(', ');
+    return q || 'Santiago, Chile';
+  }, [prop]);
+  const mapSrc = useMemo(() => {
+    const q = encodeURIComponent(mapQuery);
+    // modo "search" con zoom razonable
+    return `https://www.google.com/maps?q=${q}&t=m&z=13&output=embed`;
+  }, [mapQuery]);
+
+  /* ===================  RENDER  =================== */
   return (
     <main className="bg-white">
+      {/* ========= HERO alineado al de Inicio ========= */}
       <section className="relative w-full overflow-hidden isolate">
         {/* Fondo con imagen (full viewport real) */}
         <div
@@ -267,7 +257,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         />
         <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
 
-        {/* Alto mínimo igual a Home para tapar todo lo de abajo */}
+        {/* caja y alto mínimo */}
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
           <div className="w-full relative">
             <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[620px]">
@@ -311,7 +301,9 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
                   <div className="text-[1.25rem] md:text-[1.35rem] font-semibold text-[#0A2E57] leading-none">
-                    {precioUfHero > 0 ? `UF ${nfUF.format(precioUfHero)}` : (prop?.precio_clp ? `$ ${nfCLP.format(prop.precio_clp)}` : 'Consultar')}
+                    {precioUfHero > 0
+                      ? `UF ${nfUF.format(precioUfHero)}`
+                      : (prop?.precio_clp ? `$ ${nfCLP.format(prop.precio_clp)}` : 'Consultar')}
                   </div>
                   <div className="text-sm md:text-base text-slate-600 mt-1">
                     {precioClpHero > 0 ? `$ ${nfCLP.format(precioClpHero)}` : ''}
@@ -320,20 +312,18 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </div>
             </div>
           </div>
-          {/* Sin flechas ni indicadores (acá es una sola propiedad) */}
+          {/* Sin flechas ni indicadores en ficha única */}
         </div>
       </section>
 
-      {/* ===================  A PARTIR DE AQUÍ SE MANTIENE TU PÁGINA TAL CUAL  =================== */}
-
-      {/* GALERÍA con tabs + lightbox */}
-      <GalleryAndDetails prop={prop} />
+      {/* ========= GALERÍA / DESCRIPCIÓN / DETALLES / FEATURES / MAPA ========= */}
+      <GalleryAndDetails prop={prop} mapSrc={mapSrc} />
     </main>
   );
 }
 
-/* ---------- Lo de abajo es tu contenido existente (galería, secciones, etc.) ---------- */
-function GalleryAndDetails({ prop }: { prop: Property | null }) {
+/* ---------- Subcomponente con todo el contenido inferior ---------- */
+function GalleryAndDetails({ prop, mapSrc }: { prop: Property | null; mapSrc: string }) {
   const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
@@ -362,8 +352,16 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
   const prevLb = () => setLbIndex((i) => (i - 1 + list.length) % list.length);
   const nextLb = () => setLbIndex((i) => (i + 1) % list.length);
 
+  const dash = '—';
+  const vDorm = (prop?.dormitorios ?? null) as number | null;
+  const vBanos = (prop?.banos ?? null) as number | null;
+  const vEstac = (prop?.estacionamientos ?? null) as number | null;
+  const vConst = (prop?.superficie_util_m2 ?? null) as number | null;
+  const vTerr  = (prop?.superficie_terreno_m2 ?? null) as number | null;
+
   return (
     <>
+      {/* GALERÍA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Galería</SectionTitle>
 
@@ -374,13 +372,17 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
               onClick={() => setTab(t)}
               className={cls(
                 'px-4 py-2 border rounded-md text-sm',
-                tab === t ? 'bg-[var(--brand-50,#E9EFF6)] border-[var(--brand-200,#BFD0E6)] text-slate-900' : 'bg-white border-slate-200 text-slate-700'
+                tab === t
+                  ? 'bg-[var(--brand-50,#E9EFF6)] border-[var(--brand-200,#BFD0E6)] text-slate-900'
+                  : 'bg-white border-slate-200 text-slate-700'
               )}
             >
               {t === 'todas' ? 'Todas' : t[0].toUpperCase() + t.slice(1)}
             </button>
           ))}
-          <span className="ml-auto text-sm text-slate-500">{list.length} {list.length === 1 ? 'foto' : 'fotos'}</span>
+          <span className="ml-auto text-sm text-slate-500">
+            {list.length} {list.length === 1 ? 'foto' : 'fotos'}
+          </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -390,7 +392,11 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
               onClick={() => openLb(i)}
               className="relative aspect-[4/3] overflow-hidden group border border-slate-200"
             >
-              <img src={it.url} alt={`img ${i+1}`} className="w-full h-full object-cover group-hover:scale-[1.02] transition" />
+              <img
+                src={it.url}
+                alt={`img ${i + 1}`}
+                className="w-full h-full object-cover group-hover:scale-[1.02] transition"
+              />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
             </button>
           ))}
@@ -415,7 +421,100 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* Lightbox */}
+      {/* DETALLES (tiles) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <SectionTitle>Detalles</SectionTitle>
+
+        <div className="grid grid-cols-5 border border-slate-200 bg-white text-center">
+          {(() => {
+            const tileBase =
+              'flex flex-col items-center justify-center gap-1 py-4 md:py-5 bg-white';
+            const IconWrap = ({ children }: { children: React.ReactNode }) => (
+              <div className="text-[#6C819B]">{children}</div>
+            );
+            return (
+              <>
+                <div className={`${tileBase} border-r border-slate-200`}>
+                  <IconWrap><Bed className="h-5 w-5" /></IconWrap>
+                  <div className="text-lg text-slate-800">
+                    {vDorm ?? dash}
+                  </div>
+                </div>
+                <div className={`${tileBase} border-r border-slate-200`}>
+                  <IconWrap><ShowerHead className="h-5 w-5" /></IconWrap>
+                  <div className="text-lg text-slate-800">
+                    {vBanos ?? dash}
+                  </div>
+                </div>
+                <div className={`${tileBase} border-r border-slate-200`}>
+                  <IconWrap><Car className="h-5 w-5" /></IconWrap>
+                  <div className="text-lg text-slate-800">
+                    {vEstac ?? dash}
+                  </div>
+                </div>
+                <div className={`${tileBase} border-r border-slate-200`}>
+                  <IconWrap><Ruler className="h-5 w-5" /></IconWrap>
+                  <div className="text-lg text-slate-800">
+                    {vConst != null ? nfINT.format(vConst) : dash}
+                  </div>
+                </div>
+                <div className={`${tileBase}`}>
+                  <IconWrap><Square className="h-5 w-5" /></IconWrap>
+                  <div className="text-lg text-slate-800">
+                    {vTerr != null ? nfINT.format(vTerr) : dash}
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      </section>
+
+      {/* separador */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-slate-200 my-10" />
+      </div>
+
+      {/* CARACTERÍSTICAS DESTACADAS */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionTitle>Características destacadas</SectionTitle>
+        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
+          <li className="flex items-center gap-2">
+            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+              <Compass className="h-4 w-4 text-slate-600" />
+            </span>
+            <span>Orientación norte</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+              <TrendingUp className="h-4 w-4 text-slate-600" />
+            </span>
+            <span>Potencial de plusvalía</span>
+          </li>
+        </ul>
+      </section>
+
+      {/* separador */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-slate-200 my-10" />
+      </div>
+
+      {/* EXPLORA EL SECTOR */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <SectionTitle>Explora el sector</SectionTitle>
+        <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
+          <div className="pointer-events-none absolute z-10 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[55%] aspect-square rounded-full border border-white/60 shadow-[0_0_0_2000px_rgba(255,255,255,0.25)]" />
+          <iframe
+            title="mapa"
+            className="w-full h-full"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            src={mapSrc}
+          />
+        </div>
+      </section>
+
+      {/* LIGHTBOX */}
       <Lightbox
         open={lbOpen}
         images={list.map((x) => x.url)}
@@ -427,120 +526,3 @@ function GalleryAndDetails({ prop }: { prop: Property | null }) {
     </>
   );
 }
-{/* ================= DETALLES (tiles como la referencia) ================= */}
-<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-  <SectionTitle>Detalles</SectionTitle>
-
-  {/* Grid de 5 tiles, bordes finos y mismo look que tu mock */}
-  <div className="
-      grid grid-cols-5
-      border border-slate-200 bg-white
-      text-center
-    ">
-    {/* helper local */}
-    {(() => {
-      const dash = '—';
-      const vDorm = (prop?.dormitorios ?? null) as number | null;
-      const vBanos = (prop?.banos ?? null) as number | null;
-      const vEstac = (prop?.estacionamientos ?? null) as number | null;
-      const vConst = (prop?.superficie_util_m2 ?? null) as number | null;
-      const vTerr = (prop?.superficie_terreno_m2 ?? null) as number | null;
-
-      const tileBase =
-        'flex flex-col items-center justify-center gap-1 py-4 md:py-5 bg-white';
-
-      const IconWrap = ({ children }: { children: React.ReactNode }) => (
-        <div className="text-[#6C819B]">{children}</div>
-      );
-
-      return (
-        <>
-          {/* Dormitorios */}
-          <div className={`${tileBase} border-r border-slate-200`}>
-            <IconWrap><Bed className="h-5 w-5" /></IconWrap>
-            <div className="text-lg text-slate-800">
-              {vDorm ?? dash}
-            </div>
-          </div>
-
-          {/* Baños */}
-          <div className={`${tileBase} border-r border-slate-200`}>
-            <IconWrap><ShowerHead className="h-5 w-5" /></IconWrap>
-            <div className="text-lg text-slate-800">
-              {vBanos ?? dash}
-            </div>
-          </div>
-
-          {/* Estacionamientos */}
-          <div className={`${tileBase} border-r border-slate-200`}>
-            <IconWrap><Car className="h-5 w-5" /></IconWrap>
-            <div className="text-lg text-slate-800">
-              {vEstac ?? dash}
-            </div>
-          </div>
-
-          {/* m² construidos (mantenemos la raya si no hay) */}
-          <div className={`${tileBase} border-r border-slate-200`}>
-            <IconWrap><Ruler className="h-5 w-5" /></IconWrap>
-            <div className="text-lg text-slate-800">
-              {vConst != null ? nfINT.format(vConst) : dash}
-            </div>
-          </div>
-
-          {/* m² terreno — solo número como en tu imagen (sin unidad) */}
-          <div className={`${tileBase}`}>
-            <IconWrap><Square className="h-5 w-5" /></IconWrap>
-            <div className="text-lg text-slate-800">
-              {vTerr != null ? nfINT.format(vTerr) : dash}
-            </div>
-          </div>
-        </>
-      );
-    })()}
-  </div>
-</section>
-
-{/* separador */}
-<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-  <div className="h-px bg-slate-200 my-10" />
-</div>
-
-{/* ================= CARACTERÍSTICAS DESTACADAS ================= */}
-<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-  <SectionTitle>Características destacadas</SectionTitle>
-  <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
-    <li className="flex items-center gap-2">
-      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
-        <Compass className="h-4 w-4 text-slate-600" />
-      </span>
-      <span>Orientación norte</span>
-    </li>
-    <li className="flex items-center gap-2">
-      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
-        <TrendingUp className="h-4 w-4 text-slate-600" />
-      </span>
-      <span>Potencial de plusvalía</span>
-    </li>
-  </ul>
-</section>
-
-{/* separador */}
-<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-  <div className="h-px bg-slate-200 my-10" />
-</div>
-
-{/* ================= EXPLORA EL SECTOR (mapa) ================= */}
-<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-  <SectionTitle>Explora el sector</SectionTitle>
-  <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
-    {/* círculo referencial como overlay suave */}
-    <div className="pointer-events-none absolute z-10 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[55%] aspect-square rounded-full border border-white/60 shadow-[0_0_0_2000px_rgba(255,255,255,0.25)]" />
-    <iframe
-      title="mapa"
-      className="w-full h-full"
-      loading="lazy"
-      referrerPolicy="no-referrer-when-downgrade"
-      src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2scl!4v1713000000000"
-    />
-  </div>
-</section>
