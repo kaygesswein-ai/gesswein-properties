@@ -1,4 +1,3 @@
-
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
@@ -48,12 +47,21 @@ const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 /* ------------------------------------------------------------------ */
 /*                             UTILIDADES                             */
 /* ------------------------------------------------------------------ */
-const cls = (...s:(string|false|null|undefined)[]) => s.filter(Boolean).join(' ');
+const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-const getHeroImage = (p?:Property|null) =>
+const getHeroImage = (p?: Property | null) =>
   p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
+
+/** Capitaliza TODAS las palabras de la cadena */
+const wordsCap = (s?: string | null) =>
+  (s ?? '')
+    .toLowerCase()
+    .split(' ')
+    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+    .join(' ')
+    .trim();
 
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
@@ -76,10 +84,11 @@ function useUf() {
 /*                              LIGHTBOX                              */
 /* ------------------------------------------------------------------ */
 function Lightbox(props:{
-  open:boolean; images:string[]; index:number;
-  onClose:()=>void; onPrev:()=>void; onNext:()=>void;
+  open: boolean; images: string[]; index: number;
+  onClose: ()=>void; onPrev: ()=>void; onNext: ()=>void;
 }) {
   const { open, images, index, onClose, onPrev, onNext } = props;
+
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
@@ -114,7 +123,7 @@ function Lightbox(props:{
 /* ------------------------------------------------------------------ */
 /*                        ENCABEZADO DE SECCIÓN                       */
 /* ------------------------------------------------------------------ */
-const SectionTitle = ({children}:{children:React.ReactNode}) => (
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
     {children}
   </h2>
@@ -123,7 +132,7 @@ const SectionTitle = ({children}:{children:React.ReactNode}) => (
 /* ------------------------------------------------------------------ */
 /*                             COMPONENTE                             */
 /* ------------------------------------------------------------------ */
-export default function PropertyDetailPage({ params }:{ params:{ id:string } }) {
+export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
   const uf = useUf();
 
@@ -143,29 +152,30 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
   /* --- cálculos --- */
   const bg = useMemo(() => getHeroImage(prop), [prop]);
 
-  const cap = (s?:string|null) => s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : '';
   const linea = [
-    cap(prop?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
-    cap(prop?.tipo),
-    cap(prop?.operacion),
-  ].filter(Boolean).join(' · ');
+    wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
+    wordsCap(prop?.tipo),
+    wordsCap(prop?.operacion),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const precioUfHero =
-    typeof prop?.precio_uf === 'number' && prop.precio_uf>0
+    typeof prop?.precio_uf === 'number' && prop.precio_uf > 0
       ? prop.precio_uf
       : prop?.precio_clp && uf
-        ? Math.round(prop.precio_clp/uf)
+        ? Math.round(prop.precio_clp / uf)
         : null;
 
   const precioClpHero =
-    typeof prop?.precio_clp === 'number' && prop.precio_clp>0
+    typeof prop?.precio_clp === 'number' && prop.precio_clp > 0
       ? prop.precio_clp
       : prop?.precio_uf && uf
-        ? Math.round(prop.precio_uf*uf)
+        ? Math.round(prop.precio_uf * uf)
         : null;
 
-  const priceBoxRef = useRef<HTMLDivElement|null>(null);
-  const btnRef      = useRef<HTMLAnchorElement|null>(null);
+  const priceBoxRef = useRef<HTMLDivElement | null>(null);
+  const btnRef      = useRef<HTMLAnchorElement | null>(null);
 
   /* --- sincronizar alto del botón --- */
   useEffect(() => {
@@ -180,7 +190,7 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
       }
     };
     sync();
-    let ro:ResizeObserver|null = null;
+    let ro: ResizeObserver | null = null;
     if ('ResizeObserver' in window) {
       ro = new ResizeObserver(sync);
       if (priceBoxRef.current) ro.observe(priceBoxRef.current);
@@ -189,7 +199,7 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
   }, [prop]);
 
   const dash   = '—';
-  const fmtInt = (n:number|null|undefined) =>
+  const fmtInt = (n: number | null | undefined) =>
     typeof n === 'number' ? nfINT.format(n) : dash;
 
   /* ------------------------------------------------------------------ */
@@ -198,7 +208,7 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
       {/* ---------------- HERO ---------------- */}
       <section className="relative w-full overflow-hidden isolate">
         <div className="absolute inset-0 -z-10 bg-center bg-cover"
-             style={{ backgroundImage:`url(${bg})` }} />
+             style={{ backgroundImage: `url(${bg})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
@@ -215,16 +225,16 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
-                    {icon:<Bed        className="h-5 w-5 text-[#6C819B]"/>, v:prop?.dormitorios},
-                    {icon:<ShowerHead className="h-5 w-5 text-[#6C819B]"/>, v:prop?.banos},
-                    {icon:<Car        className="h-5 w-5 text-[#6C819B]"/>, v:prop?.estacionamientos},
-                    {icon:<Ruler      className="h-5 w-5 text-[#6C819B]"/>, v:fmtInt(prop?.superficie_util_m2)},
-                    {icon:<Square     className="h-5 w-5 text-[#6C819B]"/>, v:fmtInt(prop?.superficie_terreno_m2)},
-                  ].map((t,idx)=>(
+                    { icon: <Bed        className="h-5 w-5 text-[#6C819B]" />, v: prop?.dormitorios },
+                    { icon: <ShowerHead className="h-5 w-5 text-[#6C819B]" />, v: prop?.banos },
+                    { icon: <Car        className="h-5 w-5 text-[#6C819B]" />, v: prop?.estacionamientos },
+                    { icon: <Ruler      className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_util_m2) },
+                    { icon: <Square     className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_terreno_m2) },
+                  ].map((t, idx) => (
                     <div key={idx}
                          className={cls(
                            'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
-                           idx<4 && 'border-r border-slate-200'
+                           idx < 4 && 'border-r border-slate-200'
                          )}>
                       {t.icon}
                       <span className="text-sm text-slate-800 leading-none">{t.v ?? dash}</span>
@@ -238,7 +248,7 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
                 <Link ref={btnRef} href="/contacto"
                       className="inline-flex text-sm tracking-wide rounded-none
                                  border border-[#0A2E57] text-[#0A2E57] bg-white"
-                      style={{ boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
+                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
                   Solicitar información
                 </Link>
 
@@ -268,39 +278,41 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
 /* ------------------------------------------------------------------ */
 /*                        GALERÍA + CONTENIDO                         */
 /* ------------------------------------------------------------------ */
-function guessCategory(url:string):'exterior'|'interior'{
-  const u=url.toLowerCase();
-  const ext=/(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
-  const int=/(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
-  if(ext.test(u))return'exterior';
-  if(int.test(u))return'interior';
+function guessCategory(url: string): 'exterior' | 'interior' {
+  const u = url.toLowerCase();
+  const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
+  const int = /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
+  if (ext.test(u)) return 'exterior';
+  if (int.test(u)) return 'interior';
   return 'exterior';
 }
 
-function GalleryAndDetails({ prop }:{ prop:Property|null }) {
-  const [tab,setTab]=useState<'todas'|'exterior'|'interior'>('todas');
-  const [lbOpen,setLbOpen]=useState(false);
-  const [lbIndex,setLbIndex]=useState(0);
+function GalleryAndDetails({ prop }: { prop: Property | null }) {
+  const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
+  const [lbOpen, setLbOpen] = useState(false);
+  const [lbIndex, setLbIndex] = useState(0);
 
-  const images=useMemo(()=>{
-    const arr=(prop?.imagenes??[]).filter(Boolean);
-    return arr.length?arr:['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop'];
-  },[prop]);
+  const images = useMemo(() => {
+    const arr = (prop?.imagenes ?? []).filter(Boolean);
+    return arr.length
+      ? arr
+      : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop'];
+  }, [prop]);
 
-  const imagesByCat=useMemo(()=>{
-    const all=images.map(url=>({url,cat:guessCategory(url)}));
+  const imagesByCat = useMemo(() => {
+    const all = images.map(url => ({ url, cat: guessCategory(url) }));
     return {
-      todas:all,
-      exterior:all.filter(i=>i.cat==='exterior'),
-      interior:all.filter(i=>i.cat==='interior'),
+      todas: all,
+      exterior: all.filter(i => i.cat === 'exterior'),
+      interior: all.filter(i => i.cat === 'interior'),
     };
-  },[images]);
+  }, [images]);
 
-  const list=imagesByCat[tab];
-  const openLb=(i:number)=>{setLbIndex(i);setLbOpen(true);};
-  const closeLb=()=>setLbOpen(false);
-  const prevLb=()=>setLbIndex(i=>(i-1+list.length)%list.length);
-  const nextLb=()=>setLbIndex(i=>(i+1)%list.length);
+  const list = imagesByCat[tab];
+  const openLb  = (i: number) => { setLbIndex(i); setLbOpen(true); };
+  const closeLb = () => setLbOpen(false);
+  const prevLb  = () => setLbIndex(i => (i - 1 + list.length) % list.length);
+  const nextLb  = () => setLbIndex(i => (i + 1) % list.length);
 
   return (
     <>
@@ -309,27 +321,28 @@ function GalleryAndDetails({ prop }:{ prop:Property|null }) {
         <SectionTitle>Galería</SectionTitle>
 
         <div className="flex items-center gap-2 mb-4">
-          {(['todas','exterior','interior'] as const).map(t=>(
-            <button key={t} onClick={()=>setTab(t)}
+          {(['todas', 'exterior', 'interior'] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)}
                     className={cls(
                       'px-4 py-2 border rounded-md text-sm',
-                      tab===t
-                        ?'bg-[var(--brand-50,#E9EFF6)] border-[var(--brand-200,#BFD0E6)] text-slate-900'
-                        :'bg-white border-slate-200 text-slate-700'
+                      tab === t
+                        ? 'bg-[var(--brand-50,#E9EFF6)] border-[var(--brand-200,#BFD0E6)] text-slate-900'
+                        : 'bg-white border-slate-200 text-slate-700'
                     )}>
-              {t==='todas'?'Todas':t[0].toUpperCase()+t.slice(1)}
+              {t === 'todas' ? 'Todas' : t[0].toUpperCase() + t.slice(1)}
             </button>
           ))}
           <span className="ml-auto text-sm text-slate-500">
-            {list.length} {list.length===1?'foto':'fotos'}
+            {list.length} {list.length === 1 ? 'foto' : 'fotos'}
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {list.map((it,i)=>(
-            <button key={i} onClick={()=>openLb(i)}
+          {list.map((it, i) => (
+            <button key={i} onClick={() => openLb(i)}
                     className="relative aspect-[4/3] overflow-hidden group border border-slate-200">
-              <img src={it.url} alt="" className="w-full h-full object-cover group-hover:scale-[1.02] transition" />
+              <img src={it.url} alt=""
+                   className="w-full h-full object-cover group-hover:scale-[1.02] transition" />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
             </button>
           ))}
@@ -385,13 +398,13 @@ function GalleryAndDetails({ prop }:{ prop:Property|null }) {
           <div className="pointer-events-none absolute z-10 left-1/2 top-1/2
                           -translate-x-1/2 -translate-y-1/2 w-[55%] aspect-square
                           rounded-full border border-white/60
-                          shadow-[0_0_0_2000px_rgba(255,255,255,0.25)]" />
+                          shadow-[0 0 0 2000px rgba(255,255,255,0.25)]" />
           <iframe
             title="mapa"
             className="w-full h-full"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2scl!4v1713000000000"
+            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1es!2scl!4v1713000000000"
           />
         </div>
       </section>
@@ -399,7 +412,7 @@ function GalleryAndDetails({ prop }:{ prop:Property|null }) {
       {/* ---------- LIGHTBOX ---------- */}
       <Lightbox
         open={lbOpen}
-        images={list.map(x=>x.url)}
+        images={list.map(x => x.url)}
         index={lbIndex}
         onClose={closeLb}
         onPrev={prevLb}
