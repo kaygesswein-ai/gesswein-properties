@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import Link from 'next/link';
@@ -16,7 +17,9 @@ import {
 import useUf from '../hooks/useUf';
 import SmartSelect from '../components/SmartSelect';
 
-/* -------------------- Tipos -------------------- */
+/* ------------------------------------------------------------------ */
+/*                               TIPOS                                */
+/* ------------------------------------------------------------------ */
 type Property = {
   id: string;
   titulo?: string;
@@ -27,517 +30,280 @@ type Property = {
   precio_clp?: number | null;
   dormitorios?: number | null;
   banos?: number | null;
-  estacionamientos?: number | null;          // NUEVO
+  estacionamientos?: number | null;
   superficie_util_m2?: number | null;
-  superficie_terreno_m2?: number | null;     // NUEVO
+  superficie_terreno_m2?: number | null;
   imagenes?: string[];
   images?: string[];
   coverImage?: string;
   destacada?: boolean;
 };
 
-/* -------------------- Utilidades -------------------- */
-function fmtUF(n: number) {
-  return `UF ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`;
-}
-function fmtCLP(n: number) {
-  return `$ ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`;
-}
-function fmtPrecioFallback(pUf?: number | null, pClp?: number | null) {
-  if (typeof pUf === 'number' && pUf > 0) return fmtUF(pUf);
-  if (typeof pClp === 'number' && pClp > 0) return fmtCLP(pClp);
-  return 'Consultar';
-}
-function capFirst(s?: string | null) {
-  if (!s) return '';
-  const lower = s.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
-}
+/* ------------------------------------------------------------------ */
+/*                             UTILIDADES                             */
+/* ------------------------------------------------------------------ */
+const fmtUF  = (n:number) => `UF ${new Intl.NumberFormat('es-CL',{maximumFractionDigits:0}).format(n)}`;
+const fmtCLP = (n:number) => `$ ${new Intl.NumberFormat('es-CL',{maximumFractionDigits:0}).format(n)}`;
+
+const fmtPrecioFallback = (pUf?:number|null,pClp?:number|null) =>
+  typeof pUf === 'number' && pUf>0 ? fmtUF(pUf)
+  : typeof pClp === 'number' && pClp>0 ? fmtCLP(pClp)
+  : 'Consultar';
+
+const capFirst = (s?:string|null) =>{
+  if(!s) return '';
+  const lower=s.toLowerCase();
+  return lower.charAt(0).toUpperCase()+lower.slice(1);
+};
+
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-// Imagen robusta para el hero (acepta distintos esquemas de datos)
-function getHeroImage(p?: Property) {
-  if (!p) return HERO_FALLBACK;
-  const anyP: any = p as any;
-  const candList: (string | undefined)[] = [
-    p.coverImage,
-    anyP.imagen,
-    anyP.image,
-    anyP.foto,
-    p.images?.[0],
-    p.imagenes?.[0],
+function getHeroImage(p?:Property){
+  if(!p) return HERO_FALLBACK;
+  const anyP:any = p;
+  const cand:(string|undefined)[]=[
+    p.coverImage, anyP.imagen, anyP.image, anyP.foto,
+    p.images?.[0], p.imagenes?.[0]
   ];
-  const src = candList.find((s) => typeof s === 'string' && s.trim().length > 4);
-  if (!src) return HERO_FALLBACK;
-  return src;
+  const src=cand.find(s=>typeof s==='string' && s.trim().length>4);
+  return src || HERO_FALLBACK;
 }
 
-/* -------------------- Datos Chile (para formulario de referidos) -------------------- */
-const REGIONES: readonly string[] = [
-  'Arica y Parinacota',
-  'Tarapacá',
-  'Antofagasta',
-  'Atacama',
-  'Coquimbo',
-  'Valparaíso',
-  "O'Higgins",
-  'Maule',
-  'Ñuble',
-  'Biobío',
-  'La Araucanía',
-  'Los Ríos',
-  'Los Lagos',
-  'Aysén',
-  'Magallanes',
-  'Metropolitana de Santiago',
+/* ------------------------------------------------------------------ */
+/*                      DATOS CHILE – SELECTS                         */
+/* ------------------------------------------------------------------ */
+const REGIONES:readonly string[]=[
+  'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',
+  "O'Higgins",'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos',
+  'Aysén','Magallanes','Metropolitana de Santiago',
 ];
 type Region = (typeof REGIONES)[number];
 
-const COMUNAS_POR_REGION: Record<Region, string[]> = {
-  'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
-  Tarapacá: ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica', 'Huara', 'Camiña', 'Colchane'],
-  Antofagasta: [
-    'Antofagasta',
-    'Mejillones',
-    'Taltal',
-    'Sierra Gorda',
-    'Calama',
-    'San Pedro de Atacama',
-    'María Elena',
-    'Tocopilla',
-  ],
-  Atacama: [
-    'Copiapó',
-    'Caldera',
-    'Tierra Amarilla',
-    'Vallenar',
-    'Huasco',
-    'Freirina',
-    'Chañaral',
-    'Diego de Almagro',
-  ],
-  Coquimbo: [
-    'La Serena',
-    'Coquimbo',
-    'Andacollo',
-    'Vicuña',
-    'Ovalle',
-    'Monte Patria',
-    'Punitaqui',
-    'Illapel',
-    'Los Vilos',
-    'Salamanca',
-  ],
-  Valparaíso: [
-    'Valparaíso',
-    'Viña del Mar',
-    'Concón',
-    'Quilpué',
-    'Villa Alemana',
-    'Quillota',
-    'La Calera',
-    'San Antonio',
-    'Casablanca',
-    'Quintero',
-    'Puchuncaví',
-    'Limache',
-    'Olmué',
-  ],
-  "O'Higgins": [
-    'Rancagua',
-    'Machalí',
-    'Graneros',
-    'Mostazal',
-    'Doñihue',
-    'San Vicente',
-    'Santa Cruz',
-    'San Fernando',
-    'Pichilemu',
-  ],
-  Maule: [
-    'Talca',
-    'Maule',
-    'San Clemente',
-    'Cauquenes',
-    'Curicó',
-    'Molina',
-    'Rauco',
-    'Linares',
-    'Parral',
-  ],
-  'Ñuble': ['Chillán', 'Chillán Viejo', 'San Carlos', 'Coihueco', 'Bulnes', 'Quirihue'],
-  'Biobío': [
-    'Concepción',
-    'Talcahuano',
-    'Hualpén',
-    'San Pedro de la Paz',
-    'Chiguayante',
-    'Coronel',
-    'Lota',
-    'Los Ángeles',
-    'Arauco',
-    'Curanilahue',
-  ],
-  'La Araucanía': [
-    'Temuco',
-    'Padre Las Casas',
-    'Villarrica',
-    'Pucón',
-    'Angol',
-    'Victoria',
-    'Nueva Imperial',
-  ],
-  'Los Ríos': ['Valdivia', 'Lanco', 'Panguipulli', 'Los Lagos', 'La Unión', 'Río Bueno'],
-  'Los Lagos': ['Puerto Montt', 'Puerto Varas', 'Frutillar', 'Osorno', 'Castro', 'Ancud', 'Quellón'],
-  Aysén: ['Coyhaique', 'Aysén', 'Cisnes', 'Chile Chico'],
-  Magallanes: ['Punta Arenas', 'Puerto Natales', 'Porvenir', 'Cabo de Hornos'],
-  'Metropolitana de Santiago': [
-    'Santiago',
-    'Providencia',
-    'Las Condes',
-    'Vitacura',
-    'Lo Barnechea',
-    'Ñuñoa',
-    'La Reina',
-    'Macul',
-    'Peñalolén',
-    'La Florida',
-    'Puente Alto',
-    'San Joaquín',
-    'San Miguel',
-    'La Cisterna',
-    'Cerrillos',
-    'Estación Central',
-    'Quinta Normal',
-    'Recoleta',
-    'Independencia',
-    'Huechuraba',
-    'Conchalí',
-    'Renca',
-    'Quilicura',
-    'Pudahuel',
-    'Lo Prado',
-    'Cerro Navia',
-    'Maipú',
-    'Pedro Aguirre Cerda',
-    'San Ramón',
-    'El Bosque',
-    'La Granja',
-    'San Bernardo',
-    'Buin',
-    'Paine',
-    'Calera de Tango',
-    'Talagante',
-    'Peñaflor',
-    'Isla de Maipo',
-    'El Monte',
-    'Padre Hurtado',
-    'Colina',
-    'Lampa',
-    'Tiltil',
-    'Melipilla',
-    'Curacaví',
-    'María Pinto',
-    'San José de Maipo',
-    'Pirque',
-  ],
-};
-
-const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
-const TIPO_PROPIEDAD = ['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'];
-
-/* ===== util: romanos para regiones (solo display) ===== */
-const ROMANOS = [
-  'I',
-  'II',
-  'III',
-  'IV',
-  'V',
-  'VI',
-  'VII',
-  'VIII',
-  'IX',
-  'X',
-  'XI',
-  'XII',
-  'XIII',
-  'XIV',
-  'XV',
-  'XVI',
-];
-const displayRegion = (r: Region) => {
-  const idx = REGIONES.indexOf(r);
-  const roman = ROMANOS[idx] ?? '';
+const displayRegion=(r:Region)=>{
+  const roman=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI'][REGIONES.indexOf(r)]||'';
   return roman ? `${roman} - ${r}` : r;
 };
-const extractRegionName = (value: string): Region | '' => {
-  const v = value.includes(' - ') ? value.split(' - ').slice(1).join(' - ') : value;
-  const match = REGIONES.find((r) => r.toLowerCase() === v.trim().toLowerCase());
-  return (match as Region) || '';
-};
 
-/* -------------------- Componente -------------------- */
-export default function HomePage() {
-  const [destacadas, setDestacadas] = useState<Property[]>([]);
-  const [i, setI] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+const SERVICIOS = ['Comprar','Vender','Arrendar','Gestionar un arriendo','Consultoría específica'];
+const TIPO_PROPIEDAD = ['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno'];
 
-  const firstTileRef = useRef<HTMLDivElement | null>(null);
-  const priceBoxRef = useRef<HTMLDivElement | null>(null);
-  const verMasRef = useRef<HTMLAnchorElement | null>(null);
+/* ------------------------------------------------------------------ */
+/*                              HOME PAGE                             */
+/* ------------------------------------------------------------------ */
+export default function HomePage(){
+  const [destacadas,setDestacadas]=useState<Property[]>([]);
+  const [i,setI]=useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval>|null>(null);
 
-  const touchStartX = useRef<number | null>(null);
-  const touchDeltaX = useRef(0);
+  const priceBoxRef = useRef<HTMLDivElement|null>(null);
+  const verMasRef   = useRef<HTMLAnchorElement|null>(null);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' });
-        const json = await res.json();
-        if (!mounted) return;
-        const data: Property[] = Array.isArray(json?.data) ? json.data : [];
-        const fixed = data.map((p) =>
-          (p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0 ? { ...p, precio_uf: 2300 } : p
-        );
+  /* ---------- fetch propiedades destacadas ---------- */
+  useEffect(()=>{
+    let mounted=true;
+    (async()=>{
+      try{
+        const res = await fetch('/api/propiedades?destacada=true&limit=6',{cache:'no-store'});
+        const j   = await res.json().catch(()=>null);
+        if(!mounted) return;
+        const data:Array<Property>=Array.isArray(j?.data)?j.data:[];
+        const fixed=data.map(p=>(p.precio_uf??0)<=0&&(p.precio_clp??0)<=0
+          ? {...p,precio_uf:2300}
+          : p);
         setDestacadas(fixed);
-      } catch {
-        if (mounted) setDestacadas([]);
-      }
+      }catch{ if(mounted) setDestacadas([]); }
     })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    return()=>{ mounted=false; };
+  },[]);
 
-  useEffect(() => {
-    if (!destacadas.length) return;
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [destacadas.length]);
+  /* ---------- autoplay ---------- */
+  useEffect(()=>{
+    if(!destacadas.length) return;
+    if(timerRef.current) clearInterval(timerRef.current);
+    timerRef.current=setInterval(()=>setI(p=>(p+1)%destacadas.length),4000);
+    return()=>{ if(timerRef.current) clearInterval(timerRef.current); };
+  },[destacadas.length]);
 
-  const go = (dir: -1 | 1) => {
-    if (!destacadas.length) return;
-    setI((p) => {
-      const n = destacadas.length;
-      return ((p + dir) % n + n) % n;
+  const go=(dir:-1|1)=>{
+    if(!destacadas.length) return;
+    setI(p=>{
+      const n=destacadas.length;
+      return ((p+dir)%n+n)%n;
     });
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchDeltaX.current = 0;
-    if (timerRef.current) clearInterval(timerRef.current);
+  /* ---------- touch swipe ---------- */
+  const touchStartX=useRef<number|null>(null);
+  const touchDeltaX=useRef(0);
+  const onTouchStart=(e:React.TouchEvent)=>{
+    touchStartX.current=e.touches[0].clientX;
+    touchDeltaX.current=0;
+    if(timerRef.current) clearInterval(timerRef.current);
   };
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartX.current !== null) {
-      touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+  const onTouchMove=(e:React.TouchEvent)=>{
+    if(touchStartX.current!==null){
+      touchDeltaX.current=e.touches[0].clientX-touchStartX.current;
     }
   };
-  const handleTouchEnd = () => {
-    const dx = touchDeltaX.current;
-    const TH = 50;
-    if (Math.abs(dx) > TH) {
-      if (dx < 0) go(1);
-      else go(-1);
-    }
-    touchStartX.current = null;
-    touchDeltaX.current = 0;
-    if (destacadas.length) {
-      timerRef.current = setInterval(() => setI((p) => (p + 1) % destacadas.length), 4000);
+  const onTouchEnd=()=>{
+    const dx=touchDeltaX.current;
+    if(Math.abs(dx)>50){ dx<0?go(1):go(-1); }
+    touchStartX.current=null; touchDeltaX.current=0;
+    if(destacadas.length){
+      timerRef.current=setInterval(()=>setI(p=>(p+1)%destacadas.length),4000);
     }
   };
 
-  const active = destacadas[i];
-  const bg = useMemo(() => getHeroImage(active), [active]);
+  /* ---------- hero data ---------- */
+  const active=destacadas[i];
+  const bg=useMemo(()=>getHeroImage(active),[active]);
 
-  const lineaSecundaria = [
-    capFirst(active?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
+  const lineaSecundaria=[
+    capFirst(active?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
     capFirst(active?.tipo),
     capFirst(active?.operacion),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  ].filter(Boolean).join(' · ');
 
-  const ufHoy = useUf();
+  const ufHoy=useUf();
+  const precioUfHero =
+    typeof active?.precio_uf==='number' && active.precio_uf>0
+      ? Math.round(active.precio_uf)
+      : active?.precio_clp && ufHoy
+        ? Math.round(active.precio_clp/ufHoy)
+        : 0;
 
-  const precioUfHero = useMemo(() => {
-    if (!active) return 0;
-    if (typeof active.precio_uf === 'number' && active.precio_uf > 0) return Math.round(active.precio_uf);
-    if (typeof active.precio_clp === 'number' && active.precio_clp > 0 && ufHoy) {
-      return Math.round(active.precio_clp / ufHoy);
-    }
-    return 0;
-  }, [active, ufHoy]);
+  const precioClpHero =
+    typeof active?.precio_clp==='number' && active.precio_clp>0
+      ? Math.round(active.precio_clp)
+      : active?.precio_uf && ufHoy
+        ? Math.round(active.precio_uf*ufHoy)
+        : 0;
 
-  const precioClpHero = useMemo(() => {
-    if (!active) return 0;
-    if (typeof active.precio_clp === 'number' && active.precio_clp > 0) return Math.round(active.precio_clp);
-    if (typeof active.precio_uf === 'number' && active.precio_uf > 0 && ufHoy) {
-      return Math.round(active.precio_uf * ufHoy);
-    }
-    return 0;
-  }, [active, ufHoy]);
-
-  // Ajusta el tamaño del botón "Ver más" para que calce con el alto del box de precios
-  const applyButtonSize = () => {
-    const h = priceBoxRef.current?.offsetHeight;
-    const a = verMasRef.current;
-    if (a && h) a.style.height = `${h}px`;
-    if (a) {
-      a.style.display = 'inline-flex';
-      a.style.alignItems = 'center';
-      a.style.justifyContent = 'center';
-      a.style.paddingLeft = '16px';
-      a.style.paddingRight = '16px';
-    }
-  };
-  useEffect(() => {
-    applyButtonSize();
-    let ro: ResizeObserver | null = null;
-    try {
-      if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
-        ro = new ResizeObserver(applyButtonSize);
-        if (priceBoxRef.current) ro.observe(priceBoxRef.current);
+  /* ---------- sincronizar alto del botón ---------- */
+  useEffect(()=>{
+    const sync=()=>{
+      const h=priceBoxRef.current?.offsetHeight;
+      if(verMasRef.current && h){
+        verMasRef.current.style.height=`${h}px`;
+        verMasRef.current.style.display='inline-flex';
+        verMasRef.current.style.alignItems='center';
+        verMasRef.current.style.justifyContent='center';
+        verMasRef.current.style.padding='0 16px';
       }
-    } catch {
-      // no-op
-    }
-    return () => {
-      try {
-        ro?.disconnect();
-      } catch {}
     };
-  }, [active]);
+    sync();
+    let ro:ResizeObserver|null=null;
+    if('ResizeObserver'in window){
+      ro=new ResizeObserver(sync);
+      if(priceBoxRef.current) ro.observe(priceBoxRef.current);
+    }
+    return()=>{ try{ro?.disconnect();}catch{} };
+  },[active]);
 
-  // helpers display
-  const dash = '—';
-  const fmtInt = (n: number | null | undefined) =>
-    typeof n === 'number' ? new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n) : dash;
+  const dash='—';
+  const fmtInt=(n:number|null|undefined)=>
+    typeof n==='number' ? new Intl.NumberFormat('es-CL',{maximumFractionDigits:0}).format(n) : dash;
 
-  return (
+  /* ------------------------------------------------------------------ */
+  return(
     <main className="bg-white">
-      {/* ========= HERO ========= */}
+      {/* ================= HERO ================= */}
       <section
         className="relative w-full overflow-hidden isolate"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
-        <div
-          className="absolute inset-0 -z-10 bg-center bg-cover"
-          style={{ backgroundImage: `url(${bg})` }}
-          aria-hidden
-        />
-        <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden />
+        <div className="absolute inset-0 -z-10 bg-center bg-cover"
+             style={{backgroundImage:`url(${bg})`}} />
+        <div className="absolute inset-0 -z-10 bg-black/35" />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] md:min-h-[96vh] lg:min-h-[100vh] flex items-end pb-16 md:pb-20">
-          <div className="w-full relative">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-none p-4 md:p-5 w-full max-w-[820px]">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
+                        min-h-[100svh] flex items-end pb-16 md:pb-20">
+          <div className="w-full">
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5
+                            w-full md:max-w-[480px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
               <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
-              {/* ===== Barra de 5 tiles (igual a la de la ficha) ===== */}
+              {/* ---------- Tiles ---------- */}
               <div className="mt-4">
-                <div className="grid grid-cols-5 border border-slate-200 bg-white text-center">
-                  {/* Dormitorios */}
-                  <div
-                    ref={firstTileRef}
-                    className="flex flex-col items-center justify-center gap-1 py-3 md:py-4 border-r border-slate-200"
-                  >
-                    <Bed className="h-5 w-5 text-[#6C819B]" />
-                    <div className="text-lg text-slate-800">{active?.dormitorios ?? dash}</div>
-                  </div>
-                  {/* Baños */}
-                  <div className="flex flex-col items-center justify-center gap-1 py-3 md:py-4 border-r border-slate-200">
-                    <ShowerHead className="h-5 w-5 text-[#6C819B]" />
-                    <div className="text-lg text-slate-800">{active?.banos ?? dash}</div>
-                  </div>
-                  {/* Estacionamientos */}
-                  <div className="flex flex-col items-center justify-center gap-1 py-3 md:py-4 border-r border-slate-200">
-                    <Car className="h-5 w-5 text-[#6C819B]" />
-                    <div className="text-lg text-slate-800">{active?.estacionamientos ?? dash}</div>
-                  </div>
-                  {/* m² construidos */}
-                  <div className="flex flex-col items-center justify-center gap-1 py-3 md:py-4 border-r border-slate-200">
-                    <Ruler className="h-5 w-5 text-[#6C819B]" />
-                    <div className="text-lg text-slate-800">{fmtInt(active?.superficie_util_m2)}</div>
-                  </div>
-                  {/* m² terreno (solo número) */}
-                  <div className="flex flex-col items-center justify-center gap-1 py-3 md:py-4">
-                    <Square className="h-5 w-5 text-[#6C819B]" />
-                    <div className="text-lg text-slate-800">{fmtInt(active?.superficie_terreno_m2)}</div>
-                  </div>
+                <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
+                  {[
+                    {icon:<Bed        className="h-5 w-5 text-[#6C819B]"/>, v:active?.dormitorios},
+                    {icon:<ShowerHead className="h-5 w-5 text-[#6C819B]"/>, v:active?.banos},
+                    {icon:<Car        className="h-5 w-5 text-[#6C819B]"/>, v:active?.estacionamientos},
+                    {icon:<Ruler      className="h-5 w-5 text-[#6C819B]"/>, v:fmtInt(active?.superficie_util_m2)},
+                    {icon:<Square     className="h-5 w-5 text-[#6C819B]"/>, v:fmtInt(active?.superficie_terreno_m2)},
+                  ].map((t,idx)=>(
+                    <div key={idx}
+                         className={`${idx<4?'border-r border-slate-200':''}
+                                      flex flex-col items-center justify-center gap-1
+                                      py-2 md:py-[10px]`}>
+                      {t.icon}
+                      <span className="text-sm text-slate-800 leading-none">{t.v ?? dash}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
+              {/* ---------- Botón + precio ---------- */}
               <div className="mt-4 flex items-end gap-3">
-                <div>
-                  {active?.id ? (
-                    <Link
-                      ref={verMasRef}
-                      href={`/propiedades/${active.id}`}
-                      className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white px-4"
-                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
-                    >
-                      Ver más
-                    </Link>
-                  ) : null}
-                </div>
+                {active?.id && (
+                  <Link ref={verMasRef}
+                        href={`/propiedades/${active.id}`}
+                        className="inline-flex text-sm tracking-wide rounded-none
+                                   border border-[#0A2E57] text-[#0A2E57] bg-white"
+                        style={{ boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
+                    Ver más
+                  </Link>
+                )}
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
-                  <div className="text-[1.25rem] md:text-[1.35rem] font-semibold text-[#0A2E57] leading-none">
-                    {precioUfHero > 0
+                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold
+                                  text-[#0A2E57] leading-none">
+                    {precioUfHero
                       ? fmtUF(precioUfHero)
-                      : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
+                      : fmtPrecioFallback(active?.precio_uf,active?.precio_clp)}
                   </div>
-                  <div className="text-sm md:text-base text-slate-600 mt-1">
-                    {precioClpHero > 0 ? fmtCLP(precioClpHero) : ''}
-                  </div>
+                  {precioClpHero>0 && (
+                    <div className="text-sm md:text-base text-slate-600 mt-[2px]">
+                      {fmtCLP(precioClpHero)}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {destacadas.length > 1 && (
+          {destacadas.length>1 && (
             <>
-              <button
-                aria-label="Anterior"
-                onClick={() => go(-1)}
-                className="group absolute left-4 md:left-6 top-1/2 -translate-y-1/2 p-2"
-              >
+              <button aria-label="Anterior" onClick={()=>go(-1)}
+                      className="group absolute left-4 md:left-6 top-1/2 -translate-y-1/2 p-2">
                 <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
-              <button
-                aria-label="Siguiente"
-                onClick={() => go(1)}
-                className="group absolute right-4 md:right-6 top-1/2 -translate-y-1/2 p-2"
-              >
+              <button aria-label="Siguiente" onClick={()=>go(1)}
+                      className="group absolute right-4 md:right-6 top-1/2 -translate-y-1/2 p-2">
                 <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
               </button>
             </>
           )}
 
-          {destacadas.length > 1 && (
+          {destacadas.length>1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              {destacadas.map((_, idx) => (
-                <span
-                  key={idx}
-                  className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`}
-                />
+              {destacadas.map((_,idx)=>(
+                <span key={idx}
+                      className={`h-1.5 w-6 rounded-full ${i===idx?'bg-white':'bg-white/50'}`} />
               ))}
             </div>
           )}
         </div>
       </section>
 
-      {/* ========= EQUIPO ========= */}
+      {/* ================= EQUIPO ================= */}
       <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex items-center gap-3">
           <Users2 className="h-6 w-6 text-[#0A2E57]" />
@@ -552,68 +318,26 @@ export default function HomePage() {
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            {
-              nombre: 'Carolina San Martín',
-              cargo: 'SOCIA FUNDADORA',
-              profesion: 'Arquitecta',
-              foto: '/team/carolina-san-martin.png',
-            },
-            {
-              nombre: 'Alberto Gesswein',
-              cargo: 'SOCIO',
-              profesion: 'Periodista y gestor de proyectos',
-              foto: '/team/alberto-gesswein.png',
-            },
-            {
-              nombre: 'Jan Gesswein',
-              cargo: 'SOCIO',
-              profesion: 'Abogado',
-              foto: '/team/jan-gesswein.png',
-            },
-            {
-              nombre: 'Kay Gesswein',
-              cargo: 'SOCIO',
-              profesion: 'Ingeniero comercial · Magíster en finanzas',
-              foto: '/team/kay-gesswein.png',
-            },
-          ].map((m) => (
-            <article
-              key={m.nombre}
-              className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-lg transition"
-              tabIndex={0}
-            >
+            { nombre:'Carolina San Martín', cargo:'SOCIA FUNDADORA', profesion:'Arquitecta', foto:'/team/carolina-san-martin.png' },
+            { nombre:'Alberto Gesswein',     cargo:'SOCIO',           profesion:'Periodista y gestor de proyectos', foto:'/team/alberto-gesswein.png' },
+            { nombre:'Jan Gesswein',         cargo:'SOCIO',           profesion:'Abogado', foto:'/team/jan-gesswein.png' },
+            { nombre:'Kay Gesswein',         cargo:'SOCIO',           profesion:'Ingeniero comercial · Magíster en finanzas', foto:'/team/kay-gesswein.png' },
+          ].map(m=>(
+            <article key={m.nombre}
+                     className="group relative rounded-2xl overflow-hidden border border-slate-200
+                                bg-white shadow-sm hover:shadow-lg transition" tabIndex={0}>
               <div className="aspect-[3/4] w-full bg-slate-100">
-                <img
-                  src={m.foto}
-                  alt={m.nombre}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = 'none';
-                  }}
-                />
+                <img src={m.foto} alt={m.nombre} className="h-full w-full object-cover"
+                     onError={e=>{ (e.currentTarget as HTMLImageElement).style.display='none'; }} />
               </div>
 
-              <div
-                className="
-                  pointer-events-none absolute inset-0
-                  bg-[#0A2E57]/0
-                  group-hover:bg-[#0A2E57]/90
-                  group-active:bg-[#0A2E57]/90
-                  focus-within:bg-[#0A2E57]/90
-                  transition duration-300
-                "
-              />
+              <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0
+                              group-hover:bg-[#0A2E57]/90 group-active:bg-[#0A2E57]/90
+                              focus-within:bg-[#0A2E57]/90 transition duration-300" />
 
-              <div
-                className="
-                  absolute inset-0 flex items-end
-                  opacity-0
-                  group-hover:opacity-100
-                  group-active:opacity-100
-                  focus-within:opacity-100
-                  transition duration-300
-                "
-              >
+              <div className="absolute inset-0 flex items-end opacity-0
+                              group-hover:opacity-100 group-active:opacity-100
+                              focus-within:opacity-100 transition duration-300">
                 <div className="w-full p-4 text-white">
                   <h3 className="text-lg leading-snug">{m.nombre}</h3>
                   <p className="text-sm mt-1">{m.cargo}</p>
@@ -625,7 +349,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ========= REFERIDOS ========= */}
+      {/* ================= REFERIDOS ================= */}
       <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="px-6 py-8 text-center">
@@ -639,28 +363,23 @@ export default function HomePage() {
           </div>
 
           <div className="px-6 pb-8">
+            {/* ----------- formulario (sin lógica) ----------- */}
             <h3 className="text-lg">Tus datos (referente)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="Tu nombre completo"
-                />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                                  text-slate-700 placeholder-slate-400" placeholder="Tu nombre completo" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="tu@email.com"
-                />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                                  text-slate-700 placeholder-slate-400" placeholder="tu@email.com" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
-                <input
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="+56 9 1234 5678"
-                />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                                  text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
               </div>
             </div>
 
@@ -668,122 +387,80 @@ export default function HomePage() {
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="Nombre del referido"
-                />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                                  text-slate-700 placeholder-slate-400" placeholder="Nombre del referido" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="correo@referido.com"
-                />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                                  text-slate-700 placeholder-slate-400" placeholder="correo@referido.com" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
-                <input
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="+56 9 1234 5678"
-                />
+                <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                                  text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
               </div>
             </div>
 
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* Servicio */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
-                <SmartSelect
-                  options={SERVICIOS}
-                  value={''}
-                  onChange={() => {}}
-                  placeholder="Seleccionar o escribir…"
-                  className="w-full"
-                />
+                <SmartSelect options={SERVICIOS} value={''} onChange={()=>{}}
+                             placeholder="Seleccionar o escribir…" className="w-full" />
               </div>
 
-              {/* Tipo de propiedad */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <SmartSelect
-                  options={TIPO_PROPIEDAD}
-                  value={''}
-                  onChange={() => {}}
-                  placeholder="Seleccionar o escribir…"
-                  className="w-full"
-                />
+                <SmartSelect options={TIPO_PROPIEDAD} value={''} onChange={()=>{}}
+                             placeholder="Seleccionar o escribir…" className="w-full" />
               </div>
 
-              {/* Región */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
-                <SmartSelect
-                  options={REGIONES.map((r) => displayRegion(r as Region))}
-                  value={''}
-                  onChange={() => {}}
-                  placeholder="Seleccionar o escribir…"
-                  className="w-full"
-                />
+                <SmartSelect options={REGIONES.map(r=>displayRegion(r as Region))}
+                             value={''} onChange={()=>{}}
+                             placeholder="Seleccionar o escribir…" className="w-full" />
               </div>
 
-              {/* Comuna */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
-                <SmartSelect
-                  options={[]}
-                  value={''}
-                  onChange={() => {}}
-                  placeholder="Selecciona una región primero"
-                  disabled
-                  className="w-full"
-                />
+                <SmartSelect options={[]} value={''} onChange={()=>{}}
+                             placeholder="Selecciona una región primero" disabled className="w-full" />
               </div>
 
-              {/* Presupuestos UF */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
-                <input
-                  inputMode="numeric"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="0"
-                />
+                <input inputMode="numeric"
+                       className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                                  text-slate-700 placeholder-slate-400" placeholder="0" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
-                <input
-                  inputMode="numeric"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="0"
-                />
+                <input inputMode="numeric"
+                       className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                                  text-slate-700 placeholder-slate-400" placeholder="0" />
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
-                <textarea
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700"
-                  rows={4}
-                  placeholder="Cualquier información adicional que pueda ser útil..."
-                />
+                <textarea rows={4}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                             text-slate-700" placeholder="Cualquier información adicional que pueda ser útil..." />
               </div>
             </div>
 
             <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none"
-                style={{
-                  boxShadow:
-                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
-                }}
-              >
+              <button type="button"
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide
+                                 text-white bg-[#0A2E57] rounded-none"
+                      style={{boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)'}}>
                 <Gift className="h-4 w-4" /> Enviar referido
               </button>
             </div>
 
             <p className="mt-3 text-center text-xs text-slate-500">
-              Al enviar este formulario, aceptas nuestros términos del programa de referidos y política
-              de privacidad.
+              Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
             </p>
           </div>
         </div>
