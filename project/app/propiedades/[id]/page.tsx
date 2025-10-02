@@ -218,34 +218,35 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
               </h1>
               <p className="mt-1 text-sm text-white/90">{linea || '—'}</p>
 
-              {/* ---------- Tiles ---------- */}
+              {/* ---------- Tiles (estilo anterior) ---------- */}
               <div className="mt-4">
-                <div className="grid grid-cols-5 border border-white/20 bg-white/5">
+                <div className="grid grid-cols-5 border border-white/20 bg-white/70/5">
                   {[
-                    {icon:<Bed        className="h-5 w-5 text-white/90"/>, v:prop?.dormitorios},
-                    {icon:<ShowerHead className="h-5 w-5 text-white/90"/>, v:prop?.banos},
-                    {icon:<Car        className="h-5 w-5 text-white/90"/>, v:prop?.estacionamientos},
-                    {icon:<Ruler      className="h-5 w-5 text-white/90"/>, v:fmtInt(prop?.superficie_util_m2)},
-                    {icon:<Square     className="h-5 w-5 text-white/90"/>, v:fmtInt(prop?.superficie_terreno_m2)},
+                    {icon:<Bed        className="h-5 w-5 text-[#0A2E57]"/>, v:prop?.dormitorios},
+                    {icon:<ShowerHead className="h-5 w-5 text-[#0A2E57]"/>, v:prop?.banos},
+                    {icon:<Car        className="h-5 w-5 text-[#0A2E57]"/>, v:prop?.estacionamientos},
+                    {icon:<Ruler      className="h-5 w-5 text-[#0A2E57]"/>, v:fmtInt(prop?.superficie_util_m2)},
+                    {icon:<Square     className="h-5 w-5 text-[#0A2E57]"/>, v:fmtInt(prop?.superficie_terreno_m2)},
                   ].map((t,idx)=>(
                     <div key={idx}
                          className={cls(
-                           'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
-                           idx<4 && 'border-r border-white/20'
+                           'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px] bg-white/20',
+                           idx<4 && 'border-r border-white/15'
                          )}>
                       {t.icon}
-                      <span className="text-sm text-white leading-none">{t.v ?? dash}</span>
+                      <span className="text-sm text-[#0A2E57] leading-none">{t.v ?? dash}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* ---------- Botón + precio ---------- */}
+              {/* ---------- Botón + precio (botón estilo anterior) ---------- */}
               <div className="mt-4 flex items-end gap-3">
                 <Link ref={btnRef} href="/contacto"
                       className="inline-flex text-sm tracking-wide rounded-none
-                                 border border-white text-white bg-transparent
-                                 hover:bg-white/10 transition-colors">
+                                 border border-[#0A2E57] text-[#0A2E57] bg-white
+                                 hover:bg-white/90 transition-colors"
+                      style={{ boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
                   Solicitar información
                 </Link>
 
@@ -281,7 +282,7 @@ function guessCategory(url:string):'exterior'|'interior'{
   const int=/(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
   if(ext.test(u))return'exterior';
   if(int.test(u))return'interior';
-  return 'exterior';
+  return'exterior';
 }
 
 function GalleryAndDetails({ prop }:{ prop:Property|null }) {
