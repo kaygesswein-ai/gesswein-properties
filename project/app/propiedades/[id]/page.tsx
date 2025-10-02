@@ -1,4 +1,3 @@
-
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
@@ -204,16 +203,17 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
                         min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5
-                            w-full md:max-w-[480px]">
+            {/* ======= CARD con tono celeste corporativo ======= */}
+            <div className="bg-[#E9EFF6]/70 backdrop-blur-sm shadow-xl
+                            p-4 md:p-5 w-full md:max-w-[480px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {prop?.titulo ?? 'Propiedad'}
               </h1>
-              <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
+              <p className="mt-1 text-sm text-gray-700">{linea || '—'}</p>
 
               {/* ---------- Tiles ---------- */}
               <div className="mt-4">
-                <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
+                <div className="grid grid-cols-5 border border-slate-200 bg-[#F6FAFF]/50">
                   {[
                     {icon:<Bed        className="h-5 w-5 text-[#6C819B]"/>, v:prop?.dormitorios},
                     {icon:<ShowerHead className="h-5 w-5 text-[#6C819B]"/>, v:prop?.banos},
@@ -254,7 +254,7 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
                   )}
                 </div>
               </div>
-            </div>
+            </div>{/* card */}
           </div>
         </div>
       </section>
