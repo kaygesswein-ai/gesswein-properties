@@ -56,6 +56,14 @@ const capFirst = (s?:string|null) =>{
   return lower.charAt(0).toUpperCase()+lower.slice(1);
 };
 
+/* capitaliza cada palabra (“las condes” → “Las Condes”) */
+const capWords = (s?:string|null) =>
+  (s ?? '')
+    .split(' ')
+    .map(w=>w ? w[0].toUpperCase()+w.slice(1).toLowerCase() : '')
+    .join(' ')
+    .trim();
+
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
@@ -160,7 +168,7 @@ export default function HomePage(){
   const bg=useMemo(()=>getHeroImage(active),[active]);
 
   const lineaSecundaria=[
-    capFirst(active?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
+    capWords(active?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
     capFirst(active?.tipo),
     capFirst(active?.operacion),
   ].filter(Boolean).join(' · ');
@@ -312,8 +320,8 @@ export default function HomePage(){
 
         <p className="mt-3 max-w-4xl text-slate-700">
           En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
-          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera para que
-          cada decisión inmobiliaria sea segura y rentable.
+          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera
+          para que cada decisión inmobiliaria sea segura y rentable.
         </p>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -325,10 +333,12 @@ export default function HomePage(){
           ].map(m=>(
             <article key={m.nombre}
                      className="group relative rounded-2xl overflow-hidden border border-slate-200
-                                bg-white shadow-sm hover:shadow-lg transition" tabIndex={0}>
+                                bg-white shadow-sm hover:shadow-lg transition"
+                     tabIndex={0}>
               <div className="aspect-[3/4] w-full bg-slate-100">
-                <img src={m.foto} alt={m.nombre} className="h-full w-full object-cover"
-                     onError={e=>{ (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                <img src={m.foto} alt={m.nombre}
+                     className="h-full w-full object-cover"
+                     onError={e=>{(e.currentTarget as HTMLImageElement).style.display='none';}}/>
               </div>
 
               <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0
@@ -352,115 +362,154 @@ export default function HomePage(){
       {/* ================= REFERIDOS ================= */}
       <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          {/* encabezado */}
           <div className="px-6 py-8 text-center">
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="mt-3 text-2xl md:text-3xl">Programa de Referidos con exclusividad</h2>
+            <h2 className="mt-3 text-2xl md:text-3xl">
+              Programa de Referidos con exclusividad
+            </h2>
             <p className="mt-2 text-slate-600">
               ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
             </p>
           </div>
 
+          {/* formulario */}
           <div className="px-6 pb-8">
-            {/* ----------- formulario (sin lógica) ----------- */}
+            {/* ---------- referente ---------- */}
             <h3 className="text-lg">Tus datos (referente)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
-                                  text-slate-700 placeholder-slate-400" placeholder="Tu nombre completo" />
+                                  text-slate-700 placeholder-slate-400"
+                       placeholder="Tu nombre completo" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
-                                  text-slate-700 placeholder-slate-400" placeholder="tu@email.com" />
+                                  text-slate-700 placeholder-slate-400"
+                       placeholder="tu@email.com" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
-                                  text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
+                                  text-slate-700 placeholder-slate-400"
+                       placeholder="+56 9 1234 5678" />
               </div>
             </div>
 
+            {/* ---------- referido ---------- */}
             <h3 className="mt-8 text-lg">Datos del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
-                                  text-slate-700 placeholder-slate-400" placeholder="Nombre del referido" />
+                                  text-slate-700 placeholder-slate-400"
+                       placeholder="Nombre del referido" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Email *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
-                                  text-slate-700 placeholder-slate-400" placeholder="correo@referido.com" />
+                                  text-slate-700 placeholder-slate-400"
+                       placeholder="correo@referido.com" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
-                                  text-slate-700 placeholder-slate-400" placeholder="+56 9 1234 5678" />
+                                  text-slate-700 placeholder-slate-400"
+                       placeholder="+56 9 1234 5678" />
               </div>
             </div>
 
+            {/* ---------- preferencias ---------- */}
             <h3 className="mt-8 text-lg">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
+              {/* servicio */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
-                <SmartSelect options={SERVICIOS} value={''} onChange={()=>{}}
-                             placeholder="Seleccionar o escribir…" className="w-full" />
+                <SmartSelect
+                  options={SERVICIOS}
+                  value={''}
+                  onChange={()=>{}}
+                  placeholder="Seleccionar o escribir…"
+                  className="w-full"
+                />
               </div>
-
+              {/* tipo propiedad */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
-                <SmartSelect options={TIPO_PROPIEDAD} value={''} onChange={()=>{}}
-                             placeholder="Seleccionar o escribir…" className="w-full" />
+                <SmartSelect
+                  options={TIPO_PROPIEDAD}
+                  value={''}
+                  onChange={()=>{}}
+                  placeholder="Seleccionar o escribir…"
+                  className="w-full"
+                />
               </div>
-
+              {/* región */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
-                <SmartSelect options={REGIONES.map(r=>displayRegion(r as Region))}
-                             value={''} onChange={()=>{}}
-                             placeholder="Seleccionar o escribir…" className="w-full" />
+                <SmartSelect
+                  options={REGIONES.map(r=>displayRegion(r as Region))}
+                  value={''}
+                  onChange={()=>{}}
+                  placeholder="Seleccionar o escribir…"
+                  className="w-full"
+                />
               </div>
-
+              {/* comuna */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
-                <SmartSelect options={[]} value={''} onChange={()=>{}}
-                             placeholder="Selecciona una región primero" disabled className="w-full" />
+                <SmartSelect
+                  options={[]}
+                  value={''}
+                  onChange={()=>{}}
+                  placeholder="Selecciona una región primero"
+                  disabled
+                  className="w-full"
+                />
               </div>
-
+              {/* presupuesto */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
                 <input inputMode="numeric"
                        className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
-                                  text-slate-700 placeholder-slate-400" placeholder="0" />
+                                  text-slate-700 placeholder-slate-400"
+                       placeholder="0" />
               </div>
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
                 <input inputMode="numeric"
                        className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
-                                  text-slate-700 placeholder-slate-400" placeholder="0" />
+                                  text-slate-700 placeholder-slate-400"
+                       placeholder="0" />
               </div>
-
+              {/* comentarios */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
                 <textarea rows={4}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
-                             text-slate-700" placeholder="Cualquier información adicional que pueda ser útil..." />
+                          className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
+                                     text-slate-700 placeholder-slate-400"
+                          placeholder="Cualquier información adicional que pueda ser útil…" />
               </div>
             </div>
 
+            {/* botón enviar */}
             <div className="mt-6 flex justify-center">
-              <button type="button"
-                      className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide
-                                 text-white bg-[#0A2E57] rounded-none"
-                      style={{boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)'}}>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide
+                           text-white bg-[#0A2E57] rounded-none"
+                style={{boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)'}}>
                 <Gift className="h-4 w-4" /> Enviar referido
               </button>
             </div>
 
             <p className="mt-3 text-center text-xs text-slate-500">
-              Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
+              Al enviar este formulario, aceptas nuestros términos del programa de referidos
+              y política de privacidad.
             </p>
           </div>
         </div>
