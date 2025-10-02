@@ -210,32 +210,31 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
                         min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            {/* ======= CARD con tono celeste corporativo notorio ======= */}
-            <div className="bg-gradient-to-br from-white/85 to-[#A8D9F8]/80
-                            backdrop-blur-sm shadow-xl p-4 md:p-5
+            {/* ======= CARD azul corporativo + texto blanco ======= */}
+            <div className="bg-[#0A2E57]/90 backdrop-blur-sm shadow-xl p-4 md:p-5
                             w-full md:max-w-[480px]">
-              <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
+              <h1 className="text-[1.4rem] md:text-2xl text-white">
                 {prop?.titulo ?? 'Propiedad'}
               </h1>
-              <p className="mt-1 text-sm text-gray-700">{linea || '—'}</p>
+              <p className="mt-1 text-sm text-white/90">{linea || '—'}</p>
 
               {/* ---------- Tiles ---------- */}
               <div className="mt-4">
-                <div className="grid grid-cols-5 border border-slate-200 bg-white/60">
+                <div className="grid grid-cols-5 border border-white/20 bg-white/5">
                   {[
-                    {icon:<Bed        className="h-5 w-5 text-[#4E6F8E]"/>, v:prop?.dormitorios},
-                    {icon:<ShowerHead className="h-5 w-5 text-[#4E6F8E]"/>, v:prop?.banos},
-                    {icon:<Car        className="h-5 w-5 text-[#4E6F8E]"/>, v:prop?.estacionamientos},
-                    {icon:<Ruler      className="h-5 w-5 text-[#4E6F8E]"/>, v:fmtInt(prop?.superficie_util_m2)},
-                    {icon:<Square     className="h-5 w-5 text-[#4E6F8E]"/>, v:fmtInt(prop?.superficie_terreno_m2)},
+                    {icon:<Bed        className="h-5 w-5 text-white/90"/>, v:prop?.dormitorios},
+                    {icon:<ShowerHead className="h-5 w-5 text-white/90"/>, v:prop?.banos},
+                    {icon:<Car        className="h-5 w-5 text-white/90"/>, v:prop?.estacionamientos},
+                    {icon:<Ruler      className="h-5 w-5 text-white/90"/>, v:fmtInt(prop?.superficie_util_m2)},
+                    {icon:<Square     className="h-5 w-5 text-white/90"/>, v:fmtInt(prop?.superficie_terreno_m2)},
                   ].map((t,idx)=>(
                     <div key={idx}
                          className={cls(
                            'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
-                           idx<4 && 'border-r border-slate-200'
+                           idx<4 && 'border-r border-white/20'
                          )}>
                       {t.icon}
-                      <span className="text-sm text-slate-800 leading-none">{t.v ?? dash}</span>
+                      <span className="text-sm text-white leading-none">{t.v ?? dash}</span>
                     </div>
                   ))}
                 </div>
@@ -245,18 +244,18 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
               <div className="mt-4 flex items-end gap-3">
                 <Link ref={btnRef} href="/contacto"
                       className="inline-flex text-sm tracking-wide rounded-none
-                                 border border-[#0A2E57] text-[#0A2E57] bg-white"
-                      style={{ boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
+                                 border border-white text-white bg-transparent
+                                 hover:bg-white/10 transition-colors">
                   Solicitar información
                 </Link>
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
                   <div className="text-[1.15rem] md:text-[1.25rem] font-semibold
-                                  text-[#0A2E57] leading-none">
+                                  text-white leading-none">
                     {precioUfHero ? `UF ${nfUF.format(precioUfHero)}` : 'Consultar'}
                   </div>
                   {precioClpHero && (
-                    <div className="text-sm md:text-base text-slate-600 mt-[2px]">
+                    <div className="text-sm md:text-base text-white/90 mt-[2px]">
                       $ {nfCLP.format(precioClpHero)}
                     </div>
                   )}
