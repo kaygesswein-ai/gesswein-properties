@@ -54,6 +54,14 @@ const HERO_FALLBACK =
 const getHeroImage = (p?:Property|null) =>
   p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
 
+const wordsCap = (s?:string|null) =>
+  (s ?? '')
+    .toLowerCase()
+    .split(' ')
+    .map(w => w ? w[0].toUpperCase() + w.slice(1) : '')
+    .join(' ')
+    .trim();
+
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -142,11 +150,10 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
   /* --- cálculos --- */
   const bg = useMemo(() => getHeroImage(prop), [prop]);
 
-  const cap = (s?:string|null) => s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : '';
   const linea = [
-    cap(prop?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
-    cap(prop?.tipo),
-    cap(prop?.operacion),
+    wordsCap(prop?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
+    wordsCap(prop?.tipo),
+    wordsCap(prop?.operacion),
   ].filter(Boolean).join(' · ');
 
   const precioUfHero =
@@ -203,9 +210,10 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
                         min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            {/* ======= CARD con tono celeste corporativo ======= */}
-            <div className="bg-[#E9EFF6]/70 backdrop-blur-sm shadow-xl
-                            p-4 md:p-5 w-full md:max-w-[480px]">
+            {/* ======= CARD con tono celeste corporativo notorio ======= */}
+            <div className="bg-gradient-to-br from-white/85 to-[#A8D9F8]/80
+                            backdrop-blur-sm shadow-xl p-4 md:p-5
+                            w-full md:max-w-[480px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {prop?.titulo ?? 'Propiedad'}
               </h1>
@@ -213,13 +221,13 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
 
               {/* ---------- Tiles ---------- */}
               <div className="mt-4">
-                <div className="grid grid-cols-5 border border-slate-200 bg-[#F6FAFF]/50">
+                <div className="grid grid-cols-5 border border-slate-200 bg-white/60">
                   {[
-                    {icon:<Bed        className="h-5 w-5 text-[#6C819B]"/>, v:prop?.dormitorios},
-                    {icon:<ShowerHead className="h-5 w-5 text-[#6C819B]"/>, v:prop?.banos},
-                    {icon:<Car        className="h-5 w-5 text-[#6C819B]"/>, v:prop?.estacionamientos},
-                    {icon:<Ruler      className="h-5 w-5 text-[#6C819B]"/>, v:fmtInt(prop?.superficie_util_m2)},
-                    {icon:<Square     className="h-5 w-5 text-[#6C819B]"/>, v:fmtInt(prop?.superficie_terreno_m2)},
+                    {icon:<Bed        className="h-5 w-5 text-[#4E6F8E]"/>, v:prop?.dormitorios},
+                    {icon:<ShowerHead className="h-5 w-5 text-[#4E6F8E]"/>, v:prop?.banos},
+                    {icon:<Car        className="h-5 w-5 text-[#4E6F8E]"/>, v:prop?.estacionamientos},
+                    {icon:<Ruler      className="h-5 w-5 text-[#4E6F8E]"/>, v:fmtInt(prop?.superficie_util_m2)},
+                    {icon:<Square     className="h-5 w-5 text-[#4E6F8E]"/>, v:fmtInt(prop?.superficie_terreno_m2)},
                   ].map((t,idx)=>(
                     <div key={idx}
                          className={cls(
