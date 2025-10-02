@@ -218,9 +218,9 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
               </h1>
               <p className="mt-1 text-sm text-white/90">{linea || '—'}</p>
 
-              {/* ---------- Tiles (estilo anterior) ---------- */}
+              {/* ---------- Tiles: fondo blanco ---------- */}
               <div className="mt-4">
-                <div className="grid grid-cols-5 border border-white/20 bg-white/70/5">
+                <div className="grid grid-cols-5 border border-white/20 bg-white">
                   {[
                     {icon:<Bed        className="h-5 w-5 text-[#0A2E57]"/>, v:prop?.dormitorios},
                     {icon:<ShowerHead className="h-5 w-5 text-[#0A2E57]"/>, v:prop?.banos},
@@ -230,8 +230,8 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
                   ].map((t,idx)=>(
                     <div key={idx}
                          className={cls(
-                           'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px] bg-white/20',
-                           idx<4 && 'border-r border-white/15'
+                           'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px] bg-white',
+                           idx<4 && 'border-r border-white/20'
                          )}>
                       {t.icon}
                       <span className="text-sm text-[#0A2E57] leading-none">{t.v ?? dash}</span>
