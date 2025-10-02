@@ -1,3 +1,4 @@
+
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
@@ -53,14 +54,6 @@ const HERO_FALLBACK =
 
 const getHeroImage = (p?:Property|null) =>
   p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
-
-const wordsCap = (s?:string|null) =>
-  (s ?? '')
-    .toLowerCase()
-    .split(' ')
-    .map(w => w ? w[0].toUpperCase() + w.slice(1) : '')
-    .join(' ')
-    .trim();
 
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
@@ -150,10 +143,11 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
   /* --- cálculos --- */
   const bg = useMemo(() => getHeroImage(prop), [prop]);
 
+  const cap = (s?:string|null) => s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : '';
   const linea = [
-    wordsCap(prop?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
-    wordsCap(prop?.tipo),
-    wordsCap(prop?.operacion),
+    cap(prop?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
+    cap(prop?.tipo),
+    cap(prop?.operacion),
   ].filter(Boolean).join(' · ');
 
   const precioUfHero =
@@ -210,59 +204,57 @@ export default function PropertyDetailPage({ params }:{ params:{ id:string } }) 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
                         min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            {/* ======= CARD azul corporativo + texto blanco ======= */}
-            <div className="bg-[#0A2E57]/90 backdrop-blur-sm shadow-xl p-4 md:p-5
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5
                             w-full md:max-w-[480px]">
-              <h1 className="text-[1.4rem] md:text-2xl text-white">
+              <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {prop?.titulo ?? 'Propiedad'}
               </h1>
-              <p className="mt-1 text-sm text-white/90">{linea || '—'}</p>
+              <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
 
-              {/* ---------- Tiles: fondo blanco ---------- */}
+              {/* ---------- Tiles ---------- */}
               <div className="mt-4">
-                <div className="grid grid-cols-5 border border-white/20 bg-white">
+                <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
-                    {icon:<Bed        className="h-5 w-5 text-[#0A2E57]"/>, v:prop?.dormitorios},
-                    {icon:<ShowerHead className="h-5 w-5 text-[#0A2E57]"/>, v:prop?.banos},
-                    {icon:<Car        className="h-5 w-5 text-[#0A2E57]"/>, v:prop?.estacionamientos},
-                    {icon:<Ruler      className="h-5 w-5 text-[#0A2E57]"/>, v:fmtInt(prop?.superficie_util_m2)},
-                    {icon:<Square     className="h-5 w-5 text-[#0A2E57]"/>, v:fmtInt(prop?.superficie_terreno_m2)},
+                    {icon:<Bed        className="h-5 w-5 text-[#6C819B]"/>, v:prop?.dormitorios},
+                    {icon:<ShowerHead className="h-5 w-5 text-[#6C819B]"/>, v:prop?.banos},
+                    {icon:<Car        className="h-5 w-5 text-[#6C819B]"/>, v:prop?.estacionamientos},
+                    {icon:<Ruler      className="h-5 w-5 text-[#6C819B]"/>, v:fmtInt(prop?.superficie_util_m2)},
+                    {icon:<Square     className="h-5 w-5 text-[#6C819B]"/>, v:fmtInt(prop?.superficie_terreno_m2)},
                   ].map((t,idx)=>(
                     <div key={idx}
                          className={cls(
-                           'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px] bg-white',
-                           idx<4 && 'border-r border-white/20'
+                           'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
+                           idx<4 && 'border-r border-slate-200'
                          )}>
                       {t.icon}
-                      <span className="text-sm text-[#0A2E57] leading-none">{t.v ?? dash}</span>
+                      <span className="text-sm text-slate-800 leading-none">{t.v ?? dash}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* ---------- Botón + precio (botón estilo anterior) ---------- */}
+              {/* ---------- Botón + precio ---------- */}
               <div className="mt-4 flex items-end gap-3">
                 <Link ref={btnRef} href="/contacto"
                       className="inline-flex text-sm tracking-wide rounded-none
-                                 border border-[#0A2E57] text-[#0A2E57] bg-white
-                                 hover:bg-white/90 transition-colors"
+                                 border border-[#0A2E57] text-[#0A2E57] bg-white"
                       style={{ boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
                   Solicitar información
                 </Link>
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
                   <div className="text-[1.15rem] md:text-[1.25rem] font-semibold
-                                  text-white leading-none">
+                                  text-[#0A2E57] leading-none">
                     {precioUfHero ? `UF ${nfUF.format(precioUfHero)}` : 'Consultar'}
                   </div>
                   {precioClpHero && (
-                    <div className="text-sm md:text-base text-white/90 mt-[2px]">
+                    <div className="text-sm md:text-base text-slate-600 mt-[2px]">
                       $ {nfCLP.format(precioClpHero)}
                     </div>
                   )}
                 </div>
               </div>
-            </div>{/* card */}
+            </div>
           </div>
         </div>
       </section>
@@ -282,7 +274,7 @@ function guessCategory(url:string):'exterior'|'interior'{
   const int=/(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
   if(ext.test(u))return'exterior';
   if(int.test(u))return'interior';
-  return'exterior';
+  return 'exterior';
 }
 
 function GalleryAndDetails({ prop }:{ prop:Property|null }) {
