@@ -159,16 +159,21 @@ function Lightbox(props:{
 
   const toggleFullscreen = async () => {
     if (!wrapRef.current) return;
+    // intento Fullscreen API
     try {
-      if (!document.fullscreenElement) {
+      if (!document.fullscreenElement && (document as any).fullscreenEnabled !== false) {
         await wrapRef.current.requestFullscreen();
         setIsFs(true);
-      } else {
+        setIsPseudoFs(false);
+      } else if (document.fullscreenElement) {
         await document.exitFullscreen();
         setIsFs(false);
+      } else {
+        // si no hay soporte, usa fallback
+        setIsPseudoFs(v => !v);
       }
     } catch {
-      // Fallback iOS / navegadores sin Fullscreen API
+      // fallback para iOS / navegadores sin soporte
       setIsPseudoFs(v => !v);
     }
   };
@@ -254,12 +259,16 @@ function Lightbox(props:{
   };
 
   if (!open) return null;
+  // en pseudo Fullscreen aumentamos el límite de tamaño de la imagen
+  const maxSizeClass = (isFs || isPseudoFs)
+    ? 'max-h-[100svh] max-w-[100vw]'
+    : 'max-h-[88vh] max-w-[92vw]';
+
   return (
     <div
       ref={wrapRef}
       className={cls(
-        'fixed inset-0 z-[999] bg-black/95 text-white select-none',
-        isPseudoFs && 'inset-0'
+        'fixed inset-0 z-[999] bg-black/95 text-white select-none'
       )}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
@@ -269,70 +278,71 @@ function Lightbox(props:{
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Top bar */}
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 text-sm z-30">
-        <div className="opacity-80" />
-        <div className="rounded bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+      {/* Contador CENTRADO */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
+        <div className="rounded bg-white/10 px-3 py-1.5 backdrop-blur-sm text-sm">
           <span className="font-medium">{index + 1}</span>
           <span className="opacity-70"> / {images.length}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setScale(s => clampScale(s - 0.25))}
-            aria-label="Alejar"
-            className="p-2 bg-white/10 hover:bg-white/20 rounded"
-          >
-            <Minus className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setScale(s => clampScale(s + 0.25))}
-            aria-label="Acercar"
-            className="p-2 bg-white/10 hover:bg-white/20 rounded"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
-          <button
-            onClick={resetZoom}
-            aria-label="Restablecer zoom"
-            className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded min-w-[52px] text-center"
-            title="Restablecer a 100%"
-          >
-            {Math.round(scale * 100)}%
-          </button>
-          <button
-            onClick={toggleFullscreen}
-            aria-label="Pantalla completa"
-            className="p-2 bg-white/10 hover:bg-white/20 rounded"
-          >
-            {isFs || isPseudoFs ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
-          </button>
-          <button
-            onClick={() => { exitFullscreen(); onClose(); }}
-            aria-label="Cerrar"
-            className="p-2 bg-white/10 hover:bg-white/20 rounded"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
       </div>
 
-      {/* Flechas */}
+      {/* Controles arriba a la derecha */}
+      <div className="absolute top-0 right-0 flex items-center gap-2 px-4 py-3 text-sm z-30">
+        <button
+          onClick={() => setScale(s => clampScale(s - 0.25))}
+          aria-label="Alejar"
+          className="p-2 hover:bg-white/10 rounded"
+        >
+          <Minus className="h-5 w-5" />
+        </button>
+        <button
+          onClick={() => setScale(s => clampScale(s + 0.25))}
+          aria-label="Acercar"
+          className="p-2 hover:bg-white/10 rounded"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+        <button
+          onClick={() => setScale(1)}
+          aria-label="Restablecer zoom"
+          className="px-2 py-1 text-xs hover:bg-white/10 rounded min-w-[52px] text-center"
+          title="Restablecer a 100%"
+        >
+          {Math.round(scale * 100)}%
+        </button>
+        <button
+          onClick={toggleFullscreen}
+          aria-label="Pantalla completa"
+          className="p-2 hover:bg-white/10 rounded"
+        >
+          {isFs || isPseudoFs ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+        </button>
+        <button
+          onClick={() => { exitFullscreen(); onClose(); }}
+          aria-label="Cerrar"
+          className="p-2 hover:bg-white/10 rounded"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Flechas — SIN FONDO */}
       <button
         onClick={onPrev}
         aria-label="Anterior"
-        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
+        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded z-30 hover:bg-white/10"
       >
         <ChevronLeft className="h-8 w-8" />
       </button>
       <button
         onClick={onNext}
         aria-label="Siguiente"
-        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded z-30 hover:bg-white/10"
       >
         <ChevronRight className="h-8 w-8" />
       </button>
 
-      {/* Imagen (debajo de todo) */}
+      {/* Imagen */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <img
           ref={imgRef}
@@ -342,7 +352,8 @@ function Lightbox(props:{
           onMouseDown={onMouseDown}
           draggable={false}
           className={cls(
-            'max-h-[88vh] max-w-[92vw] object-contain transition-transform duration-75',
+            maxSizeClass,
+            'object-contain transition-transform duration-75',
             scale > 1 ? (drag.active ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'
           )}
           style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }}
