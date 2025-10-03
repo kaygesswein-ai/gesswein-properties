@@ -36,18 +36,22 @@ type Property = {
   estacionamientos?: number | null;
   created_at?: string | null;
   descripcion?: string | null;
-  imagenes?: string[] | null;
+  imagenes?: string[] | null; // se mantiene por compatibilidad
   barrio?: string | null;
 
-  // Campo auxiliar para el hero que setemos nosotros
-  _hero?: string | null;
+  _hero?: string | null; // solo para el hero
 };
 
 type FotoRow = {
   url: string;
   categoria?: 'exterior' | 'interior' | 'planos' | null;
-  tag?: 'exterior' | 'interior' | 'planos' | null; // alias por compatibilidad
+  tag?: 'exterior' | 'interior' | 'planos' | null; // por compatibilidad
   orden?: number | null;
+};
+
+type FotoItem = {
+  url: string;
+  cat: 'exterior' | 'interior' | 'planos';
 };
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
@@ -61,7 +65,6 @@ const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).jo
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-// 👉 ahora prioriza prop._hero (si lo definimos al traer fotos)
 const getHeroImage = (p?: Property | null) => {
   if (!p) return HERO_FALLBACK;
   if (p._hero?.trim()) return p._hero!;
@@ -149,40 +152,58 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 /* ------------------------------------------------------------------ */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
+  const [photos, setPhotos] = useState<FotoItem[]>([]);
   const uf = useUf();
+
+  // Regex para fallback si no viene categoria en DB
+  const guessCategory = (url: string): 'exterior' | 'interior' | 'planos' => {
+    const u = url.toLowerCase();
+    const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
+    const int = /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
+    if (ext.test(u)) return 'exterior';
+    if (int.test(u)) return 'interior';
+    return 'exterior';
+  };
 
   /* --- fetch --- */
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        // 1) Propiedad (como ya estaba)
+        // 1) Propiedad
         const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}`).catch(() => null as any);
         const j = r?.ok ? await r.json().catch(() => null) : null;
         const baseProp: Property | null = j?.data ?? null;
 
-        // 2) Fotos de Supabase para esta propiedad
+        // 2) Fotos (con categoria real)
         const rf = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`).catch(() => null as any);
         const jf = rf?.ok ? await rf.json().catch(() => null) : null;
-        const fotos: FotoRow[] = Array.isArray(jf?.data) ? jf.data : [];
+        const rows: FotoRow[] = Array.isArray(jf?.data) ? jf.data : [];
 
-        // urls planas
-        const urls = fotos.map((f) => f.url).filter(Boolean) as string[];
+        const mapped: FotoItem[] = rows.map(row => {
+          const cat = (row.categoria ?? row.tag ?? guessCategory(row.url)) as FotoItem['cat'];
+          return { url: row.url, cat };
+        });
 
-        // Elegimos hero: primera exterior → primera cualquiera → imagen original → fallback
+        // Hero: primera exterior → primera cualquiera → imagen original
         const heroFromFotos =
-          fotos.find((f) => (f.categoria ?? f.tag) === 'exterior')?.url
-          ?? fotos[0]?.url
+          mapped.find(f => f.cat === 'exterior')?.url
+          ?? mapped[0]?.url
           ?? baseProp?.imagenes?.[0]
           ?? null;
 
         const merged: Property | null = baseProp
-          ? { ...baseProp, imagenes: urls.length ? urls : (baseProp.imagenes ?? []), _hero: heroFromFotos }
+          ? { ...baseProp, imagenes: mapped.length ? mapped.map(f => f.url) : (baseProp.imagenes ?? []), _hero: heroFromFotos }
           : null;
 
-        if (alive) setProp(merged);
+        if (!alive) return;
+        setProp(merged);
+        setPhotos(mapped);
       } catch {
-        if (alive) setProp(null);
+        if (alive) {
+          setProp(null);
+          setPhotos([]);
+        }
       }
     })();
     return () => { alive = false; };
@@ -309,7 +330,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       </section>
 
       {/* ---------------- GALERÍA + DESCRIPCIÓN + FEATURES + MAPA ---------------- */}
-      <GalleryAndDetails prop={prop} />
+      <GalleryAndDetails photos={photos} prop={prop} />
     </main>
   );
 }
@@ -317,35 +338,24 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 /* ------------------------------------------------------------------ */
 /*                        GALERÍA + CONTENIDO                         */
 /* ------------------------------------------------------------------ */
-function guessCategory(url: string): 'exterior' | 'interior' {
-  const u = url.toLowerCase();
-  const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
-  const int = /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
-  if (ext.test(u)) return 'exterior';
-  if (int.test(u)) return 'interior';
-  return 'exterior';
-}
-
-function GalleryAndDetails({ prop }: { prop: Property | null }) {
+function GalleryAndDetails({ prop, photos }: { prop: Property | null; photos: FotoItem[] }) {
   const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
-  const images = useMemo(() => {
-    const arr = (prop?.imagenes ?? []).filter(Boolean);
-    return arr.length
-      ? arr
-      : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop'];
-  }, [prop]);
+  // Si no hay fotos, mostramos una de fallback para no dejar vacío
+  const effectivePhotos: FotoItem[] = photos.length
+    ? photos
+    : [{ url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop', cat: 'exterior' }];
 
   const imagesByCat = useMemo(() => {
-    const all = images.map(url => ({ url, cat: guessCategory(url) }));
+    const all = effectivePhotos;
     return {
       todas: all,
       exterior: all.filter(i => i.cat === 'exterior'),
       interior: all.filter(i => i.cat === 'interior'),
     };
-  }, [images]);
+  }, [effectivePhotos]);
 
   const list = imagesByCat[tab];
   const openLb  = (i: number) => { setLbIndex(i); setLbOpen(true); };
