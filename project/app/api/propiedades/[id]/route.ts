@@ -1,58 +1,63 @@
-// app/api/propiedades/[id]/route.ts
+// project/app/api/propiedades/[id]/route.ts
 import { NextResponse } from 'next/server';
-import { supaRest } from '@/lib/supabase-rest';
+import { createClient } from '@supabase/supabase-js';
 
-type Row = Record<string, any> | null;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-async function fetchOne(column: 'id' | 'slug', value: string): Promise<Row> {
-  const qs = new URLSearchParams();
-  // Importante: usa la vista pública para mantener el mismo shape que las cards
-  qs.set('select', '*');
-  qs.set(column, `eq.${value}`);
-  qs.set('limit', '1');
+// Revalida en el edge (opcional)
+export const runtime = 'edge';
+export const revalidate = 60 * 60 * 2;
 
-  // Primero intento en la vista (trae coverImage); si no está, caigo a la tabla
-  let res = await supaRest(`propiedades_api?${qs.toString()}`);
-  if (!res.ok) {
-    // Reintento directo a la tabla por si la vista aún no existe en algún entorno
-    res = await supaRest(`propiedades?${qs.toString()}`);
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+
+  // 1) Trae la propiedad (usa tu vista pública para no exponer precio_clp)
+  const { data: prop, error: e1 } = await supabase
+    .from('propiedades_api')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (e1) {
+    console.error('[api/propiedades/:id] fetch propiedad', e1);
+    return NextResponse.json({ success: false, error: e1.message }, { status: 500 });
   }
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    throw new Error(errText || `PostgREST error (${res.status})`);
+  if (!prop) {
+    return NextResponse.json({ success: false, error: 'No existe la propiedad' }, { status: 404 });
   }
-  const data = await res.json().catch(() => null);
-  return Array.isArray(data) && data.length > 0 ? (data[0] as Row) : null;
-}
 
-function normalize(row: any) {
-  if (!row) return null;
-  // Asegura que siempre exista un array de imágenes
-  const imagenes: string[] = Array.isArray(row.imagenes) ? row.imagenes : [];
-  return {
-    ...row,
-    // alias en inglés para el front
-    images: imagenes,
-    // si la vista no vino con coverImage, lo calculamos
-    coverImage: row.coverImage ?? imagenes[0] ?? null,
+  // 2) Trae sus fotos categorizadas
+  const { data: fotos, error: e2 } = await supabase
+    .from('propiedades_fotos')
+    .select('url, tag, orden')
+    .eq('propiedad_id', id)
+    .order('orden', { ascending: true });
+
+  if (e2) {
+    console.error('[api/propiedades/:id] fetch fotos', e2);
+    // No abortamos; devolvemos la propiedad igual
+  }
+
+  // 3) Si hay fotos en propiedades_fotos, sobre-escribimos "imagenes"
+  const imagenesDesdeTabla =
+    (fotos?.map((f) => f.url).filter(Boolean) as string[] | undefined) ?? [];
+
+  const merged = {
+    ...prop,
+    imagenes: imagenesDesdeTabla.length > 0 ? imagenesDesdeTabla : (prop.imagenes ?? []),
+    // Opcional: también devolvemos agrupado por tag para un futuro
+    _byTag: {
+      exterior: (fotos ?? []).filter(f => f.tag === 'exterior').map(f => f.url),
+      interior: (fotos ?? []).filter(f => f.tag === 'interior').map(f => f.url),
+      planos:   (fotos ?? []).filter(f => f.tag === 'planos').map(f => f.url),
+    }
   };
-}
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  try {
-    const raw = decodeURIComponent(params.id || '');
-    // Permite buscar por id o por slug
-    let row = await fetchOne('id', raw).catch(() => null);
-    if (!row) row = await fetchOne('slug', raw).catch(() => null);
-
-    if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return NextResponse.json({ data: normalize(row) }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: 'Internal error', details: String(err?.message || err) },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json({ success: true, data: merged });
 }
-// export const runtime = 'edge'; // opcional
-export const dynamic = 'force-dynamic'; // evita que Next cachee esta ruta
