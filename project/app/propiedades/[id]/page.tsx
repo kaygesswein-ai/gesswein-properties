@@ -117,42 +117,63 @@ function Lightbox(props:{
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const imgRef  = useRef<HTMLImageElement | null>(null);
 
-  const [isFs, setIsFs] = useState(false);
+  const [isFs, setIsFs] = useState(false);         // fullscreen real
+  const [isPseudoFs, setIsPseudoFs] = useState(false); // fallback iOS
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState<{x:number;y:number}>({x:0,y:0});
   const [drag, setDrag] = useState<{active:boolean; sx:number; sy:number; ox:number; oy:number}>({
     active:false, sx:0, sy:0, ox:0, oy:0
   });
 
+  // Swipe
+  const touch = useRef<{x:number;y:number; t2?:number; pinchStartDist?:number; startScale?:number}>({x:0,y:0});
+
   // keyboard
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape')      { if (document.fullscreenElement) document.exitFullscreen().catch(()=>{}); onClose(); }
+      if (e.key === 'Escape')      { exitFullscreen(); onClose(); }
       if (e.key === 'ArrowLeft')   onPrev();
       if (e.key === 'ArrowRight')  onNext();
-      if (e.key === '+')           setScale(s => Math.min(3, +(s+0.25).toFixed(2)));
-      if (e.key === '-')           setScale(s => Math.max(1, +(s-0.25).toFixed(2)));
-      if (e.key === '0')           { setScale(1); setOffset({x:0,y:0}); }
+      if (e.key === '+')           setScale(s => clampScale(s + 0.25));
+      if (e.key === '-')           setScale(s => clampScale(s - 0.25));
+      if (e.key === '0')           resetZoom();
       if (e.key.toLowerCase() === 'f') toggleFullscreen();
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, [open, onClose, onPrev, onNext]);
 
-  useEffect(() => { // reset zoom cuando cambia la foto o se abre
-    if (open) { setScale(1); setOffset({x:0,y:0}); }
+  useEffect(() => { // reset cuando cambia la foto o se abre
+    if (open) resetZoom();
   }, [index, open]);
+
+  const clampScale = (v:number) => Math.max(1, Math.min(3, +v.toFixed(2)));
+  const resetZoom  = () => { setScale(1); setOffset({x:0,y:0}); };
+
+  const exitFullscreen = async () => {
+    try { if (document.fullscreenElement) await document.exitFullscreen(); } catch {}
+    setIsFs(false);
+    setIsPseudoFs(false);
+  };
 
   const toggleFullscreen = async () => {
     if (!wrapRef.current) return;
-    if (!document.fullscreenElement) {
-      try { await wrapRef.current.requestFullscreen(); setIsFs(true); } catch {}
-    } else {
-      try { await document.exitFullscreen(); setIsFs(false); } catch {}
+    try {
+      if (!document.fullscreenElement) {
+        await wrapRef.current.requestFullscreen();
+        setIsFs(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFs(false);
+      }
+    } catch {
+      // Fallback iOS / navegadores sin Fullscreen API
+      setIsPseudoFs(v => !v);
     }
   };
 
+  // drag (desktop)
   const onMouseDown = (e: React.MouseEvent) => {
     if (scale === 1) return;
     setDrag({active:true, sx:e.clientX, sy:e.clientY, ox:offset.x, oy:offset.y});
@@ -166,10 +187,9 @@ function Lightbox(props:{
   const onMouseUp = () => setDrag(d => ({...d, active:false}));
 
   const onWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey) e.preventDefault();
     const dir = e.deltaY > 0 ? -1 : 1;
     setScale(s => {
-      const next = Math.max(1, Math.min(3, +(s + dir*0.25).toFixed(2)));
+      const next = clampScale(s + dir*0.25);
       if (next === 1) setOffset({x:0,y:0});
       return next;
     });
@@ -183,56 +203,107 @@ function Lightbox(props:{
     });
   };
 
+  // touch handlers
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touch.current.x = e.touches[0].clientX;
+      touch.current.y = e.touches[0].clientY;
+      touch.current.t2 = undefined;
+    } else if (e.touches.length === 2) {
+      const d = dist2(e.touches[0], e.touches[1]);
+      touch.current.pinchStartDist = d;
+      touch.current.startScale = scale;
+    }
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touch.current.pinchStartDist && touch.current.startScale) {
+      const d = dist2(e.touches[0], e.touches[1]);
+      const factor = d / touch.current.pinchStartDist;
+      const next = clampScale(touch.current.startScale * factor);
+      setScale(next);
+      if (next === 1) setOffset({x:0,y:0});
+      return;
+    }
+    if (e.touches.length === 1 && scale > 1) {
+      // pan con un dedo
+      const dx = e.touches[0].clientX - touch.current.x;
+      const dy = e.touches[0].clientY - touch.current.y;
+      setOffset(o => ({x:o.x + dx, y:o.y + dy}));
+      touch.current.x = e.touches[0].clientX;
+      touch.current.y = e.touches[0].clientY;
+    }
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (e.changedTouches.length && scale === 1) {
+      const endX = e.changedTouches[0].clientX;
+      const diff = endX - touch.current.x;
+      if (Math.abs(diff) > 50) {
+        diff < 0 ? onNext() : onPrev();
+      }
+    }
+  };
+
+  function dist2(a: Touch, b: Touch) {
+    const dx = a.clientX - b.clientX;
+    const dy = a.clientY - b.clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+
   if (!open) return null;
   return (
     <div
       ref={wrapRef}
-      className="fixed inset-0 z-[999] bg-black/95 text-white select-none"
+      className={cls(
+        'fixed inset-0 z-[999] bg-black/95 text-white select-none',
+        isPseudoFs && 'inset-0'
+      )}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
       onWheel={onWheel}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
-      {/* Top bar: contador + acciones */}
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 text-sm">
-        <div className="opacity-80">
-          {/* vacío para balancear */}
-        </div>
+      {/* Top bar */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 text-sm z-30">
+        <div className="opacity-80" />
         <div className="rounded bg-white/10 px-3 py-1.5 backdrop-blur-sm">
           <span className="font-medium">{index + 1}</span>
           <span className="opacity-70"> / {images.length}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setScale(s => Math.max(1, +(s-0.25).toFixed(2)))}
+            onClick={() => setScale(s => clampScale(s - 0.25))}
             aria-label="Alejar"
             className="p-2 bg-white/10 hover:bg-white/20 rounded"
           >
             <Minus className="h-5 w-5" />
           </button>
           <button
-            onClick={() => setScale(s => Math.min(3, +(s+0.25).toFixed(2)))}
+            onClick={() => setScale(s => clampScale(s + 0.25))}
             aria-label="Acercar"
             className="p-2 bg-white/10 hover:bg-white/20 rounded"
           >
             <Plus className="h-5 w-5" />
           </button>
           <button
-            onClick={() => { setScale(1); setOffset({x:0,y:0}); }}
+            onClick={resetZoom}
             aria-label="Restablecer zoom"
-            className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded"
+            className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded min-w-[52px] text-center"
+            title="Restablecer a 100%"
           >
-            100%
+            {Math.round(scale * 100)}%
           </button>
           <button
             onClick={toggleFullscreen}
             aria-label="Pantalla completa"
             className="p-2 bg-white/10 hover:bg-white/20 rounded"
           >
-            {isFs ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+            {isFs || isPseudoFs ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
           </button>
           <button
-            onClick={() => { if (document.fullscreenElement) document.exitFullscreen().catch(()=>{}); onClose(); }}
+            onClick={() => { exitFullscreen(); onClose(); }}
             aria-label="Cerrar"
             className="p-2 bg-white/10 hover:bg-white/20 rounded"
           >
@@ -245,20 +316,20 @@ function Lightbox(props:{
       <button
         onClick={onPrev}
         aria-label="Anterior"
-        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 rounded"
+        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
       >
         <ChevronLeft className="h-8 w-8" />
       </button>
       <button
         onClick={onNext}
         aria-label="Siguiente"
-        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 rounded"
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
       >
         <ChevronRight className="h-8 w-8" />
       </button>
 
-      {/* Imagen */}
-      <div className="absolute inset-0 flex items-center justify-center">
+      {/* Imagen (debajo de todo) */}
+      <div className="absolute inset-0 flex items-center justify-center z-10">
         <img
           ref={imgRef}
           src={images[index]}
@@ -554,8 +625,6 @@ function GalleryTiles({ photos }: { photos: FotoItem[] }) {
 
   const openLb  = (i: number) => { setLbIndex(i); setLbOpen(true); };
   const closeLb = () => setLbOpen(false);
-  const prevLb  = () => setLbIndex(i => (i - 1 + currentList.length) % currentList.length);
-  const nextLb  = () => setLbIndex(i => (i + 1) % currentList.length);
 
   const cover = {
     todas   : imagesByCat.todas[0]?.url,
@@ -630,7 +699,7 @@ function GalleryTiles({ photos }: { photos: FotoItem[] }) {
         open={lbOpen}
         images={imagesByCat[tab].map(x => x.url)}
         index={lbIndex}
-        onClose={() => setLbOpen(false)}
+        onClose={closeLb}
         onPrev={() => {
           const list = imagesByCat[tab];
           setLbIndex(i => (i - 1 + list.length) % list.length);
