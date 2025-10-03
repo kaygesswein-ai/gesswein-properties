@@ -125,7 +125,7 @@ function Lightbox(props:{
     active:false, sx:0, sy:0, ox:0, oy:0
   });
 
-  // Swipe
+  // Swipe / Pinch
   const touch = useRef<{x:number;y:number; t2?:number; pinchStartDist?:number; startScale?:number}>({x:0,y:0});
 
   // keyboard
@@ -203,11 +203,20 @@ function Lightbox(props:{
     });
   };
 
+  // ---------- Touch helpers (para React.Touch / DOM Touch indistinto) ----------
+  type P2 = { clientX: number; clientY: number };
+  const dist2 = (a: P2, b: P2) => {
+    const dx = a.clientX - b.clientX;
+    const dy = a.clientY - b.clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  };
+
   // touch handlers
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 1) {
-      touch.current.x = e.touches[0].clientX;
-      touch.current.y = e.touches[0].clientY;
+      const t0 = e.touches[0];
+      touch.current.x = t0.clientX;
+      touch.current.y = t0.clientY;
       touch.current.t2 = undefined;
     } else if (e.touches.length === 2) {
       const d = dist2(e.touches[0], e.touches[1]);
@@ -226,11 +235,12 @@ function Lightbox(props:{
     }
     if (e.touches.length === 1 && scale > 1) {
       // pan con un dedo
-      const dx = e.touches[0].clientX - touch.current.x;
-      const dy = e.touches[0].clientY - touch.current.y;
+      const t0 = e.touches[0];
+      const dx = t0.clientX - touch.current.x;
+      const dy = t0.clientY - touch.current.y;
       setOffset(o => ({x:o.x + dx, y:o.y + dy}));
-      touch.current.x = e.touches[0].clientX;
-      touch.current.y = e.touches[0].clientY;
+      touch.current.x = t0.clientX;
+      touch.current.y = t0.clientY;
     }
   };
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -242,12 +252,6 @@ function Lightbox(props:{
       }
     }
   };
-
-  function dist2(a: Touch, b: Touch) {
-    const dx = a.clientX - b.clientX;
-    const dy = a.clientY - b.clientY;
-    return Math.sqrt(dx*dx + dy*dy);
-  }
 
   if (!open) return null;
   return (
