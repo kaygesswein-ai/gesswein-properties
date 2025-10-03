@@ -2,17 +2,20 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Usa SIEMPRE la ANON KEY en producción (respeta RLS)
+// Usa la ANON KEY en producción (RLS aplica igual en modo lectura)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Cambiamos a nodejs para evitar problemas de envs en Edge
-export const runtime = 'nodejs';
+export const runtime = 'edge';
+export const revalidate = 60 * 60 * 2; // 2 horas
 
-// No cachear este endpoint
-export const revalidate = 0;
+type Row = {
+  url: string;
+  categoria: 'exterior' | 'interior' | 'planos' | null;
+  orden: number | null;
+};
 
 export async function GET(
   _req: Request,
@@ -20,27 +23,27 @@ export async function GET(
 ) {
   const { id } = params;
 
-  try {
-    const { data, error } = await supabase
-      .from('propiedades_fotos')
-      .select('url, tag, orden')
-      .eq('propiedad_id', id)
-      .order('orden', { ascending: true });
+  const { data, error } = await supabase
+    .from('propiedades_fotos')
+    .select('url,categoria,orden')
+    .eq('propiedad_id', id)
+    .order('orden', { ascending: true });
 
-    if (error) {
-      console.error('[api/propiedades/:id/fotos] supabase error', error);
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ success: true, data }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch (e: any) {
-    console.error('[api/propiedades/:id/fotos] exception', e);
+  if (error) {
+    console.error('[api/propiedades/:id/fotos]', error);
     return NextResponse.json(
-      { success: false, error: e?.message ?? 'unknown' },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }
+
+  const photos = (data as Row[] | null)?.map((r) => ({
+    url: r.url,
+    categoria: r.categoria,
+    // Alias "tag" por compatibilidad con código antiguo
+    tag: r.categoria,
+    orden: r.orden ?? 0,
+  })) ?? [];
+
+  return NextResponse.json({ success: true, data: photos });
 }
