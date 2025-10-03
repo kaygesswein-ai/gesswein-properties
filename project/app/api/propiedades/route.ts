@@ -1,48 +1,59 @@
-// app/api/propiedades/route.ts
+// project/app/api/propiedades/route.ts
 import { NextResponse } from 'next/server';
-import { supaRest } from '@/lib/supabase-rest';
+import { createClient } from '@supabase/supabase-js';
 
-export const revalidate = 0;
-export const dynamic = 'force-dynamic';
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const qs = new URLSearchParams();
+export const runtime = 'edge';
+export const revalidate = 60 * 20; // 20 minutos
 
-    // base
-    qs.set('select', '*');
-    // orden más nuevo primero
-    qs.set('order', 'created_at.desc');
-    // paginación opcional
-    const limit = searchParams.get('limit') || '60';
-    qs.set('limit', limit);
+export async function GET() {
+  // 1) Trae todas las publicadas desde tu vista
+  const { data: props, error: e1 } = await supabase
+    .from('propiedades_api')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    // filtros básicos que ya usa tu UI (si no vienen, no se aplican)
-    const setEq = (key: string, param: string) => {
-      const v = searchParams.get(param);
-      if (v) qs.set(key, `eq.${v}`);
-    };
-    setEq('operacion', 'operacion');
-    setEq('tipo', 'tipo');
-    setEq('region', 'region');
-    setEq('comuna', 'comuna');
-
-    // rangos por UF (minUF/maxUF) usados por tu UI
-    const minUF = searchParams.get('minUF');
-    const maxUF = searchParams.get('maxUF');
-    if (minUF) qs.set('precio_uf', `gte.${minUF}`);
-    if (maxUF) qs.append('precio_uf', `lte.${maxUF}`);
-
-    // nota: la vista ya oculta no publicados
-    const res = await supaRest(`propiedades_api?${qs.toString()}`);
-    if (!res.ok) {
-      const err = await res.text();
-      return NextResponse.json({ error: err || 'Error consultando propiedades' }, { status: 500 });
-    }
-    const data = await res.json();
-    return NextResponse.json({ data });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Error' }, { status: 500 });
+  if (e1) {
+    console.error('[api/propiedades] propiedades_api', e1);
+    return NextResponse.json({ success: false, error: e1.message }, { status: 500 });
   }
+
+  if (!props || props.length === 0) {
+    return NextResponse.json({ success: true, data: [] });
+  }
+
+  // 2) Detecta cuáles no traen coverImage
+  const sinCover = props.filter(p => !p.coverImage).map(p => p.id as string);
+  let covers: Record<string, string> = {};
+
+  if (sinCover.length > 0) {
+    // Traemos la primera foto por propiedad (orden ascendente)
+    const { data: fotos, error: e2 } = await supabase
+      .from('propiedades_fotos')
+      .select('propiedad_id, url, orden')
+      .in('propiedad_id', sinCover)
+      .order('orden', { ascending: true });
+
+    if (e2) {
+      console.error('[api/propiedades] fotos para covers', e2);
+    } else {
+      // Nos quedamos con el primer url por propiedad_id
+      for (const f of fotos ?? []) {
+        const pid = f.propiedad_id as string;
+        if (!covers[pid]) covers[pid] = f.url; // solo la primera
+      }
+    }
+  }
+
+  // 3) Merge: si no hay coverImage, usar el de "covers"
+  const merged = props.map(p => ({
+    ...p,
+    coverImage: p.coverImage || covers[p.id as string] || null
+  }));
+
+  return NextResponse.json({ success: true, data: merged });
 }
