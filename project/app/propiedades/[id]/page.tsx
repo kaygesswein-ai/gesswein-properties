@@ -57,7 +57,7 @@ type Property = {
   map_lng?: number | null;
   map_zoom?: number | null;
 
-  // Características destacadas opcionales (si tu API las incluye)
+  // Características destacadas opcionales
   tags?: string[] | null;
 };
 
@@ -202,7 +202,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
-  /* --- fetch --- */
+  /* --- fetch propiedad --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -215,6 +215,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
+  /* --- fetch fotos --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -229,7 +230,14 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   }, [params.id]);
 
   /* --- cálculos --- */
-  const bg = useMemo(() => getHeroImage(prop), [prop]);
+
+  // 👇 NUEVO: si no hay imagen en la propiedad, usa la primera foto cargada
+  const bg = useMemo(() => {
+    const fromProp = getHeroImage(prop);
+    if (fromProp !== HERO_FALLBACK) return fromProp;
+    const firstFoto = fotos?.find(f => f?.url)?.url;
+    return firstFoto || HERO_FALLBACK;
+  }, [prop, fotos]);
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -399,7 +407,6 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   const openLbFor = (arr: string[], start = 0) => {
     if (!arr.length) return;
     setLbIndex(start);
-    // hacemos que las imágenes mostradas sean el array elegido
     setDynamicList(arr);
     setLbOpen(true);
   };
@@ -408,7 +415,6 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   const [dynamicList, setDynamicList] = useState<string[]>([]);
 
   useEffect(() => {
-    // primera carga: si hay "todas"
     if ((todas ?? []).length && dynamicList.length === 0) {
       setDynamicList(todas);
     }
@@ -459,7 +465,6 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
       {/* ---------- DESCRIPCIÓN ---------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
-        {/* 👇 mantiene saltos y viñetas tal cual vienen de la DB */}
         <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
           {prop?.descripcion || 'Descripción no disponible por el momento.'}
         </p>
@@ -485,7 +490,6 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
             ))
           ) : (
             <>
-              {/* fallback visual por si el API aún no envía tags */}
               <li className="flex items-center gap-2">
                 <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
                   <Compass className="h-4 w-4 text-slate-600" />
