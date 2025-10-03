@@ -326,8 +326,68 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* ---------------- TARJETAS DE GALERÍA ---------------- */}
+      {/* ---------------- TARJETAS DE GALERÍA (abre lightbox) ---------------- */}
       <GalleryTiles photos={photos} />
+
+      {/* ---------- SEPARADOR ---------- */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-slate-200 my-10" />
+      </div>
+
+      {/* ---------- DESCRIPCIÓN ---------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionTitle>Descripción</SectionTitle>
+        <p className="text-slate-700 leading-relaxed">
+          {prop?.descripcion || 'Descripción no disponible por el momento.'}
+        </p>
+      </section>
+
+      {/* ---------- SEPARADOR ---------- */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-slate-200 my-10" />
+      </div>
+
+      {/* ---------- CARACTERÍSTICAS ---------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionTitle>Características destacadas</SectionTitle>
+        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
+          <li className="flex items-center gap-2">
+            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+              <Compass className="h-4 w-4 text-slate-600" />
+            </span>
+            <span>Orientación norte</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+              <TrendingUp className="h-4 w-4 text-slate-600" />
+            </span>
+            <span>Potencial de plusvalía</span>
+          </li>
+        </ul>
+      </section>
+
+      {/* ---------- SEPARADOR ---------- */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-slate-200 my-10" />
+      </div>
+
+      {/* ---------- MAPA ---------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <SectionTitle>Explora el sector</SectionTitle>
+        <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
+          <div className="pointer-events-none absolute z-10 left-1/2 top-1/2
+                          -translate-x-1/2 -translate-y-1/2 w-[55%] aspect-square
+                          rounded-full border border-white/60
+                          shadow-[0_0_0_2000px_rgba(255,255,255,0.25)]" />
+          <iframe
+            title="mapa"
+            className="w-full h-full"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1es!2scl!4v1713000000000"
+          />
+        </div>
+      </section>
     </main>
   );
 }
@@ -374,16 +434,15 @@ function GalleryTiles({ photos }: { photos: FotoItem[] }) {
 
   // Orden: Photos, Exterior, Interior, Planos (último siempre)
   const tiles: Tile[] = [
-    { key: 'todas',    label: 'Photos',   icon: <Camera className="h-7 w-7" />,         bg: cover.todas,    count: imagesByCat.todas.length },
-    { key: 'exterior', label: 'Exterior', icon: <Trees className="h-7 w-7" />,          bg: cover.exterior, count: imagesByCat.exterior.length },
-    { key: 'interior', label: 'Interior', icon: <Sofa className="h-7 w-7" />,           bg: cover.interior, count: imagesByCat.interior.length },
-    { key: 'planos',   label: 'Floor Plan', icon: <LayoutPanelTop className="h-7 w-7" />,  bg: cover.planos,   count: imagesByCat.planos.length },
+    { key: 'todas',    label: 'Photos',     icon: <Camera className="h-7 w-7" />,         bg: cover.todas,    count: imagesByCat.todas.length },
+    { key: 'exterior', label: 'Exterior',   icon: <Trees className="h-7 w-7" />,          bg: cover.exterior, count: imagesByCat.exterior.length },
+    { key: 'interior', label: 'Interior',   icon: <Sofa className="h-7 w-7" />,           bg: cover.interior, count: imagesByCat.interior.length },
+    { key: 'planos',   label: 'Floor Plan', icon: <LayoutPanelTop className="h-7 w-7" />, bg: cover.planos,   count: imagesByCat.planos.length },
   ];
 
   const handleTileClick = (key: TileKey, count: number) => {
     setTab(key);
     if (count > 0) {
-      // abre lightbox en la primera foto de la categoría
       setLbIndex(0);
       setLbOpen(true);
     }
@@ -427,7 +486,8 @@ function GalleryTiles({ photos }: { photos: FotoItem[] }) {
                   <div className="mt-2 text-[13px] font-medium tracking-wide">{t.label}</div>
                   <div className="mt-0.5 text-[11px] opacity-80">{t.count} {t.count === 1 ? 'foto' : 'fotos'}</div>
                 </div>
-                {/* borde activo cuando hay lightbox de esa pestaña */}
+
+                {/* borde activo cuando ese tab está seleccionado */}
                 {(!disabled && tab === t.key && (
                   <div className="absolute inset-0 ring-2 ring-[#0A2E57] rounded-[10px] pointer-events-none" />
                 )) || null}
@@ -437,7 +497,7 @@ function GalleryTiles({ photos }: { photos: FotoItem[] }) {
         </div>
       </section>
 
-      {/* No hay grid de fotos; solo lightbox cuando el usuario elige una tarjeta */}
+      {/* Solo lightbox; no grid de fotos debajo */}
       <Lightbox
         open={lbOpen}
         images={imagesByCat[tab].map(x => x.url)}
