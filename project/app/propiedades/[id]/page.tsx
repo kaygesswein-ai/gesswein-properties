@@ -18,6 +18,10 @@ import {
   Trees,
   Sofa,
   LayoutPanelTop,
+  Maximize2,
+  Minimize2,
+  Plus,
+  Minus,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -110,33 +114,165 @@ function Lightbox(props:{
 }) {
   const { open, images, index, onClose, onPrev, onNext } = props;
 
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const imgRef  = useRef<HTMLImageElement | null>(null);
+
+  const [isFs, setIsFs] = useState(false);
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState<{x:number;y:number}>({x:0,y:0});
+  const [drag, setDrag] = useState<{active:boolean; sx:number; sy:number; ox:number; oy:number}>({
+    active:false, sx:0, sy:0, ox:0, oy:0
+  });
+
+  // keyboard
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape')      onClose();
+      if (e.key === 'Escape')      { if (document.fullscreenElement) document.exitFullscreen().catch(()=>{}); onClose(); }
       if (e.key === 'ArrowLeft')   onPrev();
       if (e.key === 'ArrowRight')  onNext();
+      if (e.key === '+')           setScale(s => Math.min(3, +(s+0.25).toFixed(2)));
+      if (e.key === '-')           setScale(s => Math.max(1, +(s-0.25).toFixed(2)));
+      if (e.key === '0')           { setScale(1); setOffset({x:0,y:0}); }
+      if (e.key.toLowerCase() === 'f') toggleFullscreen();
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, [open, onClose, onPrev, onNext]);
 
+  useEffect(() => { // reset zoom cuando cambia la foto o se abre
+    if (open) { setScale(1); setOffset({x:0,y:0}); }
+  }, [index, open]);
+
+  const toggleFullscreen = async () => {
+    if (!wrapRef.current) return;
+    if (!document.fullscreenElement) {
+      try { await wrapRef.current.requestFullscreen(); setIsFs(true); } catch {}
+    } else {
+      try { await document.exitFullscreen(); setIsFs(false); } catch {}
+    }
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (scale === 1) return;
+    setDrag({active:true, sx:e.clientX, sy:e.clientY, ox:offset.x, oy:offset.y});
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!drag.active) return;
+    const dx = e.clientX - drag.sx;
+    const dy = e.clientY - drag.sy;
+    setOffset({x:drag.ox + dx, y:drag.oy + dy});
+  };
+  const onMouseUp = () => setDrag(d => ({...d, active:false}));
+
+  const onWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey) e.preventDefault();
+    const dir = e.deltaY > 0 ? -1 : 1;
+    setScale(s => {
+      const next = Math.max(1, Math.min(3, +(s + dir*0.25).toFixed(2)));
+      if (next === 1) setOffset({x:0,y:0});
+      return next;
+    });
+  };
+
+  const onDblClick = () => {
+    setScale(s => {
+      const next = s === 1 ? 2 : 1;
+      if (next === 1) setOffset({x:0,y:0});
+      return next;
+    });
+  };
+
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
-      <button onClick={onClose}  aria-label="Cerrar"
-              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded">
-        <X className="h-6 w-6 text-white" />
+    <div
+      ref={wrapRef}
+      className="fixed inset-0 z-[999] bg-black/95 text-white select-none"
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      onWheel={onWheel}
+    >
+      {/* Top bar: contador + acciones */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 text-sm">
+        <div className="opacity-80">
+          {/* vacío para balancear */}
+        </div>
+        <div className="rounded bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+          <span className="font-medium">{index + 1}</span>
+          <span className="opacity-70"> / {images.length}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setScale(s => Math.max(1, +(s-0.25).toFixed(2)))}
+            aria-label="Alejar"
+            className="p-2 bg-white/10 hover:bg-white/20 rounded"
+          >
+            <Minus className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setScale(s => Math.min(3, +(s+0.25).toFixed(2)))}
+            aria-label="Acercar"
+            className="p-2 bg-white/10 hover:bg-white/20 rounded"
+          >
+            <Plus className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => { setScale(1); setOffset({x:0,y:0}); }}
+            aria-label="Restablecer zoom"
+            className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded"
+          >
+            100%
+          </button>
+          <button
+            onClick={toggleFullscreen}
+            aria-label="Pantalla completa"
+            className="p-2 bg-white/10 hover:bg-white/20 rounded"
+          >
+            {isFs ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+          </button>
+          <button
+            onClick={() => { if (document.fullscreenElement) document.exitFullscreen().catch(()=>{}); onClose(); }}
+            aria-label="Cerrar"
+            className="p-2 bg-white/10 hover:bg-white/20 rounded"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Flechas */}
+      <button
+        onClick={onPrev}
+        aria-label="Anterior"
+        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 rounded"
+      >
+        <ChevronLeft className="h-8 w-8" />
       </button>
-      <button onClick={onPrev}   aria-label="Anterior"
-              className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded">
-        <ChevronLeft className="h-8 w-8 text-white" />
+      <button
+        onClick={onNext}
+        aria-label="Siguiente"
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 rounded"
+      >
+        <ChevronRight className="h-8 w-8" />
       </button>
-      <img src={images[index]} alt="" className="max-h-[90vh] max-w-[92vw] object-contain" />
-      <button onClick={onNext}   aria-label="Siguiente"
-              className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded">
-        <ChevronRight className="h-8 w-8 text-white" />
-      </button>
+
+      {/* Imagen */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          ref={imgRef}
+          src={images[index]}
+          alt=""
+          onDoubleClick={onDblClick}
+          onMouseDown={onMouseDown}
+          draggable={false}
+          className={cls(
+            'max-h-[88vh] max-w-[92vw] object-contain transition-transform duration-75',
+            scale > 1 ? (drag.active ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'
+          )}
+          style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }}
+        />
+      </div>
     </div>
   );
 }
@@ -425,14 +561,12 @@ function GalleryTiles({ photos }: { photos: FotoItem[] }) {
     todas   : imagesByCat.todas[0]?.url,
     exterior: imagesByCat.exterior[0]?.url,
     interior: imagesByCat.interior[0]?.url,
-    // si no hay planos, usamos un cover neutro
     planos  : imagesByCat.planos[0]?.url ?? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="100%" height="100%" fill="%2318273a"/><g fill="%23ffffff" opacity="0.25"><rect x="80" y="120" width="640" height="360" stroke="%23ffffff" stroke-width="2" fill="none"/><line x1="80" y1="300" x2="720" y2="300" stroke="%23ffffff" stroke-width="2"/><line x1="400" y1="120" x2="400" y2="480" stroke="%23ffffff" stroke-width="2"/></g></svg>',
   };
 
   type TileKey = 'todas' | 'exterior' | 'interior' | 'planos';
   type Tile = { key: TileKey; label: string; icon: React.ReactNode; bg?: string; count: number };
 
-  // Orden: Photos, Exterior, Interior, Planos (último siempre)
   const tiles: Tile[] = [
     { key: 'todas',    label: 'Photos',     icon: <Camera className="h-7 w-7" />,         bg: cover.todas,    count: imagesByCat.todas.length },
     { key: 'exterior', label: 'Exterior',   icon: <Trees className="h-7 w-7" />,          bg: cover.exterior, count: imagesByCat.exterior.length },
@@ -468,26 +602,21 @@ function GalleryTiles({ photos }: { photos: FotoItem[] }) {
                 aria-label={t.label}
                 disabled={disabled}
               >
-                {/* background */}
                 <div
                   className="absolute inset-0 bg-center bg-cover"
                   style={{ backgroundImage: `url(${t.bg ?? ''})` }}
                 />
-                {/* overlay azul oscuro con hover */}
                 <div
                   className={cls(
                     'absolute inset-0 transition',
                     'bg-[#0A2E57]/60 group-hover:bg-[#0A2E57]/40'
                   )}
                 />
-                {/* icono + label */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
                   <div className="opacity-90">{t.icon}</div>
                   <div className="mt-2 text-[13px] font-medium tracking-wide">{t.label}</div>
                   <div className="mt-0.5 text-[11px] opacity-80">{t.count} {t.count === 1 ? 'foto' : 'fotos'}</div>
                 </div>
-
-                {/* borde activo cuando ese tab está seleccionado */}
                 {(!disabled && tab === t.key && (
                   <div className="absolute inset-0 ring-2 ring-[#0A2E57] rounded-[10px] pointer-events-none" />
                 )) || null}
@@ -497,7 +626,6 @@ function GalleryTiles({ photos }: { photos: FotoItem[] }) {
         </div>
       </section>
 
-      {/* Solo lightbox; no grid de fotos debajo */}
       <Lightbox
         open={lbOpen}
         images={imagesByCat[tab].map(x => x.url)}
