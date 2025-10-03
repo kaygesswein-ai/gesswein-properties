@@ -40,7 +40,7 @@ type Property = {
   barrio?: string | null;
 };
 
-type Foto = { url: string; tag?: 'exterior' | 'interior' | 'planos' | null; orden?: number | null };
+type FotoRow = { url: string; tag?: string | null; orden?: number | null };
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
@@ -53,6 +53,10 @@ const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).jo
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
+const getHeroImage = (p?: Property | null) =>
+  p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
+
+/** Capitaliza TODAS las palabras de la cadena */
 const wordsCap = (s?: string | null) =>
   (s ?? '')
     .toLowerCase()
@@ -60,16 +64,6 @@ const wordsCap = (s?: string | null) =>
     .map(w => (w ? w[0].toUpperCase() + w.slice(1) : ''))
     .join(' ')
     .trim();
-
-/** Heurística solo de respaldo cuando la tabla no traiga `tag` */
-const guessCategory = (url: string): 'exterior' | 'interior' => {
-  const u = url.toLowerCase();
-  const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
-  const int = /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
-  if (ext.test(u)) return 'exterior';
-  if (int.test(u)) return 'interior';
-  return 'exterior';
-};
 
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
@@ -141,11 +135,14 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 /*                             COMPONENTE                             */
 /* ------------------------------------------------------------------ */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
-  const [prop, setProp]   = useState<Property | null>(null);
-  const [fotos, setFotos] = useState<Foto[] | null>(null);
+  const [prop, setProp] = useState<Property | null>(null);
+
+  // <<<< NUEVO: fotos desde Supabase REST >>>>
+  const [fotos, setFotos] = useState<FotoRow[] | null>(null);
+
   const uf = useUf();
 
-  /* --- fetch propiedad --- */
+  /* --- fetch de la propiedad (igual que antes) --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -158,26 +155,37 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- fetch fotos desde la nueva ruta (si existe) --- */
+  /* --- NUEVO: fetch de fotos de la tabla propiedades_fotos --- */
   useEffect(() => {
-    if (!prop) return;
     let alive = true;
     (async () => {
       try {
-        const r = await fetch(`/api/propiedades/${encodeURIComponent(prop.id)}/fotos`);
-        if (!r.ok) return;
-        const j = await r.json().catch(() => null);
-        if (alive && j?.success) setFotos(j.data as Foto[]);
-      } catch {}
+        const base = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const key  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const url  =
+          `${base}/rest/v1/propiedades_fotos?propiedad_id=eq.${encodeURIComponent(params.id)}` +
+          `&select=url,tag,orden&order=orden.asc`;
+
+        const r = await fetch(url, {
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+          },
+          cache: 'no-store',
+        });
+
+        if (!r.ok) { setFotos([]); return; }
+        const rows: FotoRow[] = await r.json().catch(() => []);
+        if (alive) setFotos(rows ?? []);
+      } catch {
+        if (alive) setFotos([]);
+      }
     })();
     return () => { alive = false; };
-  }, [prop]);
+  }, [params.id]);
 
-  /* --- cálculos hero --- */
-  const heroImg = useMemo(() => {
-    const fotoTabla = fotos?.[0]?.url;
-    return fotoTabla ?? prop?.imagenes?.[0] ?? HERO_FALLBACK;
-  }, [fotos, prop]);
+  /* --- cálculos --- */
+  const bg = useMemo(() => getHeroImage(prop), [prop]);
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -235,7 +243,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       {/* ---------------- HERO ---------------- */}
       <section className="relative w-full overflow-hidden isolate">
         <div className="absolute inset-0 -z-10 bg-center bg-cover"
-             style={{ backgroundImage: `url(${heroImg})` }} />
+             style={{ backgroundImage: `url(${bg})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
@@ -297,7 +305,11 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       </section>
 
       {/* ---------------- GALERÍA + DESCRIPCIÓN + FEATURES + MAPA ---------------- */}
-      <GalleryAndDetails prop={prop} fotos={fotos} />
+      <GalleryAndDetails
+        prop={prop}
+        // <<<< NUEVO: pasamos las fotos priorizando Supabase
+        imagesOverride={ (fotos && fotos.length) ? fotos.map(f => f.url) : undefined }
+      />
     </main>
   );
 }
@@ -305,36 +317,46 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 /* ------------------------------------------------------------------ */
 /*                        GALERÍA + CONTENIDO                         */
 /* ------------------------------------------------------------------ */
-function GalleryAndDetails({ prop, fotos }:{ prop:Property|null; fotos:Foto[]|null }) {
-  const [tab, setTab] = useState<'todas' | 'exterior' | 'interior' | 'planos'>('todas');
+function guessCategory(url: string): 'exterior' | 'interior' {
+  const u = url.toLowerCase();
+  const ext = /(exterior|fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/;
+  const int = /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio|interior)/;
+  if (ext.test(u)) return 'exterior';
+  if (int.test(u)) return 'interior';
+  return 'exterior';
+}
+
+function GalleryAndDetails({
+  prop,
+  imagesOverride,
+}: {
+  prop: Property | null;
+  imagesOverride?: string[];   // <<<< NUEVO
+}) {
+  const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
-  /* ------ armar catálogo por categoría ------ */
+  const images = useMemo(() => {
+    const fromDb = imagesOverride ?? [];
+    const base   = (prop?.imagenes ?? []).filter(Boolean);
+    const merged = fromDb.length ? fromDb : base;
+    return merged.length
+      ? merged
+      : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop'];
+  }, [prop, imagesOverride]);
+
   const imagesByCat = useMemo(() => {
-    if (fotos) {
-      const all = fotos
-        .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
-        .map(f => ({ url: f.url, cat: f.tag ?? guessCategory(f.url) }));
-      return {
-        todas: all,
-        exterior: all.filter(i => i.cat === 'exterior'),
-        interior: all.filter(i => i.cat === 'interior'),
-        planos:   all.filter(i => i.cat === 'planos'),
-      };
-    }
-    const arr = (prop?.imagenes ?? []).filter(Boolean);
-    const all = arr.map(u => ({ url: u, cat: guessCategory(u) }));
+    const all = images.map(url => ({ url, cat: guessCategory(url) }));
     return {
       todas: all,
       exterior: all.filter(i => i.cat === 'exterior'),
       interior: all.filter(i => i.cat === 'interior'),
-      planos: [],
     };
-  }, [fotos, prop]);
+  }, [images]);
 
   const list = imagesByCat[tab];
-  const openLb  = (i:number) => { setLbIndex(i); setLbOpen(true); };
+  const openLb  = (i: number) => { setLbIndex(i); setLbOpen(true); };
   const closeLb = () => setLbOpen(false);
   const prevLb  = () => setLbIndex(i => (i - 1 + list.length) % list.length);
   const nextLb  = () => setLbIndex(i => (i + 1) % list.length);
@@ -346,7 +368,7 @@ function GalleryAndDetails({ prop, fotos }:{ prop:Property|null; fotos:Foto[]|nu
         <SectionTitle>Galería</SectionTitle>
 
         <div className="flex items-center gap-2 mb-4">
-          {(['todas','exterior','interior','planos'] as const).map(t => (
+          {(['todas', 'exterior', 'interior'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
                     className={cls(
                       'px-4 py-2 border rounded-md text-sm',
@@ -354,7 +376,7 @@ function GalleryAndDetails({ prop, fotos }:{ prop:Property|null; fotos:Foto[]|nu
                         ? 'bg-[var(--brand-50,#E9EFF6)] border-[var(--brand-200,#BFD0E6)] text-slate-900'
                         : 'bg-white border-slate-200 text-slate-700'
                     )}>
-              {t[0].toUpperCase() + t.slice(1)}
+              {t === 'todas' ? 'Todas' : t[0].toUpperCase() + t.slice(1)}
             </button>
           ))}
           <span className="ml-auto text-sm text-slate-500">
@@ -423,7 +445,7 @@ function GalleryAndDetails({ prop, fotos }:{ prop:Property|null; fotos:Foto[]|nu
           <div className="pointer-events-none absolute z-10 left-1/2 top-1/2
                           -translate-x-1/2 -translate-y-1/2 w-[55%] aspect-square
                           rounded-full border border-white/60
-                          shadow-[0_0_0_2000px_rgba(255,255,255,0.25)]" />
+                          shadow-[0 0 0 2000px rgba(255,255,255,0.25)]" />
           <iframe
             title="mapa"
             className="w-full h-full"
