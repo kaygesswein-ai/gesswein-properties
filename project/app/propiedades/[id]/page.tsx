@@ -38,9 +38,17 @@ type Property = {
   descripcion?: string | null;
   imagenes?: string[] | null;
   barrio?: string | null;
+
+  // Campo auxiliar para el hero que setemos nosotros
+  _hero?: string | null;
 };
 
-type FotoApi = { url: string; tag?: string | null; orden?: number | null };
+type FotoRow = {
+  url: string;
+  categoria?: 'exterior' | 'interior' | 'planos' | null;
+  tag?: 'exterior' | 'interior' | 'planos' | null; // alias por compatibilidad
+  orden?: number | null;
+};
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
@@ -53,8 +61,13 @@ const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).jo
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-const getHeroImage = (p?: Property | null) =>
-  p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
+// 👉 ahora prioriza prop._hero (si lo definimos al traer fotos)
+const getHeroImage = (p?: Property | null) => {
+  if (!p) return HERO_FALLBACK;
+  if (p._hero?.trim()) return p._hero!;
+  if (p.imagenes?.[0]?.trim()) return p.imagenes![0];
+  return HERO_FALLBACK;
+};
 
 /** Capitaliza TODAS las palabras de la cadena */
 const wordsCap = (s?: string | null) =>
@@ -136,10 +149,6 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 /* ------------------------------------------------------------------ */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
-
-  // NUEVO: fotos extra desde Supabase (API interna)
-  const [extraFotos, setExtraFotos] = useState<FotoApi[] | null>(null);
-
   const uf = useUf();
 
   /* --- fetch --- */
@@ -147,47 +156,40 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     let alive = true;
     (async () => {
       try {
-        // propiedad
-        const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}`, { cache: 'no-store' }).catch(() => null as any);
+        // 1) Propiedad (como ya estaba)
+        const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}`).catch(() => null as any);
         const j = r?.ok ? await r.json().catch(() => null) : null;
-        if (alive) setProp(j?.data ?? null);
-      } catch { if (alive) setProp(null); }
+        const baseProp: Property | null = j?.data ?? null;
 
-      try {
-        // fotos supabase
-        const rf = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`, { cache: 'no-store' }).catch(() => null as any);
+        // 2) Fotos de Supabase para esta propiedad
+        const rf = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`).catch(() => null as any);
         const jf = rf?.ok ? await rf.json().catch(() => null) : null;
-        if (alive) setExtraFotos(Array.isArray(jf?.data) ? jf.data : []);
-      } catch { if (alive) setExtraFotos([]); }
+        const fotos: FotoRow[] = Array.isArray(jf?.data) ? jf.data : [];
+
+        // urls planas
+        const urls = fotos.map((f) => f.url).filter(Boolean) as string[];
+
+        // Elegimos hero: primera exterior → primera cualquiera → imagen original → fallback
+        const heroFromFotos =
+          fotos.find((f) => (f.categoria ?? f.tag) === 'exterior')?.url
+          ?? fotos[0]?.url
+          ?? baseProp?.imagenes?.[0]
+          ?? null;
+
+        const merged: Property | null = baseProp
+          ? { ...baseProp, imagenes: urls.length ? urls : (baseProp.imagenes ?? []), _hero: heroFromFotos }
+          : null;
+
+        if (alive) setProp(merged);
+      } catch {
+        if (alive) setProp(null);
+      }
     })();
     return () => { alive = false; };
   }, [params.id]);
 
   /* --- cálculos --- */
   const bg = useMemo(() => getHeroImage(prop), [prop]);
-
-  // Mezcla imágenes: primero las de la propiedad, luego las extra (ordenadas).
-  const mergedImages: string[] = useMemo(() => {
-    const base = (prop?.imagenes ?? []).filter(Boolean) as string[];
-    const extraSorted = (extraFotos ?? [])
-      .slice()
-      .sort((a,b) => (a.orden ?? 9999) - (b.orden ?? 9999))
-      .map(x => x.url)
-      .filter(Boolean) as string[];
-
-    // deduplicar (case-insensitive)
-    const seen = new Set<string>();
-    const push = (arr: string[], out: string[]) => {
-      for (const u of arr) {
-        const k = (u || '').trim().toLowerCase();
-        if (k && !seen.has(k)) { seen.add(k); out.push(u); }
-      }
-    };
-    const out: string[] = [];
-    push(base, out);
-    push(extraSorted, out);
-    return out;
-  }, [prop?.imagenes, extraFotos]);
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -307,7 +309,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       </section>
 
       {/* ---------------- GALERÍA + DESCRIPCIÓN + FEATURES + MAPA ---------------- */}
-      <GalleryAndDetails prop={prop} mergedImages={mergedImages} />
+      <GalleryAndDetails prop={prop} />
     </main>
   );
 }
@@ -324,17 +326,17 @@ function guessCategory(url: string): 'exterior' | 'interior' {
   return 'exterior';
 }
 
-function GalleryAndDetails({ prop, mergedImages }: { prop: Property | null; mergedImages: string[] }) {
+function GalleryAndDetails({ prop }: { prop: Property | null }) {
   const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
   const images = useMemo(() => {
-    const arr = (mergedImages ?? []).filter(Boolean);
+    const arr = (prop?.imagenes ?? []).filter(Boolean);
     return arr.length
       ? arr
       : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop'];
-  }, [mergedImages]);
+  }, [prop]);
 
   const imagesByCat = useMemo(() => {
     const all = images.map(url => ({ url, cat: guessCategory(url) }));
