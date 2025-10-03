@@ -17,7 +17,7 @@ import {
   Camera,
   Trees,
   Sofa,
-  LayoutPanelTop, // similar a “floor plan”
+  LayoutPanelTop,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -364,7 +364,6 @@ function GalleryAndDetails({ prop, photos }: { prop: Property | null; photos: Fo
   const prevLb  = () => setLbIndex(i => (i - 1 + list.length) % list.length);
   const nextLb  = () => setLbIndex(i => (i + 1) % list.length);
 
-  // “Portadas” para cada tarjeta
   const cover = {
     todas   : imagesByCat.todas[0]?.url,
     planos  : imagesByCat.planos[0]?.url,
@@ -372,19 +371,19 @@ function GalleryAndDetails({ prop, photos }: { prop: Property | null; photos: Fo
     interior: imagesByCat.interior[0]?.url,
   };
 
-  // Config de tarjetas (icono + etiqueta + clave)
-  const tiles: Array<{
-    key: 'todas' | 'planos' | 'exterior' | 'interior';
-    label: string;
-    icon: React.ReactNode;
-    bg?: string | undefined;
-    count: number;
-  }> = [
+  // ---------- FIX TIPOS AQUI ----------
+  type TileKey = 'todas' | 'planos' | 'exterior' | 'interior';
+  type Tile = { key: TileKey; label: string; icon: React.ReactNode; bg?: string; count: number };
+
+  const tilesBase: Tile[] = [
     { key: 'todas',    label: 'Photos',     icon: <Camera className="h-7 w-7" />,         bg: cover.todas,    count: imagesByCat.todas.length },
     { key: 'planos',   label: 'Floor Plan', icon: <LayoutPanelTop className="h-7 w-7" />,  bg: cover.planos,   count: imagesByCat.planos.length },
     { key: 'exterior', label: 'Exterior',   icon: <Trees className="h-7 w-7" />,          bg: cover.exterior, count: imagesByCat.exterior.length },
     { key: 'interior', label: 'Interior',   icon: <Sofa className="h-7 w-7" />,           bg: cover.interior, count: imagesByCat.interior.length },
-  ].filter(t => t.count > 0); // si no hay fotos para la categoría, no se muestra
+  ];
+
+  const tiles: Tile[] = tilesBase.filter((t) => t.count > 0);
+  // ------------------------------------
 
   return (
     <>
