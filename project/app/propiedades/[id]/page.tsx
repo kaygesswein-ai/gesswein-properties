@@ -40,6 +40,8 @@ type Property = {
   barrio?: string | null;
 };
 
+type FotoApi = { url: string; tag?: string | null; orden?: number | null };
+
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
@@ -134,40 +136,58 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 /* ------------------------------------------------------------------ */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
-  const [extraImages, setExtraImages] = useState<string[]>([]); // ← Fotos de Supabase
+
+  // NUEVO: fotos extra desde Supabase (API interna)
+  const [extraFotos, setExtraFotos] = useState<FotoApi[] | null>(null);
+
   const uf = useUf();
 
-  /* --- fetch ficha --- */
+  /* --- fetch --- */
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}`).catch(() => null as any);
+        // propiedad
+        const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}`, { cache: 'no-store' }).catch(() => null as any);
         const j = r?.ok ? await r.json().catch(() => null) : null;
         if (alive) setProp(j?.data ?? null);
       } catch { if (alive) setProp(null); }
-    })();
-    return () => { alive = false; };
-  }, [params.id]);
 
-  /* --- fetch fotos desde Supabase (API interna) --- */
-  useEffect(() => {
-    let alive = true;
-    (async () => {
       try {
-        const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`, { cache: 'no-store' });
-        const j = r?.ok ? await r.json().catch(() => null) : null;
-        const urls: string[] = Array.isArray(j?.data) ? j.data.map((x: any) => String(x.url)).filter(Boolean) : [];
-        if (alive) setExtraImages(urls);
-      } catch {
-        if (alive) setExtraImages([]);
-      }
+        // fotos supabase
+        const rf = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`, { cache: 'no-store' }).catch(() => null as any);
+        const jf = rf?.ok ? await rf.json().catch(() => null) : null;
+        if (alive) setExtraFotos(Array.isArray(jf?.data) ? jf.data : []);
+      } catch { if (alive) setExtraFotos([]); }
     })();
     return () => { alive = false; };
   }, [params.id]);
 
   /* --- cálculos --- */
   const bg = useMemo(() => getHeroImage(prop), [prop]);
+
+  // Mezcla imágenes: primero las de la propiedad, luego las extra (ordenadas).
+  const mergedImages: string[] = useMemo(() => {
+    const base = (prop?.imagenes ?? []).filter(Boolean) as string[];
+    const extraSorted = (extraFotos ?? [])
+      .slice()
+      .sort((a,b) => (a.orden ?? 9999) - (b.orden ?? 9999))
+      .map(x => x.url)
+      .filter(Boolean) as string[];
+
+    // deduplicar (case-insensitive)
+    const seen = new Set<string>();
+    const push = (arr: string[], out: string[]) => {
+      for (const u of arr) {
+        const k = (u || '').trim().toLowerCase();
+        if (k && !seen.has(k)) { seen.add(k); out.push(u); }
+      }
+    };
+    const out: string[] = [];
+    push(base, out);
+    push(extraSorted, out);
+    return out;
+  }, [prop?.imagenes, extraFotos]);
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -287,7 +307,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       </section>
 
       {/* ---------------- GALERÍA + DESCRIPCIÓN + FEATURES + MAPA ---------------- */}
-      <GalleryAndDetails prop={prop} extraImages={extraImages} />
+      <GalleryAndDetails prop={prop} mergedImages={mergedImages} />
     </main>
   );
 }
@@ -304,27 +324,17 @@ function guessCategory(url: string): 'exterior' | 'interior' {
   return 'exterior';
 }
 
-function GalleryAndDetails({ prop, extraImages }: { prop: Property | null; extraImages?: string[] }) {
+function GalleryAndDetails({ prop, mergedImages }: { prop: Property | null; mergedImages: string[] }) {
   const [tab, setTab] = useState<'todas' | 'exterior' | 'interior'>('todas');
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
-  // 1) Partimos por las imágenes de la ficha (como antes).
-  // 2) Si no hay, usamos las de Supabase.
-  // 3) Si hay en ambos, unimos evitando duplicados (sin cambiar el layout).
   const images = useMemo(() => {
-    const a = (prop?.imagenes ?? []).filter(Boolean);
-    const b = (extraImages ?? []).filter(Boolean);
-    if (a.length === 0 && b.length === 0) {
-      return ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop'];
-    }
-    if (a.length === 0) return b;
-    if (b.length === 0) return a;
-
-    const seen = new Set(a);
-    const merged = a.concat(b.filter(u => !seen.has(u)));
-    return merged;
-  }, [prop, extraImages]);
+    const arr = (mergedImages ?? []).filter(Boolean);
+    return arr.length
+      ? arr
+      : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop'];
+  }, [mergedImages]);
 
   const imagesByCat = useMemo(() => {
     const all = images.map(url => ({ url, cat: guessCategory(url) }));
