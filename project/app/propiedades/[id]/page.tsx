@@ -98,143 +98,180 @@ function useUf() {
   return uf;
 }
 
-/* ------------------------------------------------------------------ */
-/*                              LIGHTBOX                              */
-/* ------------------------------------------------------------------ */
-function Lightbox(props:{
-  open: boolean; images: string[]; index: number;
-  onClose: ()=>void; onPrev: ()=>void; onNext: ()=>void;
+/* --------------------------- LIGHTBOX (FIX TS) --------------------------- */
+function Lightbox(props: {
+  open: boolean;
+  images: string[];
+  index: number;
+  onClose: () => void;
+  onPrev: () => void;
+  onNext: () => void;
 }) {
   const { open, images, index, onClose, onPrev, onNext } = props;
 
   const [scale, setScale] = useState(1);
   const imgRef = useRef<HTMLImageElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  // helpers de puntos (soporta Touch y React.Touch)
+  type P = { x: number; y: number };
+  const pt = (t: Touch | React.Touch): P => ({ x: t.clientX, y: t.clientY });
+  const dist2 = (a: P, b: P) => {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // estado táctil
   const touch = useRef<{
-    x?: number; y?: number;
-    t1?: Touch; t2?: Touch;
-    pinchStartDist?: number;
-    startScale?: number;
-    swiping?: boolean;
-  }>({});
+    x0: number;
+    y0: number;
+    swiping: boolean;
+    pinchStartDist: number;
+    startScale: number;
+  }>({
+    x0: 0,
+    y0: 0,
+    swiping: false,
+    pinchStartDist: 0,
+    startScale: 1,
+  });
 
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape')      onClose();
-      if (e.key === 'ArrowLeft')   onPrev();
-      if (e.key === 'ArrowRight')  onNext();
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') onPrev();
+      if (e.key === 'ArrowRight') onNext();
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, [open, onClose, onPrev, onNext]);
 
-  useEffect(() => { setScale(1); }, [index, open]);
+  useEffect(() => {
+    setScale(1);
+  }, [index, open]);
 
-  const zoomIn  = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
-  const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
-  const full = () => {
-    // En desktop permite fullscreen, en móvil se oculta el botón
-    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) return;
+  const zoomIn = () =>
+    setScale((v) => Math.min(3, Math.round((v + 0.25) * 100) / 100));
+  const zoomOut = () =>
+    setScale((v) => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
+
+  const full = async () => {
     try {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else containerRef.current?.requestFullscreen();
-    } catch {}
+      const el = boxRef.current || document.documentElement;
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await el.requestFullscreen();
+      }
+    } catch {
+      /* noop */
+    }
   };
 
-  // wheel zoom (desktop)
-  useEffect(() => {
+  // wheel zoom
+  const onWheel = (e: React.WheelEvent) => {
     if (!open) return;
-    const el = containerRef.current;
-    if (!el) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if (e.deltaY > 0) zoomOut();
-      else zoomIn();
-    };
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, [open]);
+    e.preventDefault();
+    const delta = Math.sign(e.deltaY);
+    if (delta > 0) zoomOut();
+    else zoomIn();
+  };
 
-  // touch (swipe + pinch)
-  const dist2 = (a: Touch, b: Touch) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
-
-  const onTouchStart: React.TouchEventHandler<HTMLDivElement> = (e) => {
+  // pinch + swipe (con tipos válidos)
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 1) {
-      touch.current.x = e.touches[0].clientX;
-      touch.current.y = e.touches[0].clientY;
+      touch.current.x0 = e.touches[0].clientX;
+      touch.current.y0 = e.touches[0].clientY;
       touch.current.swiping = true;
     } else if (e.touches.length === 2) {
-      const d = dist2(e.touches[0], e.touches[1]);
+      const d = dist2(pt(e.touches[0]), pt(e.touches[1]));
       touch.current.pinchStartDist = d;
       touch.current.startScale = scale;
       touch.current.swiping = false;
     }
   };
 
-  const onTouchMove: React.TouchEventHandler<HTMLDivElement> = (e) => {
-    if (e.touches.length === 2 && touch.current.pinchStartDist) {
-      const d = dist2(e.touches[0], e.touches[1]);
-      const ratio = d / touch.current.pinchStartDist;
-      const next = Math.max(0.5, Math.min(3, (touch.current.startScale ?? 1) * ratio));
+  const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2) {
+      const d = dist2(pt(e.touches[0]), pt(e.touches[1]));
+      const ratio = d / Math.max(1, touch.current.pinchStartDist);
+      const next = Math.max(0.5, Math.min(3, touch.current.startScale * ratio));
       setScale(next);
       e.preventDefault();
-      return;
     }
   };
 
-  const onTouchEnd: React.TouchEventHandler<HTMLDivElement> = (e) => {
-    if (touch.current.swiping && touch.current.x != null) {
-      const upX = e.changedTouches[0]?.clientX ?? touch.current.x;
-      const dx = upX - touch.current.x;
-      if (dx > 50) onPrev();
-      if (dx < -50) onNext();
+  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!touch.current.swiping) return;
+    const changed = e.changedTouches?.[0];
+    if (!changed) return;
+    const dx = changed.clientX - touch.current.x0;
+    const dy = changed.clientY - touch.current.y0;
+    // swipe horizontal con umbral
+    if (Math.abs(dx) > 40 && Math.abs(dy) < 60) {
+      if (dx < 0) onNext();
+      else onPrev();
     }
-    touch.current = {};
+    touch.current.swiping = false;
   };
 
   if (!open) return null;
 
   return (
     <div
-      ref={containerRef}
+      ref={boxRef}
       className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
+      onWheel={onWheel}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* contador (mejor contraste en móvil) */}
-      <div className="absolute top-3 left-16 sm:left-1/2 sm:-translate-x-1/2 text-white/90 text-sm px-3 py-1 rounded
-                      bg-white/20 backdrop-blur-sm">
+      {/* HUD superior (centrado) */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 text-white/90 text-sm px-3 py-1 rounded bg-white/10">
         {index + 1} / {images.length}
       </div>
 
-      {/* HUD derecho */}
+      {/* Controles */}
       <div className="absolute top-3 right-4 flex items-center gap-2 text-white">
-        <button onClick={zoomOut} aria-label="Zoom out"
-                className="p-2 bg-white/10 hover:bg-white/20 rounded">
+        <button
+          onClick={zoomOut}
+          aria-label="Zoom out"
+          className="p-2 bg-white/10 hover:bg-white/20 rounded"
+        >
           <Minus className="h-5 w-5" />
         </button>
         <span className="px-2 text-sm">{Math.round(scale * 100)}%</span>
-        <button onClick={zoomIn} aria-label="Zoom in"
-                className="p-2 bg-white/10 hover:bg-white/20 rounded">
+        <button
+          onClick={zoomIn}
+          aria-label="Zoom in"
+          className="p-2 bg-white/10 hover:bg-white/20 rounded"
+        >
           <Plus className="h-5 w-5" />
         </button>
         <button
           onClick={full}
           aria-label="Pantalla completa"
-          className="hidden md:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded"
+          className="hidden sm:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded"
         >
           <Maximize2 className="h-5 w-5" />
         </button>
-        <button onClick={onClose} aria-label="Cerrar"
-                className="p-2 bg-white/10 hover:bg-white/20 rounded">
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="p-2 bg-white/10 hover:bg-white/20 rounded"
+        >
           <X className="h-5 w-5" />
         </button>
       </div>
 
-      <button onClick={onPrev} aria-label="Anterior"
-              className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded">
+      {/* Flechas */}
+      <button
+        onClick={onPrev}
+        aria-label="Anterior"
+        className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded"
+      >
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
 
@@ -246,8 +283,11 @@ function Lightbox(props:{
         style={{ transform: `scale(${scale})` }}
       />
 
-      <button onClick={onNext} aria-label="Siguiente"
-              className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded">
+      <button
+        onClick={onNext}
+        aria-label="Siguiente"
+        className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded"
+      >
         <ChevronRight className="h-8 w-8 text-white" />
       </button>
     </div>
