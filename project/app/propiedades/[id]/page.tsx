@@ -23,18 +23,9 @@ import {
   Plus,
 } from 'lucide-react';
 
-/* ------------------------------------------------------------------ */
-/*                               TIPOS                                */
-/* ------------------------------------------------------------------ */
-type FotoRow = {
-  url: string;
-  tag?: 'exterior' | 'interior' | 'planos' | string | null;
-  orden?: number | null;
-};
-
+type FotoRow = { url: string; tag?: 'exterior' | 'interior' | 'planos' | string | null; orden?: number | null };
 type Property = {
   id: string;
-  slug?: string | null;
   titulo?: string | null;
   comuna?: string | null;
   region?: string | null;
@@ -47,42 +38,21 @@ type Property = {
   superficie_util_m2?: number | null;
   superficie_terreno_m2?: number | null;
   estacionamientos?: number | null;
-  created_at?: string | null;
   descripcion?: string | null;
   imagenes?: string[] | null;
-  barrio?: string | null;
-
-  // NUEVOS CAMPOS DINÁMICOS PARA EL MAPA
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
-
-  // Características destacadas opcionales
   tags?: string[] | null;
 };
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-
-/* ------------------------------------------------------------------ */
-/*                             UTILIDADES                             */
-/* ------------------------------------------------------------------ */
 const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
-const HERO_FALLBACK =
-  'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
+const HERO_FALLBACK = 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-const getHeroImage = (p?: Property | null) =>
-  p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
-
-/** Capitaliza TODAS las palabras de la cadena */
-const wordsCap = (s?: string | null) =>
-  (s ?? '')
-    .toLowerCase()
-    .split(' ')
-    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : ''))
-    .join(' ')
-    .trim();
+const getHeroImage = (p?: Property | null) => p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
 
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
@@ -102,23 +72,26 @@ function useUf() {
 }
 
 /* ------------------------------------------------------------------ */
-/*                              LIGHTBOX                              */
+/*                            LIGHTBOX                                */
 /* ------------------------------------------------------------------ */
-function Lightbox(props:{
+function Lightbox({
+  open, images, index, onClose, onPrev, onNext
+}: {
   open: boolean; images: string[]; index: number;
   onClose: ()=>void; onPrev: ()=>void; onNext: ()=>void;
 }) {
-  const { open, images, index, onClose, onPrev, onNext } = props;
-
   const [scale, setScale] = useState(1);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+
   const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape')      onClose();
-      if (e.key === 'ArrowLeft')   onPrev();
-      if (e.key === 'ArrowRight')  onNext();
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') onPrev();
+      if (e.key === 'ArrowRight') onNext();
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
@@ -126,8 +99,9 @@ function Lightbox(props:{
 
   useEffect(() => { setScale(1); }, [index, open]);
 
-  const zoomIn  = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
-  const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
+  const zoomIn  = () => setScale(v => Math.min(3, v + 0.25));
+  const zoomOut = () => setScale(v => Math.max(0.5, v - 0.25));
+
   const full = () => {
     try {
       if (document.fullscreenElement) document.exitFullscreen();
@@ -135,24 +109,41 @@ function Lightbox(props:{
     } catch {}
   };
 
+  // Swipe táctil
+  const handleTouchStart = (e: React.TouchEvent) => setTouchStartX(e.touches[0].clientX);
+  const handleTouchMove  = (e: React.TouchEvent) => setTouchEndX(e.touches[0].clientX);
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    const distance = touchStartX - touchEndX;
+    if (distance > 50) onNext();       // desliza a la izquierda → siguiente
+    if (distance < -50) onPrev();      // desliza a la derecha → anterior
+    setTouchStartX(null);
+    setTouchEndX(null);
+  };
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
-      {/* HUD superior — AHORA IZQUIERDA EN MÓVIL, CENTRADO EN ≥SM */}
+    <div
+      className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Indicador superior */}
       <div
         className="
-          absolute top-6 sm:top-4 left-6 sm:left-1/2 sm:-translate-x-1/2
+          absolute top-3 left-5 sm:top-4 sm:left-1/2 sm:-translate-x-1/2
           z-30 text-white text-[14px] sm:text-sm font-medium
           px-3 py-[6px] rounded-full
           bg-[rgba(10,46,87,0.85)] backdrop-blur-sm shadow-md
           pointer-events-none select-none
         "
-        style={{ letterSpacing: '0.03em' }}
       >
         {index + 1} / {images.length}
       </div>
 
+      {/* Controles */}
       <div className="absolute top-3 right-4 flex items-center gap-2 text-white z-30">
         <button onClick={zoomOut} aria-label="Zoom out"
                 className="p-2 bg-white/10 hover:bg-white/20 rounded">
@@ -163,8 +154,9 @@ function Lightbox(props:{
                 className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Plus className="h-5 w-5" />
         </button>
+        {/* Oculto en móviles */}
         <button onClick={full} aria-label="Pantalla completa"
-                className="p-2 bg-white/10 hover:bg-white/20 rounded">
+                className="hidden sm:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded">
           <Maximize2 className="h-5 w-5" />
         </button>
         <button onClick={onClose} aria-label="Cerrar"
@@ -173,6 +165,7 @@ function Lightbox(props:{
         </button>
       </div>
 
+      {/* Flechas */}
       <button onClick={onPrev} aria-label="Anterior"
               className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronLeft className="h-8 w-8 text-white" />
