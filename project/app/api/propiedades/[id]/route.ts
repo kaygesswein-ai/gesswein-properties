@@ -1,15 +1,15 @@
-// project/app/api/propiedades/[id]/route.ts
+// app/api/propiedades/[id]/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Usa SIEMPRE la ANON KEY en producción -tiene los mismos permisos RLS-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Revalida en el edge (opcional)
-export const runtime = 'edge';
-export const revalidate = 60 * 60 * 2;
+export const runtime   = 'edge';
+export const revalidate = 60 * 10; // 10 min
 
 export async function GET(
   _req: Request,
@@ -17,47 +17,44 @@ export async function GET(
 ) {
   const { id } = params;
 
-  // 1) Trae la propiedad (usa tu vista pública para no exponer precio_clp)
-  const { data: prop, error: e1 } = await supabase
-    .from('propiedades_api')
-    .select('*')
+  // 👇 Aseguramos traer TODOS los campos que usa la UI, incluyendo
+  // descripcion, tags, map_lat, map_lng y map_zoom
+  const { data, error } = await supabase
+    .from('propiedades')
+    .select(`
+      id,
+      slug,
+      titulo,
+      comuna,
+      region,
+      operacion,
+      tipo,
+      precio_uf,
+      precio_clp,
+      dormitorios,
+      banos,
+      superficie_util_m2,
+      superficie_terreno_m2,
+      estacionamientos,
+      created_at,
+      descripcion,
+      imagenes,
+      barrio,
+      map_lat,
+      map_lng,
+      map_zoom,
+      tags
+    `)
     .eq('id', id)
-    .maybeSingle();
+    .single();
 
-  if (e1) {
-    console.error('[api/propiedades/:id] fetch propiedad', e1);
-    return NextResponse.json({ success: false, error: e1.message }, { status: 500 });
-  }
-  if (!prop) {
-    return NextResponse.json({ success: false, error: 'No existe la propiedad' }, { status: 404 });
-  }
-
-  // 2) Trae sus fotos categorizadas
-  const { data: fotos, error: e2 } = await supabase
-    .from('propiedades_fotos')
-    .select('url, tag, orden')
-    .eq('propiedad_id', id)
-    .order('orden', { ascending: true });
-
-  if (e2) {
-    console.error('[api/propiedades/:id] fetch fotos', e2);
-    // No abortamos; devolvemos la propiedad igual
+  if (error) {
+    console.error('[api/propiedades/:id] ', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 
-  // 3) Si hay fotos en propiedades_fotos, sobre-escribimos "imagenes"
-  const imagenesDesdeTabla =
-    (fotos?.map((f) => f.url).filter(Boolean) as string[] | undefined) ?? [];
-
-  const merged = {
-    ...prop,
-    imagenes: imagenesDesdeTabla.length > 0 ? imagenesDesdeTabla : (prop.imagenes ?? []),
-    // Opcional: también devolvemos agrupado por tag para un futuro
-    _byTag: {
-      exterior: (fotos ?? []).filter(f => f.tag === 'exterior').map(f => f.url),
-      interior: (fotos ?? []).filter(f => f.tag === 'interior').map(f => f.url),
-      planos:   (fotos ?? []).filter(f => f.tag === 'planos').map(f => f.url),
-    }
-  };
-
-  return NextResponse.json({ success: true, data: merged });
+  return NextResponse.json({ success: true, data });
 }
