@@ -139,11 +139,11 @@ function Lightbox(props:{
 
   return (
     <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
-      {/* HUD superior (centrado y visible también en móvil) */}
+      {/* HUD superior — AHORA IZQUIERDA EN MÓVIL, CENTRADO EN ≥SM */}
       <div
         className="
-          absolute top-6 sm:top-4 left-1/2 -translate-x-1/2 z-30
-          text-white text-[14px] sm:text-sm font-medium
+          absolute top-6 sm:top-4 left-6 sm:left-1/2 sm:-translate-x-1/2
+          z-30 text-white text-[14px] sm:text-sm font-medium
           px-3 py-[6px] rounded-full
           bg-[rgba(10,46,87,0.85)] backdrop-blur-sm shadow-md
           pointer-events-none select-none
@@ -173,7 +173,7 @@ function Lightbox(props:{
         </button>
       </div>
 
-      <button onClick={onPrev}   aria-label="Anterior"
+      <button onClick={onPrev} aria-label="Anterior"
               className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
@@ -186,7 +186,7 @@ function Lightbox(props:{
         style={{ transform: `scale(${scale})` }}
       />
 
-      <button onClick={onNext}   aria-label="Siguiente"
+      <button onClick={onNext} aria-label="Siguiente"
               className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronRight className="h-8 w-8 text-white" />
       </button>
@@ -240,7 +240,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
   /* --- cálculos --- */
 
-  // 👇 NUEVO: si no hay imagen en la propiedad, usa la primera foto cargada
+  // si no hay imagen en la propiedad, usa la primera foto cargada
   const bg = useMemo(() => {
     const fromProp = getHeroImage(prop);
     if (fromProp !== HERO_FALLBACK) return fromProp;
@@ -406,10 +406,10 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   // Tarjetas resumen
   const tiles = useMemo(() => {
     return [
-      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (todas    ?? []).length, preview: '' /* sin foto */ },
+      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (todas    ?? []).length, preview: '' },
       { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (exterior  ?? []).length, preview: exterior[0] },
       { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (interior  ?? []).length, preview: interior[0] },
-      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.35)]', count: (planos    ?? []).length, preview: '' /* sin foto */ },
+      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.35)]', count: (planos    ?? []).length, preview: '' },
     ];
   }, [todas, exterior, interior, planos]);
 
@@ -437,7 +437,6 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {tiles.map(t => {
-            // si hay preview úsalo, si no mostramos bloque sólido
             const hasPreview = !!t.preview;
             const list =
               t.key === 'todas'    ? todas :
