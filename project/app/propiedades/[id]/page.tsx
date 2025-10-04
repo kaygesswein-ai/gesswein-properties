@@ -139,7 +139,7 @@ function Lightbox(props:{
 
   return (
     <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
-      {/* HUD superior */}
+      {/* HUD superior (centrado) */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 text-white/90 text-sm px-3 py-1 rounded bg-white/10">
         {index + 1} / {images.length}
       </div>
@@ -231,7 +231,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
   /* --- cálculos --- */
 
-  // 👇 NUEVO: si no hay imagen en la propiedad, usa la primera foto cargada
+  // Si no hay imagen en la propiedad, usa la primera foto cargada
   const bg = useMemo(() => {
     const fromProp = getHeroImage(prop);
     if (fromProp !== HERO_FALLBACK) return fromProp;
@@ -395,12 +395,13 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   }, [fotos]);
 
   // Tarjetas resumen
+  // >>> Cambios: 'todas' y 'planos' NO muestran foto de portada (preview undefined)
   const tiles = useMemo(() => {
     return [
-      { key: 'todas'   as const, label: 'Photos',   icon: <Images   className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (todas   ?? []).length, preview: todas[0]   },
-      { key: 'exterior' as const, label: 'Exterior', icon: <Home     className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (exterior ?? []).length, preview: exterior[0] },
-      { key: 'interior' as const, label: 'Interior', icon: <DoorOpen className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (interior ?? []).length, preview: interior[0] },
-      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.35)]', count: (planos ?? []).length, preview: planos[0] },
+      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: undefined },
+      { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, count: (exterior  ?? []).length, preview: exterior[0] },
+      { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, count: (interior  ?? []).length, preview: interior[0] },
+      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, count: (planos    ?? []).length, preview: undefined },
     ];
   }, [todas, exterior, interior, planos]);
 
@@ -428,11 +429,13 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {tiles.map(t => {
-            const src = t.preview || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop';
             const list =
               t.key === 'todas'   ? todas :
               t.key === 'exterior' ? exterior :
               t.key === 'interior' ? interior : planos;
+
+            const hasPreview = Boolean(t.preview);
+            const src = t.preview;
 
             return (
               <button
@@ -440,21 +443,32 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
                 onClick={() => openLbFor(list, 0)}
                 className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
               >
-                <img
-                  src={src}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
+                {/* Fondo: si hay preview, foto; si no, sólido azul corporativo */}
+                {hasPreview ? (
+                  <img
+                    src={src!}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-[#0A2E57]/80 group-hover:bg-[#0A2E57]/70 transition-colors" />
+                )}
+
+                {/* Capa de contenido */}
                 <div className={cls(
                   'absolute inset-0 flex flex-col items-center justify-center gap-1',
-                  'transition',
-                  'bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white'
+                  'transition text-white',
+                  hasPreview
+                    ? 'bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)]'
+                    : ''
                 )}>
                   <div className="flex items-center gap-2">
                     {t.icon}
                     <span className="font-semibold">{t.label}</span>
                   </div>
-                  <span className="text-xs opacity-90">{t.count} {t.count === 1 ? 'foto' : 'fotos'}</span>
+                  <span className="text-xs opacity-90">
+                    {t.count} {t.count === 1 ? 'foto' : 'fotos'}
+                  </span>
                 </div>
               </button>
             );
@@ -465,6 +479,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
       {/* ---------- DESCRIPCIÓN ---------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
+        {/* Respeta saltos/viñetas pegadas desde CMS con whitespace-pre-wrap */}
         <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
           {prop?.descripcion || 'Descripción no disponible por el momento.'}
         </p>
