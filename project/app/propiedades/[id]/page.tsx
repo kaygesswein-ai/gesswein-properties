@@ -1,4 +1,3 @@
-
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
@@ -53,12 +52,10 @@ type Property = {
   imagenes?: string[] | null;
   barrio?: string | null;
 
-  // NUEVOS CAMPOS DINÁMICOS PARA EL MAPA
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
 
-  // Características destacadas opcionales
   tags?: string[] | null;
 };
 
@@ -76,7 +73,6 @@ const HERO_FALLBACK =
 const getHeroImage = (p?: Property | null) =>
   p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
 
-/** Capitaliza TODAS las palabras de la cadena */
 const wordsCap = (s?: string | null) =>
   (s ?? '')
     .toLowerCase()
@@ -113,10 +109,14 @@ function Lightbox(props:{
 
   const [scale, setScale] = useState(1);
   const imgRef = useRef<HTMLImageElement | null>(null);
-
-  // Soporte swipe táctil
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX   = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const touch = useRef<{
+    x?: number; y?: number;
+    t1?: Touch; t2?: Touch;
+    pinchStartDist?: number;
+    startScale?: number;
+    swiping?: boolean;
+  }>({});
 
   useEffect(() => {
     if (!open) return;
@@ -133,55 +133,84 @@ function Lightbox(props:{
 
   const zoomIn  = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
   const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
-
   const full = () => {
+    // En desktop permite fullscreen, en móvil se oculta el botón
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) return;
     try {
       if (document.fullscreenElement) document.exitFullscreen();
-      else document.documentElement.requestFullscreen();
+      else containerRef.current?.requestFullscreen();
     } catch {}
   };
 
-  // Eventos táctiles (móvil)
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchEndX.current = null;
+  // wheel zoom (desktop)
+  useEffect(() => {
+    if (!open) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.deltaY > 0) zoomOut();
+      else zoomIn();
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [open]);
+
+  // touch (swipe + pinch)
+  const dist2 = (a: Touch, b: Touch) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+
+  const onTouchStart: React.TouchEventHandler<HTMLDivElement> = (e) => {
+    if (e.touches.length === 1) {
+      touch.current.x = e.touches[0].clientX;
+      touch.current.y = e.touches[0].clientY;
+      touch.current.swiping = true;
+    } else if (e.touches.length === 2) {
+      const d = dist2(e.touches[0], e.touches[1]);
+      touch.current.pinchStartDist = d;
+      touch.current.startScale = scale;
+      touch.current.swiping = false;
+    }
   };
-  const onTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
+
+  const onTouchMove: React.TouchEventHandler<HTMLDivElement> = (e) => {
+    if (e.touches.length === 2 && touch.current.pinchStartDist) {
+      const d = dist2(e.touches[0], e.touches[1]);
+      const ratio = d / touch.current.pinchStartDist;
+      const next = Math.max(0.5, Math.min(3, (touch.current.startScale ?? 1) * ratio));
+      setScale(next);
+      e.preventDefault();
+      return;
+    }
   };
-  const onTouchEnd = () => {
-    if (touchStartX.current == null || touchEndX.current == null) return;
-    const delta = touchStartX.current - touchEndX.current;
-    if (delta > 50) onNext();      // swipe izquierda -> siguiente
-    if (delta < -50) onPrev();     // swipe derecha   -> anterior
-    touchStartX.current = null;
-    touchEndX.current = null;
+
+  const onTouchEnd: React.TouchEventHandler<HTMLDivElement> = (e) => {
+    if (touch.current.swiping && touch.current.x != null) {
+      const upX = e.changedTouches[0]?.clientX ?? touch.current.x;
+      const dx = upX - touch.current.x;
+      if (dx > 50) onPrev();
+      if (dx < -50) onNext();
+    }
+    touch.current = {};
   };
 
   if (!open) return null;
 
   return (
     <div
+      ref={containerRef}
       className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* HUD superior (contador) */}
-      <div
-        className="
-          absolute top-3 left-5 sm:top-4 sm:left-1/2 sm:-translate-x-1/2
-          z-30 text-white text-[14px] sm:text-sm font-medium
-          px-3 py-[6px] rounded-full
-          bg-[rgba(10,46,87,0.85)] backdrop-blur-sm shadow-md
-          pointer-events-none select-none
-        "
-      >
+      {/* contador (mejor contraste en móvil) */}
+      <div className="absolute top-3 left-16 sm:left-1/2 sm:-translate-x-1/2 text-white/90 text-sm px-3 py-1 rounded
+                      bg-white/20 backdrop-blur-sm">
         {index + 1} / {images.length}
       </div>
 
-      {/* Controles */}
-      <div className="absolute top-3 right-4 flex items-center gap-2 text-white z-30">
+      {/* HUD derecho */}
+      <div className="absolute top-3 right-4 flex items-center gap-2 text-white">
         <button onClick={zoomOut} aria-label="Zoom out"
                 className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Minus className="h-5 w-5" />
@@ -191,9 +220,11 @@ function Lightbox(props:{
                 className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Plus className="h-5 w-5" />
         </button>
-        {/* Oculto en móvil */}
-        <button onClick={full} aria-label="Pantalla completa"
-                className="hidden sm:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded">
+        <button
+          onClick={full}
+          aria-label="Pantalla completa"
+          className="hidden md:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded"
+        >
           <Maximize2 className="h-5 w-5" />
         </button>
         <button onClick={onClose} aria-label="Cerrar"
@@ -202,9 +233,8 @@ function Lightbox(props:{
         </button>
       </div>
 
-      {/* Flechas */}
-      <button onClick={onPrev}   aria-label="Anterior"
-              className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
+      <button onClick={onPrev} aria-label="Anterior"
+              className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded">
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
 
@@ -216,8 +246,8 @@ function Lightbox(props:{
         style={{ transform: `scale(${scale})` }}
       />
 
-      <button onClick={onNext}   aria-label="Siguiente"
-              className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
+      <button onClick={onNext} aria-label="Siguiente"
+              className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded">
         <ChevronRight className="h-8 w-8 text-white" />
       </button>
     </div>
@@ -241,7 +271,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
-  /* --- fetch propiedad --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -254,7 +283,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- fetch fotos --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -268,9 +296,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- cálculos --- */
-
-  // Si no hay imagen en la propiedad, usa la primera foto cargada
+  // hero
   const bg = useMemo(() => {
     const fromProp = getHeroImage(prop);
     if (fromProp !== HERO_FALLBACK) return fromProp;
@@ -282,9 +308,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
     wordsCap(prop?.tipo),
     wordsCap(prop?.operacion),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  ].filter(Boolean).join(' · ');
 
   const precioUfHero =
     typeof prop?.precio_uf === 'number' && prop.precio_uf > 0
@@ -303,7 +327,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const btnRef      = useRef<HTMLAnchorElement | null>(null);
 
-  /* --- sincronizar alto del botón --- */
   useEffect(() => {
     const sync = () => {
       const h = priceBoxRef.current?.offsetHeight;
@@ -328,7 +351,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const fmtInt = (n: number | null | undefined) =>
     typeof n === 'number' ? nfINT.format(n) : dash;
 
-  /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
       {/* ---------------- HERO ---------------- */}
@@ -416,7 +438,6 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
-  // Agrupa fotos por categoría
   const { todas, exterior, interior, planos } = useMemo(() => {
     const rows = (fotos ?? []).filter(f => f?.url);
     const map = {
@@ -433,16 +454,16 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     return map;
   }, [fotos]);
 
-  // Tarjetas resumen (sin foto de fondo para "Photos" y "Floor Plan")
   const tiles = useMemo(() => {
     return [
-      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, list: todas,    showImg: false, preview: todas[0] },
-      { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, list: exterior, showImg: true,  preview: exterior[0] },
-      { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, list: interior, showImg: true,  preview: interior[0] },
-      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, list: planos,   showImg: false, preview: planos[0] },
+      { key: 'todas'    as const, label: 'Photos',    icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: todas[0]    },
+      { key: 'exterior' as const, label: 'Exterior',  icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, preview: exterior[0] },
+      { key: 'interior' as const, label: 'Interior',  icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, preview: interior[0] },
+      { key: 'planos'   as const, label: 'Floor Plan',icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, preview: planos[0]   },
     ];
   }, [todas, exterior, interior, planos]);
 
+  const [dynamicList, setDynamicList] = useState<string[]>([]);
   const openLbFor = (arr: string[], start = 0) => {
     if (!arr.length) return;
     setLbIndex(start);
@@ -450,14 +471,22 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     setLbOpen(true);
   };
 
-  // lista dinámica que consume Lightbox
-  const [dynamicList, setDynamicList] = useState<string[]>([]);
-
   useEffect(() => {
     if ((todas ?? []).length && dynamicList.length === 0) {
       setDynamicList(todas);
     }
   }, [todas, dynamicList.length]);
+
+  /* ---------- descripción normalizada (ESPACIADO FIJO) ---------- */
+  const normalizedParagraphs = useMemo(() => {
+    const raw = (prop?.descripcion ?? '')
+      .replace(/\r\n/g, '\n')       // Windows -> Unix
+      .replace(/\n{3,}/g, '\n\n')   // colapsa saltos excesivos
+      .trim();
+
+    // divide por párrafos (línea en blanco) y respeta saltos dentro de cada párrafo
+    return raw.length ? raw.split('\n\n') : [];
+  }, [prop?.descripcion]);
 
   return (
     <>
@@ -467,34 +496,36 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {tiles.map(t => {
-            const showImg = t.showImg && !!t.preview && t.list.length > 0;
+            const list =
+              t.key === 'todas'   ? todas :
+              t.key === 'exterior' ? exterior :
+              t.key === 'interior' ? interior : planos;
+
+            const showImage = !!t.preview && t.key !== 'todas'; // 'todas' sin foto de portada
+            const showSolid  = !showImage;                      // azul corporativo sólido
 
             return (
               <button
                 key={t.key}
-                onClick={() => openLbFor(t.list, 0)}
+                onClick={() => openLbFor(list, 0)}
                 className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
               >
-                {/* Fondo: foto si corresponde, si no, color */}
-                {showImg ? (
+                {showImage ? (
                   <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
-                  <div className="absolute inset-0 w-full h-full bg-[rgba(15,40,80,0.25)]" />
+                  <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
                 )}
-                <div
-                  className={cls(
-                    'absolute inset-0 flex flex-col items-center justify-center gap-1',
-                    'transition',
-                    'bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white'
-                  )}
-                >
+
+                <div className={cls(
+                  'absolute inset-0 flex flex-col items-center justify-center gap-1',
+                  'transition',
+                  'bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white'
+                )}>
                   <div className="flex items-center gap-2">
                     {t.icon}
                     <span className="font-semibold">{t.label}</span>
                   </div>
-                  <span className="text-xs opacity-90">
-                    {t.count} {t.count === 1 ? 'foto' : 'fotos'}
-                  </span>
+                  <span className="text-xs opacity-90">{t.count} {t.count === 1 ? 'foto' : 'fotos'}</span>
                 </div>
               </button>
             );
@@ -502,12 +533,23 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         </div>
       </section>
 
-      {/* ---------- DESCRIPCIÓN ---------- */}
+      {/* ---------- DESCRIPCIÓN (párrafos con espaciado consistente) ---------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
-        <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
-          {prop?.descripcion || 'Descripción no disponible por el momento.'}
-        </p>
+
+        {normalizedParagraphs.length ? (
+          <div>
+            {normalizedParagraphs.map((p, i) => (
+              <p key={i} className="text-slate-700 leading-relaxed whitespace-pre-wrap mb-3 last:mb-0">
+                {p}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="text-slate-700 leading-relaxed">
+            Descripción no disponible por el momento.
+          </p>
+        )}
       </section>
 
       {/* ---------- SEPARADOR ---------- */}
@@ -552,15 +594,17 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* ---------- MAPA (DINÁMICO) ---------- */}
+      {/* ---------- MAPA DINÁMICO ---------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <SectionTitle>Explora el sector</SectionTitle>
+
         <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden rounded">
           {(() => {
             const lat  = typeof prop?.map_lat  === 'number' ? prop!.map_lat  : -33.437;
             const lng  = typeof prop?.map_lng  === 'number' ? prop!.map_lng  : -70.65;
             const zoom = typeof prop?.map_zoom === 'number' ? (prop!.map_zoom as number) : 15;
             const src  = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&hl=es&output=embed`;
+
             return (
               <iframe
                 title="mapa"
