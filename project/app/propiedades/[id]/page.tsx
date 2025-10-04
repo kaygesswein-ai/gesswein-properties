@@ -14,14 +14,24 @@ import {
   ChevronRight,
   Compass,
   TrendingUp,
+  Images,
+  DoorOpen,
   Home,
-  Camera,
-  ScrollText,
+  Map as MapIcon,
+  Maximize2,
+  Minus,
+  Plus,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
 /*                               TIPOS                                */
 /* ------------------------------------------------------------------ */
+type FotoRow = {
+  url: string;
+  tag?: 'exterior' | 'interior' | 'planos' | string | null;
+  orden?: number | null;
+};
+
 type Property = {
   id: string;
   slug?: string | null;
@@ -39,13 +49,17 @@ type Property = {
   estacionamientos?: number | null;
   created_at?: string | null;
   descripcion?: string | null;
-  map_lat?: number | null;
-  map_lng?: number | null;
   imagenes?: string[] | null;
   barrio?: string | null;
-};
 
-type Foto = { url: string; tag: 'exterior' | 'interior' | 'planos' | null; orden?: number | null };
+  // NUEVOS CAMPOS DINÁMICOS PARA EL MAPA
+  map_lat?: number | null;
+  map_lng?: number | null;
+  map_zoom?: number | null;
+
+  // Características destacadas opcionales
+  tags?: string[] | null;
+};
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
@@ -57,6 +71,18 @@ const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
+
+const getHeroImage = (p?: Property | null) =>
+  p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
+
+/** Capitaliza TODAS las palabras de la cadena */
+const wordsCap = (s?: string | null) =>
+  (s ?? '')
+    .toLowerCase()
+    .split(' ')
+    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+    .join(' ')
+    .trim();
 
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
@@ -84,6 +110,9 @@ function Lightbox(props:{
 }) {
   const { open, images, index, onClose, onPrev, onNext } = props;
 
+  const [scale, setScale] = useState(1);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
@@ -95,18 +124,59 @@ function Lightbox(props:{
     return () => window.removeEventListener('keydown', h);
   }, [open, onClose, onPrev, onNext]);
 
+  useEffect(() => { setScale(1); }, [index, open]);
+
+  const zoomIn  = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
+  const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
+  const full = () => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    } catch {}
+  };
+
   if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
-      <button onClick={onClose}  aria-label="Cerrar"
-              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded">
-        <X className="h-6 w-6 text-white" />
-      </button>
+      {/* HUD superior */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 text-white/90 text-sm px-3 py-1 rounded bg-white/10">
+        {index + 1} / {images.length}
+      </div>
+
+      <div className="absolute top-3 right-4 flex items-center gap-2 text-white">
+        <button onClick={zoomOut} aria-label="Zoom out"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded">
+          <Minus className="h-5 w-5" />
+        </button>
+        <span className="px-2 text-sm">{Math.round(scale * 100)}%</span>
+        <button onClick={zoomIn} aria-label="Zoom in"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded">
+          <Plus className="h-5 w-5" />
+        </button>
+        <button onClick={full} aria-label="Pantalla completa"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded">
+          <Maximize2 className="h-5 w-5" />
+        </button>
+        <button onClick={onClose} aria-label="Cerrar"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded">
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
       <button onClick={onPrev}   aria-label="Anterior"
               className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded">
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
-      <img src={images[index]} alt="" className="max-h-[90vh] max-w-[92vw] object-contain" />
+
+      <img
+        ref={imgRef}
+        src={images[index]}
+        alt=""
+        className="max-h-[90vh] max-w-[92vw] object-contain transition-transform"
+        style={{ transform: `scale(${scale})` }}
+      />
+
       <button onClick={onNext}   aria-label="Siguiente"
               className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded">
         <ChevronRight className="h-8 w-8 text-white" />
@@ -124,14 +194,15 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   </h2>
 );
 
-/* ================================================================== */
-/*                          PÁGINA DETALLE                            */
-/* ================================================================== */
+/* ------------------------------------------------------------------ */
+/*                             COMPONENTE                             */
+/* ------------------------------------------------------------------ */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
-  const [fotos, setFotos] = useState<Foto[]>([]);
+  const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
+  /* --- fetch propiedad --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -144,45 +215,37 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
+  /* --- fetch fotos --- */
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`, { cache: 'no-store' })
-          .catch(() => null as any);
+        const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`).catch(() => null as any);
         const j = r?.ok ? await r.json().catch(() => null) : null;
-        if (alive) setFotos(Array.isArray(j?.data) ? j.data : []);
+        const rows: FotoRow[] = j?.data ?? [];
+        if (alive) setFotos(rows);
       } catch { if (alive) setFotos([]); }
     })();
     return () => { alive = false; };
   }, [params.id]);
 
-  const imgs = useMemo(() => {
-    const all = fotos.map((f) => ({ url: f.url, tag: (f.tag ?? 'exterior') as 'exterior'|'interior'|'planos' }));
-    return {
-      todas: all,
-      exterior: all.filter(x => x.tag === 'exterior'),
-      interior: all.filter(x => x.tag === 'interior'),
-      planos:   all.filter(x => x.tag === 'planos'),
-    };
-  }, [fotos]);
+  /* --- cálculos --- */
 
-  // HERO: prioriza exterior > interior > cualquier > fallback
-  const hero = useMemo(() => {
-    const cands = [
-      imgs.exterior[0]?.url,
-      imgs.interior[0]?.url,
-      imgs.todas[0]?.url,
-      prop?.imagenes?.[0],
-    ].filter(Boolean) as string[];
-    return cands[0] ?? HERO_FALLBACK;
-  }, [imgs, prop]);
+  // 👇 NUEVO: si no hay imagen en la propiedad, usa la primera foto cargada
+  const bg = useMemo(() => {
+    const fromProp = getHeroImage(prop);
+    if (fromProp !== HERO_FALLBACK) return fromProp;
+    const firstFoto = fotos?.find(f => f?.url)?.url;
+    return firstFoto || HERO_FALLBACK;
+  }, [prop, fotos]);
 
   const linea = [
-    (prop?.comuna ?? '').replace(/^lo barnechea/i, 'Lo Barnechea'),
-    prop?.tipo ?? undefined,
-    prop?.operacion ?? undefined,
-  ].filter(Boolean).join(' · ');
+    wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
+    wordsCap(prop?.tipo),
+    wordsCap(prop?.operacion),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const precioUfHero =
     typeof prop?.precio_uf === 'number' && prop.precio_uf > 0
@@ -201,6 +264,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const btnRef      = useRef<HTMLAnchorElement | null>(null);
 
+  /* --- sincronizar alto del botón --- */
   useEffect(() => {
     const sync = () => {
       const h = priceBoxRef.current?.offsetHeight;
@@ -222,14 +286,16 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   }, [prop]);
 
   const dash   = '—';
-  const fmtInt = (n: number | null | undefined) => typeof n === 'number' ? nfINT.format(n) : dash;
+  const fmtInt = (n: number | null | undefined) =>
+    typeof n === 'number' ? nfINT.format(n) : dash;
 
+  /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
       {/* ---------------- HERO ---------------- */}
       <section className="relative w-full overflow-hidden isolate">
         <div className="absolute inset-0 -z-10 bg-center bg-cover"
-             style={{ backgroundImage: `url(${hero})` }} />
+             style={{ backgroundImage: `url(${bg})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
@@ -242,6 +308,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </h1>
               <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
 
+              {/* ---------- Tiles ---------- */}
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
@@ -263,6 +330,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
+              {/* ---------- Botón + precio ---------- */}
               <div className="mt-4 flex items-end gap-3">
                 <Link ref={btnRef} href="/contacto"
                       className="inline-flex text-sm tracking-wide rounded-none
@@ -288,170 +356,194 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* ---------------- GALERÍA (tarjetas) ---------------- */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionTitle>Galería</SectionTitle>
-        <GalleryTiles imgs={imgs} />
-      </section>
-
-      {/* ---------------- DESCRIPCIÓN ---------------- */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionTitle>Descripción</SectionTitle>
-        <p className="whitespace-pre-line text-slate-700 leading-relaxed">
-          {prop?.descripcion || 'Descripción no disponible por el momento.'}
-        </p>
-      </section>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
-
-      {/* --------- CARACTERÍSTICAS (placeholder) --------- */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionTitle>Características destacadas</SectionTitle>
-        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
-          <li className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
-              <Compass className="h-4 w-4 text-slate-600" />
-            </span>
-            <span>Orientación norte</span>
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
-              <TrendingUp className="h-4 w-4 text-slate-600" />
-            </span>
-            <span>Potencial de plusvalía</span>
-          </li>
-        </ul>
-      </section>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
-
-      {/* ---------------- MAPA ---------------- */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-        <SectionTitle>Explora el sector</SectionTitle>
-        <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden">
-          <iframe
-            title="mapa"
-            className="w-full h-full"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            src={
-              prop?.map_lat && prop?.map_lng
-                ? `https://www.google.com/maps?q=${prop.map_lat},${prop.map_lng}&z=15&output=embed`
-                : 'https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d33338.286!2d-70.527!3d-33.406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1es!2scl!4v1713000000000'
-            }
-          />
-        </div>
-      </section>
+      {/* ---------------- GALERÍA + DESCRIPCIÓN + FEATURES + MAPA ---------------- */}
+      <GalleryAndDetails prop={prop} fotos={fotos} />
     </main>
   );
 }
 
-/* ================================================================== */
-/*                           GALERÍA – TILES                           */
-/* ================================================================== */
+/* ------------------------------------------------------------------ */
+/*                        GALERÍA + CONTENIDO                         */
+/* ------------------------------------------------------------------ */
+function normalizeTag(tag?: string | null): 'exterior' | 'interior' | 'planos' | 'todas' {
+  const t = (tag ?? '').toLowerCase();
+  if (t.includes('plan')) return 'planos';
+  if (t.includes('exterior') || /(fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/.test(t)) return 'exterior';
+  if (t.includes('interior') || /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio)/.test(t)) return 'interior';
+  return 'todas';
+}
 
-function GalleryTiles({
-  imgs,
-}: {
-  imgs: {
-    todas: { url: string; tag: 'exterior'|'interior'|'planos' }[];
-    exterior: { url: string; tag: 'exterior'|'interior'|'planos' }[];
-    interior: { url: string; tag: 'exterior'|'interior'|'planos' }[];
-    planos:   { url: string; tag: 'exterior'|'interior'|'planos' }[];
+function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: FotoRow[] }) {
+  const [lbOpen, setLbOpen] = useState(false);
+  const [lbIndex, setLbIndex] = useState(0);
+
+  // Agrupa fotos por categoría
+  const { todas, exterior, interior, planos } = useMemo(() => {
+    const rows = (fotos ?? []).filter(f => f?.url);
+    const map = {
+      todas: [] as string[],
+      exterior: [] as string[],
+      interior: [] as string[],
+      planos: [] as string[],
+    };
+    rows.forEach(r => {
+      const k = normalizeTag(r.tag);
+      map.todas.push(r.url);
+      if (k !== 'todas') map[k].push(r.url);
+    });
+    return map;
+  }, [fotos]);
+
+  // Tarjetas resumen
+  const tiles = useMemo(() => {
+    return [
+      { key: 'todas'   as const, label: 'Photos',   icon: <Images   className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (todas   ?? []).length, preview: todas[0]   },
+      { key: 'exterior' as const, label: 'Exterior', icon: <Home     className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (exterior ?? []).length, preview: exterior[0] },
+      { key: 'interior' as const, label: 'Interior', icon: <DoorOpen className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (interior ?? []).length, preview: interior[0] },
+      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.35)]', count: (planos ?? []).length, preview: planos[0] },
+    ];
+  }, [todas, exterior, interior, planos]);
+
+  const openLbFor = (arr: string[], start = 0) => {
+    if (!arr.length) return;
+    setLbIndex(start);
+    setDynamicList(arr);
+    setLbOpen(true);
   };
-}) {
-  const counts = {
-    todas: imgs.todas.length,
-    exterior: imgs.exterior.length,
-    interior: imgs.interior.length,
-    planos: imgs.planos.length,
-  };
 
-  const sample = {
-    todas: imgs.todas[0]?.url,
-    exterior: imgs.exterior[0]?.url,
-    interior: imgs.interior[0]?.url,
-    planos: imgs.planos[0]?.url,
-  };
+  // lista dinámica que consume Lightbox
+  const [dynamicList, setDynamicList] = useState<string[]>([]);
 
-  const tiles: Array<{
-    key: 'todas'|'exterior'|'interior'|'planos';
-    label: string;
-    icon: React.ReactNode;
-    bg?: string;
-    count: number;
-  }> = [
-    { key: 'todas',    label: 'Photos',     icon: <Camera className="h-6 w-6" />,     bg: sample.todas,    count: counts.todas },
-    { key: 'exterior', label: 'Exterior',   icon: <Home className="h-6 w-6" />,       bg: sample.exterior, count: counts.exterior },
-    { key: 'interior', label: 'Interior',   icon: <Home className="h-6 w-6" />,       bg: sample.interior, count: counts.interior },
-    { key: 'planos',   label: 'Floor Plan', icon: <ScrollText className="h-6 w-6" />, bg: counts.planos > 0 ? sample.planos : undefined, count: counts.planos },
-  ];
-
-  const [open, setOpen]   = useState(false);
-  const [index, setIndex] = useState(0);
-  const [list, setList]   = useState<string[]>([]);
-
-  const openLb = (key: 'todas'|'exterior'|'interior'|'planos') => {
-    const arr = (imgs as any)[key] as Array<{url: string}>;
-    if (!arr?.length) return;
-    setList(arr.map(x => x.url));
-    setIndex(0);
-    setOpen(true);
-  };
+  useEffect(() => {
+    if ((todas ?? []).length && dynamicList.length === 0) {
+      setDynamicList(todas);
+    }
+  }, [todas, dynamicList.length]);
 
   return (
     <>
-      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {tiles.map(t => {
-          const hasImages = t.count > 0;
-          return (
-            <button
-              key={t.key}
-              onClick={() => hasImages && openLb(t.key)}
-              className="group relative h-[220px] w-full overflow-hidden rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A2E57]"
-            >
-              {/* MISMO LOOK PARA TODAS: si no hay fotos, fondo neutro + MISMO overlay azul */}
-              {hasImages ? (
-                <>
-                  <img src={t.bg!} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-[#14324E]/70 group-hover:bg-[#14324E]/60 transition" />
-                </>
-              ) : (
-                <>
-                  <div className="absolute inset-0 bg-slate-200" />
-                  <div className="absolute inset-0 bg-[#14324E]/70 group-hover:bg-[#14324E]/60 transition" />
-                </>
-              )}
+      {/* ---------- TARJETAS / TILES ---------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionTitle>Galería</SectionTitle>
 
-              <div className="relative z-10 h-full w-full flex flex-col items-start justify-center px-8">
-                <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/20 text-white">
-                  {t.icon}
-                </div>
-                <div className="mt-3">
-                  <div className="text-white font-semibold text-xl drop-shadow">
-                    {t.label}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {tiles.map(t => {
+            const src = t.preview || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop';
+            const list =
+              t.key === 'todas'   ? todas :
+              t.key === 'exterior' ? exterior :
+              t.key === 'interior' ? interior : planos;
+
+            return (
+              <button
+                key={t.key}
+                onClick={() => openLbFor(list, 0)}
+                className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
+              >
+                <img
+                  src={src}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className={cls(
+                  'absolute inset-0 flex flex-col items-center justify-center gap-1',
+                  'transition',
+                  'bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white'
+                )}>
+                  <div className="flex items-center gap-2">
+                    {t.icon}
+                    <span className="font-semibold">{t.label}</span>
                   </div>
-                  <div className="text-white/90 text-sm drop-shadow">
-                    {t.count} {t.count === 1 ? 'foto' : 'fotos'}
-                  </div>
+                  <span className="text-xs opacity-90">{t.count} {t.count === 1 ? 'foto' : 'fotos'}</span>
                 </div>
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ---------- DESCRIPCIÓN ---------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionTitle>Descripción</SectionTitle>
+        <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+          {prop?.descripcion || 'Descripción no disponible por el momento.'}
+        </p>
+      </section>
+
+      {/* ---------- SEPARADOR ---------- */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-slate-200 my-10" />
       </div>
 
+      {/* ---------- CARACTERÍSTICAS DESTACADAS ---------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionTitle>Características destacadas</SectionTitle>
+        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
+          {(prop?.tags ?? []).length ? (
+            (prop?.tags ?? []).map((t, i) => (
+              <li key={`${t}-${i}`} className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+                  <Compass className="h-4 w-4 text-slate-600" />
+                </span>
+                <span>{t}</span>
+              </li>
+            ))
+          ) : (
+            <>
+              <li className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+                  <Compass className="h-4 w-4 text-slate-600" />
+                </span>
+                <span>Orientación norte</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+                  <TrendingUp className="h-4 w-4 text-slate-600" />
+                </span>
+                <span>Potencial de plusvalía</span>
+              </li>
+            </>
+          )}
+        </ul>
+      </section>
+
+      {/* ---------- SEPARADOR ---------- */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-slate-200 my-10" />
+      </div>
+
+      {/* ---------- MAPA (DINÁMICO) ---------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <SectionTitle>Explora el sector</SectionTitle>
+
+        <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden rounded">
+          {(() => {
+            const lat  = typeof prop?.map_lat  === 'number' ? prop!.map_lat  : -33.437;
+            const lng  = typeof prop?.map_lng  === 'number' ? prop!.map_lng  : -70.65;
+            const zoom = typeof prop?.map_zoom === 'number' ? (prop!.map_zoom as number) : 15;
+            const src  = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&hl=es&output=embed`;
+
+            return (
+              <iframe
+                title="mapa"
+                className="w-full h-full"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={src}
+              />
+            );
+          })()}
+        </div>
+      </section>
+
+      {/* ---------- LIGHTBOX ---------- */}
       <Lightbox
-        open={open}
-        images={list}
-        index={index}
-        onClose={() => setOpen(false)}
-        onPrev={() => setIndex(i => (i - 1 + list.length) % list.length)}
-        onNext={() => setIndex(i => (i + 1) % list.length)}
+        open={lbOpen}
+        images={dynamicList}
+        index={lbIndex}
+        onClose={() => setLbOpen(false)}
+        onPrev={() => setLbIndex(i => (i - 1 + dynamicList.length) % dynamicList.length)}
+        onNext={() => setLbIndex(i => (i + 1) % dynamicList.length)}
       />
     </>
   );
