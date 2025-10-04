@@ -52,12 +52,10 @@ type Property = {
   imagenes?: string[] | null;
   barrio?: string | null;
 
-  // NUEVOS CAMPOS DINÁMICOS PARA EL MAPA
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
 
-  // Características destacadas opcionales
   tags?: string[] | null;
 };
 
@@ -75,7 +73,6 @@ const HERO_FALLBACK =
 const getHeroImage = (p?: Property | null) =>
   p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
 
-/** Capitaliza TODAS las palabras de la cadena */
 const wordsCap = (s?: string | null) =>
   (s ?? '')
     .toLowerCase()
@@ -111,7 +108,19 @@ function Lightbox(props:{
   const { open, images, index, onClose, onPrev, onNext } = props;
 
   const [scale, setScale] = useState(1);
+  const [cursor, setCursor] = useState<'zoom-in'|'zoom-out'>('zoom-in');
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+
+  // gestos táctiles
+  const touch = useRef({
+    startX: 0,
+    lastX: 0,
+    swiping: false,
+    pinching: false,
+    pinchStartDist: 0,
+    startScale: 1,
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -124,27 +133,98 @@ function Lightbox(props:{
     return () => window.removeEventListener('keydown', h);
   }, [open, onClose, onPrev, onNext]);
 
-  useEffect(() => { setScale(1); }, [index, open]);
+  useEffect(() => { setScale(1); setCursor('zoom-in'); }, [index, open]);
 
-  const zoomIn  = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
-  const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
-  const full = () => {
+  const clamp = (v:number, a:number, b:number) => Math.max(a, Math.min(b, v));
+  const setZoom = (v:number) => {
+    const s = clamp(Math.round(v*100)/100, 0.5, 3);
+    setScale(s);
+    setCursor(s > 1 ? 'zoom-out' : 'zoom-in');
+  };
+
+  const zoomIn  = () => setZoom(scale + 0.25);
+  const zoomOut = () => setZoom(scale - 0.25);
+
+  const toggleZoom = () => setZoom(scale > 1 ? 1 : 2);
+
+  // fullscreen SOLO del contenedor del lightbox
+  const full = async () => {
     try {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else document.documentElement.requestFullscreen();
+      const el = containerRef.current!;
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (el?.requestFullscreen) await el.requestFullscreen();
     } catch {}
+  };
+
+  // wheel zoom
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+    const el = containerRef.current;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.deltaY < 0) zoomIn();
+      else zoomOut();
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel as any);
+  }, [open, scale]);
+
+  // touch helpers
+  const dist2 = (a:{x:number,y:number}, b:{x:number,y:number}) => {
+    const dx = a.x - b.x, dy = a.y - b.y;
+    return Math.sqrt(dx*dx + dy*dy);
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touch.current.swiping = true;
+      touch.current.startX = e.touches[0].clientX;
+      touch.current.lastX = touch.current.startX;
+    } else if (e.touches.length === 2) {
+      touch.current.pinching = true;
+      const t1 = e.touches[0], t2 = e.touches[1];
+      touch.current.pinchStartDist = dist2({x:t1.clientX,y:t1.clientY}, {x:t2.clientX,y:t2.clientY});
+      touch.current.startScale = scale;
+    }
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touch.current.pinching && e.touches.length === 2) {
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const d  = dist2({x:t1.clientX,y:t1.clientY}, {x:t2.clientX,y:t2.clientY});
+      const k  = d / (touch.current.pinchStartDist || 1);
+      setZoom(touch.current.startScale * k);
+    } else if (touch.current.swiping && e.touches.length === 1) {
+      touch.current.lastX = e.touches[0].clientX;
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (touch.current.swiping) {
+      const dx = touch.current.lastX - touch.current.startX;
+      if (Math.abs(dx) > 40) (dx < 0 ? onNext() : onPrev());
+    }
+    touch.current.swiping = false;
+    touch.current.pinching = false;
   };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
-      {/* HUD superior (centrado) */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 text-white/90 text-sm px-3 py-1 rounded bg-white/10">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* HUD superior (centrado y sobre la foto) */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 text-white/90 text-sm px-3 py-1 rounded bg-white/10 pointer-events-none">
         {index + 1} / {images.length}
       </div>
 
-      <div className="absolute top-3 right-4 flex items-center gap-2 text-white">
+      {/* Controles superiores */}
+      <div className="absolute top-3 right-4 z-20 flex items-center gap-2 text-white">
         <button onClick={zoomOut} aria-label="Zoom out"
                 className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Minus className="h-5 w-5" />
@@ -164,21 +244,25 @@ function Lightbox(props:{
         </button>
       </div>
 
-      <button onClick={onPrev}   aria-label="Anterior"
-              className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded">
+      {/* Flechas (sobre la imagen) */}
+      <button onClick={onPrev} aria-label="Anterior"
+              className="absolute left-3 md:left-6 z-20 p-2 bg-white/10 hover:bg-white/20 rounded">
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
 
+      {/* Imagen */}
       <img
         ref={imgRef}
         src={images[index]}
         alt=""
-        className="max-h-[90vh] max-w-[92vw] object-contain transition-transform"
-        style={{ transform: `scale(${scale})` }}
+        onDoubleClick={toggleZoom}
+        onClick={toggleZoom}
+        className="max-h-[90vh] max-w-[92vw] object-contain transition-transform duration-150"
+        style={{ transform: `scale(${scale})`, cursor }}
       />
 
-      <button onClick={onNext}   aria-label="Siguiente"
-              className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded">
+      <button onClick={onNext} aria-label="Siguiente"
+              className="absolute right-3 md:right-6 z-20 p-2 bg-white/10 hover:bg-white/20 rounded">
         <ChevronRight className="h-8 w-8 text-white" />
       </button>
     </div>
@@ -202,7 +286,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
-  /* --- fetch propiedad --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -215,7 +298,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- fetch fotos --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -229,9 +311,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- cálculos --- */
-
-  // Si no hay imagen en la propiedad, usa la primera foto cargada
+  // hero: si no viene imagen, usa primera foto
   const bg = useMemo(() => {
     const fromProp = getHeroImage(prop);
     if (fromProp !== HERO_FALLBACK) return fromProp;
@@ -243,9 +323,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
     wordsCap(prop?.tipo),
     wordsCap(prop?.operacion),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  ].filter(Boolean).join(' · ');
 
   const precioUfHero =
     typeof prop?.precio_uf === 'number' && prop.precio_uf > 0
@@ -264,7 +342,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const btnRef      = useRef<HTMLAnchorElement | null>(null);
 
-  /* --- sincronizar alto del botón --- */
   useEffect(() => {
     const sync = () => {
       const h = priceBoxRef.current?.offsetHeight;
@@ -286,13 +363,11 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   }, [prop]);
 
   const dash   = '—';
-  const fmtInt = (n: number | null | undefined) =>
-    typeof n === 'number' ? nfINT.format(n) : dash;
+  const fmtInt = (n: number | null | undefined) => (typeof n === 'number' ? nfINT.format(n) : dash);
 
-  /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
-      {/* ---------------- HERO ---------------- */}
+      {/* HERO */}
       <section className="relative w-full overflow-hidden isolate">
         <div className="absolute inset-0 -z-10 bg-center bg-cover"
              style={{ backgroundImage: `url(${bg})` }} />
@@ -308,7 +383,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </h1>
               <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
 
-              {/* ---------- Tiles ---------- */}
+              {/* Tiles */}
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
@@ -330,7 +405,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
-              {/* ---------- Botón + precio ---------- */}
+              {/* Botón + precio */}
               <div className="mt-4 flex items-end gap-3">
                 <Link ref={btnRef} href="/contacto"
                       className="inline-flex text-sm tracking-wide rounded-none
@@ -340,8 +415,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 </Link>
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
-                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold
-                                  text-[#0A2E57] leading-none">
+                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
                     {precioUfHero ? `UF ${nfUF.format(precioUfHero)}` : 'Consultar'}
                   </div>
                   {precioClpHero && (
@@ -356,7 +430,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* ---------------- GALERÍA + DESCRIPCIÓN + FEATURES + MAPA ---------------- */}
+      {/* GALERÍA + CONTENIDO */}
       <GalleryAndDetails prop={prop} fotos={fotos} />
     </main>
   );
@@ -394,8 +468,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     return map;
   }, [fotos]);
 
-  // Tarjetas resumen
-  // >>> Cambios: 'todas' y 'planos' NO muestran foto de portada (preview undefined)
+  // Tarjetas resumen (Photos y Planos sin preview)
   const tiles = useMemo(() => {
     return [
       { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: undefined },
@@ -412,9 +485,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     setLbOpen(true);
   };
 
-  // lista dinámica que consume Lightbox
   const [dynamicList, setDynamicList] = useState<string[]>([]);
-
   useEffect(() => {
     if ((todas ?? []).length && dynamicList.length === 0) {
       setDynamicList(todas);
@@ -423,7 +494,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
 
   return (
     <>
-      {/* ---------- TARJETAS / TILES ---------- */}
+      {/* TARJETAS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Galería</SectionTitle>
 
@@ -443,21 +514,14 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
                 onClick={() => openLbFor(list, 0)}
                 className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
               >
-                {/* Fondo: si hay preview, foto; si no, sólido azul corporativo */}
                 {hasPreview ? (
-                  <img
-                    src={src!}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+                  <img src={src!} alt="" className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
                   <div className="absolute inset-0 bg-[#0A2E57]/80 group-hover:bg-[#0A2E57]/70 transition-colors" />
                 )}
 
-                {/* Capa de contenido */}
                 <div className={cls(
-                  'absolute inset-0 flex flex-col items-center justify-center gap-1',
-                  'transition text-white',
+                  'absolute inset-0 flex flex-col items-center justify-center gap-1 transition text-white',
                   hasPreview
                     ? 'bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)]'
                     : ''
@@ -476,21 +540,20 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         </div>
       </section>
 
-      {/* ---------- DESCRIPCIÓN ---------- */}
+      {/* DESCRIPCIÓN */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
-        {/* Respeta saltos/viñetas pegadas desde CMS con whitespace-pre-wrap */}
         <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
           {prop?.descripcion || 'Descripción no disponible por el momento.'}
         </p>
       </section>
 
-      {/* ---------- SEPARADOR ---------- */}
+      {/* SEPARADOR */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* ---------- CARACTERÍSTICAS DESTACADAS ---------- */}
+      {/* CARACTERÍSTICAS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Características destacadas</SectionTitle>
         <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
@@ -522,22 +585,20 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         </ul>
       </section>
 
-      {/* ---------- SEPARADOR ---------- */}
+      {/* SEPARADOR */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* ---------- MAPA (DINÁMICO) ---------- */}
+      {/* MAPA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <SectionTitle>Explora el sector</SectionTitle>
-
         <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden rounded">
           {(() => {
             const lat  = typeof prop?.map_lat  === 'number' ? prop!.map_lat  : -33.437;
             const lng  = typeof prop?.map_lng  === 'number' ? prop!.map_lng  : -70.65;
             const zoom = typeof prop?.map_zoom === 'number' ? (prop!.map_zoom as number) : 15;
             const src  = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&hl=es&output=embed`;
-
             return (
               <iframe
                 title="mapa"
@@ -551,7 +612,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         </div>
       </section>
 
-      {/* ---------- LIGHTBOX ---------- */}
+      {/* LIGHTBOX */}
       <Lightbox
         open={lbOpen}
         images={dynamicList}
