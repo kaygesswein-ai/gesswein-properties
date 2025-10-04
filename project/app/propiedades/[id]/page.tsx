@@ -98,7 +98,7 @@ function useUf() {
   return uf;
 }
 
-/* --------------------------- LIGHTBOX (FIX TS) --------------------------- */
+/* --------------------------- LIGHTBOX (z-index + mobile layout) --------------------------- */
 function Lightbox(props: {
   open: boolean;
   images: string[];
@@ -113,7 +113,7 @@ function Lightbox(props: {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
-  // helpers de puntos (soporta Touch y React.Touch)
+  // helpers: soportan Touch y React.Touch
   type P = { x: number; y: number };
   const pt = (t: Touch | React.Touch): P => ({ x: t.clientX, y: t.clientY });
   const dist2 = (a: P, b: P) => {
@@ -137,6 +137,7 @@ function Lightbox(props: {
     startScale: 1,
   });
 
+  // teclado
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
@@ -148,9 +149,7 @@ function Lightbox(props: {
     return () => window.removeEventListener('keydown', h);
   }, [open, onClose, onPrev, onNext]);
 
-  useEffect(() => {
-    setScale(1);
-  }, [index, open]);
+  useEffect(() => setScale(1), [index, open]);
 
   const zoomIn = () =>
     setScale((v) => Math.min(3, Math.round((v + 0.25) * 100) / 100));
@@ -160,26 +159,21 @@ function Lightbox(props: {
   const full = async () => {
     try {
       const el = boxRef.current || document.documentElement;
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      } else {
-        await el.requestFullscreen();
-      }
-    } catch {
-      /* noop */
-    }
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await el.requestFullscreen();
+    } catch {}
   };
 
-  // wheel zoom
+  // rueda
   const onWheel = (e: React.WheelEvent) => {
     if (!open) return;
     e.preventDefault();
-    const delta = Math.sign(e.deltaY);
-    if (delta > 0) zoomOut();
+    const sign = Math.sign(e.deltaY);
+    if (sign > 0) zoomOut();
     else zoomIn();
   };
 
-  // pinch + swipe (con tipos válidos)
+  // táctil
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 1) {
       touch.current.x0 = e.touches[0].clientX;
@@ -205,11 +199,10 @@ function Lightbox(props: {
 
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!touch.current.swiping) return;
-    const changed = e.changedTouches?.[0];
-    if (!changed) return;
-    const dx = changed.clientX - touch.current.x0;
-    const dy = changed.clientY - touch.current.y0;
-    // swipe horizontal con umbral
+    const ch = e.changedTouches?.[0];
+    if (!ch) return;
+    const dx = ch.clientX - touch.current.x0;
+    const dy = ch.clientY - touch.current.y0;
     if (Math.abs(dx) > 40 && Math.abs(dy) < 60) {
       if (dx < 0) onNext();
       else onPrev();
@@ -228,13 +221,19 @@ function Lightbox(props: {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* HUD superior (centrado) */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 text-white/90 text-sm px-3 py-1 rounded bg-white/10">
+      {/* Contador: móvil a la izquierda, desktop centrado. Siempre por encima. */}
+      <div
+        className="
+          absolute top-3 left-3 md:left-1/2 md:-translate-x-1/2
+          px-3 py-1 rounded text-white/90 text-sm bg-white/10
+          z-40
+        "
+      >
         {index + 1} / {images.length}
       </div>
 
-      {/* Controles */}
-      <div className="absolute top-3 right-4 flex items-center gap-2 text-white">
+      {/* Controles superiores */}
+      <div className="absolute top-3 right-4 flex items-center gap-2 text-white z-40">
         <button
           onClick={zoomOut}
           aria-label="Zoom out"
@@ -250,6 +249,7 @@ function Lightbox(props: {
         >
           <Plus className="h-5 w-5" />
         </button>
+        {/* Oculto en móvil */}
         <button
           onClick={full}
           aria-label="Pantalla completa"
@@ -266,27 +266,28 @@ function Lightbox(props: {
         </button>
       </div>
 
-      {/* Flechas */}
+      {/* Flechas, siempre encima de la imagen */}
       <button
         onClick={onPrev}
         aria-label="Anterior"
-        className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded"
+        className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
       >
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
 
+      {/* Imagen */}
       <img
         ref={imgRef}
         src={images[index]}
         alt=""
-        className="max-h-[90vh] max-w-[92vw] object-contain transition-transform"
+        className="max-h-[90vh] max-w-[92vw] object-contain transition-transform z-20"
         style={{ transform: `scale(${scale})` }}
       />
 
       <button
         onClick={onNext}
         aria-label="Siguiente"
-        className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded"
+        className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
       >
         <ChevronRight className="h-8 w-8 text-white" />
       </button>
