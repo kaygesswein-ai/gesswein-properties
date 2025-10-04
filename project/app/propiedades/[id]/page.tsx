@@ -23,9 +23,18 @@ import {
   Plus,
 } from 'lucide-react';
 
-type FotoRow = { url: string; tag?: 'exterior' | 'interior' | 'planos' | string | null; orden?: number | null };
+/* ------------------------------------------------------------------ */
+/*                               TIPOS                                */
+/* ------------------------------------------------------------------ */
+type FotoRow = {
+  url: string;
+  tag?: 'exterior' | 'interior' | 'planos' | string | null;
+  orden?: number | null;
+};
+
 type Property = {
   id: string;
+  slug?: string | null;
   titulo?: string | null;
   comuna?: string | null;
   region?: string | null;
@@ -38,21 +47,42 @@ type Property = {
   superficie_util_m2?: number | null;
   superficie_terreno_m2?: number | null;
   estacionamientos?: number | null;
+  created_at?: string | null;
   descripcion?: string | null;
   imagenes?: string[] | null;
+  barrio?: string | null;
+
+  // NUEVOS CAMPOS DINÁMICOS PARA EL MAPA
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
+
+  // Características destacadas opcionales
   tags?: string[] | null;
 };
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
-const HERO_FALLBACK = 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-const getHeroImage = (p?: Property | null) => p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
+/* ------------------------------------------------------------------ */
+/*                             UTILIDADES                             */
+/* ------------------------------------------------------------------ */
+const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
+const HERO_FALLBACK =
+  'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
+
+const getHeroImage = (p?: Property | null) =>
+  p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
+
+/** Capitaliza TODAS las palabras de la cadena */
+const wordsCap = (s?: string | null) =>
+  (s ?? '')
+    .toLowerCase()
+    .split(' ')
+    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+    .join(' ')
+    .trim();
 
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
@@ -72,26 +102,27 @@ function useUf() {
 }
 
 /* ------------------------------------------------------------------ */
-/*                            LIGHTBOX                                */
+/*                              LIGHTBOX                              */
 /* ------------------------------------------------------------------ */
-function Lightbox({
-  open, images, index, onClose, onPrev, onNext
-}: {
+function Lightbox(props:{
   open: boolean; images: string[]; index: number;
   onClose: ()=>void; onPrev: ()=>void; onNext: ()=>void;
 }) {
-  const [scale, setScale] = useState(1);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const { open, images, index, onClose, onPrev, onNext } = props;
 
+  const [scale, setScale] = useState(1);
   const imgRef = useRef<HTMLImageElement | null>(null);
+
+  // Soporte swipe táctil
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX   = useRef<number | null>(null);
 
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') onPrev();
-      if (e.key === 'ArrowRight') onNext();
+      if (e.key === 'Escape')      onClose();
+      if (e.key === 'ArrowLeft')   onPrev();
+      if (e.key === 'ArrowRight')  onNext();
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
@@ -99,8 +130,8 @@ function Lightbox({
 
   useEffect(() => { setScale(1); }, [index, open]);
 
-  const zoomIn  = () => setScale(v => Math.min(3, v + 0.25));
-  const zoomOut = () => setScale(v => Math.max(0.5, v - 0.25));
+  const zoomIn  = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
+  const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
 
   const full = () => {
     try {
@@ -109,16 +140,21 @@ function Lightbox({
     } catch {}
   };
 
-  // Swipe táctil
-  const handleTouchStart = (e: React.TouchEvent) => setTouchStartX(e.touches[0].clientX);
-  const handleTouchMove  = (e: React.TouchEvent) => setTouchEndX(e.touches[0].clientX);
-  const handleTouchEnd = () => {
-    if (!touchStartX || !touchEndX) return;
-    const distance = touchStartX - touchEndX;
-    if (distance > 50) onNext();       // desliza a la izquierda → siguiente
-    if (distance < -50) onPrev();      // desliza a la derecha → anterior
-    setTouchStartX(null);
-    setTouchEndX(null);
+  // Eventos táctiles (móvil)
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = null;
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = () => {
+    if (touchStartX.current == null || touchEndX.current == null) return;
+    const delta = touchStartX.current - touchEndX.current;
+    if (delta > 50) onNext();      // swipe izquierda -> siguiente
+    if (delta < -50) onPrev();     // swipe derecha   -> anterior
+    touchStartX.current = null;
+    touchEndX.current = null;
   };
 
   if (!open) return null;
@@ -126,11 +162,11 @@ function Lightbox({
   return (
     <div
       className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
-      {/* Indicador superior */}
+      {/* HUD superior (contador) */}
       <div
         className="
           absolute top-3 left-5 sm:top-4 sm:left-1/2 sm:-translate-x-1/2
@@ -154,7 +190,7 @@ function Lightbox({
                 className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Plus className="h-5 w-5" />
         </button>
-        {/* Oculto en móviles */}
+        {/* Oculto en móvil */}
         <button onClick={full} aria-label="Pantalla completa"
                 className="hidden sm:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded">
           <Maximize2 className="h-5 w-5" />
@@ -166,7 +202,7 @@ function Lightbox({
       </div>
 
       {/* Flechas */}
-      <button onClick={onPrev} aria-label="Anterior"
+      <button onClick={onPrev}   aria-label="Anterior"
               className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
@@ -179,7 +215,7 @@ function Lightbox({
         style={{ transform: `scale(${scale})` }}
       />
 
-      <button onClick={onNext} aria-label="Siguiente"
+      <button onClick={onNext}   aria-label="Siguiente"
               className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronRight className="h-8 w-8 text-white" />
       </button>
@@ -233,7 +269,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
   /* --- cálculos --- */
 
-  // si no hay imagen en la propiedad, usa la primera foto cargada
+  // Si no hay imagen en la propiedad, usa la primera foto cargada
   const bg = useMemo(() => {
     const fromProp = getHeroImage(prop);
     if (fromProp !== HERO_FALLBACK) return fromProp;
@@ -396,13 +432,13 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     return map;
   }, [fotos]);
 
-  // Tarjetas resumen
+  // Tarjetas resumen (sin foto de fondo para "Photos" y "Floor Plan")
   const tiles = useMemo(() => {
     return [
-      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (todas    ?? []).length, preview: '' },
-      { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (exterior  ?? []).length, preview: exterior[0] },
-      { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.55)]', count: (interior  ?? []).length, preview: interior[0] },
-      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, bg: 'bg-[rgba(15,40,80,0.35)]', count: (planos    ?? []).length, preview: '' },
+      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, list: todas,    showImg: false, preview: todas[0] },
+      { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, list: exterior, showImg: true,  preview: exterior[0] },
+      { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, list: interior, showImg: true,  preview: interior[0] },
+      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, list: planos,   showImg: false, preview: planos[0] },
     ];
   }, [todas, exterior, interior, planos]);
 
@@ -430,37 +466,34 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {tiles.map(t => {
-            const hasPreview = !!t.preview;
-            const list =
-              t.key === 'todas'    ? todas :
-              t.key === 'exterior' ? exterior :
-              t.key === 'interior' ? interior : planos;
+            const showImg = t.showImg && !!t.preview && t.list.length > 0;
 
             return (
               <button
                 key={t.key}
-                onClick={() => openLbFor(list, 0)}
+                onClick={() => openLbFor(t.list, 0)}
                 className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
               >
-                {hasPreview ? (
-                  <img
-                    src={t.preview}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+                {/* Fondo: foto si corresponde, si no, color */}
+                {showImg ? (
+                  <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
-                  <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
+                  <div className="absolute inset-0 w-full h-full bg-[rgba(15,40,80,0.25)]" />
                 )}
-                <div className={cls(
-                  'absolute inset-0 flex flex-col items-center justify-center gap-1',
-                  'transition',
-                  'bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white'
-                )}>
+                <div
+                  className={cls(
+                    'absolute inset-0 flex flex-col items-center justify-center gap-1',
+                    'transition',
+                    'bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white'
+                  )}
+                >
                   <div className="flex items-center gap-2">
                     {t.icon}
                     <span className="font-semibold">{t.label}</span>
                   </div>
-                  <span className="text-xs opacity-90">{t.count} {t.count === 1 ? 'foto' : 'fotos'}</span>
+                  <span className="text-xs opacity-90">
+                    {t.count} {t.count === 1 ? 'foto' : 'fotos'}
+                  </span>
                 </div>
               </button>
             );
@@ -521,14 +554,12 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
       {/* ---------- MAPA (DINÁMICO) ---------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <SectionTitle>Explora el sector</SectionTitle>
-
         <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden rounded">
           {(() => {
             const lat  = typeof prop?.map_lat  === 'number' ? prop!.map_lat  : -33.437;
             const lng  = typeof prop?.map_lng  === 'number' ? prop!.map_lng  : -70.65;
             const zoom = typeof prop?.map_zoom === 'number' ? (prop!.map_zoom as number) : 15;
             const src  = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&hl=es&output=embed`;
-
             return (
               <iframe
                 title="mapa"
