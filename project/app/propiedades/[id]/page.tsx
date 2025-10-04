@@ -38,10 +38,10 @@ type Property = {
   superficie_terreno_m2?: number | null;
   estacionamientos?: number | null;
   created_at?: string | null;
-  descripcion?: string | null;   // <- traída desde DB
-  map_lat?: number | null;       // <- traída desde DB
-  map_lng?: number | null;       // <- traída desde DB
-  imagenes?: string[] | null;    // compat viejo
+  descripcion?: string | null;
+  map_lat?: number | null;
+  map_lng?: number | null;
+  imagenes?: string[] | null;
   barrio?: string | null;
 };
 
@@ -132,7 +132,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [fotos, setFotos] = useState<Foto[]>([]);
   const uf = useUf();
 
-  /* --- fetch property --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -145,7 +144,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- fetch fotos --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -159,7 +157,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- particionar fotos --- */
   const imgs = useMemo(() => {
     const all = fotos.map((f) => ({ url: f.url, tag: (f.tag ?? 'exterior') as 'exterior'|'interior'|'planos' }));
     return {
@@ -170,7 +167,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     };
   }, [fotos]);
 
-  /* --- hero image: toma exterior->interior->todas->fallback --- */
+  // HERO: prioriza exterior > interior > cualquier > fallback
   const hero = useMemo(() => {
     const cands = [
       imgs.exterior[0]?.url,
@@ -245,7 +242,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </h1>
               <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
 
-              {/* Tiles chicos */}
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
@@ -267,7 +263,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
-              {/* Botón + precio */}
               <div className="mt-4 flex items-end gap-3">
                 <Link ref={btnRef} href="/contacto"
                       className="inline-flex text-sm tracking-wide rounded-none
@@ -296,25 +291,22 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       {/* ---------------- GALERÍA (tarjetas) ---------------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Galería</SectionTitle>
-
         <GalleryTiles imgs={imgs} />
       </section>
 
       {/* ---------------- DESCRIPCIÓN ---------------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
-        {/* preserva saltos de línea del texto que viene desde DB */}
         <p className="whitespace-pre-line text-slate-700 leading-relaxed">
           {prop?.descripcion || 'Descripción no disponible por el momento.'}
         </p>
       </section>
 
-      {/* ---------------- SEPARADOR ---------------- */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* ---------------- CARACTERÍSTICAS (demo, puedes rellenar desde DB cuando las tengas) ---------------- */}
+      {/* --------- CARACTERÍSTICAS (placeholder) --------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Características destacadas</SectionTitle>
         <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
@@ -333,7 +325,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </ul>
       </section>
 
-      {/* ---------------- SEPARADOR ---------------- */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-px bg-slate-200 my-10" />
       </div>
@@ -347,7 +338,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
             className="w-full h-full"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            // centra en coordenadas guardadas cuando existan
             src={
               prop?.map_lat && prop?.map_lng
                 ? `https://www.google.com/maps?q=${prop.map_lat},${prop.map_lng}&z=15&output=embed`
@@ -395,10 +385,9 @@ function GalleryTiles({
     bg?: string;
     count: number;
   }> = [
-    { key: 'todas',    label: 'Photos',   icon: <Camera className="h-6 w-6" />,      bg: sample.todas,    count: counts.todas },
-    { key: 'exterior', label: 'Exterior', icon: <Home className="h-6 w-6" />,        bg: sample.exterior, count: counts.exterior },
-    { key: 'interior', label: 'Interior', icon: <Home className="h-6 w-6" />,        bg: sample.interior, count: counts.interior },
-    // <<<< AQUÍ: si no hay fotos de planos NO usamos imagen de fondo
+    { key: 'todas',    label: 'Photos',     icon: <Camera className="h-6 w-6" />,     bg: sample.todas,    count: counts.todas },
+    { key: 'exterior', label: 'Exterior',   icon: <Home className="h-6 w-6" />,       bg: sample.exterior, count: counts.exterior },
+    { key: 'interior', label: 'Interior',   icon: <Home className="h-6 w-6" />,       bg: sample.interior, count: counts.interior },
     { key: 'planos',   label: 'Floor Plan', icon: <ScrollText className="h-6 w-6" />, bg: counts.planos > 0 ? sample.planos : undefined, count: counts.planos },
   ];
 
@@ -425,25 +414,21 @@ function GalleryTiles({
               onClick={() => hasImages && openLb(t.key)}
               className="group relative h-[220px] w-full overflow-hidden rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A2E57]"
             >
-              {/* Fondo: solo si hay imágenes; si no, tarjeta gris */}
+              {/* MISMO LOOK PARA TODAS: si no hay fotos, fondo neutro + MISMO overlay azul */}
               {hasImages ? (
                 <>
-                  <img
-                    src={t.bg!}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+                  <img src={t.bg!} alt="" className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-[#14324E]/70 group-hover:bg-[#14324E]/60 transition" />
                 </>
               ) : (
-                <div className="absolute inset-0 bg-slate-300/60 border border-slate-300" />
+                <>
+                  <div className="absolute inset-0 bg-slate-200" />
+                  <div className="absolute inset-0 bg-[#14324E]/70 group-hover:bg-[#14324E]/60 transition" />
+                </>
               )}
 
               <div className="relative z-10 h-full w-full flex flex-col items-start justify-center px-8">
-                <div className={cls(
-                  'inline-flex items-center justify-center h-10 w-10 rounded-full',
-                  'bg-white/20 text-white'
-                )}>
+                <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/20 text-white">
                   {t.icon}
                 </div>
                 <div className="mt-3">
