@@ -4,34 +4,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  Bed,
-  ShowerHead,
-  Car,
-  Ruler,
-  Square,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Compass,
-  TrendingUp,
-  Images,
-  DoorOpen,
-  Home,
-  Map as MapIcon,
-  Maximize2,
-  Minus,
-  Plus,
+  Bed, ShowerHead, Car, Ruler, Square, X, ChevronLeft, ChevronRight,
+  Compass, TrendingUp, Images, DoorOpen, Home, Map as MapIcon,
+  Maximize2, Minus, Plus,
 } from 'lucide-react';
 
-/* ------------------------------------------------------------------ */
-/*                               TIPOS                                */
-/* ------------------------------------------------------------------ */
+/* ------------------ Tipos ------------------ */
 type FotoRow = {
   url: string;
   tag?: 'exterior' | 'interior' | 'planos' | string | null;
   orden?: number | null;
 };
-
 type Property = {
   id: string;
   slug?: string | null;
@@ -52,15 +35,15 @@ type Property = {
   imagenes?: string[] | null;
   barrio?: string | null;
 
-  // NUEVOS (para mapa)
+  // mapa
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
 
-  // NUEVO (portada elegida en Supabase)
+  // portada fija (desde Supabase)
   portada_url?: string | null;
 
-  // Características destacadas opcionales
+  // tags destacados
   tags?: string[] | null;
 };
 
@@ -68,14 +51,11 @@ const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
-/* ------------------------------------------------------------------ */
-/*                             UTILIDADES                             */
-/* ------------------------------------------------------------------ */
+/* ------------------ Utils ------------------ */
 const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-/** Capitaliza TODAS las palabras de la cadena */
 const wordsCap = (s?: string | null) =>
   (s ?? '')
     .toLowerCase()
@@ -101,14 +81,10 @@ function useUf() {
   return uf;
 }
 
-/* --------------------------- LIGHTBOX (z-index + mobile layout) --------------------------- */
+/* ------------------ Lightbox ------------------ */
 function Lightbox(props: {
-  open: boolean;
-  images: string[];
-  index: number;
-  onClose: () => void;
-  onPrev: () => void;
-  onNext: () => void;
+  open: boolean; images: string[]; index: number;
+  onClose: ()=>void; onPrev: ()=>void; onNext: ()=>void;
 }) {
   const { open, images, index, onClose, onPrev, onNext } = props;
 
@@ -116,31 +92,12 @@ function Lightbox(props: {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
-  // helpers: soportan Touch y React.Touch
   type P = { x: number; y: number };
   const pt = (t: Touch | React.Touch): P => ({ x: t.clientX, y: t.clientY });
-  const dist2 = (a: P, b: P) => {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
+  const dist2 = (a: P, b: P) => Math.hypot(a.x - b.x, a.y - b.y);
 
-  // estado táctil
-  const touch = useRef<{
-    x0: number;
-    y0: number;
-    swiping: boolean;
-    pinchStartDist: number;
-    startScale: number;
-  }>({
-    x0: 0,
-    y0: 0,
-    swiping: false,
-    pinchStartDist: 0,
-    startScale: 1,
-  });
+  const touch = useRef({ x0: 0, y0: 0, swiping: false, pinchStartDist: 0, startScale: 1 });
 
-  // teclado
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
@@ -154,10 +111,8 @@ function Lightbox(props: {
 
   useEffect(() => setScale(1), [index, open]);
 
-  const zoomIn = () =>
-    setScale((v) => Math.min(3, Math.round((v + 0.25) * 100) / 100));
-  const zoomOut = () =>
-    setScale((v) => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
+  const zoomIn = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
+  const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
 
   const full = async () => {
     try {
@@ -167,16 +122,12 @@ function Lightbox(props: {
     } catch {}
   };
 
-  // rueda
   const onWheel = (e: React.WheelEvent) => {
     if (!open) return;
     e.preventDefault();
-    const sign = Math.sign(e.deltaY);
-    if (sign > 0) zoomOut();
-    else zoomIn();
+    Math.sign(e.deltaY) > 0 ? zoomOut() : zoomIn();
   };
 
-  // táctil
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 1) {
       touch.current.x0 = e.touches[0].clientX;
@@ -189,7 +140,6 @@ function Lightbox(props: {
       touch.current.swiping = false;
     }
   };
-
   const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 2) {
       const d = dist2(pt(e.touches[0]), pt(e.touches[1]));
@@ -199,17 +149,13 @@ function Lightbox(props: {
       e.preventDefault();
     }
   };
-
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!touch.current.swiping) return;
     const ch = e.changedTouches?.[0];
     if (!ch) return;
     const dx = ch.clientX - touch.current.x0;
     const dy = ch.clientY - touch.current.y0;
-    if (Math.abs(dx) > 40 && Math.abs(dy) < 60) {
-      if (dx < 0) onNext();
-      else onPrev();
-    }
+    if (Math.abs(dx) > 40 && Math.abs(dy) < 60) dx < 0 ? onNext() : onPrev();
     touch.current.swiping = false;
   };
 
@@ -224,61 +170,30 @@ function Lightbox(props: {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Contador: móvil a la izquierda, desktop centrado. Siempre por encima. */}
-      <div
-        className="
-          absolute top-3 left-3 md:left-1/2 md:-translate-x-1/2
-          px-3 py-1 rounded text-white/90 text-sm bg-white/10
-          z-40
-        "
-      >
+      <div className="absolute top-3 left-3 md:left-1/2 md:-translate-x-1/2 px-3 py-1 rounded text-white/90 text-sm bg-white/10 z-40">
         {index + 1} / {images.length}
       </div>
 
-      {/* Controles superiores */}
       <div className="absolute top-3 right-4 flex items-center gap-2 text-white z-40">
-        <button
-          onClick={zoomOut}
-          aria-label="Zoom out"
-          className="p-2 bg-white/10 hover:bg-white/20 rounded"
-        >
+        <button onClick={zoomOut} aria-label="Zoom out" className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Minus className="h-5 w-5" />
         </button>
         <span className="px-2 text-sm">{Math.round(scale * 100)}%</span>
-        <button
-          onClick={zoomIn}
-          aria-label="Zoom in"
-          className="p-2 bg-white/10 hover:bg-white/20 rounded"
-        >
+        <button onClick={zoomIn} aria-label="Zoom in" className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Plus className="h-5 w-5" />
         </button>
-        {/* Oculto en móvil */}
-        <button
-          onClick={full}
-          aria-label="Pantalla completa"
-          className="hidden sm:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded"
-        >
+        <button onClick={full} aria-label="Pantalla completa" className="hidden sm:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded">
           <Maximize2 className="h-5 w-5" />
         </button>
-        <button
-          onClick={onClose}
-          aria-label="Cerrar"
-          className="p-2 bg-white/10 hover:bg-white/20 rounded"
-        >
+        <button onClick={onClose} aria-label="Cerrar" className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <X className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Flechas, siempre encima de la imagen */}
-      <button
-        onClick={onPrev}
-        aria-label="Anterior"
-        className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
-      >
+      <button onClick={onPrev} aria-label="Anterior" className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
 
-      {/* Imagen */}
       <img
         ref={imgRef}
         src={images[index]}
@@ -287,38 +202,29 @@ function Lightbox(props: {
         style={{ transform: `scale(${scale})` }}
       />
 
-      <button
-        onClick={onNext}
-        aria-label="Siguiente"
-        className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
-      >
+      <button onClick={onNext} aria-label="Siguiente" className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronRight className="h-8 w-8 text-white" />
       </button>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*                        ENCABEZADO DE SECCIÓN                       */
-/* ------------------------------------------------------------------ */
+/* ------------------ Encabezado de sección ------------------ */
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
     {children}
   </h2>
 );
 
-/* ------------------------------------------------------------------ */
-/*                HELPER CENTRALIZADO DE PORTADA (LOCAL)              */
-/* ------------------------------------------------------------------ */
+/* ------------------ Portada centralizada (local) ------------------ */
 function pickCoverUrl(prop?: Property | null, fotos?: FotoRow[] | null): string {
-  // 1) Si hay portada fija desde Supabase, úsala
+  // 1) portada fija de Supabase
   const fixed = prop?.portada_url?.trim();
-  if (fixed) return fixed;
+  if (fixed) return fixed!;
 
-  // 2) Si tenemos fotos categorizadas, prioriza exterior > interior > cualquiera
+  // 2) exterior > interior > cualquiera
   if (Array.isArray(fotos) && fotos.length) {
-    const byOrden = (a: FotoRow, b: FotoRow) =>
-      (a.orden ?? 9_999) - (b.orden ?? 9_999);
+    const byOrden = (a: FotoRow, b: FotoRow) => (a.orden ?? 9_999) - (b.orden ?? 9_999);
     const exts = fotos.filter(f => (f.tag ?? '').toLowerCase().includes('exterior')).sort(byOrden);
     const ints = fotos.filter(f => (f.tag ?? '').toLowerCase().includes('interior')).sort(byOrden);
     if (exts[0]?.url) return exts[0].url;
@@ -326,22 +232,20 @@ function pickCoverUrl(prop?: Property | null, fotos?: FotoRow[] | null): string 
     return fotos.slice().sort(byOrden)[0].url;
   }
 
-  // 3) Si la API trae un arreglo de imagenes planas, usa la primera
+  // 3) primer valor de imagenes[] si viene desde la API
   if (prop?.imagenes?.length) return prop.imagenes[0]!;
 
-  // 4) Fallback
+  // 4) fallback
   return HERO_FALLBACK;
 }
 
-/* ------------------------------------------------------------------ */
-/*                             COMPONENTE                             */
-/* ------------------------------------------------------------------ */
+/* ------------------ Página ------------------ */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
   const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
-  /* --- fetch propiedad --- */
+  // Propiedad
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -354,21 +258,25 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- fetch fotos --- */
+  // Fotos
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
         const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`).catch(() => null as any);
         const j = r?.ok ? await r.json().catch(() => null) : null;
-        const rows: FotoRow[] = j?.data ?? [];
+        const rows: FotoRow[] = (j?.data ?? []).map((f: any) => ({
+          url: f.url,
+          tag: f.tag ?? f.categoria ?? null,
+          orden: f.orden ?? null,
+        }));
         if (alive) setFotos(rows);
       } catch { if (alive) setFotos([]); }
     })();
     return () => { alive = false; };
   }, [params.id]);
 
-  // hero (portada)
+  // Hero (usa portada_url si existe)
   const bg = useMemo(() => pickCoverUrl(prop, fotos), [prop, fotos]);
 
   const linea = [
@@ -394,7 +302,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const btnRef      = useRef<HTMLAnchorElement | null>(null);
 
-  /* --- sincronizar alto del botón --- */
+  // sincroniza alto del botón
   useEffect(() => {
     const sync = () => {
       const h = priceBoxRef.current?.offsetHeight;
@@ -419,40 +327,33 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const fmtInt = (n: number | null | undefined) =>
     typeof n === 'number' ? nfINT.format(n) : dash;
 
-  /* ------------------------------------------------------------------ */
+  /* ---------- Render ---------- */
   return (
     <main className="bg-white">
-      {/* ---------------- HERO ---------------- */}
+      {/* HERO */}
       <section className="relative w-full overflow-hidden isolate">
-        <div className="absolute inset-0 -z-10 bg-center bg-cover"
-             style={{ backgroundImage: `url(${bg})` }} />
+        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
-                        min-h-[100svh] flex items-end pb-16 md:pb-20">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5
-                            w-full md:max-w-[480px]">
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {prop?.titulo ?? 'Propiedad'}
               </h1>
               <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
 
-              {/* ---------- Tiles ---------- */}
+              {/* Tiles */}
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
-                    { icon: <Bed        className="h-5 w-5 text-[#6C819B]" />, v: prop?.dormitorios },
+                    { icon: <Bed className="h-5 w-5 text-[#6C819B]" />, v: prop?.dormitorios },
                     { icon: <ShowerHead className="h-5 w-5 text-[#6C819B]" />, v: prop?.banos },
-                    { icon: <Car        className="h-5 w-5 text-[#6C819B]" />, v: prop?.estacionamientos },
-                    { icon: <Ruler      className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_util_m2) },
-                    { icon: <Square     className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_terreno_m2) },
+                    { icon: <Car className="h-5 w-5 text-[#6C819B]" />, v: prop?.estacionamientos },
+                    { icon: <Ruler className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_util_m2) },
+                    { icon: <Square className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_terreno_m2) },
                   ].map((t, idx) => (
-                    <div key={idx}
-                         className={cls(
-                           'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
-                           idx < 4 && 'border-r border-slate-200'
-                         )}>
+                    <div key={idx} className={cls('flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]', idx < 4 && 'border-r border-slate-200')}>
                       {t.icon}
                       <span className="text-sm text-slate-800 leading-none">{t.v ?? dash}</span>
                     </div>
@@ -460,25 +361,22 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
-              {/* ---------- Botón + precio ---------- */}
+              {/* Botón + precio */}
               <div className="mt-4 flex items-end gap-3">
-                <Link ref={btnRef} href="/contacto"
-                      className="inline-flex text-sm tracking-wide rounded-none
-                                 border border-[#0A2E57] text-[#0A2E57] bg-white"
-                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
+                <Link
+                  ref={btnRef}
+                  href="/contacto"
+                  className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+                  style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
+                >
                   Solicitar información
                 </Link>
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
-                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold
-                                  text-[#0A2E57] leading-none">
+                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
                     {precioUfHero ? `UF ${nfUF.format(precioUfHero)}` : 'Consultar'}
                   </div>
-                  {precioClpHero && (
-                    <div className="text-sm md:text-base text-slate-600 mt-[2px]">
-                      $ {nfCLP.format(precioClpHero)}
-                    </div>
-                  )}
+                  {precioClpHero && <div className="text-sm md:text-base text-slate-600 mt-[2px]">$ {nfCLP.format(precioClpHero)}</div>}
                 </div>
               </div>
             </div>
@@ -486,15 +384,13 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* ---------------- GALERÍA + DESCRIPCIÓN + FEATURES + MAPA ---------------- */}
+      {/* GALERÍA + DESCRIPCIÓN + FEATURES + MAPA */}
       <GalleryAndDetails prop={prop} fotos={fotos} />
     </main>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*                        GALERÍA + CONTENIDO                         */
-/* ------------------------------------------------------------------ */
+/* ------------------ Galería + contenido ------------------ */
 function normalizeTag(tag?: string | null): 'exterior' | 'interior' | 'planos' | 'todas' {
   const t = (tag ?? '').toLowerCase();
   if (t.includes('plan')) return 'planos';
@@ -507,15 +403,9 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
-  // Agrupa fotos por categoría
   const { todas, exterior, interior, planos } = useMemo(() => {
     const rows = (fotos ?? []).filter(f => f?.url);
-    const map = {
-      todas: [] as string[],
-      exterior: [] as string[],
-      interior: [] as string[],
-      planos: [] as string[],
-    };
+    const map = { todas: [] as string[], exterior: [] as string[], interior: [] as string[], planos: [] as string[] };
     rows.forEach(r => {
       const k = normalizeTag(r.tag);
       map.todas.push(r.url);
@@ -524,15 +414,12 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     return map;
   }, [fotos]);
 
-  // Tarjetas resumen
-  const tiles = useMemo(() => {
-    return [
-      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: todas[0]    },
-      { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, preview: exterior[0] },
-      { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, preview: interior[0] },
-      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, preview: planos[0]   },
-    ];
-  }, [todas, exterior, interior, planos]);
+  const tiles = useMemo(() => ([
+    { key: 'todas' as const, label: 'Photos', icon: <Images className="h-6 w-6" />, count: (todas ?? []).length, preview: todas[0] },
+    { key: 'exterior' as const, label: 'Exterior', icon: <Home className="h-6 w-6" />, count: (exterior ?? []).length, preview: exterior[0] },
+    { key: 'interior' as const, label: 'Interior', icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, preview: interior[0] },
+    { key: 'planos' as const, label: 'Floor Plan', icon: <MapIcon className="h-6 w-6" />, count: (planos ?? []).length, preview: planos[0] },
+  ]), [todas, exterior, interior, planos]);
 
   const [dynamicList, setDynamicList] = useState<string[]>([]);
   const openLbFor = (arr: string[], start = 0) => {
@@ -548,52 +435,38 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     }
   }, [todas, dynamicList.length]);
 
-  /* ---------- descripción normalizada (ESPACIADO FIJO) ---------- */
+  // Descripción: espaciado consistente
   const normalizedParagraphs = useMemo(() => {
     const raw = (prop?.descripcion ?? '')
-      .replace(/\r\n/g, '\n')       // Windows -> Unix
-      .replace(/\n{3,}/g, '\n\n')   // colapsa saltos excesivos
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
-
-    // divide por párrafos (línea en blanco) y respeta saltos dentro de cada párrafo
     return raw.length ? raw.split('\n\n') : [];
   }, [prop?.descripcion]);
 
   return (
     <>
-      {/* ---------- TARJETAS / TILES ---------- */}
+      {/* Tarjetas */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Galería</SectionTitle>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {tiles.map(t => {
             const list =
-              t.key === 'todas'   ? todas :
+              t.key === 'todas' ? todas :
               t.key === 'exterior' ? exterior :
               t.key === 'interior' ? interior : planos;
 
-            const showImage = !!t.preview && t.key !== 'todas'; // 'todas' sin foto de portada
+            const showImage = !!t.preview && t.key !== 'todas';
             return (
-              <button
-                key={t.key}
-                onClick={() => openLbFor(list, 0)}
-                className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
-              >
+              <button key={t.key} onClick={() => openLbFor(list, 0)} className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left">
                 {showImage ? (
-                  <img
-                    src={t.preview!}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+                  <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
                   <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
                 )}
 
-                <div className={cls(
-                  'absolute inset-0 flex flex-col items-center justify-center gap-1',
-                  'transition',
-                  'bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white'
-                )}>
+                <div className={cls('absolute inset-0 flex flex-col items-center justify-center gap-1',
+                  'transition','bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white')}>
                   <div className="flex items-center gap-2">
                     {t.icon}
                     <span className="font-semibold">{t.label}</span>
@@ -606,10 +479,9 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         </div>
       </section>
 
-      {/* ---------- DESCRIPCIÓN (párrafos con espaciado consistente) ---------- */}
+      {/* Descripción */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
-
         {normalizedParagraphs.length ? (
           <div>
             {normalizedParagraphs.map((p, i) => (
@@ -619,18 +491,14 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
             ))}
           </div>
         ) : (
-          <p className="text-slate-700 leading-relaxed">
-            Descripción no disponible por el momento.
-          </p>
+          <p className="text-slate-700 leading-relaxed">Descripción no disponible por el momento.</p>
         )}
       </section>
 
-      {/* ---------- SEPARADOR ---------- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      {/* Separador */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
-      {/* ---------- CARACTERÍSTICAS DESTACADAS ---------- */}
+      {/* Características */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Características destacadas</SectionTitle>
         <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
@@ -662,36 +530,23 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         </ul>
       </section>
 
-      {/* ---------- SEPARADOR ---------- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      {/* Separador */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
-      {/* ---------- MAPA DINÁMICO ---------- */}
+      {/* MAPA (usa map_lat/map_lng/map_zoom del backend) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <SectionTitle>Explora el sector</SectionTitle>
-
         <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden rounded">
           {(() => {
             const lat  = typeof prop?.map_lat  === 'number' ? prop!.map_lat  : -33.437;
             const lng  = typeof prop?.map_lng  === 'number' ? prop!.map_lng  : -70.65;
             const zoom = typeof prop?.map_zoom === 'number' ? (prop!.map_zoom as number) : 15;
             const src  = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&hl=es&output=embed`;
-
-            return (
-              <iframe
-                title="mapa"
-                className="w-full h-full"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                src={src}
-              />
-            );
+            return <iframe title="mapa" className="w-full h-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={src} />;
           })()}
         </div>
       </section>
 
-      {/* ---------- LIGHTBOX ---------- */}
       <Lightbox
         open={lbOpen}
         images={dynamicList}
