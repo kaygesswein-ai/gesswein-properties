@@ -52,10 +52,15 @@ type Property = {
   imagenes?: string[] | null;
   barrio?: string | null;
 
+  // NUEVOS (para mapa)
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
 
+  // NUEVO (portada elegida en Supabase)
+  portada_url?: string | null;
+
+  // Características destacadas opcionales
   tags?: string[] | null;
 };
 
@@ -70,9 +75,7 @@ const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).jo
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-const getHeroImage = (p?: Property | null) =>
-  p?.imagenes?.[0]?.trim()?.length ? p.imagenes![0] : HERO_FALLBACK;
-
+/** Capitaliza TODAS las palabras de la cadena */
 const wordsCap = (s?: string | null) =>
   (s ?? '')
     .toLowerCase()
@@ -305,6 +308,32 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 );
 
 /* ------------------------------------------------------------------ */
+/*                HELPER CENTRALIZADO DE PORTADA (LOCAL)              */
+/* ------------------------------------------------------------------ */
+function pickCoverUrl(prop?: Property | null, fotos?: FotoRow[] | null): string {
+  // 1) Si hay portada fija desde Supabase, úsala
+  const fixed = prop?.portada_url?.trim();
+  if (fixed) return fixed;
+
+  // 2) Si tenemos fotos categorizadas, prioriza exterior > interior > cualquiera
+  if (Array.isArray(fotos) && fotos.length) {
+    const byOrden = (a: FotoRow, b: FotoRow) =>
+      (a.orden ?? 9_999) - (b.orden ?? 9_999);
+    const exts = fotos.filter(f => (f.tag ?? '').toLowerCase().includes('exterior')).sort(byOrden);
+    const ints = fotos.filter(f => (f.tag ?? '').toLowerCase().includes('interior')).sort(byOrden);
+    if (exts[0]?.url) return exts[0].url;
+    if (ints[0]?.url) return ints[0].url;
+    return fotos.slice().sort(byOrden)[0].url;
+  }
+
+  // 3) Si la API trae un arreglo de imagenes planas, usa la primera
+  if (prop?.imagenes?.length) return prop.imagenes[0]!;
+
+  // 4) Fallback
+  return HERO_FALLBACK;
+}
+
+/* ------------------------------------------------------------------ */
 /*                             COMPONENTE                             */
 /* ------------------------------------------------------------------ */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
@@ -312,6 +341,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
+  /* --- fetch propiedad --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -324,6 +354,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
+  /* --- fetch fotos --- */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -337,13 +368,8 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  // hero
-  const bg = useMemo(() => {
-    const fromProp = getHeroImage(prop);
-    if (fromProp !== HERO_FALLBACK) return fromProp;
-    const firstFoto = fotos?.find(f => f?.url)?.url;
-    return firstFoto || HERO_FALLBACK;
-  }, [prop, fotos]);
+  // hero (portada)
+  const bg = useMemo(() => pickCoverUrl(prop, fotos), [prop, fotos]);
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -368,6 +394,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const btnRef      = useRef<HTMLAnchorElement | null>(null);
 
+  /* --- sincronizar alto del botón --- */
   useEffect(() => {
     const sync = () => {
       const h = priceBoxRef.current?.offsetHeight;
@@ -392,6 +419,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const fmtInt = (n: number | null | undefined) =>
     typeof n === 'number' ? nfINT.format(n) : dash;
 
+  /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
       {/* ---------------- HERO ---------------- */}
@@ -479,6 +507,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
+  // Agrupa fotos por categoría
   const { todas, exterior, interior, planos } = useMemo(() => {
     const rows = (fotos ?? []).filter(f => f?.url);
     const map = {
@@ -495,12 +524,13 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     return map;
   }, [fotos]);
 
+  // Tarjetas resumen
   const tiles = useMemo(() => {
     return [
-      { key: 'todas'    as const, label: 'Photos',    icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: todas[0]    },
-      { key: 'exterior' as const, label: 'Exterior',  icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, preview: exterior[0] },
-      { key: 'interior' as const, label: 'Interior',  icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, preview: interior[0] },
-      { key: 'planos'   as const, label: 'Floor Plan',icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, preview: planos[0]   },
+      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: todas[0]    },
+      { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, preview: exterior[0] },
+      { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, preview: interior[0] },
+      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, preview: planos[0]   },
     ];
   }, [todas, exterior, interior, planos]);
 
@@ -543,8 +573,6 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
               t.key === 'interior' ? interior : planos;
 
             const showImage = !!t.preview && t.key !== 'todas'; // 'todas' sin foto de portada
-            const showSolid  = !showImage;                      // azul corporativo sólido
-
             return (
               <button
                 key={t.key}
@@ -552,7 +580,11 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
                 className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
               >
                 {showImage ? (
-                  <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  <img
+                    src={t.preview!}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
                 )}
