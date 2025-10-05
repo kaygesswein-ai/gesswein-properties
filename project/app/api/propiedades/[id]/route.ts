@@ -2,14 +2,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Usa SIEMPRE la ANON KEY en producción -tiene los mismos permisos RLS-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-export const runtime   = 'edge';
-export const revalidate = 60 * 10; // 10 min
 
 export async function GET(
   _req: Request,
@@ -17,8 +13,7 @@ export async function GET(
 ) {
   const { id } = params;
 
-  // 👇 Aseguramos traer TODOS los campos que usa la UI, incluyendo
-  // descripcion, tags, map_lat, map_lng y map_zoom
+  // Selecciona los campos que usa la ficha, incluyendo portada y mapa
   const { data, error } = await supabase
     .from('propiedades')
     .select(`
@@ -43,18 +38,14 @@ export async function GET(
       map_lat,
       map_lng,
       map_zoom,
-      tags
+      portada_url
     `)
     .eq('id', id)
     .single();
 
   if (error) {
-    console.error('[api/propiedades/:id] ', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, data });
+  return NextResponse.json({ data });
 }
