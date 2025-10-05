@@ -28,7 +28,7 @@ import {
 /* ------------------------------------------------------------------ */
 type FotoRow = {
   url: string;
-  tag?: 'exterior' | 'interior' | 'planos' | string | null;
+  tag?: 'exterior' | 'interior' | 'planos' | 'portada' | string | null;
   orden?: number | null;
 };
 
@@ -57,10 +57,10 @@ type Property = {
   map_lng?: number | null;
   map_zoom?: number | null;
 
-  // Extras
+  // Etiquetas
   tags?: string[] | null;
 
-  // Portada SUPABASE
+  // Portada (si el API la entrega)
   portada_url?: string | null;
 };
 
@@ -75,12 +75,27 @@ const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).jo
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-// Prioriza portada_url, luego imagenes[0], luego primera foto subida y por último fallback
+const norm = (s?: string | null) => (s ?? '').trim().toLowerCase();
+
+/** Elige portada con prioridad: portada_url -> foto 'portada/cover/hero' -> 1ª 'exterior' -> imagenes[0] -> 1ª foto -> fallback */
 const pickCoverUrl = (p?: Property | null, fotos?: FotoRow[]) => {
   if (p?.portada_url && p.portada_url.trim().length > 0) return p.portada_url;
+
+  const list = fotos ?? [];
+
+  const portada = list.find(f => {
+    const t = norm(f.tag as string);
+    return t === 'portada' || t === 'cover' || t === 'hero';
+  });
+  if (portada?.url) return portada.url;
+
+  const exterior = list.find(f => norm(f.tag as string) === 'exterior');
+  if (exterior?.url) return exterior.url;
+
   if (p?.imagenes?.[0]?.trim()?.length) return p.imagenes![0];
-  const firstFoto = fotos?.find(f => f?.url)?.url;
-  return firstFoto || HERO_FALLBACK;
+
+  const first = list.find(f => f?.url)?.url;
+  return first || HERO_FALLBACK;
 };
 
 const wordsCap = (s?: string | null) =>
@@ -123,7 +138,6 @@ function Lightbox(props: {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
-  // helpers: soportan Touch y React.Touch
   type P = { x: number; y: number };
   const pt = (t: Touch | React.Touch): P => ({ x: t.clientX, y: t.clientY });
   const dist2 = (a: P, b: P) => {
@@ -132,7 +146,6 @@ function Lightbox(props: {
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  // estado táctil
   const touch = useRef<{
     x0: number;
     y0: number;
@@ -147,7 +160,6 @@ function Lightbox(props: {
     startScale: 1,
   });
 
-  // teclado
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => {
@@ -161,10 +173,8 @@ function Lightbox(props: {
 
   useEffect(() => setScale(1), [index, open]);
 
-  const zoomIn = () =>
-    setScale((v) => Math.min(3, Math.round((v + 0.25) * 100) / 100));
-  const zoomOut = () =>
-    setScale((v) => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
+  const zoomIn = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
+  const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
 
   const full = async () => {
     try {
@@ -174,16 +184,12 @@ function Lightbox(props: {
     } catch {}
   };
 
-  // rueda
   const onWheel = (e: React.WheelEvent) => {
     if (!open) return;
     e.preventDefault();
-    const sign = Math.sign(e.deltaY);
-    if (sign > 0) zoomOut();
-    else zoomIn();
+    Math.sign(e.deltaY) > 0 ? zoomOut() : zoomIn();
   };
 
-  // táctil
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 1) {
       touch.current.x0 = e.touches[0].clientX;
@@ -196,7 +202,6 @@ function Lightbox(props: {
       touch.current.swiping = false;
     }
   };
-
   const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 2) {
       const d = dist2(pt(e.touches[0]), pt(e.touches[1]));
@@ -206,17 +211,13 @@ function Lightbox(props: {
       e.preventDefault();
     }
   };
-
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!touch.current.swiping) return;
     const ch = e.changedTouches?.[0];
     if (!ch) return;
     const dx = ch.clientX - touch.current.x0;
     const dy = ch.clientY - touch.current.y0;
-    if (Math.abs(dx) > 40 && Math.abs(dy) < 60) {
-      if (dx < 0) onNext();
-      else onPrev();
-    }
+    if (Math.abs(dx) > 40 && Math.abs(dy) < 60) (dx < 0 ? onNext() : onPrev());
     touch.current.swiping = false;
   };
 
@@ -231,61 +232,30 @@ function Lightbox(props: {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Contador: móvil a la izquierda, desktop centrado. Siempre por encima. */}
-      <div
-        className="
-          absolute top-3 left-3 md:left-1/2 md:-translate-x-1/2
-          px-3 py-1 rounded text-white/90 text-sm bg-white/10
-          z-40
-        "
-      >
+      <div className="absolute top-3 left-3 md:left-1/2 md:-translate-x-1/2 px-3 py-1 rounded text-white/90 text-sm bg-white/10 z-40">
         {index + 1} / {images.length}
       </div>
 
-      {/* Controles superiores */}
       <div className="absolute top-3 right-4 flex items-center gap-2 text-white z-40">
-        <button
-          onClick={zoomOut}
-          aria-label="Zoom out"
-          className="p-2 bg-white/10 hover:bg-white/20 rounded"
-        >
+        <button onClick={zoomOut} aria-label="Zoom out" className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Minus className="h-5 w-5" />
         </button>
         <span className="px-2 text-sm">{Math.round(scale * 100)}%</span>
-        <button
-          onClick={zoomIn}
-          aria-label="Zoom in"
-          className="p-2 bg-white/10 hover:bg-white/20 rounded"
-        >
+        <button onClick={zoomIn} aria-label="Zoom in" className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Plus className="h-5 w-5" />
         </button>
-        {/* Oculto en móvil */}
-        <button
-          onClick={full}
-          aria-label="Pantalla completa"
-          className="hidden sm:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded"
-        >
+        <button onClick={full} aria-label="Pantalla completa" className="hidden sm:inline-flex p-2 bg-white/10 hover:bg-white/20 rounded">
           <Maximize2 className="h-5 w-5" />
         </button>
-        <button
-          onClick={onClose}
-          aria-label="Cerrar"
-          className="p-2 bg-white/10 hover:bg-white/20 rounded"
-        >
+        <button onClick={onClose} aria-label="Cerrar" className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <X className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Flechas, siempre encima de la imagen */}
-      <button
-        onClick={onPrev}
-        aria-label="Anterior"
-        className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
-      >
+      <button onClick={onPrev} aria-label="Anterior" className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
 
-      {/* Imagen */}
       <img
         ref={imgRef}
         src={images[index]}
@@ -294,11 +264,7 @@ function Lightbox(props: {
         style={{ transform: `scale(${scale})` }}
       />
 
-      <button
-        onClick={onNext}
-        aria-label="Siguiente"
-        className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
-      >
+      <button onClick={onNext} aria-label="Siguiente" className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronRight className="h-8 w-8 text-white" />
       </button>
     </div>
@@ -322,7 +288,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
-  /* --- fetch propiedad (SIN CACHE) --- */
+  // Propiedad (sin caché)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -338,7 +304,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- fetch fotos (SIN CACHE) --- */
+  // Fotos (sin caché)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -359,7 +325,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  // hero
+  // Hero: ahora con prioridad portada/cover/hero
   const bg = useMemo(() => pickCoverUrl(prop, fotos), [prop, fotos]);
 
   const linea = [
@@ -405,7 +371,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { try { ro?.disconnect(); } catch {} };
   }, [prop]);
 
-  const dash   = '—';
+  const dash = '—';
   const fmtInt = (n: number | null | undefined) =>
     typeof n === 'number' ? nfINT.format(n) : dash;
 
@@ -413,15 +379,12 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     <main className="bg-white">
       {/* ---------------- HERO ---------------- */}
       <section className="relative w-full overflow-hidden isolate">
-        <div className="absolute inset-0 -z-10 bg-center bg-cover"
-             style={{ backgroundImage: `url(${bg})` }} />
+        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
-                        min-h-[100svh] flex items-end pb-16 md:pb-20">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5
-                            w-full md:max-w-[480px]">
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {prop?.titulo ?? 'Propiedad'}
               </h1>
@@ -431,17 +394,19 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
-                    { icon: <Bed        className="h-5 w-5 text-[#6C819B]" />, v: prop?.dormitorios },
+                    { icon: <Bed className="h-5 w-5 text-[#6C819B]" />, v: prop?.dormitorios },
                     { icon: <ShowerHead className="h-5 w-5 text-[#6C819B]" />, v: prop?.banos },
-                    { icon: <Car        className="h-5 w-5 text-[#6C819B]" />, v: prop?.estacionamientos },
-                    { icon: <Ruler      className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_util_m2) },
-                    { icon: <Square     className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_terreno_m2) },
+                    { icon: <Car className="h-5 w-5 text-[#6C819B]" />, v: prop?.estacionamientos },
+                    { icon: <Ruler className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_util_m2) },
+                    { icon: <Square className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_terreno_m2) },
                   ].map((t, idx) => (
-                    <div key={idx}
-                         className={cls(
-                           'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
-                           idx < 4 && 'border-r border-slate-200'
-                         )}>
+                    <div
+                      key={idx}
+                      className={cls(
+                        'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
+                        idx < 4 && 'border-r border-slate-200'
+                      )}
+                    >
                       {t.icon}
                       <span className="text-sm text-slate-800 leading-none">{t.v ?? dash}</span>
                     </div>
@@ -451,16 +416,17 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
               {/* ---------- Botón + precio ---------- */}
               <div className="mt-4 flex items-end gap-3">
-                <Link ref={btnRef} href="/contacto"
-                      className="inline-flex text-sm tracking-wide rounded-none
-                                 border border-[#0A2E57] text-[#0A2E57] bg-white"
-                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
+                <Link
+                  ref={btnRef}
+                  href="/contacto"
+                  className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+                  style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
+                >
                   Solicitar información
                 </Link>
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
-                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold
-                                  text-[#0A2E57] leading-none">
+                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
                     {precioUfHero ? `UF ${nfUF.format(precioUfHero)}` : 'Consultar'}
                   </div>
                   {precioClpHero && (
@@ -484,9 +450,10 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 /* ------------------------------------------------------------------ */
 /*                        GALERÍA + CONTENIDO                         */
 /* ------------------------------------------------------------------ */
-function normalizeTag(tag?: string | null): 'exterior' | 'interior' | 'planos' | 'todas' {
+function normalizeTag(tag?: string | null): 'exterior' | 'interior' | 'planos' | 'portada' | 'todas' {
   const t = (tag ?? '').toLowerCase();
   if (t.includes('plan')) return 'planos';
+  if (t.includes('portad') || t.includes('cover') || t.includes('hero')) return 'portada';
   if (t.includes('exterior') || /(fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/.test(t)) return 'exterior';
   if (t.includes('interior') || /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio)/.test(t)) return 'interior';
   return 'todas';
@@ -496,10 +463,11 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
-  const { todas, exterior, interior, planos } = useMemo(() => {
+  const { todas, portada, exterior, interior, planos } = useMemo(() => {
     const rows = (fotos ?? []).filter(f => f?.url);
     const map = {
       todas: [] as string[],
+      portada: [] as string[],
       exterior: [] as string[],
       interior: [] as string[],
       planos: [] as string[],
@@ -515,11 +483,12 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   const tiles = useMemo(() => {
     return [
       { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: todas[0]    },
+      { key: 'portada'  as const, label: 'Portada',    icon: <Home     className="h-6 w-6" />, count: (portada  ?? []).length, preview: portada[0]  },
       { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, preview: exterior[0] },
       { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, preview: interior[0] },
       { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, preview: planos[0]   },
     ];
-  }, [todas, exterior, interior, planos]);
+  }, [todas, portada, exterior, interior, planos]);
 
   const [dynamicList, setDynamicList] = useState<string[]>([]);
   const openLbFor = (arr: string[], start = 0) => {
@@ -530,12 +499,10 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   };
 
   useEffect(() => {
-    if ((todas ?? []).length && dynamicList.length === 0) {
-      setDynamicList(todas);
-    }
+    if ((todas ?? []).length && dynamicList.length === 0) setDynamicList(todas);
   }, [todas, dynamicList.length]);
 
-  /* ---------- descripción normalizada (ESPACIADO FIJO) ---------- */
+  // Descripción con espaciado estable
   const normalizedParagraphs = useMemo(() => {
     const raw = (prop?.descripcion ?? '')
       .replace(/\r\n/g, '\n')
@@ -554,6 +521,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
           {tiles.map(t => {
             const list =
               t.key === 'todas'    ? todas :
+              t.key === 'portada'  ? portada :
               t.key === 'exterior' ? exterior :
               t.key === 'interior' ? interior : planos;
 
@@ -600,9 +568,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
             ))}
           </div>
         ) : (
-          <p className="text-slate-700 leading-relaxed">
-            Descripción no disponible por el momento.
-          </p>
+          <p className="text-slate-700 leading-relaxed">Descripción no disponible por el momento.</p>
         )}
       </section>
 
@@ -658,7 +624,6 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
             const lng  = typeof prop?.map_lng  === 'number' ? prop!.map_lng  : -70.65;
             const zoom = typeof prop?.map_zoom === 'number' ? (prop!.map_zoom as number) : 15;
             const src  = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&hl=es&output=embed`;
-
             return (
               <iframe
                 title="mapa"
