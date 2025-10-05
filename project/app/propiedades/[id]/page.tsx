@@ -4,23 +4,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  Bed,
-  ShowerHead,
-  Car,
-  Ruler,
-  Square,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Compass,
-  TrendingUp,
-  Images,
-  DoorOpen,
-  Home,
-  Map as MapIcon,
-  Maximize2,
-  Minus,
-  Plus,
+  Bed, ShowerHead, Car, Ruler, Square,
+  X, ChevronLeft, ChevronRight,
+  Compass, TrendingUp, Images, DoorOpen, Home,
+  Map as MapIcon, Maximize2, Minus, Plus,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -28,7 +15,8 @@ import {
 /* ------------------------------------------------------------------ */
 type FotoRow = {
   url: string;
-  tag?: 'exterior' | 'interior' | 'planos' | 'portada' | string | null;
+  tag?: string | null;        // el API puede devolver "tag" o "categoria"
+  categoria?: string | null;  // nos aseguramos de mapearlo a tag
   orden?: number | null;
 };
 
@@ -52,16 +40,11 @@ type Property = {
   imagenes?: string[] | null;
   barrio?: string | null;
 
-  // Mapa
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
 
-  // Etiquetas
   tags?: string[] | null;
-
-  // Portada (si el API la entrega)
-  portada_url?: string | null;
 };
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
@@ -74,29 +57,6 @@ const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
-
-const norm = (s?: string | null) => (s ?? '').trim().toLowerCase();
-
-/** Elige portada con prioridad: portada_url -> foto 'portada/cover/hero' -> 1ª 'exterior' -> imagenes[0] -> 1ª foto -> fallback */
-const pickCoverUrl = (p?: Property | null, fotos?: FotoRow[]) => {
-  if (p?.portada_url && p.portada_url.trim().length > 0) return p.portada_url;
-
-  const list = fotos ?? [];
-
-  const portada = list.find(f => {
-    const t = norm(f.tag as string);
-    return t === 'portada' || t === 'cover' || t === 'hero';
-  });
-  if (portada?.url) return portada.url;
-
-  const exterior = list.find(f => norm(f.tag as string) === 'exterior');
-  if (exterior?.url) return exterior.url;
-
-  if (p?.imagenes?.[0]?.trim()?.length) return p.imagenes![0];
-
-  const first = list.find(f => f?.url)?.url;
-  return first || HERO_FALLBACK;
-};
 
 const wordsCap = (s?: string | null) =>
   (s ?? '')
@@ -125,12 +85,8 @@ function useUf() {
 
 /* --------------------------- LIGHTBOX --------------------------- */
 function Lightbox(props: {
-  open: boolean;
-  images: string[];
-  index: number;
-  onClose: () => void;
-  onPrev: () => void;
-  onNext: () => void;
+  open: boolean; images: string[]; index: number;
+  onClose: () => void; onPrev: () => void; onNext: () => void;
 }) {
   const { open, images, index, onClose, onPrev, onNext } = props;
 
@@ -140,25 +96,9 @@ function Lightbox(props: {
 
   type P = { x: number; y: number };
   const pt = (t: Touch | React.Touch): P => ({ x: t.clientX, y: t.clientY });
-  const dist2 = (a: P, b: P) => {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
+  const dist2 = (a: P, b: P) => Math.hypot(a.x - b.x, a.y - b.y);
 
-  const touch = useRef<{
-    x0: number;
-    y0: number;
-    swiping: boolean;
-    pinchStartDist: number;
-    startScale: number;
-  }>({
-    x0: 0,
-    y0: 0,
-    swiping: false,
-    pinchStartDist: 0,
-    startScale: 1,
-  });
+  const touch = useRef({ x0: 0, y0: 0, swiping: false, pinchStartDist: 0, startScale: 1 });
 
   useEffect(() => {
     if (!open) return;
@@ -173,9 +113,8 @@ function Lightbox(props: {
 
   useEffect(() => setScale(1), [index, open]);
 
-  const zoomIn = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
+  const zoomIn  = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
   const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
-
   const full = async () => {
     try {
       const el = boxRef.current || document.documentElement;
@@ -202,6 +141,7 @@ function Lightbox(props: {
       touch.current.swiping = false;
     }
   };
+
   const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 2) {
       const d = dist2(pt(e.touches[0]), pt(e.touches[1]));
@@ -211,6 +151,7 @@ function Lightbox(props: {
       e.preventDefault();
     }
   };
+
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!touch.current.swiping) return;
     const ch = e.changedTouches?.[0];
@@ -288,15 +229,12 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
-  // Propiedad (sin caché)
+  /* --- fetch propiedad --- */
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const r = await fetch(
-          `/api/propiedades/${encodeURIComponent(params.id)}?ts=${Date.now()}`,
-          { cache: 'no-store', headers: { 'Cache-Control': 'no-store' } }
-        ).catch(() => null as any);
+        const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}`).catch(() => null as any);
         const j = r?.ok ? await r.json().catch(() => null) : null;
         if (alive) setProp(j?.data ?? null);
       } catch { if (alive) setProp(null); }
@@ -304,20 +242,19 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  // Fotos (sin caché)
+  /* --- fetch fotos --- */
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const r = await fetch(
-          `/api/propiedades/${encodeURIComponent(params.id)}/fotos?ts=${Date.now()}`,
-          { cache: 'no-store', headers: { 'Cache-Control': 'no-store' } }
-        ).catch(() => null as any);
+        const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`).catch(() => null as any);
         const j = r?.ok ? await r.json().catch(() => null) : null;
+        // normalizamos: si no viene "tag", usamos "categoria"
         const rows: FotoRow[] = (j?.data ?? []).map((f: any) => ({
-          url: f.url,
-          tag: f.tag ?? f.categoria ?? null,
-          orden: f.orden ?? null,
+          url: f?.url,
+          tag: f?.tag ?? f?.categoria ?? null,
+          orden: f?.orden ?? null,
+          categoria: f?.categoria ?? null,
         }));
         if (alive) setFotos(rows);
       } catch { if (alive) setFotos([]); }
@@ -325,8 +262,30 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  // Hero: ahora con prioridad portada/cover/hero
-  const bg = useMemo(() => pickCoverUrl(prop, fotos), [prop, fotos]);
+  /* --- elegir HERO (prioriza portada) --- */
+  const hero = useMemo(() => {
+    if (!fotos?.length && !prop?.imagenes?.length) return HERO_FALLBACK;
+
+    // 1) portada explícita
+    const portada = fotos.find(f => (f.tag ?? '').toLowerCase() === 'portada')?.url;
+    if (portada) return portada;
+
+    // 2) primera imagen guardada en "imagenes" de la propiedad (si existe)
+    const fromProp = prop?.imagenes?.[0]?.trim();
+    if (fromProp) return fromProp;
+
+    // 3) primera exterior
+    const firstExterior = fotos.find(f => (f.tag ?? '').toLowerCase().includes('exterior'))?.url;
+    if (firstExterior) return firstExterior;
+
+    // 4) primera interior
+    const firstInterior = fotos.find(f => (f.tag ?? '').toLowerCase().includes('interior'))?.url;
+    if (firstInterior) return firstInterior;
+
+    // 5) cualquiera
+    const any = fotos.find(f => f?.url)?.url;
+    return any || HERO_FALLBACK;
+  }, [fotos, prop?.imagenes]);
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -371,7 +330,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { try { ro?.disconnect(); } catch {} };
   }, [prop]);
 
-  const dash = '—';
+  const dash   = '—';
   const fmtInt = (n: number | null | undefined) =>
     typeof n === 'number' ? nfINT.format(n) : dash;
 
@@ -379,12 +338,15 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     <main className="bg-white">
       {/* ---------------- HERO ---------------- */}
       <section className="relative w-full overflow-hidden isolate">
-        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
+        <div className="absolute inset-0 -z-10 bg-center bg-cover"
+             style={{ backgroundImage: `url(${hero})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
+                        min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5
+                            w-full md:max-w-[480px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
                 {prop?.titulo ?? 'Propiedad'}
               </h1>
@@ -394,19 +356,17 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
-                    { icon: <Bed className="h-5 w-5 text-[#6C819B]" />, v: prop?.dormitorios },
+                    { icon: <Bed        className="h-5 w-5 text-[#6C819B]" />, v: prop?.dormitorios },
                     { icon: <ShowerHead className="h-5 w-5 text-[#6C819B]" />, v: prop?.banos },
-                    { icon: <Car className="h-5 w-5 text-[#6C819B]" />, v: prop?.estacionamientos },
-                    { icon: <Ruler className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_util_m2) },
-                    { icon: <Square className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_terreno_m2) },
+                    { icon: <Car        className="h-5 w-5 text-[#6C819B]" />, v: prop?.estacionamientos },
+                    { icon: <Ruler      className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_util_m2) },
+                    { icon: <Square     className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(prop?.superficie_terreno_m2) },
                   ].map((t, idx) => (
-                    <div
-                      key={idx}
-                      className={cls(
-                        'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
-                        idx < 4 && 'border-r border-slate-200'
-                      )}
-                    >
+                    <div key={idx}
+                         className={cls(
+                           'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
+                           idx < 4 && 'border-r border-slate-200'
+                         )}>
                       {t.icon}
                       <span className="text-sm text-slate-800 leading-none">{t.v ?? dash}</span>
                     </div>
@@ -416,17 +376,16 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
               {/* ---------- Botón + precio ---------- */}
               <div className="mt-4 flex items-end gap-3">
-                <Link
-                  ref={btnRef}
-                  href="/contacto"
-                  className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
-                  style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
-                >
+                <Link ref={btnRef} href="/contacto"
+                      className="inline-flex text-sm tracking-wide rounded-none
+                                 border border-[#0A2E57] text-[#0A2E57] bg-white"
+                      style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
                   Solicitar información
                 </Link>
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
-                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
+                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold
+                                  text-[#0A2E57] leading-none">
                     {precioUfHero ? `UF ${nfUF.format(precioUfHero)}` : 'Consultar'}
                   </div>
                   {precioClpHero && (
@@ -450,12 +409,12 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 /* ------------------------------------------------------------------ */
 /*                        GALERÍA + CONTENIDO                         */
 /* ------------------------------------------------------------------ */
-function normalizeTag(tag?: string | null): 'exterior' | 'interior' | 'planos' | 'portada' | 'todas' {
+function normalizeTag(tag?: string | null): 'exterior' | 'interior' | 'planos' | 'todas' {
   const t = (tag ?? '').toLowerCase();
   if (t.includes('plan')) return 'planos';
-  if (t.includes('portad') || t.includes('cover') || t.includes('hero')) return 'portada';
   if (t.includes('exterior') || /(fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/.test(t)) return 'exterior';
   if (t.includes('interior') || /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio)/.test(t)) return 'interior';
+  // 👉 'portada' cae aquí: NO mostramos tile "Portada"
   return 'todas';
 }
 
@@ -463,32 +422,25 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
-  const { todas, portada, exterior, interior, planos } = useMemo(() => {
+  // Agrupa fotos por categoría
+  const { todas, exterior, interior, planos } = useMemo(() => {
     const rows = (fotos ?? []).filter(f => f?.url);
-    const map = {
-      todas: [] as string[],
-      portada: [] as string[],
-      exterior: [] as string[],
-      interior: [] as string[],
-      planos: [] as string[],
-    };
+    const map = { todas: [] as string[], exterior: [] as string[], interior: [] as string[], planos: [] as string[] };
     rows.forEach(r => {
-      const k = normalizeTag(r.tag);
+      const k = normalizeTag(r.tag ?? r.categoria);
       map.todas.push(r.url);
-      if (k !== 'todas') (map as any)[k].push(r.url);
+      if (k !== 'todas') map[k].push(r.url);
     });
     return map;
   }, [fotos]);
 
-  const tiles = useMemo(() => {
-    return [
-      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: todas[0]    },
-      { key: 'portada'  as const, label: 'Portada',    icon: <Home     className="h-6 w-6" />, count: (portada  ?? []).length, preview: portada[0]  },
-      { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, preview: exterior[0] },
-      { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, preview: interior[0] },
-      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, preview: planos[0]   },
-    ];
-  }, [todas, portada, exterior, interior, planos]);
+  // Tarjetas resumen (sin "Portada")
+  const tiles = useMemo(() => ([
+    { key: 'todas'    as const, label: 'Photos',    icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: todas[0]    },
+    { key: 'exterior' as const, label: 'Exterior',  icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, preview: exterior[0] },
+    { key: 'interior' as const, label: 'Interior',  icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, preview: interior[0] },
+    { key: 'planos'   as const, label: 'Floor Plan',icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, preview: planos[0]   },
+  ]), [todas, exterior, interior, planos]);
 
   const [dynamicList, setDynamicList] = useState<string[]>([]);
   const openLbFor = (arr: string[], start = 0) => {
@@ -499,10 +451,12 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
   };
 
   useEffect(() => {
-    if ((todas ?? []).length && dynamicList.length === 0) setDynamicList(todas);
+    if ((todas ?? []).length && dynamicList.length === 0) {
+      setDynamicList(todas);
+    }
   }, [todas, dynamicList.length]);
 
-  // Descripción con espaciado estable
+  /* ---------- descripción normalizada ---------- */
   const normalizedParagraphs = useMemo(() => {
     const raw = (prop?.descripcion ?? '')
       .replace(/\r\n/g, '\n')
@@ -513,15 +467,14 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
 
   return (
     <>
-      {/* ---------- TARJETAS / TILES ---------- */}
+      {/* ---------- TARJETAS ---------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Galería</SectionTitle>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {tiles.map(t => {
             const list =
-              t.key === 'todas'    ? todas :
-              t.key === 'portada'  ? portada :
+              t.key === 'todas'   ? todas :
               t.key === 'exterior' ? exterior :
               t.key === 'interior' ? interior : planos;
 
@@ -532,11 +485,10 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
                 onClick={() => openLbFor(list, 0)}
                 className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
               >
-                {showImage ? (
-                  <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                ) : (
-                  <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
-                )}
+                {showImage
+                  ? <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  : <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
+                }
 
                 <div className={cls(
                   'absolute inset-0 flex flex-col items-center justify-center gap-1',
@@ -570,43 +522,6 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         ) : (
           <p className="text-slate-700 leading-relaxed">Descripción no disponible por el momento.</p>
         )}
-      </section>
-
-      {/* ---------- SEPARADOR ---------- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
-
-      {/* ---------- CARACTERÍSTICAS DESTACADAS ---------- */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionTitle>Características destacadas</SectionTitle>
-        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
-          {(prop?.tags ?? []).length ? (
-            (prop?.tags ?? []).map((t, i) => (
-              <li key={`${t}-${i}`} className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
-                  <Compass className="h-4 w-4 text-slate-600" />
-                </span>
-                <span>{t}</span>
-              </li>
-            ))
-          ) : (
-            <>
-              <li className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
-                  <Compass className="h-4 w-4 text-slate-600" />
-                </span>
-                <span>Orientación norte</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
-                  <TrendingUp className="h-4 w-4 text-slate-600" />
-                </span>
-                <span>Potencial de plusvalía</span>
-              </li>
-            </>
-          )}
-        </ul>
       </section>
 
       {/* ---------- SEPARADOR ---------- */}
