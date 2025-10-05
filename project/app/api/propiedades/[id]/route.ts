@@ -2,6 +2,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -13,7 +16,6 @@ export async function GET(
 ) {
   const { id } = params;
 
-  // Selecciona los campos que usa la ficha, incluyendo portada y mapa
   const { data, error } = await supabase
     .from('propiedades')
     .select(`
@@ -47,5 +49,5 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ data }, { headers: { 'Cache-Control': 'no-store' } });
 }
