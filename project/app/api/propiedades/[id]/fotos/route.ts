@@ -1,21 +1,11 @@
-// project/app/api/propiedades/[id]/fotos/route.ts
+// app/api/propiedades/[id]/fotos/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Usa la ANON KEY en producción (RLS aplica igual en modo lectura)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-export const runtime = 'edge';
-export const revalidate = 60 * 60 * 2; // 2 horas
-
-type Row = {
-  url: string;
-  categoria: 'exterior' | 'interior' | 'planos' | null;
-  orden: number | null;
-};
 
 export async function GET(
   _req: Request,
@@ -23,27 +13,23 @@ export async function GET(
 ) {
   const { id } = params;
 
+  // Trae url, categoria y orden, ordenadas por "orden" primero
   const { data, error } = await supabase
     .from('propiedades_fotos')
-    .select('url,categoria,orden')
+    .select('url, categoria, orden')
     .eq('propiedad_id', id)
-    .order('orden', { ascending: true });
+    .order('orden', { ascending: true, nullsFirst: false });
 
   if (error) {
-    console.error('[api/propiedades/:id/fotos]', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const photos = (data as Row[] | null)?.map((r) => ({
+  // Normalizo nombres para el front
+  const rows = (data ?? []).map((r: any) => ({
     url: r.url,
-    categoria: r.categoria,
-    // Alias "tag" por compatibilidad con código antiguo
-    tag: r.categoria,
-    orden: r.orden ?? 0,
-  })) ?? [];
+    tag: r.categoria,     // <- el front trabaja con "tag"
+    orden: r.orden ?? null
+  }));
 
-  return NextResponse.json({ success: true, data: photos });
+  return NextResponse.json({ data: rows });
 }
