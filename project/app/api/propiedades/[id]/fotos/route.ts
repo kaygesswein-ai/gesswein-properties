@@ -2,6 +2,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -13,7 +16,6 @@ export async function GET(
 ) {
   const { id } = params;
 
-  // Trae url, categoria y orden, ordenadas por "orden" primero
   const { data, error } = await supabase
     .from('propiedades_fotos')
     .select('url, categoria, orden')
@@ -24,12 +26,11 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Normalizo nombres para el front
   const rows = (data ?? []).map((r: any) => ({
     url: r.url,
-    tag: r.categoria,     // <- el front trabaja con "tag"
-    orden: r.orden ?? null
+    tag: r.categoria,
+    orden: r.orden ?? null,
   }));
 
-  return NextResponse.json({ data: rows });
+  return NextResponse.json({ data: rows }, { headers: { 'Cache-Control': 'no-store' } });
 }
