@@ -4,10 +4,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  Bed, ShowerHead, Car, Ruler, Square,
-  X, ChevronLeft, ChevronRight,
-  Compass, TrendingUp, Images, DoorOpen, Home,
-  Map as MapIcon, Maximize2, Minus, Plus,
+  Bed,
+  ShowerHead,
+  Car,
+  Ruler,
+  Square,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Compass,
+  TrendingUp,
+  Images,
+  DoorOpen,
+  Home,
+  Map as MapIcon,
+  Maximize2,
+  Minus,
+  Plus,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -15,8 +28,9 @@ import {
 /* ------------------------------------------------------------------ */
 type FotoRow = {
   url: string;
-  tag?: string | null;        // el API puede devolver "tag" o "categoria"
-  categoria?: string | null;  // nos aseguramos de mapearlo a tag
+  // el backend puede llamar a la categoría "tag" o "categoria", aceptamos ambos
+  tag?: 'exterior' | 'interior' | 'planos' | 'portada' | string | null;
+  categoria?: 'exterior' | 'interior' | 'planos' | 'portada' | string | null;
   orden?: number | null;
 };
 
@@ -40,10 +54,15 @@ type Property = {
   imagenes?: string[] | null;
   barrio?: string | null;
 
+  // Mapa
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
 
+  // NUEVO: si tu API lo trae, lo usamos; si no, lo deducimos de las fotos
+  portada_url?: string | null;
+
+  // Tags opcionales
   tags?: string[] | null;
 };
 
@@ -83,10 +102,12 @@ function useUf() {
   return uf;
 }
 
-/* --------------------------- LIGHTBOX --------------------------- */
-function Lightbox(props: {
+/* ------------------------------------------------------------------ */
+/*                              LIGHTBOX                              */
+/* ------------------------------------------------------------------ */
+function Lightbox(props:{
   open: boolean; images: string[]; index: number;
-  onClose: () => void; onPrev: () => void; onNext: () => void;
+  onClose: ()=>void; onPrev: ()=>void; onNext: ()=>void;
 }) {
   const { open, images, index, onClose, onPrev, onNext } = props;
 
@@ -98,7 +119,12 @@ function Lightbox(props: {
   const pt = (t: Touch | React.Touch): P => ({ x: t.clientX, y: t.clientY });
   const dist2 = (a: P, b: P) => Math.hypot(a.x - b.x, a.y - b.y);
 
-  const touch = useRef({ x0: 0, y0: 0, swiping: false, pinchStartDist: 0, startScale: 1 });
+  const touch = useRef({
+    x0: 0, y0: 0,
+    swiping: false,
+    pinchStartDist: 0,
+    startScale: 1,
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -115,6 +141,7 @@ function Lightbox(props: {
 
   const zoomIn  = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
   const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
+
   const full = async () => {
     try {
       const el = boxRef.current || document.documentElement;
@@ -141,24 +168,21 @@ function Lightbox(props: {
       touch.current.swiping = false;
     }
   };
-
   const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 2) {
       const d = dist2(pt(e.touches[0]), pt(e.touches[1]));
       const ratio = d / Math.max(1, touch.current.pinchStartDist);
-      const next = Math.max(0.5, Math.min(3, touch.current.startScale * ratio));
-      setScale(next);
+      setScale(v => Math.max(0.5, Math.min(3, touch.current.startScale * ratio)));
       e.preventDefault();
     }
   };
-
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!touch.current.swiping) return;
     const ch = e.changedTouches?.[0];
     if (!ch) return;
     const dx = ch.clientX - touch.current.x0;
     const dy = ch.clientY - touch.current.y0;
-    if (Math.abs(dx) > 40 && Math.abs(dy) < 60) (dx < 0 ? onNext() : onPrev());
+    if (Math.abs(dx) > 40 && Math.abs(dy) < 60) dx < 0 ? onNext() : onPrev();
     touch.current.swiping = false;
   };
 
@@ -173,10 +197,12 @@ function Lightbox(props: {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
+      {/* contador */}
       <div className="absolute top-3 left-3 md:left-1/2 md:-translate-x-1/2 px-3 py-1 rounded text-white/90 text-sm bg-white/10 z-40">
         {index + 1} / {images.length}
       </div>
 
+      {/* controles */}
       <div className="absolute top-3 right-4 flex items-center gap-2 text-white z-40">
         <button onClick={zoomOut} aria-label="Zoom out" className="p-2 bg-white/10 hover:bg-white/20 rounded">
           <Minus className="h-5 w-5" />
@@ -229,7 +255,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
-  /* --- fetch propiedad --- */
+  // propiedad
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -242,50 +268,63 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- fetch fotos --- */
+  // fotos
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
         const r = await fetch(`/api/propiedades/${encodeURIComponent(params.id)}/fotos`).catch(() => null as any);
         const j = r?.ok ? await r.json().catch(() => null) : null;
-        // normalizamos: si no viene "tag", usamos "categoria"
-        const rows: FotoRow[] = (j?.data ?? []).map((f: any) => ({
-          url: f?.url,
-          tag: f?.tag ?? f?.categoria ?? null,
-          orden: f?.orden ?? null,
-          categoria: f?.categoria ?? null,
-        }));
+        const rows: FotoRow[] = j?.data ?? [];
         if (alive) setFotos(rows);
       } catch { if (alive) setFotos([]); }
     })();
     return () => { alive = false; };
   }, [params.id]);
 
-  /* --- elegir HERO (prioriza portada) --- */
-  const hero = useMemo(() => {
-    if (!fotos?.length && !prop?.imagenes?.length) return HERO_FALLBACK;
+  // normaliza categoría
+  function normalizeTag(tag?: string | null): 'portada' | 'exterior' | 'interior' | 'planos' | 'todas' {
+    const t = (tag ?? '').toLowerCase();
+    if (t.includes('portada')) return 'portada';
+    if (t.includes('plan')) return 'planos';
+    if (t.includes('exterior') || /(fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/.test(t)) return 'exterior';
+    if (t.includes('interior') || /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio)/.test(t)) return 'interior';
+    return 'todas';
+  }
 
-    // 1) portada explícita
-    const portada = fotos.find(f => (f.tag ?? '').toLowerCase() === 'portada')?.url;
-    if (portada) return portada;
+  // agrupa fotos
+  const groups = useMemo(() => {
+    const rows = (fotos ?? []).filter(f => f?.url);
+    const g = {
+      todas: [] as string[],
+      portada: [] as string[],
+      exterior: [] as string[],
+      interior: [] as string[],
+      planos: [] as string[],
+    };
+    rows.forEach(r => {
+      const raw = (r.categoria ?? r.tag ?? '') as string | null;
+      const k = normalizeTag(raw);
+      g.todas.push(r.url);
+      if (k !== 'todas') (g as any)[k].push(r.url);
+    });
+    return g;
+  }, [fotos]);
 
-    // 2) primera imagen guardada en "imagenes" de la propiedad (si existe)
-    const fromProp = prop?.imagenes?.[0]?.trim();
+  // HERO: orden de prioridad para elegir la imagen
+  const bg = useMemo(() => {
+    const fromPropPortada = prop?.portada_url?.trim();
+    if (fromPropPortada) return fromPropPortada;
+
+    const fromFotosPortada = groups.portada[0];
+    if (fromFotosPortada) return fromFotosPortada;
+
+    const fromProp = (prop?.imagenes?.[0] ?? '').trim();
     if (fromProp) return fromProp;
 
-    // 3) primera exterior
-    const firstExterior = fotos.find(f => (f.tag ?? '').toLowerCase().includes('exterior'))?.url;
-    if (firstExterior) return firstExterior;
-
-    // 4) primera interior
-    const firstInterior = fotos.find(f => (f.tag ?? '').toLowerCase().includes('interior'))?.url;
-    if (firstInterior) return firstInterior;
-
-    // 5) cualquiera
-    const any = fotos.find(f => f?.url)?.url;
-    return any || HERO_FALLBACK;
-  }, [fotos, prop?.imagenes]);
+    const firstFoto = groups.todas[0];
+    return firstFoto || HERO_FALLBACK;
+  }, [prop?.portada_url, prop?.imagenes, groups.portada, groups.todas]);
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -339,7 +378,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       {/* ---------------- HERO ---------------- */}
       <section className="relative w-full overflow-hidden isolate">
         <div className="absolute inset-0 -z-10 bg-center bg-cover"
-             style={{ backgroundImage: `url(${hero})` }} />
+             style={{ backgroundImage: `url(${bg})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
@@ -352,7 +391,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </h1>
               <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
 
-              {/* ---------- Tiles ---------- */}
+              {/* Tiles */}
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
@@ -374,7 +413,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
-              {/* ---------- Botón + precio ---------- */}
+              {/* Botón + precio */}
               <div className="mt-4 flex items-end gap-3">
                 <Link ref={btnRef} href="/contacto"
                       className="inline-flex text-sm tracking-wide rounded-none
@@ -400,8 +439,8 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      {/* ---------------- GALERÍA + DESCRIPCIÓN + FEATURES + MAPA ---------------- */}
-      <GalleryAndDetails prop={prop} fotos={fotos} />
+      {/* ---------------- GALERÍA + DESCRIPCIÓN + MAPA ---------------- */}
+      <GalleryAndDetails prop={prop} fotos={fotos} groups={groups} />
     </main>
   );
 }
@@ -409,39 +448,35 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 /* ------------------------------------------------------------------ */
 /*                        GALERÍA + CONTENIDO                         */
 /* ------------------------------------------------------------------ */
-function normalizeTag(tag?: string | null): 'exterior' | 'interior' | 'planos' | 'todas' {
-  const t = (tag ?? '').toLowerCase();
-  if (t.includes('plan')) return 'planos';
-  if (t.includes('exterior') || /(fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/.test(t)) return 'exterior';
-  if (t.includes('interior') || /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio)/.test(t)) return 'interior';
-  // 👉 'portada' cae aquí: NO mostramos tile "Portada"
-  return 'todas';
-}
-
-function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: FotoRow[] }) {
+function GalleryAndDetails({
+  prop,
+  fotos,
+  groups,
+}: {
+  prop: Property | null;
+  fotos: FotoRow[];
+  groups: {
+    todas: string[];
+    portada: string[];
+    exterior: string[];
+    interior: string[];
+    planos: string[];
+  };
+}) {
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
-  // Agrupa fotos por categoría
-  const { todas, exterior, interior, planos } = useMemo(() => {
-    const rows = (fotos ?? []).filter(f => f?.url);
-    const map = { todas: [] as string[], exterior: [] as string[], interior: [] as string[], planos: [] as string[] };
-    rows.forEach(r => {
-      const k = normalizeTag(r.tag ?? r.categoria);
-      map.todas.push(r.url);
-      if (k !== 'todas') map[k].push(r.url);
-    });
-    return map;
-  }, [fotos]);
+  // Tarjetas resumen (NO mostramos "Portada" como tarjeta)
+  const tiles = useMemo(() => {
+    return [
+      { key: 'todas'    as const, label: 'Photos',     icon: <Images   className="h-6 w-6" />, count: (groups.todas    ?? []).length, preview: groups.todas[0]    },
+      { key: 'exterior' as const, label: 'Exterior',   icon: <Home     className="h-6 w-6" />, count: (groups.exterior ?? []).length, preview: groups.exterior[0] },
+      { key: 'interior' as const, label: 'Interior',   icon: <DoorOpen className="h-6 w-6" />, count: (groups.interior ?? []).length, preview: groups.interior[0] },
+      { key: 'planos'   as const, label: 'Floor Plan', icon: <MapIcon  className="h-6 w-6" />, count: (groups.planos   ?? []).length, preview: groups.planos[0]   },
+    ];
+  }, [groups]);
 
-  // Tarjetas resumen (sin "Portada")
-  const tiles = useMemo(() => ([
-    { key: 'todas'    as const, label: 'Photos',    icon: <Images   className="h-6 w-6" />, count: (todas    ?? []).length, preview: todas[0]    },
-    { key: 'exterior' as const, label: 'Exterior',  icon: <Home     className="h-6 w-6" />, count: (exterior ?? []).length, preview: exterior[0] },
-    { key: 'interior' as const, label: 'Interior',  icon: <DoorOpen className="h-6 w-6" />, count: (interior ?? []).length, preview: interior[0] },
-    { key: 'planos'   as const, label: 'Floor Plan',icon: <MapIcon  className="h-6 w-6" />, count: (planos   ?? []).length, preview: planos[0]   },
-  ]), [todas, exterior, interior, planos]);
-
+  // lista que consume Lightbox
   const [dynamicList, setDynamicList] = useState<string[]>([]);
   const openLbFor = (arr: string[], start = 0) => {
     if (!arr.length) return;
@@ -449,14 +484,13 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     setDynamicList(arr);
     setLbOpen(true);
   };
-
   useEffect(() => {
-    if ((todas ?? []).length && dynamicList.length === 0) {
-      setDynamicList(todas);
+    if ((groups.todas ?? []).length && dynamicList.length === 0) {
+      setDynamicList(groups.todas);
     }
-  }, [todas, dynamicList.length]);
+  }, [groups.todas, dynamicList.length]);
 
-  /* ---------- descripción normalizada ---------- */
+  // descripción con espaciado consistente
   const normalizedParagraphs = useMemo(() => {
     const raw = (prop?.descripcion ?? '')
       .replace(/\r\n/g, '\n')
@@ -467,16 +501,16 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
 
   return (
     <>
-      {/* ---------- TARJETAS ---------- */}
+      {/* TARJETAS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Galería</SectionTitle>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {tiles.map(t => {
             const list =
-              t.key === 'todas'   ? todas :
-              t.key === 'exterior' ? exterior :
-              t.key === 'interior' ? interior : planos;
+              t.key === 'todas'   ? groups.todas :
+              t.key === 'exterior' ? groups.exterior :
+              t.key === 'interior' ? groups.interior : groups.planos;
 
             const showImage = !!t.preview && t.key !== 'todas';
             return (
@@ -485,10 +519,11 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
                 onClick={() => openLbFor(list, 0)}
                 className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
               >
-                {showImage
-                  ? <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  : <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
-                }
+                {showImage ? (
+                  <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
+                )}
 
                 <div className={cls(
                   'absolute inset-0 flex flex-col items-center justify-center gap-1',
@@ -507,7 +542,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         </div>
       </section>
 
-      {/* ---------- DESCRIPCIÓN ---------- */}
+      {/* DESCRIPCIÓN */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Descripción</SectionTitle>
 
@@ -520,16 +555,18 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
             ))}
           </div>
         ) : (
-          <p className="text-slate-700 leading-relaxed">Descripción no disponible por el momento.</p>
+          <p className="text-slate-700 leading-relaxed">
+            Descripción no disponible por el momento.
+          </p>
         )}
       </section>
 
-      {/* ---------- SEPARADOR ---------- */}
+      {/* SEPARADOR */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* ---------- MAPA DINÁMICO ---------- */}
+      {/* MAPA DINÁMICO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <SectionTitle>Explora el sector</SectionTitle>
 
@@ -539,6 +576,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
             const lng  = typeof prop?.map_lng  === 'number' ? prop!.map_lng  : -70.65;
             const zoom = typeof prop?.map_zoom === 'number' ? (prop!.map_zoom as number) : 15;
             const src  = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&hl=es&output=embed`;
+
             return (
               <iframe
                 title="mapa"
@@ -552,7 +590,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         </div>
       </section>
 
-      {/* ---------- LIGHTBOX ---------- */}
+      {/* LIGHTBOX */}
       <Lightbox
         open={lbOpen}
         images={dynamicList}
