@@ -43,7 +43,7 @@ const BTN_GRAY_BORDER = '#e2e8f0';
 const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_5437%20(1).jpeg';
 
-// “sin foto”
+// Fallback card
 const CARD_FALLBACK =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
@@ -102,6 +102,7 @@ const COMUNAS: Record<string, string[]> = {
     'Macul',
   ],
   Valparaíso: [
+    'Casablanca',       // <-- agregado (Tunquén pertenece a Casablanca)
     'Viña del Mar',
     'Valparaíso',
     'Concón',
@@ -109,7 +110,6 @@ const COMUNAS: Record<string, string[]> = {
     'Villa Alemana',
     'Limache',
     'Olmué',
-    'Casablanca', // ← IMPORTANTE para Tunquén
   ],
 };
 
@@ -137,8 +137,6 @@ const BARRIOS: Record<string, string[]> = {
   'Villa Alemana': ['Peñablanca', 'El Álamo', 'El Carmen'],
   Quilpué: ['El Sol', 'Belloto', 'Los Pinos'],
   Olmué: ['Olmué Centro', 'Lo Narváez'],
-  // Nuevos para Valparaíso/Casablanca:
-  Casablanca: ['Tunquén', 'El Rosario de Tunquén'],
 };
 
 /* ==== Normalización y región ==== */
@@ -146,8 +144,8 @@ const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u03
 const normalize = (s?: string) =>
   stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
 
-function inferRegion(prop: Property): string | undefined {
-  const c = normalize(prop.comuna);
+function inferRegionByComuna(comuna?: string): string | undefined {
+  const c = normalize(comuna);
   if (!c) return undefined;
   for (const [reg, comunas] of Object.entries(COMUNAS)) {
     if (comunas.some((co) => normalize(co) === c)) return reg;
@@ -156,19 +154,19 @@ function inferRegion(prop: Property): string | undefined {
 }
 
 export default function PropiedadesPage() {
-  // — Filtros (PENDIENTES / UI) —
+  // — Filtros (UI) —
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<string>('');
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
-  // — UF / CLP (PENDIENTES / UI) —
+  // — UF / CLP (UI) —
   const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  // — Avanzada (PENDIENTES / UI) —
+  // — Avanzada (UI) —
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
   const [minDorm, setMinDorm] = useState('');
   const [minBanos, setMinBanos] = useState('');
@@ -198,22 +196,25 @@ export default function PropiedadesPage() {
   const [loading, setLoading] = useState(false);
   const [trigger, setTrigger] = useState(0);
 
+  // Portadas “hidratadas” por id cuando la lista no las trae
+  const [portadasById, setPortadasById] = useState<Record<string, string>>({});
+
   // Orden
   const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | 'hipoteca' | 'flipping' | 'subdivision' | ''>('');
   const [sortOpen, setSortOpen] = useState(false);
 
   const ufValue = useUfValue();
 
-  // Carga inicial (una sola vez)
+  // Carga inicial
   useEffect(() => { setTrigger((v) => v + 1); }, []);
 
-  /* Fetch (SOLO cuando cambia trigger) */
+  /* Fetch listado (SOLO cuando cambia trigger) */
   useEffect(() => {
     const p = new URLSearchParams();
 
+    // NO enviamos region (se filtra en cliente por comuna para soportar fichas sin 'region')
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
-    if (aRegion) p.set('region', aRegion);
     if (aComuna) p.set('comuna', aComuna);
     if (aBarrio) p.set('barrio', aBarrio);
 
@@ -239,7 +240,7 @@ export default function PropiedadesPage() {
       }
     }
 
-    // Filtros avanzados aplicados (por si el backend soporta algo)
+    // Filtros avanzados aplicados (en servidor si existen)
     if (aMinDorm) p.set('minDorm', aMinDorm);
     if (aMinBanos) p.set('minBanos', aMinBanos);
     if (aMinM2Const) p.set('minM2Const', aMinM2Const.replace(/\./g, ''));
@@ -259,72 +260,71 @@ export default function PropiedadesPage() {
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [trigger]); // <- SOLO cambia con “Buscar”
+  }, [trigger, ufValue]);
 
-  // ====== FILTRO EN CLIENTE (asegura que todo funcione) ======
+  // Hidratación de portadas cuando falten en el listado
+  useEffect(() => {
+    const need = (items || [])
+      .filter(p => p.id && !p.portada_url && !p.portada_fija_url)
+      .map(p => p.id!) // seguras
+      .filter(id => !portadasById[id]);
+
+    if (need.length === 0) return;
+
+    let cancel = false;
+    (async () => {
+      const entries: [string, string][] = [];
+      for (const id of need) {
+        try {
+          const r = await fetch(`/api/propiedades/${encodeURIComponent(id)}`, { cache: 'no-store' });
+          const j = await r.json();
+          const data = j?.data || j;
+          const img =
+            (data?.portada_url && String(data.portada_url).trim()) ||
+            (data?.portada_fija_url && String(data.portada_fija_url).trim()) ||
+            (Array.isArray(data?.imagenes) && data.imagenes[0]) ||
+            '';
+          if (img) entries.push([id, img]);
+        } catch {}
+      }
+      if (!cancel && entries.length) {
+        setPortadasById(prev => {
+          const next = { ...prev };
+          for (const [k, v] of entries) next[k] = v;
+          return next;
+        });
+      }
+    })();
+
+    return () => { cancel = true; };
+  }, [items, portadasById]);
+
+  // Filtro en cliente para REGION (y también barrio “contiene”)
   const filteredItems = useMemo(() => {
     const norm = (s?: string) => normalize(s || '');
-    const toUF = (p: Property) => {
-      if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
-      if (p.precio_clp && p.precio_clp > 0 && ufValue) return p.precio_clp / ufValue;
-      return null;
-    };
-    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
-
-    const minN = toInt(aMinValor);
-    const maxN = toInt(aMaxValor);
-    const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
-    const minUF = Number.isNaN(minN) ? -Infinity : (isCLP && ufValue ? minN / ufValue : minN);
-    const maxUF = Number.isNaN(maxN) ? Infinity   : (isCLP && ufValue ? maxN / ufValue : maxN);
-
-    const dMin = toInt(aMinDorm);
-    const bMin = toInt(aMinBanos);
-    const cMin = toInt(aMinM2Const);
-    const tMin = toInt(aMinM2Terreno);
-    const eMin = toInt(aEstac);
 
     return (items || []).filter((x) => {
-      // operación y tipo
-      if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
-      if (aTipo       && !norm(x.tipo).startsWith(norm(aTipo))) return false;
-
-      // región robusta (usa comuna->región)
+      // Región (cliente por comuna)
       if (aRegion) {
-        const r = inferRegion(x);
-        if (norm(r) !== norm(aRegion)) return false;
+        const regByComuna = inferRegionByComuna(x.comuna);
+        if (norm(regByComuna) !== norm(aRegion)) return false;
       }
 
-      // comuna y barrio (normalizado)
+      // Comuna (servidor ya puede filtrar; aquí reforzamos)
       if (aComuna && norm(x.comuna) !== norm(aComuna)) return false;
-      if (aBarrio && norm(x.barrio) !== norm(aBarrio)) return false;
 
-      // precio (en UF comparables)
-      const vUF = toUF(x);
-      if (vUF != null) {
-        if (vUF < minUF || vUF > maxUF) return false;
-      } else if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
-        // si pediste rango y no hay precio, descártalo
-        return false;
+      // Barrio: coincidencia por “contiene”
+      if (aBarrio) {
+        const bx = norm(x.barrio);
+        const bf = norm(aBarrio);
+        if (!bx || !bx.includes(bf)) return false;
       }
-
-      // avanzados: mínimos
-      if (!Number.isNaN(dMin) && (x.dormitorios ?? -Infinity) < dMin) return false;
-      if (!Number.isNaN(bMin) && (x.banos ?? -Infinity) < bMin) return false;
-      if (!Number.isNaN(cMin) && (x.superficie_util_m2 ?? -Infinity) < cMin) return false;
-      if (!Number.isNaN(tMin) && (x.superficie_terreno_m2 ?? -Infinity) < tMin) return false;
-      if (!Number.isNaN(eMin) && (x.estacionamientos ?? -Infinity) < eMin) return false;
 
       return true;
     });
-  }, [
-    items,
-    ufValue,
-    aOperacion, aTipo, aRegion, aComuna, aBarrio,
-    aMoneda, aMinValor, aMaxValor,
-    aMinDorm, aMinBanos, aMinM2Const, aMinM2Terreno, aEstac,
-  ]);
+  }, [items, aRegion, aComuna, aBarrio]);
 
-  // ====== ORDENAMIENTO sobre el resultado filtrado ======
+  // Ordenamiento
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
@@ -353,7 +353,7 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  // Aplicar filtros (BOTÓN BUSCAR)
+  // Aplicar filtros (BUSCAR)
   const applyAndSearch = () => {
     setAOperacion(operacion);
     setATipo(tipo);
@@ -381,10 +381,15 @@ export default function PropiedadesPage() {
   return (
     <main className="bg-white">
       {/* HERO */}
-      <section
-        className="relative bg-cover bg-center min-h-[100svh]"
-        style={{ backgroundImage: `url(${HERO_IMG})` }}
-      >
+      <section className="relative min-h-[100svh]">
+        {/* Imagen como <img> para evitar problemas de CSS background y CORS */}
+        <img
+          src={HERO_IMG}
+          alt="Portada"
+          className="absolute inset-0 w-full h-full object-cover"
+          // Ajuste de encuadre: un poco más alto que centro
+          style={{ objectPosition: '50% 35%' }}
+        />
         <div className="absolute inset-0 bg-black/35" />
         <div className="absolute bottom-6 left-0 right-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -556,9 +561,13 @@ export default function PropiedadesPage() {
               const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
               const bodega = (p.tipo || '').toLowerCase().includes('bodega');
               const linkId = (p.id || p.slug || '').toString();
+
+              // Portada: primero portada_url/fija, luego hidratada por id, luego cover/imagenes, luego fallback
+              const portadaHidratada = p.id ? portadasById[p.id] : '';
               const cardImage =
                 (p.portada_url && String(p.portada_url).trim()) ||
                 (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
+                (portadaHidratada && String(portadaHidratada).trim()) ||
                 (p.coverImage && String(p.coverImage).trim()) ||
                 (Array.isArray(p.imagenes) && p.imagenes[0]) ||
                 CARD_FALLBACK;
