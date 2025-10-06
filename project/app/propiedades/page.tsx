@@ -153,25 +153,42 @@ function inferRegion(prop: Property): string | undefined {
 }
 
 export default function PropiedadesPage() {
-  // — Filtros —
+  // — Filtros (PENDIENTES / UI) —
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<string>('');
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
-  // — UF / CLP —
+  // — UF / CLP (PENDIENTES / UI) —
   const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  // — Avanzada —
+  // — Avanzada (PENDIENTES / UI) —
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
   const [minDorm, setMinDorm] = useState('');
   const [minBanos, setMinBanos] = useState('');
   const [minM2Const, setMinM2Const] = useState('');
   const [minM2Terreno, setMinM2Terreno] = useState('');
   const [estac, setEstac] = useState('');
+
+  // — Filtros APLICADOS (los que realmente buscan) —
+  const [aOperacion, setAOperacion] = useState('');
+  const [aTipo, setATipo] = useState('');
+  const [aRegion, setARegion] = useState<string>('');
+  const [aComuna, setAComuna] = useState('');
+  const [aBarrio, setABarrio] = useState('');
+
+  const [aMoneda, setAMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
+  const [aMinValor, setAMinValor] = useState('');
+  const [aMaxValor, setAMaxValor] = useState('');
+
+  const [aMinDorm, setAMinDorm] = useState('');
+  const [aMinBanos, setAMinBanos] = useState('');
+  const [aMinM2Const, setAMinM2Const] = useState('');
+  const [aMinM2Terreno, setAMinM2Terreno] = useState('');
+  const [aEstac, setAEstac] = useState('');
 
   // — Resultados —
   const [items, setItems] = useState<Property[]>([]);
@@ -184,23 +201,25 @@ export default function PropiedadesPage() {
 
   const ufValue = useUfValue();
 
-  // Carga inicial
+  // Carga inicial (una sola vez)
   useEffect(() => { setTrigger((v) => v + 1); }, []);
 
-  /* Fetch (solo cuando cambia trigger o UF) */
+  /* Fetch (SOLO cuando cambia trigger) */
   useEffect(() => {
     const p = new URLSearchParams();
-    if (operacion) p.set('operacion', operacion);
-    if (tipo) p.set('tipo', tipo);
-    if (region) p.set('region', region);
-    if (comuna) p.set('comuna', comuna);
-    if (barrio) p.set('barrio', barrio);
 
+    if (aOperacion) p.set('operacion', aOperacion);
+    if (aTipo) p.set('tipo', aTipo);
+    if (aRegion) p.set('region', aRegion);
+    if (aComuna) p.set('comuna', aComuna);
+    if (aBarrio) p.set('barrio', aBarrio);
+
+    // MIN/MAX con UF o CLP — usando valores APLICADOS
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
-    const minN = toInt(minValor);
-    const maxN = toInt(maxValor);
+    const minN = toInt(aMinValor);
+    const maxN = toInt(aMaxValor);
     if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
-      const isCLP = moneda === 'CLP' || moneda === 'CLP$';
+      const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
       if (isCLP && typeof ufValue === 'number' && ufValue > 0) {
         const minUF = !Number.isNaN(minN) ? Math.round(minN / ufValue) : NaN;
         const maxUF = !Number.isNaN(maxN) ? Math.round(maxN / ufValue) : NaN;
@@ -217,6 +236,13 @@ export default function PropiedadesPage() {
       }
     }
 
+    // Filtros avanzados aplicados
+    if (aMinDorm) p.set('minDorm', aMinDorm);
+    if (aMinBanos) p.set('minBanos', aMinBanos);
+    if (aMinM2Const) p.set('minM2Const', aMinM2Const.replace(/\./g, ''));
+    if (aMinM2Terreno) p.set('minM2Terreno', aMinM2Terreno.replace(/\./g, ''));
+    if (aEstac) p.set('minEstac', aEstac);
+
     setLoading(true);
     let cancel = false;
 
@@ -230,84 +256,55 @@ export default function PropiedadesPage() {
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [trigger, ufValue]); // <- NO depende de “region” para no disparar sola
+  }, [trigger]); // <- SOLO cambia con “Buscar”
 
-  // Filtro cliente (garantiza funcionamiento)
-  const filteredItems = useMemo(() => {
-    const norm = (s?: string) => normalize(s || '');
-    const toUF = (p: Property) => {
-      if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
-      if (p.precio_clp && p.precio_clp > 0 && ufValue) return p.precio_clp / ufValue;
-      return null;
-    };
-    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
-
-    const minN = toInt(minValor);
-    const maxN = toInt(maxValor);
-    const isCLP = moneda === 'CLP' || moneda === 'CLP$';
-    const minUF = Number.isNaN(minN) ? -Infinity : (isCLP && ufValue ? minN / ufValue : minN);
-    const maxUF = Number.isNaN(maxN) ? Infinity   : (isCLP && ufValue ? maxN / ufValue : maxN);
-
-    const dMin = toInt(minDorm);
-    const bMin = toInt(minBanos);
-    const cMin = toInt(minM2Const);
-    const tMin = toInt(minM2Terreno);
-    const eMin = toInt(estac);
-
-    return (items || []).filter((x) => {
-      if (operacion && norm(x.operacion) !== norm(operacion)) return false;
-      if (tipo       && !norm(x.tipo).startsWith(norm(tipo))) return false;
-
-      if (region) {
-        const r = inferRegion(x);
-        if (normalize(r) !== normalize(region)) return false;
-      }
-      if (comuna && norm(x.comuna) !== norm(comuna)) return false;
-      if (barrio && norm(x.barrio) !== norm(barrio)) return false;
-
-      // rango precio
-      const vUF = toUF(x);
-      if (vUF != null) {
-        if (vUF < minUF || vUF > maxUF) return false;
-      } else if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
-        return false;
-      }
-
-      // avanzados (>= mínimo)
-      if (!Number.isNaN(dMin) && (x.dormitorios ?? -Infinity) < dMin) return false;
-      if (!Number.isNaN(bMin) && (x.banos ?? -Infinity) < bMin) return false;
-      if (!Number.isNaN(cMin) && (x.superficie_util_m2 ?? -Infinity) < cMin) return false;
-      if (!Number.isNaN(tMin) && (x.superficie_terreno_m2 ?? -Infinity) < tMin) return false;
-      if (!Number.isNaN(eMin) && (x.estacionamientos ?? -Infinity) < eMin) return false;
-
-      return true;
-    });
-  }, [
-    items, ufValue, operacion, tipo, region, comuna, barrio,
-    minValor, maxValor, moneda, minDorm, minBanos, minM2Const, minM2Terreno, estac
-  ]);
-
-  // ===== CLPfromUF (FALTABA y rompía el build) =====
+  // Ordenamiento (sobre items recibidos)
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
-
-  // Ordenamiento
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
     if (p.precio_clp && p.precio_clp > 0 && CLPfromUF) return p.precio_clp / CLPfromUF;
     return -Infinity;
   };
   const displayedItems = useMemo(() => {
-    const arr = filteredItems.slice();
+    const arr = items.slice();
     if (sortMode === 'price-desc') arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
     else if (sortMode === 'price-asc') arr.sort((a, b) => getComparablePriceUF(a) - getComparablePriceUF(b));
     return arr;
-  }, [filteredItems, sortMode, CLPfromUF]);
+  }, [items, sortMode, CLPfromUF]);
 
-  // LIMPIAR
+  // LIMPIAR (limpia UI y aplicados, y vuelve a buscar)
   const handleClear = () => {
+    // UI
     setOperacion(''); setTipo(''); setRegion(''); setComuna(''); setBarrio('');
     setMoneda(''); setMinValor(''); setMaxValor('');
     setMinDorm(''); setMinBanos(''); setMinM2Const(''); setMinM2Terreno(''); setEstac('');
+
+    // Aplicados
+    setAOperacion(''); setATipo(''); setARegion(''); setAComuna(''); setABarrio('');
+    setAMoneda(''); setAMinValor(''); setAMaxValor('');
+    setAMinDorm(''); setAMinBanos(''); setAMinM2Const(''); setAMinM2Terreno(''); setAEstac('');
+
+    setTrigger((v) => v + 1);
+  };
+
+  // Aplicar filtros (al presionar BUSCAR)
+  const applyAndSearch = () => {
+    setAOperacion(operacion);
+    setATipo(tipo);
+    setARegion(region);
+    setAComuna(comuna);
+    setABarrio(barrio);
+
+    setAMoneda(moneda);
+    setAMinValor(minValor);
+    setAMaxValor(maxValor);
+
+    setAMinDorm(minDorm);
+    setAMinBanos(minBanos);
+    setAMinM2Const(minM2Const);
+    setAMinM2Terreno(minM2Terreno);
+    setAEstac(estac);
+
     setTrigger((v) => v + 1);
   };
 
@@ -384,7 +381,7 @@ export default function PropiedadesPage() {
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
-                <button onClick={()=>setTrigger(v=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
+                <button onClick={applyAndSearch} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
@@ -414,7 +411,7 @@ export default function PropiedadesPage() {
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
-                <button onClick={()=>setTrigger(v=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
+                <button onClick={applyAndSearch} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
@@ -428,7 +425,7 @@ export default function PropiedadesPage() {
             PROPIEDADES DISPONIBLES
           </h2>
 
-          {/* Acciones de orden */}
+        {/* Acciones de orden */}
           <div className="relative flex items-center gap-2">
             <button
               type="button"
