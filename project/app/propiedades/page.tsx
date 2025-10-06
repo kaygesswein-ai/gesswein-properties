@@ -40,8 +40,10 @@ type Property = {
 
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
+
+/* ======= HERO: URL que me pasaste ======= */
 const HERO_IMG =
-  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_5437%20(1).jpeg';
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_2884.jpeg';
 
 // “sin foto”
 const CARD_FALLBACK =
@@ -138,7 +140,7 @@ const BARRIOS: Record<string, string[]> = {
   Olmué: ['Olmué Centro', 'Lo Narváez'],
 };
 
-/* ==== Normalización y región ==== */
+/* ==== Normalización e inferencia de región por comuna ==== */
 const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalize = (s?: string) =>
   stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
@@ -210,7 +212,7 @@ export default function PropiedadesPage() {
 
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
-    if (aRegion) p.set('region', aRegion);
+    if (aRegion) p.set('region', aRegion); // si la API no filtra por region por tener null, lo corregimos abajo en post-filtro
     if (aComuna) p.set('comuna', aComuna);
     if (aBarrio) p.set('barrio', aBarrio);
 
@@ -258,74 +260,28 @@ export default function PropiedadesPage() {
     return () => { cancel = true; };
   }, [trigger]); // <- SOLO cambia con “Buscar”
 
-  /* ========= FILTRO LOCAL (aplicado) — garantiza que filtre bien ========= */
-  const filteredItems = useMemo(() => {
-    const norm = (s?: string) => normalize(s || '');
+  /* ====== Post-filtro en el cliente para Región/Comuna/Barrio ======
+     (no rompe nada existente; solo asegura que Región funcione aunque
+      la API no pueda porque muchos registros tienen region null)     */
+  const postFiltered = useMemo(() => {
+    const n = (s?: string) => normalize(s || '');
 
-    // precio a UF
-    const toUF = (p: Property) => {
-      if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
-      if (p.precio_clp && p.precio_clp > 0 && ufValue) return Math.round(p.precio_clp / ufValue);
-      return null;
-    };
+    let arr = items.slice();
 
-    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
+    if (aRegion) {
+      arr = arr.filter((x) => n(inferRegion(x)) === n(aRegion));
+    }
+    if (aComuna) {
+      arr = arr.filter((x) => n(x.comuna) === n(aComuna));
+    }
+    if (aBarrio) {
+      arr = arr.filter((x) => n(x.barrio) === n(aBarrio));
+    }
 
-    // rangos aplicados
-    const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
-    const minN = toInt(aMinValor);
-    const maxN = toInt(aMaxValor);
-    const minUF = Number.isNaN(minN) ? -Infinity : (isCLP && ufValue ? Math.round(minN / ufValue) : minN);
-    const maxUF = Number.isNaN(maxN) ?  Infinity : (isCLP && ufValue ? Math.round(maxN / ufValue) : maxN);
+    return arr;
+  }, [items, aRegion, aComuna, aBarrio]);
 
-    const dMin = toInt(aMinDorm);
-    const bMin = toInt(aMinBanos);
-    const cMin = toInt(aMinM2Const);
-    const tMin = toInt(aMinM2Terreno);
-    const eMin = toInt(aEstac);
-
-    return (items || []).filter((x) => {
-      if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
-
-      if (aTipo) {
-        // “Casa” no debe traer “Terreno”, etc.
-        if (!x.tipo) return false;
-        if (norm(x.tipo) !== norm(aTipo)) return false;
-      }
-
-      if (aRegion) {
-        const effRegion = x.region || inferRegion(x) || '';
-        if (norm(effRegion) !== norm(aRegion)) return false;
-      }
-
-      if (aComuna && norm(x.comuna) !== norm(aComuna)) return false;
-      if (aBarrio && norm(x.barrio) !== norm(aBarrio)) return false;
-
-      // Precio en UF (si hay rango)
-      if (!Number.isNaN(minUF) || !Number.isNaN(maxUF)) {
-        const v = toUF(x);
-        if (v == null) return false;
-        if (v < minUF || v > maxUF) return false;
-      }
-
-      // Avanzados (mínimos)
-      if (!Number.isNaN(dMin) && (x.dormitorios ?? -Infinity) < dMin) return false;
-      if (!Number.isNaN(bMin) && (x.banos ?? -Infinity) < bMin) return false;
-      if (!Number.isNaN(cMin) && (x.superficie_util_m2 ?? -Infinity) < cMin) return false;
-      if (!Number.isNaN(tMin) && (x.superficie_terreno_m2 ?? -Infinity) < tMin) return false;
-      if (!Number.isNaN(eMin) && (x.estacionamientos ?? -Infinity) < eMin) return false;
-
-      return true;
-    });
-  }, [
-    items,
-    aOperacion, aTipo, aRegion, aComuna, aBarrio,
-    aMoneda, aMinValor, aMaxValor,
-    aMinDorm, aMinBanos, aMinM2Const, aMinM2Terreno, aEstac,
-    ufValue
-  ]);
-
-  // Ordenamiento (sobre filtrados)
+  // Ordenamiento (sobre el arreglo post-filtrado)
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
@@ -333,11 +289,11 @@ export default function PropiedadesPage() {
     return -Infinity;
   };
   const displayedItems = useMemo(() => {
-    const arr = filteredItems.slice();
+    const arr = postFiltered.slice();
     if (sortMode === 'price-desc') arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
     else if (sortMode === 'price-asc') arr.sort((a, b) => getComparablePriceUF(a) - getComparablePriceUF(b));
     return arr;
-  }, [filteredItems, sortMode, CLPfromUF]);
+  }, [postFiltered, sortMode, CLPfromUF]);
 
   // LIMPIAR (limpia UI y aplicados, y vuelve a buscar)
   const handleClear = () => {
