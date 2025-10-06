@@ -117,8 +117,8 @@ const BARRIOS: Record<string, string[]> = {
   'Villa Alemana': ['Peñablanca','El Álamo','El Carmen'],
   Quilpué: ['El Sol','Belloto','Los Pinos'],
   Olmué: ['Olmué Centro','Lo Narváez'],
-  // Añadimos Casablanca/Tunquén para que el selector de barrio muestre Tunquén cuando eliges Casablanca
-  Casablanca: ['Tunquén', 'El Rosario de Tunquén'],
+  // >>> Solo “Tunquén” para Casablanca (se filtra tolerantemente en cliente)
+  Casablanca: ['Tunquén'],
 };
 
 /* ==== Normalización y región ==== */
@@ -207,7 +207,8 @@ export default function PropiedadesPage() {
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
     if (aComuna) p.set('comuna', aComuna);
-    if (aBarrio) p.set('barrio', aBarrio);
+    // >>> No enviamos 'barrio' al backend: lo filtramos en cliente con coincidencia flexible
+    // if (aBarrio) p.set('barrio', aBarrio);
 
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(aMinValor);
@@ -331,6 +332,7 @@ export default function PropiedadesPage() {
 
       if (aBarrio) {
         const bx = norm(x.barrio);
+        // Coincidencia flexible: “Tunquén” hace match con “El Rosario de Tunquén” también
         if (!bx.includes(norm(aBarrio))) return false;
       }
 
@@ -387,7 +389,7 @@ export default function PropiedadesPage() {
     setMinDorm(''); setMinBanos(''); setMinM2Const(''); setMinM2Terreno(''); setEstac('');
 
     setAOperacion(''); setATipo(''); setARegion(''); setAComuna(''); setABarrio('');
-    setAMoneda(''); setAMinValor(''); setAMaxValor('');
+    setAMoneda(''); setAMinValor(''); setAMaxValor('>');
     setAMinDorm(''); setAMinBanos(''); setAMinM2Const(''); setAMinM2Terreno(''); setAEstac('');
 
     setTrigger((v) => v + 1);
@@ -414,7 +416,7 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  /* ENTER -> Buscar (atajo de teclado global en el bloque de búsqueda) */
+  /* ENTER -> Buscar */
   const handleKeyDownSearch = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -509,16 +511,14 @@ export default function PropiedadesPage() {
                 <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
               </div>
 
-              {/* Reordenado: Estacionamientos ahora va después de Mín. baños */}
+              {/* Reordenado ya aplicado en tu código */}
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <SmartSelect options={['UF', 'CLP', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minDorm} onChange={(e)=>setMinDorm((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minBanos} onChange={(e)=>setMinBanos((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                {/* << Estacionamientos aquí */}
                 <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                {/* luego m² construidos y m² terreno */}
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
