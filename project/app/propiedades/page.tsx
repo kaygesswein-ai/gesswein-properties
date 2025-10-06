@@ -41,7 +41,7 @@ type Property = {
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
 
-/* === HERO: imagen exacta que pediste === */
+/* HERO exacto */
 const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_2884.jpeg';
 
@@ -117,15 +117,28 @@ const BARRIOS: Record<string, string[]> = {
   'Villa Alemana': ['Peñablanca','El Álamo','El Carmen'],
   Quilpué: ['El Sol','Belloto','Los Pinos'],
   Olmué: ['Olmué Centro','Lo Narváez'],
+  // Añadimos Casablanca/Tunquén para que el selector de barrio muestre Tunquén cuando eliges Casablanca
+  Casablanca: ['Tunquén', 'El Rosario de Tunquén'],
 };
 
 /* ==== Normalización y región ==== */
 const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalize = (s?: string) => stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
 
-function inferRegionByComuna(comuna?: string): string | undefined {
-  const c = normalize(comuna);
+/** Resuelve región a partir de comuna y, si es necesario, por barrio.
+ *  Casos especiales: Tunquén -> Casablanca -> Valparaíso
+ */
+function inferRegion(comuna?: string, barrio?: string): string | undefined {
+  const cNorm = normalize(comuna);
+  const bNorm = normalize(barrio);
+
+  // Mapear Tunquén aunque venga en comuna o barrio
+  const comunaEfectiva =
+    cNorm === 'tunquen' || bNorm.includes('tunquen') ? 'Casablanca' : (comuna || '');
+
+  const c = normalize(comunaEfectiva);
   if (!c) return undefined;
+
   for (const [reg, comunas] of Object.entries(COMUNAS)) {
     if (comunas.some((co) => normalize(co) === c)) return reg;
   }
@@ -191,14 +204,11 @@ export default function PropiedadesPage() {
   useEffect(() => {
     const p = new URLSearchParams();
 
-    // Enviamos algunos filtros al backend…
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
-    // region la resolvemos en cliente por comuna (por si no está poblada en BD)
     if (aComuna) p.set('comuna', aComuna);
     if (aBarrio) p.set('barrio', aBarrio);
 
-    // Rango precio al backend si corresponde (pero también reforzaremos en cliente)
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(aMinValor);
     const maxN = toInt(aMaxValor);
@@ -220,7 +230,6 @@ export default function PropiedadesPage() {
       }
     }
 
-    // Avanzados (también reforzaremos en cliente)
     if (aMinDorm) p.set('minDorm', aMinDorm);
     if (aMinBanos) p.set('minBanos', aMinBanos);
     if (aMinM2Const) p.set('minM2Const', aMinM2Const.replace(/\./g, ''));
@@ -279,18 +288,16 @@ export default function PropiedadesPage() {
     return () => { cancel = true; };
   }, [items, portadasById]);
 
-  /* ====== FILTRO EN CLIENTE (refuerzo completo) ====== */
+  /* ====== FILTRO EN CLIENTE ====== */
   const filteredItems = useMemo(() => {
     const norm = (s?: string) => normalize(s || '');
 
-    // Helpers de precio
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(aMinValor);
     const maxN = toInt(aMaxValor);
     const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
     const rate = ufValue || null;
 
-    // expresamos el rango en UF para comparar apples-to-apples
     const minUF = Number.isNaN(minN) ? -Infinity :
       isCLP ? (rate ? minN / rate : -Infinity) : minN;
     const maxUF = Number.isNaN(maxN) ?  Infinity :
@@ -300,36 +307,33 @@ export default function PropiedadesPage() {
       val == null ? false : val >= min;
 
     return (items || []).filter((x) => {
-      // Operación
-      if (aOperacion) {
-        const xo = norm(x.operacion);
-        const fo = norm(aOperacion);
-        if (xo !== fo) return false;
-      }
+      if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
 
-      // Tipo (aceptamos startsWith para pequeñas variaciones)
       if (aTipo) {
         const xt = norm(x.tipo);
         const ft = norm(aTipo);
         if (!xt.startsWith(ft)) return false;
       }
 
-      // Región por comuna (soporta fichas sin 'region')
+      // Región por comuna o por barrio (Tunquén -> Casablanca -> Valparaíso)
       if (aRegion) {
-        const regByComuna = inferRegionByComuna(x.comuna);
-        if (norm(regByComuna) !== norm(aRegion)) return false;
+        const r = inferRegion(x.comuna, x.barrio);
+        if (norm(r) !== norm(aRegion)) return false;
       }
 
-      // Comuna exacta
-      if (aComuna && norm(x.comuna) !== norm(aComuna)) return false;
+      if (aComuna) {
+        // Si p.comuna viene “Tunquén” y pediste Casablanca, lo aceptamos
+        const cItem = normalize(
+          normalize(x.comuna) === 'tunquen' ? 'Casablanca' : (x.comuna || '')
+        );
+        if (cItem !== norm(aComuna)) return false;
+      }
 
-      // Barrio contiene
       if (aBarrio) {
         const bx = norm(x.barrio);
         if (!bx.includes(norm(aBarrio))) return false;
       }
 
-      // Precio a UF del registro
       let vUF: number | null = null;
       if (x.precio_uf && x.precio_uf > 0) vUF = x.precio_uf;
       else if (x.precio_clp && x.precio_clp > 0 && rate) vUF = x.precio_clp / rate;
@@ -337,11 +341,9 @@ export default function PropiedadesPage() {
       if (vUF != null) {
         if (vUF < minUF || vUF > maxUF) return false;
       } else if (minUF !== -Infinity || maxUF !== Infinity) {
-        // si pediste rango y este item no tiene precio comparable, lo excluimos
         return false;
       }
 
-      // Avanzados (>= mínimo)
       if (aMinDorm && !ge(x.dormitorios, parseInt(aMinDorm, 10))) return false;
       if (aMinBanos && !ge(x.banos, parseInt(aMinBanos, 10))) return false;
       if (aMinM2Const) {
@@ -380,12 +382,10 @@ export default function PropiedadesPage() {
 
   /* LIMPIAR */
   const handleClear = () => {
-    // UI
     setOperacion(''); setTipo(''); setRegion(''); setComuna(''); setBarrio('');
     setMoneda(''); setMinValor(''); setMaxValor('');
     setMinDorm(''); setMinBanos(''); setMinM2Const(''); setMinM2Terreno(''); setEstac('');
 
-    // Aplicados
     setAOperacion(''); setATipo(''); setARegion(''); setAComuna(''); setABarrio('');
     setAMoneda(''); setAMinValor(''); setAMaxValor('');
     setAMinDorm(''); setAMinBanos(''); setAMinM2Const(''); setAMinM2Terreno(''); setAEstac('');
@@ -393,7 +393,7 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  /* BUSCAR: llevar UI -> aplicados */
+  /* BUSCAR */
   const applyAndSearch = () => {
     setAOperacion(operacion);
     setATipo(tipo);
@@ -412,6 +412,14 @@ export default function PropiedadesPage() {
     setAEstac(estac);
 
     setTrigger((v) => v + 1);
+  };
+
+  /* ENTER -> Buscar (atajo de teclado global en el bloque de búsqueda) */
+  const handleKeyDownSearch = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applyAndSearch();
+    }
   };
 
   const regionOptions = REGIONES;
@@ -442,7 +450,7 @@ export default function PropiedadesPage() {
       </section>
 
       {/* BÚSQUEDA */}
-      <section className="bg-white border-b border-slate-200">
+      <section className="bg-white border-b border-slate-200" onKeyDown={handleKeyDownSearch}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-2 text-slate-800 mb-4 pl-2 sm:pl-4">
             <Filter className="h-5 w-5" color={BRAND_BLUE} />
@@ -501,15 +509,18 @@ export default function PropiedadesPage() {
                 <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
               </div>
 
+              {/* Reordenado: Estacionamientos ahora va después de Mín. baños */}
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <SmartSelect options={['UF', 'CLP', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minDorm} onChange={(e)=>setMinDorm((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minBanos} onChange={(e)=>setMinBanos((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                {/* << Estacionamientos aquí */}
+                <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                {/* luego m² construidos y m² terreno */}
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
                 <button onClick={applyAndSearch} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
@@ -591,7 +602,6 @@ export default function PropiedadesPage() {
               const bodega = (p.tipo || '').toLowerCase().includes('bodega');
               const linkId = (p.id || p.slug || '').toString();
 
-              // Portada: primero portada_url/fija, luego hidratada por id, luego cover/imagenes, luego fallback
               const portadaHidratada = p.id ? portadasById[p.id] : '';
               const cardImage =
                 (p.portada_url && String(p.portada_url).trim()) ||
