@@ -40,10 +40,8 @@ type Property = {
 
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
-
-/* ======= HERO: URL que me pasaste ======= */
 const HERO_IMG =
-  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_2884.jpeg';
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_5437%20(1).jpeg';
 
 // “sin foto”
 const CARD_FALLBACK =
@@ -111,6 +109,7 @@ const COMUNAS: Record<string, string[]> = {
     'Villa Alemana',
     'Limache',
     'Olmué',
+    'Casablanca', // ← IMPORTANTE para Tunquén
   ],
 };
 
@@ -138,9 +137,11 @@ const BARRIOS: Record<string, string[]> = {
   'Villa Alemana': ['Peñablanca', 'El Álamo', 'El Carmen'],
   Quilpué: ['El Sol', 'Belloto', 'Los Pinos'],
   Olmué: ['Olmué Centro', 'Lo Narváez'],
+  // Nuevos para Valparaíso/Casablanca:
+  Casablanca: ['Tunquén', 'El Rosario de Tunquén'],
 };
 
-/* ==== Normalización e inferencia de región por comuna ==== */
+/* ==== Normalización y región ==== */
 const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalize = (s?: string) =>
   stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
@@ -155,19 +156,19 @@ function inferRegion(prop: Property): string | undefined {
 }
 
 export default function PropiedadesPage() {
-  // — Filtros (UI) —
+  // — Filtros (PENDIENTES / UI) —
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<string>('');
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
-  // — UF / CLP (UI) —
+  // — UF / CLP (PENDIENTES / UI) —
   const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  // — Avanzada (UI) —
+  // — Avanzada (PENDIENTES / UI) —
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
   const [minDorm, setMinDorm] = useState('');
   const [minBanos, setMinBanos] = useState('');
@@ -212,7 +213,7 @@ export default function PropiedadesPage() {
 
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
-    if (aRegion) p.set('region', aRegion); // si la API no filtra por region por tener null, lo corregimos abajo en post-filtro
+    if (aRegion) p.set('region', aRegion);
     if (aComuna) p.set('comuna', aComuna);
     if (aBarrio) p.set('barrio', aBarrio);
 
@@ -238,7 +239,7 @@ export default function PropiedadesPage() {
       }
     }
 
-    // Filtros avanzados aplicados
+    // Filtros avanzados aplicados (por si el backend soporta algo)
     if (aMinDorm) p.set('minDorm', aMinDorm);
     if (aMinBanos) p.set('minBanos', aMinBanos);
     if (aMinM2Const) p.set('minM2Const', aMinM2Const.replace(/\./g, ''));
@@ -260,28 +261,70 @@ export default function PropiedadesPage() {
     return () => { cancel = true; };
   }, [trigger]); // <- SOLO cambia con “Buscar”
 
-  /* ====== Post-filtro en el cliente para Región/Comuna/Barrio ======
-     (no rompe nada existente; solo asegura que Región funcione aunque
-      la API no pueda porque muchos registros tienen region null)     */
-  const postFiltered = useMemo(() => {
-    const n = (s?: string) => normalize(s || '');
+  // ====== FILTRO EN CLIENTE (asegura que todo funcione) ======
+  const filteredItems = useMemo(() => {
+    const norm = (s?: string) => normalize(s || '');
+    const toUF = (p: Property) => {
+      if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
+      if (p.precio_clp && p.precio_clp > 0 && ufValue) return p.precio_clp / ufValue;
+      return null;
+    };
+    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
 
-    let arr = items.slice();
+    const minN = toInt(aMinValor);
+    const maxN = toInt(aMaxValor);
+    const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
+    const minUF = Number.isNaN(minN) ? -Infinity : (isCLP && ufValue ? minN / ufValue : minN);
+    const maxUF = Number.isNaN(maxN) ? Infinity   : (isCLP && ufValue ? maxN / ufValue : maxN);
 
-    if (aRegion) {
-      arr = arr.filter((x) => n(inferRegion(x)) === n(aRegion));
-    }
-    if (aComuna) {
-      arr = arr.filter((x) => n(x.comuna) === n(aComuna));
-    }
-    if (aBarrio) {
-      arr = arr.filter((x) => n(x.barrio) === n(aBarrio));
-    }
+    const dMin = toInt(aMinDorm);
+    const bMin = toInt(aMinBanos);
+    const cMin = toInt(aMinM2Const);
+    const tMin = toInt(aMinM2Terreno);
+    const eMin = toInt(aEstac);
 
-    return arr;
-  }, [items, aRegion, aComuna, aBarrio]);
+    return (items || []).filter((x) => {
+      // operación y tipo
+      if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
+      if (aTipo       && !norm(x.tipo).startsWith(norm(aTipo))) return false;
 
-  // Ordenamiento (sobre el arreglo post-filtrado)
+      // región robusta (usa comuna->región)
+      if (aRegion) {
+        const r = inferRegion(x);
+        if (norm(r) !== norm(aRegion)) return false;
+      }
+
+      // comuna y barrio (normalizado)
+      if (aComuna && norm(x.comuna) !== norm(aComuna)) return false;
+      if (aBarrio && norm(x.barrio) !== norm(aBarrio)) return false;
+
+      // precio (en UF comparables)
+      const vUF = toUF(x);
+      if (vUF != null) {
+        if (vUF < minUF || vUF > maxUF) return false;
+      } else if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
+        // si pediste rango y no hay precio, descártalo
+        return false;
+      }
+
+      // avanzados: mínimos
+      if (!Number.isNaN(dMin) && (x.dormitorios ?? -Infinity) < dMin) return false;
+      if (!Number.isNaN(bMin) && (x.banos ?? -Infinity) < bMin) return false;
+      if (!Number.isNaN(cMin) && (x.superficie_util_m2 ?? -Infinity) < cMin) return false;
+      if (!Number.isNaN(tMin) && (x.superficie_terreno_m2 ?? -Infinity) < tMin) return false;
+      if (!Number.isNaN(eMin) && (x.estacionamientos ?? -Infinity) < eMin) return false;
+
+      return true;
+    });
+  }, [
+    items,
+    ufValue,
+    aOperacion, aTipo, aRegion, aComuna, aBarrio,
+    aMoneda, aMinValor, aMaxValor,
+    aMinDorm, aMinBanos, aMinM2Const, aMinM2Terreno, aEstac,
+  ]);
+
+  // ====== ORDENAMIENTO sobre el resultado filtrado ======
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
@@ -289,13 +332,13 @@ export default function PropiedadesPage() {
     return -Infinity;
   };
   const displayedItems = useMemo(() => {
-    const arr = postFiltered.slice();
+    const arr = filteredItems.slice();
     if (sortMode === 'price-desc') arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
     else if (sortMode === 'price-asc') arr.sort((a, b) => getComparablePriceUF(a) - getComparablePriceUF(b));
     return arr;
-  }, [postFiltered, sortMode, CLPfromUF]);
+  }, [filteredItems, sortMode, CLPfromUF]);
 
-  // LIMPIAR (limpia UI y aplicados, y vuelve a buscar)
+  // LIMPIAR
   const handleClear = () => {
     // UI
     setOperacion(''); setTipo(''); setRegion(''); setComuna(''); setBarrio('');
@@ -310,7 +353,7 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  // Aplicar filtros (al presionar BUSCAR)
+  // Aplicar filtros (BOTÓN BUSCAR)
   const applyAndSearch = () => {
     setAOperacion(operacion);
     setATipo(tipo);
@@ -339,8 +382,8 @@ export default function PropiedadesPage() {
     <main className="bg-white">
       {/* HERO */}
       <section
-        className="relative bg-cover min-h-[100svh]"
-        style={{ backgroundImage: `url(${HERO_IMG})`, backgroundPosition: '50% 82%' }}
+        className="relative bg-cover bg-center min-h-[100svh]"
+        style={{ backgroundImage: `url(${HERO_IMG})` }}
       >
         <div className="absolute inset-0 bg-black/35" />
         <div className="absolute bottom-6 left-0 right-0">
@@ -448,7 +491,7 @@ export default function PropiedadesPage() {
             PROPIEDADES DISPONIBLES
           </h2>
 
-        {/* Acciones de orden */}
+          {/* Acciones de orden */}
           <div className="relative flex items-center gap-2">
             <button
               type="button"
