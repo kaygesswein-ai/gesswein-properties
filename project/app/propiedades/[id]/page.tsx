@@ -28,7 +28,7 @@ import {
 /* ------------------------------------------------------------------ */
 type FotoRow = {
   url: string;
-  /** en la DB puede llamarse categoria; también aceptamos tag por compatibilidad */
+  /** en DB puede llamarse categoria; también aceptamos tag por compatibilidad */
   categoria?: 'exterior' | 'interior' | 'planos' | 'portada' | string | null;
   tag?: 'exterior' | 'interior' | 'planos' | 'portada' | string | null;
   orden?: number | null;
@@ -54,13 +54,13 @@ type Property = {
   imagenes?: string[] | null;
   barrio?: string | null;
 
-  // NUEVOS para portada y mapa
+  /* 👇 claves para portada y mapa */
   portada_url?: string | null;
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
 
-  // Características destacadas
+  /* 👇 Características destacadas (array de texto) */
   tags?: string[] | null;
 };
 
@@ -319,23 +319,17 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  // Normaliza etiqueta desde 'categoria' o 'tag'
   const getTag = (f?: FotoRow) => (f?.categoria ?? f?.tag ?? '')?.toString().toLowerCase();
 
-  // hero (portada)
+  /* --- HERO: prioriza SIEMPRE portada_url --- */
   const heroUrl = useMemo(() => {
-    // 1) Supabase propiedades.portada_url
     if (prop?.portada_url && String(prop.portada_url).trim().length) return prop.portada_url!;
-    // 2) Foto marcada como 'portada' en propiedades_fotos
     const portadaFoto = fotos.find(f => getTag(f) === 'portada')?.url;
     if (portadaFoto) return portadaFoto;
-    // 3) Primera imagen del array de la propiedad
     const fromProp = (prop?.imagenes ?? []).find(u => (u ?? '').trim().length);
     if (fromProp) return fromProp!;
-    // 4) Primera foto cualquiera
     const firstFoto = fotos.find(f => f?.url)?.url;
     if (firstFoto) return firstFoto;
-    // 5) Fallback
     return HERO_FALLBACK;
   }, [prop?.portada_url, prop?.imagenes, fotos]);
 
@@ -490,7 +484,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
       if (k === 'exterior') map.exterior.push(r.url);
       if (k === 'interior') map.interior.push(r.url);
       if (k === 'planos')   map.planos.push(r.url);
-      // k === 'portada' se omite en los tiles
+      // 'portada' no se muestra como tile
     });
     return map;
   }, [fotos]);
@@ -527,7 +521,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
     return raw.length ? raw.split('\n\n') : [];
   }, [prop?.descripcion]);
 
-  // Características destacadas: siempre visible
+  // Características destacadas (si hay tags en la API se muestran)
   const featureTags = (prop?.tags ?? []).filter(t => (t ?? '').trim().length);
   const hasTags = featureTags.length > 0;
 
@@ -598,7 +592,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
         <div className="h-px bg-slate-200 my-10" />
       </div>
 
-      {/* ---------- CARACTERÍSTICAS DESTACADAS (siempre visible) ---------- */}
+      {/* ---------- CARACTERÍSTICAS DESTACADAS ---------- */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle>Características destacadas</SectionTitle>
         <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
