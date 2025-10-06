@@ -6,7 +6,6 @@ import {
   Bed,
   ShowerHead,
   Ruler,
-  Search,
   Filter,
   Car,
   Square,
@@ -20,6 +19,7 @@ type Property = {
   slug?: string;
   titulo?: string;
   comuna?: string;
+  barrio?: string;
   region?: string;
   operacion?: 'venta' | 'arriendo';
   tipo?: string;
@@ -31,16 +31,23 @@ type Property = {
   superficie_terreno_m2?: number | null;
   estacionamientos?: number | null;
   coverImage?: string;
+  imagenes?: string[] | null;
   createdAt?: string;
   destacada?: boolean;
 
-  // ⬇️ NUEVO: viene desde la API/DB con la foto de portada centralizada
+  // claves de portada que podemos recibir desde la API
   portada_url?: string | null;
+  portada_fija_url?: string | null;
 };
 
 const BRAND_BLUE = '#0A2E57';
+const BTN_GRAY = '#2a2f36'; // gris corporativo para los 2 botones de orden
 const HERO_IMG =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=2000';
+
+// ⬇️ Cambia aquí tu imagen “sin foto”
+const CARD_FALLBACK =
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
 /* ==== Helpers ==== */
 const fmtMiles = (raw: string) => {
@@ -53,8 +60,7 @@ const fmtMiles = (raw: string) => {
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const capFirst = (s?: string) =>
-  (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
 /* ==== Hook UF ==== */
 function useUfValue() {
@@ -134,9 +140,9 @@ const regionDisplay = (r: string) => {
   return roman ? `${roman} - ${r}` : r;
 };
 
-/* ==== Normalización región ==== */
+/* ==== Normalización ==== */
 const stripDiacritics = (s: string) =>
-  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 const normalize = (s?: string) =>
   stripDiacritics((s || '').toLowerCase())
@@ -211,10 +217,7 @@ function inferRegion(prop: Property): string | undefined {
 }
 
 export default function PropiedadesPage() {
-  /* — Buscador superior — */
-  const [qTop, setQTop] = useState('');
-
-  /* — Filtros comunes — */
+  // — Filtros comunes —
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [regionInput, setRegionInput] = useState('');
@@ -222,12 +225,12 @@ export default function PropiedadesPage() {
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
-  /* — UF / CLP — */
+  // — UF / CLP —
   const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  /* — Avanzada — */
+  // — Avanzada —
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
   const [minDorm, setMinDorm] = useState('');
   const [minBanos, setMinBanos] = useState('');
@@ -235,13 +238,13 @@ export default function PropiedadesPage() {
   const [minM2Terreno, setMinM2Terreno] = useState('');
   const [estac, setEstac] = useState('');
 
-  /* — Resultados — */
+  // — Resultados —
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [trigger, setTrigger] = useState(0);
 
-  /* ==== Ordenamiento / menú ==== */
+  // Orden
   const [sortMode, setSortMode] = useState<
     'price-desc' | 'price-asc' | 'hipoteca' | 'flipping' | 'subdivision' | ''
   >('');
@@ -249,7 +252,7 @@ export default function PropiedadesPage() {
 
   const ufValue = useUfValue();
 
-  /* Region: acepta “RM - …”, “X - …” o solo el nombre */
+  // Región: acepta “RM - …”, “X - …” o solo el nombre (NO dispara búsqueda)
   useEffect(() => {
     const cleaned = (regionInput || '').trim();
     const m = cleaned.match(/^\s*(?:[IVXLCDM]+|RM)\s*-\s*(.+)$/i);
@@ -258,16 +261,15 @@ export default function PropiedadesPage() {
     else setRegion('');
   }, [regionInput]);
 
-  // búsqueda inicial
+  // Búsqueda inicial (una vez)
   useEffect(() => {
     setTrigger((v) => v + 1);
   }, []);
 
-  /* Build params + fetch (sin caché) — SOLO cuando cambia "trigger" */
+  /* Build params + fetch (sin caché) — SOLO cuando cambia "trigger" o UF */
   useEffect(() => {
     const p = new URLSearchParams();
 
-    if (qTop.trim()) p.set('q', qTop.trim());
     if (operacion) p.set('operacion', operacion);
     if (tipo) p.set('tipo', tipo);
     if (region) p.set('region', region);
@@ -309,11 +311,57 @@ export default function PropiedadesPage() {
         if (cancel) return;
         let arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
 
-        // Respaldo: filtro cliente por región
+        // ——— Filtro de respaldo en el cliente (garantiza que funcione) ———
+        const norm = (s?: string) => normalize(s || '');
+
+        // operación
+        if (operacion) {
+          const op = norm(operacion);
+          arr = arr.filter((x) => norm(x.operacion) === op);
+        }
+
+        // tipo (igualdad laxa)
+        if (tipo) {
+          const t = norm(tipo);
+          arr = arr.filter((x) => norm(x.tipo).startsWith(t));
+        }
+
+        // región
         if (region) {
-          arr = arr.filter((prop) => {
-            const effectiveRegion = inferRegion(prop);
-            return sameRegion(effectiveRegion, region);
+          arr = arr.filter((prop) => sameRegion(inferRegion(prop), region));
+        }
+
+        // comuna
+        if (comuna) {
+          const c = norm(comuna);
+          arr = arr.filter((x) => norm(x.comuna) === c);
+        }
+
+        // barrio (si la ficha lo trae)
+        if (barrio) {
+          const b = norm(barrio);
+          arr = arr.filter((x) => norm(x.barrio) === b);
+        }
+
+        // rango de precio (UF / CLP)
+        const toUFComparable = (p: Property) => {
+          if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
+          if (p.precio_clp && p.precio_clp > 0 && ufValue) return p.precio_clp / ufValue;
+          return Number.POSITIVE_INFINITY; // para que “sin precio” no pase el filtro si hay min
+        };
+
+        if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
+          const isCLP = moneda === 'CLP' || moneda === 'CLP$';
+          const minUF = Number.isNaN(minN)
+            ? -Infinity
+            : isCLP && ufValue ? minN / ufValue : minN;
+          const maxUF = Number.isNaN(maxN)
+            ? Infinity
+            : isCLP && ufValue ? maxN / ufValue : maxN;
+
+          arr = arr.filter((p) => {
+            const v = toUFComparable(p);
+            return v >= minUF && v <= maxUF;
           });
         }
 
@@ -329,11 +377,10 @@ export default function PropiedadesPage() {
     return () => {
       cancel = true;
     };
-  }, [trigger, ufValue, region]);
+  }, [trigger, ufValue]); // <- ¡sin “region”! ya no dispara sola
 
-  // botón LIMPIAR
+  // LIMPIAR
   const handleClear = () => {
-    setQTop('');
     setOperacion('');
     setTipo('');
     setRegionInput('');
@@ -359,7 +406,7 @@ export default function PropiedadesPage() {
 
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
 
-  /* ====== ORDENAMIENTO aplicado a los items ====== */
+  // Ordenamiento
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
     if (p.precio_clp && p.precio_clp > 0 && CLPfromUF) return p.precio_clp / CLPfromUF;
@@ -378,9 +425,9 @@ export default function PropiedadesPage() {
 
   return (
     <main className="bg-white">
-      {/* HERO */}
+      {/* HERO sin buscador por calle */}
       <section
-        className="relative bg-cover min-h-[100svh]"
+        className="relative bg-cover min-h-[60svh]"
         style={{ backgroundImage: `url(${HERO_IMG})`, backgroundPosition: '50% 82%' }}
       >
         <div className="absolute inset-0 bg-black/35" />
@@ -394,24 +441,6 @@ export default function PropiedadesPage() {
                 <p className="text-white/85 mt-2">
                   Encuentra tu próxima inversión o tu nuevo hogar.
                 </p>
-              </div>
-              <div className="mt-4 max-w-2xl">
-                <div className="relative">
-                  <Search className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-white/90" />
-                  <input
-                    value={qTop}
-                    onChange={(e) => setQTop(e.target.value)}
-                    placeholder="Buscar por calle"
-                    className="w-full rounded-md bg-white/95 backdrop-blur pl-8 pr-24 py-3 text-slate-900 placeholder-slate-500"
-                  />
-                  <button
-                    onClick={() => setTrigger((v) => v + 1)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 text-sm text-white rounded-none"
-                    style={{ background: BRAND_BLUE }}
-                  >
-                    Buscar
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -691,7 +720,7 @@ export default function PropiedadesPage() {
             PROPIEDADES DISPONIBLES
           </h2>
 
-        {/* Acciones: limpiar orden + abrir menú */}
+          {/* Acciones: limpiar orden + abrir menú */}
           <div className="relative flex items-center gap-2">
             <button
               type="button"
@@ -701,7 +730,7 @@ export default function PropiedadesPage() {
                 setSortOpen(false);
               }}
               className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
-              style={{ background: BRAND_BLUE }}
+              style={{ background: BTN_GRAY }}
               title="Limpiar orden"
             >
               <Trash2 className="h-5 w-5" />
@@ -711,7 +740,7 @@ export default function PropiedadesPage() {
               type="button"
               onClick={() => setSortOpen((s) => !s)}
               className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
-              style={{ background: BRAND_BLUE }}
+              style={{ background: BTN_GRAY }}
               aria-haspopup="menu"
               aria-expanded={sortOpen}
               title="Filtrar / ordenar"
@@ -750,7 +779,7 @@ export default function PropiedadesPage() {
                     setSortOpen(false);
                   }}
                 >
-                  Noción hipotecaria
+                  Novación hipotecaria
                 </button>
                 <button
                   className="w-full text-left px-4 py-2 hover:bg-slate-50"
@@ -794,16 +823,17 @@ export default function PropiedadesPage() {
                 (p.tipo || '').toLowerCase().includes('sitio');
               const bodega = (p.tipo || '').toLowerCase().includes('bodega');
 
-              // Usa id o slug para construir la ruta
+              // id o slug para la ruta
               const linkId = (p.id || p.slug || '').toString();
 
-              // ⬇️ NUEVO: prioriza portada_url, luego coverImage, luego fallback
+              // Portada: portada_url -> portada_fija_url -> coverImage -> imagenes[0] -> fallback
               const cardImage =
-                (p.portada_url && String(p.portada_url).trim().length ? p.portada_url : '') ||
-                (p.coverImage || '') ||
-                'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
+                (p.portada_url && String(p.portada_url).trim()) ||
+                (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
+                (p.coverImage && String(p.coverImage).trim()) ||
+                (Array.isArray(p.imagenes) && p.imagenes[0]) ||
+                CARD_FALLBACK;
 
-              // ⬇️ NUEVO: capitaliza el tipo para mostrar “Casa / Departamento / Terreno”
               const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
 
               return (
