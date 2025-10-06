@@ -21,7 +21,7 @@ type Property = {
   comuna?: string;
   barrio?: string;
   region?: string;
-  operacion?: 'venta' | 'arriendo' | string;
+  operacion?: 'venta' | 'arriendo';
   tipo?: string;
   precio_uf?: number | null;
   precio_clp?: number | null;
@@ -40,12 +40,10 @@ type Property = {
 
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
-
-/* HERO exacto */
 const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_2884.jpeg';
 
-/* Fallback card */
+// “sin foto”
 const CARD_FALLBACK =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
@@ -74,7 +72,9 @@ function useUfValue() {
         if (!cancel) setUf(null);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, []);
   return uf;
 }
@@ -84,81 +84,83 @@ const REGIONES: string[] = ['Metropolitana de Santiago', 'Valparaíso'];
 
 const COMUNAS: Record<string, string[]> = {
   'Metropolitana de Santiago': [
-    'Las Condes','Vitacura','Lo Barnechea','Providencia','Santiago','Ñuñoa','La Reina','Huechuraba',
-    'La Florida','Maipú','Puente Alto','Colina','Lampa','Talagante','Peñalolén','Macul',
+    'Las Condes',
+    'Vitacura',
+    'Lo Barnechea',
+    'Providencia',
+    'Santiago',
+    'Ñuñoa',
+    'La Reina',
+    'Huechuraba',
+    'La Florida',
+    'Maipú',
+    'Puente Alto',
+    'Colina',
+    'Lampa',
+    'Talagante',
+    'Peñalolén',
+    'Macul',
   ],
   Valparaíso: [
-    'Casablanca', // Tunquén pertenece a Casablanca
-    'Viña del Mar','Valparaíso','Concón','Quilpué','Villa Alemana','Limache','Olmué',
+    'Casablanca',
+    'Viña del Mar',
+    'Valparaíso',
+    'Concón',
+    'Quilpué',
+    'Villa Alemana',
+    'Limache',
+    'Olmué',
   ],
 };
 
 const BARRIOS: Record<string, string[]> = {
-  'Las Condes': ['El Golf','Nueva Las Condes','San Damián','Estoril','Los Dominicos','Cantagallo','Apoquindo'],
-  Vitacura: ['Santa María de Manquehue','Lo Curro','Jardín del Este','Vitacura Centro','Parque Bicentenario'],
-  'Lo Barnechea': ['La Dehesa','Los Trapenses','El Huinganal','Valle La Dehesa'],
-  Providencia: ['Los Leones','Pedro de Valdivia','Providencia Centro','Bellavista'],
-  Ñuñoa: ['Plaza Ñuñoa','Villa Frei','Irarrazabal','Suárez Mujica'],
-  Santiago: ['Centro','Lastarria','Parque Almagro','Barrio Brasil','Yungay'],
-  'La Reina': ['La Reina Alta','Nueva La Reina','La Reina Centro'],
-  Huechuraba: ['Ciudad Empresarial','Pedro Fontova'],
-  'La Florida': ['Trinidad','Walker Martínez','Bellavista','Gerónimo de Alderete'],
-  Maipú: ['Ciudad Satélite','El Abrazo','Maipú Centro'],
-  'Puente Alto': ['Eyzaguirre','Malloco Colorado','Balmaceda'],
-  Colina: ['Chicureo Oriente','Chicureo Poniente','Piedra Roja','Las Brisas','Santa Elena'],
-  'Peñalolén': ['Los Presidentes','San Luis','Altos de Peñalolén'],
-  Macul: ['Macul Centro','Emilio Rojas','Los Plátanos'],
-  Lampa: ['Valle Grande','Chicauma'],
-  Talagante: ['Talagante Centro','Isla de Maipo Norte'],
-  'Viña del Mar': ['Reñaca','Jardín del Mar','Oriente','Centro'],
-  Valparaíso: ['Cerro Alegre','Cerro Concepción','Barón','Playa Ancha'],
-  Concón: ['Bosques de Montemar','Costa de Montemar','Concón Centro'],
-  Limache: ['Limache Viejo','Limache Nuevo','San Francisco','Lliu Lliu'],
-  'Villa Alemana': ['Peñablanca','El Álamo','El Carmen'],
-  Quilpué: ['El Sol','Belloto','Los Pinos'],
-  Olmué: ['Olmué Centro','Lo Narváez'],
-  // Añadimos Casablanca/Tunquén para que el selector de barrio muestre Tunquén cuando eliges Casablanca
-  Casablanca: ['Tunquén', 'El Rosario de Tunquén'],
+  // RM
+  'Las Condes': ['El Golf', 'Nueva Las Condes', 'San Damián', 'Estoril', 'Los Dominicos', 'Cantagallo', 'Apoquindo'],
+  Vitacura: ['Santa María de Manquehue', 'Lo Curro', 'Jardín del Este', 'Vitacura Centro', 'Parque Bicentenario'],
+  'Lo Barnechea': ['La Dehesa', 'Los Trapenses', 'El Huinganal', 'Valle La Dehesa'],
+  Providencia: ['Los Leones', 'Pedro de Valdivia', 'Providencia Centro', 'Bellavista'],
+  Ñuñoa: ['Plaza Ñuñoa', 'Villa Frei', 'Irarrazabal', 'Suárez Mujica'],
+  Santiago: ['Centro', 'Lastarria', 'Parque Almagro', 'Barrio Brasil', 'Yungay'],
+  'La Reina': ['La Reina Alta', 'Nueva La Reina', 'La Reina Centro'],
+  Huechuraba: ['Ciudad Empresarial', 'Pedro Fontova'],
+  'La Florida': ['Trinidad', 'Walker Martínez', 'Bellavista', 'Gerónimo de Alderete'],
+  Maipú: ['Ciudad Satélite', 'El Abrazo', 'Maipú Centro'],
+  'Puente Alto': ['Eyzaguirre', 'Malloco Colorado', 'Balmaceda'],
+  Colina: ['Chicureo Oriente', 'Chicureo Poniente', 'Piedra Roja', 'Las Brisas', 'Santa Elena'],
+  'Peñalolén': ['Los Presidentes', 'San Luis', 'Altos de Peñalolén'],
+  Macul: ['Macul Centro', 'Emilio Rojas', 'Los Plátanos'],
+  Lampa: ['Valle Grande', 'Chicauma'],
+  Talagante: ['Talagante Centro', 'Isla de Maipo Norte'],
+  // V región
+  Casablanca: ['Tunquén'],
+  'Viña del Mar': ['Reñaca', 'Jardín del Mar', 'Oriente', 'Centro'],
+  Valparaíso: ['Cerro Alegre', 'Cerro Concepción', 'Barón', 'Playa Ancha'],
+  Concón: ['Bosques de Montemar', 'Costa de Montemar', 'Concón Centro'],
+  Limache: ['Limache Viejo', 'Limache Nuevo', 'San Francisco', 'Lliu Lliu'],
+  'Villa Alemana': ['Peñablanca', 'El Álamo', 'El Carmen'],
+  Quilpué: ['El Sol', 'Belloto', 'Los Pinos'],
+  Olmué: ['Olmué Centro', 'Lo Narváez'],
 };
 
-/* ==== Normalización y región ==== */
+/* ==== Normalización ==== */
 const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-const normalize = (s?: string) => stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
-
-/** Resuelve región a partir de comuna y, si es necesario, por barrio.
- *  Casos especiales: Tunquén -> Casablanca -> Valparaíso
- */
-function inferRegion(comuna?: string, barrio?: string): string | undefined {
-  const cNorm = normalize(comuna);
-  const bNorm = normalize(barrio);
-
-  // Mapear Tunquén aunque venga en comuna o barrio
-  const comunaEfectiva =
-    cNorm === 'tunquen' || bNorm.includes('tunquen') ? 'Casablanca' : (comuna || '');
-
-  const c = normalize(comunaEfectiva);
-  if (!c) return undefined;
-
-  for (const [reg, comunas] of Object.entries(COMUNAS)) {
-    if (comunas.some((co) => normalize(co) === c)) return reg;
-  }
-  return undefined;
-}
+const normalize = (s?: string) =>
+  stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
 
 export default function PropiedadesPage() {
-  /* — Filtros UI — */
+  // — Filtros (UI) —
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<string>('');
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
-  /* — UF / CLP UI — */
+  // — UF / CLP (UI) —
   const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  /* — Avanzada UI — */
+  // — Avanzada (UI) —
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
   const [minDorm, setMinDorm] = useState('');
   const [minBanos, setMinBanos] = useState('');
@@ -166,7 +168,7 @@ export default function PropiedadesPage() {
   const [minM2Terreno, setMinM2Terreno] = useState('');
   const [estac, setEstac] = useState('');
 
-  /* — APLICADOS — */
+  // — Filtros APLICADOS —
   const [aOperacion, setAOperacion] = useState('');
   const [aTipo, setATipo] = useState('');
   const [aRegion, setARegion] = useState<string>('');
@@ -183,32 +185,32 @@ export default function PropiedadesPage() {
   const [aMinM2Terreno, setAMinM2Terreno] = useState('');
   const [aEstac, setAEstac] = useState('');
 
-  /* — Resultados — */
+  // — Resultados —
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
   const [trigger, setTrigger] = useState(0);
 
-  /* Portadas “hidratadas” por id cuando la lista no las trae */
-  const [portadasById, setPortadasById] = useState<Record<string, string>>({});
-
-  /* Orden */
+  // Orden
   const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | 'hipoteca' | 'flipping' | 'subdivision' | ''>('');
   const [sortOpen, setSortOpen] = useState(false);
 
   const ufValue = useUfValue();
 
-  /* Carga inicial */
+  // Carga inicial
   useEffect(() => { setTrigger((v) => v + 1); }, []);
 
-  /* Fetch listado (SOLO al Buscar) */
+  /* Fetch (solo cuando cambia trigger) */
   useEffect(() => {
     const p = new URLSearchParams();
 
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
+    if (aRegion) p.set('region', aRegion);
     if (aComuna) p.set('comuna', aComuna);
-    if (aBarrio) p.set('barrio', aBarrio);
+    // NOTA: barrio se filtra con tolerancia en cliente (para aceptar “El Rosario de Tunquén”)
+    // if (aBarrio) p.set('barrio', aBarrio);
 
+    // MIN/MAX con UF o CLP — usando valores APLICADOS
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(aMinValor);
     const maxN = toInt(aMaxValor);
@@ -230,6 +232,7 @@ export default function PropiedadesPage() {
       }
     }
 
+    // Filtros avanzados aplicados
     if (aMinDorm) p.set('minDorm', aMinDorm);
     if (aMinBanos) p.set('minBanos', aMinBanos);
     if (aMinM2Const) p.set('minM2Const', aMinM2Const.replace(/\./g, ''));
@@ -249,124 +252,22 @@ export default function PropiedadesPage() {
       .finally(() => { if (!cancel) setLoading(false); });
 
     return () => { cancel = true; };
-  }, [trigger, ufValue]);
+  }, [trigger]); // <- SOLO cambia con “Buscar”
 
-  /* Hidratación de portadas por id cuando faltan en la lista */
-  useEffect(() => {
-    const need = (items || [])
-      .filter(p => p.id && !p.portada_url && !p.portada_fija_url)
-      .map(p => p.id!)
-      .filter(id => !portadasById[id]);
-
-    if (need.length === 0) return;
-
-    let cancel = false;
-    (async () => {
-      const entries: [string, string][] = [];
-      for (const id of need) {
-        try {
-          const r = await fetch(`/api/propiedades/${encodeURIComponent(id)}`, { cache: 'no-store' });
-          const j = await r.json();
-          const data = j?.data || j;
-          const img =
-            (data?.portada_url && String(data.portada_url).trim()) ||
-            (data?.portada_fija_url && String(data.portada_fija_url).trim()) ||
-            (Array.isArray(data?.imagenes) && data.imagenes[0]) ||
-            '';
-          if (img) entries.push([id, img]);
-        } catch {}
-      }
-      if (!cancel && entries.length) {
-        setPortadasById(prev => {
-          const next = { ...prev };
-          for (const [k, v] of entries) next[k] = v;
-          return next;
-        });
-      }
-    })();
-
-    return () => { cancel = true; };
-  }, [items, portadasById]);
-
-  /* ====== FILTRO EN CLIENTE ====== */
-  const filteredItems = useMemo(() => {
-    const norm = (s?: string) => normalize(s || '');
-
-    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
-    const minN = toInt(aMinValor);
-    const maxN = toInt(aMaxValor);
-    const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
-    const rate = ufValue || null;
-
-    const minUF = Number.isNaN(minN) ? -Infinity :
-      isCLP ? (rate ? minN / rate : -Infinity) : minN;
-    const maxUF = Number.isNaN(maxN) ?  Infinity :
-      isCLP ? (rate ? maxN / rate :  Infinity) : maxN;
-
-    const ge = (val: number | null | undefined, min: number) =>
-      val == null ? false : val >= min;
-
-    return (items || []).filter((x) => {
-      if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
-
-      if (aTipo) {
-        const xt = norm(x.tipo);
-        const ft = norm(aTipo);
-        if (!xt.startsWith(ft)) return false;
-      }
-
-      // Región por comuna o por barrio (Tunquén -> Casablanca -> Valparaíso)
-      if (aRegion) {
-        const r = inferRegion(x.comuna, x.barrio);
-        if (norm(r) !== norm(aRegion)) return false;
-      }
-
-      if (aComuna) {
-        // Si p.comuna viene “Tunquén” y pediste Casablanca, lo aceptamos
-        const cItem = normalize(
-          normalize(x.comuna) === 'tunquen' ? 'Casablanca' : (x.comuna || '')
-        );
-        if (cItem !== norm(aComuna)) return false;
-      }
-
-      if (aBarrio) {
-        const bx = norm(x.barrio);
-        if (!bx.includes(norm(aBarrio))) return false;
-      }
-
-      let vUF: number | null = null;
-      if (x.precio_uf && x.precio_uf > 0) vUF = x.precio_uf;
-      else if (x.precio_clp && x.precio_clp > 0 && rate) vUF = x.precio_clp / rate;
-
-      if (vUF != null) {
-        if (vUF < minUF || vUF > maxUF) return false;
-      } else if (minUF !== -Infinity || maxUF !== Infinity) {
-        return false;
-      }
-
-      if (aMinDorm && !ge(x.dormitorios, parseInt(aMinDorm, 10))) return false;
-      if (aMinBanos && !ge(x.banos, parseInt(aMinBanos, 10))) return false;
-      if (aMinM2Const) {
-        const m = parseInt(aMinM2Const.replace(/\./g, ''), 10);
-        if (!ge(x.superficie_util_m2, m)) return false;
-      }
-      if (aMinM2Terreno) {
-        const m = parseInt(aMinM2Terreno.replace(/\./g, ''), 10);
-        if (!ge(x.superficie_terreno_m2, m)) return false;
-      }
-      if (aEstac && !ge(x.estacionamientos, parseInt(aEstac, 10))) return false;
-
-      return true;
+  /* Filtro TOLERANTE por barrio (solo si se eligió) */
+  const itemsAfterBarrio = useMemo(() => {
+    if (!aBarrio) return items;
+    const sel = normalize(aBarrio);
+    return (items || []).filter((p) => {
+      const pb = normalize(p.barrio || '');
+      if (!sel) return true;
+      // Caso especial: si seleccionas "Tunquén" acepta "Tunquén" y "El Rosario de Tunquén"
+      if (sel === 'tunquen') return pb.includes('tunquen');
+      return pb === sel;
     });
-  }, [
-    items,
-    aOperacion, aTipo, aRegion, aComuna, aBarrio,
-    aMoneda, aMinValor, aMaxValor,
-    aMinDorm, aMinBanos, aMinM2Const, aMinM2Terreno, aEstac,
-    ufValue
-  ]);
+  }, [items, aBarrio]);
 
-  /* Ordenamiento */
+  // Ordenamiento (sobre la lista ya filtrada por barrio)
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
@@ -374,18 +275,20 @@ export default function PropiedadesPage() {
     return -Infinity;
   };
   const displayedItems = useMemo(() => {
-    const arr = filteredItems.slice();
+    const arr = itemsAfterBarrio.slice();
     if (sortMode === 'price-desc') arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
     else if (sortMode === 'price-asc') arr.sort((a, b) => getComparablePriceUF(a) - getComparablePriceUF(b));
     return arr;
-  }, [filteredItems, sortMode, CLPfromUF]);
+  }, [itemsAfterBarrio, sortMode, CLPfromUF]);
 
-  /* LIMPIAR */
+  // LIMPIAR
   const handleClear = () => {
+    // UI
     setOperacion(''); setTipo(''); setRegion(''); setComuna(''); setBarrio('');
     setMoneda(''); setMinValor(''); setMaxValor('');
     setMinDorm(''); setMinBanos(''); setMinM2Const(''); setMinM2Terreno(''); setEstac('');
 
+    // Aplicados
     setAOperacion(''); setATipo(''); setARegion(''); setAComuna(''); setABarrio('');
     setAMoneda(''); setAMinValor(''); setAMaxValor('');
     setAMinDorm(''); setAMinBanos(''); setAMinM2Const(''); setAMinM2Terreno(''); setAEstac('');
@@ -393,7 +296,7 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  /* BUSCAR */
+  // Aplicar filtros (BUSCAR)
   const applyAndSearch = () => {
     setAOperacion(operacion);
     setATipo(tipo);
@@ -414,14 +317,6 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  /* ENTER -> Buscar (atajo de teclado global en el bloque de búsqueda) */
-  const handleKeyDownSearch = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      applyAndSearch();
-    }
-  };
-
   const regionOptions = REGIONES;
   const comunaOptions = region ? COMUNAS[region] || [] : [];
   const barrioOptions = comuna && BARRIOS[comuna] ? BARRIOS[comuna] : [];
@@ -429,13 +324,10 @@ export default function PropiedadesPage() {
   return (
     <main className="bg-white">
       {/* HERO */}
-      <section className="relative min-h-[100svh]">
-        <img
-          src={HERO_IMG}
-          alt="Portada"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '50% 35%' }}
-        />
+      <section
+        className="relative bg-cover min-h-[100svh]"
+        style={{ backgroundImage: `url(${HERO_IMG})`, backgroundPosition: '50% 82%' }}
+      >
         <div className="absolute inset-0 bg-black/35" />
         <div className="absolute bottom-6 left-0 right-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -450,7 +342,7 @@ export default function PropiedadesPage() {
       </section>
 
       {/* BÚSQUEDA */}
-      <section className="bg-white border-b border-slate-200" onKeyDown={handleKeyDownSearch}>
+      <section className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-2 text-slate-800 mb-4 pl-2 sm:pl-4">
             <Filter className="h-5 w-5" color={BRAND_BLUE} />
@@ -462,14 +354,18 @@ export default function PropiedadesPage() {
             <button
               type="button"
               onClick={() => setAdvancedMode('rapida')}
-              className={`px-3 py-2 text-sm rounded-none border ${advancedMode === 'rapida' ? 'bg-gray-200 border-gray-300 text-slate-900' : 'bg-gray-50 border-gray-300 text-slate-700'}`}
+              className={`px-3 py-2 text-sm rounded-none border ${
+                advancedMode === 'rapida' ? 'bg-gray-200 border-gray-300 text-slate-900'
+                                          : 'bg-gray-50 border-gray-300 text-slate-700'}`}
             >
               Búsqueda rápida
             </button>
             <button
               type="button"
               onClick={() => setAdvancedMode('avanzada')}
-              className={`px-3 py-2 text-sm rounded-none border ${advancedMode === 'avanzada' ? 'bg-gray-200 border-gray-300 text-slate-900' : 'bg-gray-50 border-gray-300 text-slate-700'}`}
+              className={`px-3 py-2 text-sm rounded-none border ${
+                advancedMode === 'avanzada' ? 'bg-gray-200 border-gray-300 text-slate-900'
+                                            : 'bg-gray-50 border-gray-300 text-slate-700'}`}
             >
               Búsqueda avanzada
             </button>
@@ -480,7 +376,10 @@ export default function PropiedadesPage() {
             <>
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
-                <SmartSelect options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']} value={tipo} onChange={setTipo} placeholder="Tipo de propiedad" />
+                <SmartSelect
+                  options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']}
+                  value={tipo} onChange={setTipo} placeholder="Tipo de propiedad"
+                />
                 <SmartSelect options={regionOptions} value={region} onChange={(v)=>{ setRegion(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
                 <SmartSelect options={comunaOptions} value={comuna} onChange={(v)=>{ setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
                 <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
@@ -499,7 +398,9 @@ export default function PropiedadesPage() {
           {/* === AVANZADA === */}
           {advancedMode === 'avanzada' && (
             <>
-              <div className="pl-2 sm:pl-4"><div className="h-px bg-slate-200 my-4" /></div>
+              <div className="pl-2 sm:pl-4">
+                <div className="h-px bg-slate-200 my-4" />
+              </div>
 
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
@@ -509,16 +410,13 @@ export default function PropiedadesPage() {
                 <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
               </div>
 
-              {/* Reordenado: Estacionamientos ahora va después de Mín. baños */}
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <SmartSelect options={['UF', 'CLP', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minDorm} onChange={(e)=>setMinDorm((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minBanos} onChange={(e)=>setMinBanos((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                {/* << Estacionamientos aquí */}
                 <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                {/* luego m² construidos y m² terreno */}
                 <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
                 <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
@@ -601,12 +499,9 @@ export default function PropiedadesPage() {
               const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
               const bodega = (p.tipo || '').toLowerCase().includes('bodega');
               const linkId = (p.id || p.slug || '').toString();
-
-              const portadaHidratada = p.id ? portadasById[p.id] : '';
               const cardImage =
                 (p.portada_url && String(p.portada_url).trim()) ||
                 (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
-                (portadaHidratada && String(portadaHidratada).trim()) ||
                 (p.coverImage && String(p.coverImage).trim()) ||
                 (Array.isArray(p.imagenes) && p.imagenes[0]) ||
                 CARD_FALLBACK;
