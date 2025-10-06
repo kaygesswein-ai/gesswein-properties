@@ -16,8 +16,8 @@ import {
 import SmartSelect from '../../components/SmartSelect';
 
 type Property = {
-  id?: string;              // ← ahora opcional
-  slug?: string;            // ← añadido para soportar slugs
+  id?: string;
+  slug?: string;
   titulo?: string;
   comuna?: string;
   region?: string;
@@ -33,6 +33,9 @@ type Property = {
   coverImage?: string;
   createdAt?: string;
   destacada?: boolean;
+
+  // ⬇️ NUEVO: viene desde la API/DB con la foto de portada centralizada
+  portada_url?: string | null;
 };
 
 const BRAND_BLUE = '#0A2E57';
@@ -50,7 +53,8 @@ const fmtMiles = (raw: string) => {
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+const capFirst = (s?: string) =>
+  (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
 /* ==== Hook UF ==== */
 function useUfValue() {
@@ -115,22 +119,11 @@ const REG_N_ARABIC: Record<string, number> = {
 const toRoman = (n?: number) => {
   if (!n || Number.isNaN(n)) return '';
   const m: [number, string][] = [
-    [1000, 'M'],
-    [900, 'CM'],
-    [500, 'D'],
-    [400, 'CD'],
-    [100, 'C'],
-    [90, 'XC'],
-    [50, 'L'],
-    [40, 'XL'],
-    [10, 'X'],
-    [9, 'IX'],
-    [5, 'V'],
-    [4, 'IV'],
-    [1, 'I'],
+    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'],
+    [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'],
+    [5, 'V'], [4, 'IV'], [1, 'I'],
   ];
-  let s = '',
-    x = n;
+  let s = '', x = n;
   for (const [v, r] of m) while (x >= v) { s += r; x -= v; }
   return s;
 };
@@ -156,92 +149,54 @@ const normalize = (s?: string) =>
     .trim();
 
 const sameRegion = (a?: string, b?: string) => {
-  const na = normalize(a),
-    nb = normalize(b);
+  const na = normalize(a), nb = normalize(b);
   if (!na || !nb) return false;
   return na === nb || na.includes(nb) || nb.includes(na);
 };
 
-/* Para inferir región desde comuna si la ficha no trae region */
 const COMUNAS: Record<string, string[]> = {
   'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
   Tarapacá: ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica'],
   Antofagasta: ['Antofagasta', 'Calama', 'San Pedro de Atacama'],
   Atacama: ['Copiapó', 'Caldera', 'Vallenar'],
   Coquimbo: ['La Serena', 'Coquimbo', 'Ovalle'],
-  Valparaíso: [
-    'Viña del Mar',
-    'Valparaíso',
-    'Concón',
-    'Quilpué',
-    'Villa Alemana',
-    'Limache',
-    'Olmué',
-  ],
-  "O'Higgins": ['Rancagua', 'Machalí', 'San Fernando', 'Santa Cruz'],
-  Maule: ['Talca', 'Curicó', 'Linares'],
-  Ñuble: ['Chillán', 'San Carlos'],
-  Biobío: ['Concepción', 'San Pedro de la Paz', 'Talcahuano', 'Hualpén'],
-  'La Araucanía': ['Temuco', 'Villarrica', 'Pucón'],
-  'Los Ríos': ['Valdivia', 'Panguipulli', 'La Unión'],
-  'Los Lagos': ['Puerto Montt', 'Puerto Varas', 'Osorno', 'Castro', 'Ancud'],
-  Aysén: ['Coyhaique', 'Aysén'],
-  Magallanes: ['Punta Arenas', 'Puerto Natales'],
+  Valparaíso: ['Viña del Mar','Valparaíso','Concón','Quilpué','Villa Alemana','Limache','Olmué'],
+  "O'Higgins": ['Rancagua','Machalí','San Fernando','Santa Cruz'],
+  Maule: ['Talca','Curicó','Linares'],
+  Ñuble: ['Chillán','San Carlos'],
+  Biobío: ['Concepción','San Pedro de la Paz','Talcahuano','Hualpén'],
+  'La Araucanía': ['Temuco','Villarrica','Pucón'],
+  'Los Ríos': ['Valdivia','Panguipulli','La Unión'],
+  'Los Lagos': ['Puerto Montt','Puerto Varas','Osorno','Castro','Ancud'],
+  Aysén: ['Coyhaique','Aysén'],
+  Magallanes: ['Punta Arenas','Puerto Natales'],
   'Metropolitana de Santiago': [
-    'Las Condes',
-    'Vitacura',
-    'Lo Barnechea',
-    'Providencia',
-    'Santiago',
-    'Ñuñoa',
-    'La Reina',
-    'Huechuraba',
-    'La Florida',
-    'Maipú',
-    'Puente Alto',
-    'Colina',
-    'Lampa',
-    'Talagante',
-    'Peñalolén',
-    'Macul',
+    'Las Condes','Vitacura','Lo Barnechea','Providencia','Santiago','Ñuñoa','La Reina','Huechuraba',
+    'La Florida','Maipú','Puente Alto','Colina','Lampa','Talagante','Peñalolén','Macul',
   ],
 };
 
 const BARRIOS: Record<string, string[]> = {
-  'Las Condes': [
-    'El Golf',
-    'Nueva Las Condes',
-    'San Damián',
-    'Estoril',
-    'Los Dominicos',
-    'Cantagallo',
-    'Apoquindo',
-  ],
-  Vitacura: [
-    'Santa María de Manquehue',
-    'Lo Curro',
-    'Jardín del Este',
-    'Vitacura Centro',
-    'Parque Bicentenario',
-  ],
-  'Lo Barnechea': ['La Dehesa', 'Los Trapenses', 'El Huinganal', 'Valle La Dehesa'],
-  Providencia: ['Los Leones', 'Pedro de Valdivia', 'Providencia Centro', 'Bellavista'],
-  Ñuñoa: ['Plaza Ñuñoa', 'Villa Frei', 'Irarrazabal', 'Suárez Mujica'],
-  Santiago: ['Centro', 'Lastarria', 'Parque Almagro', 'Barrio Brasil', 'Yungay'],
-  'La Reina': ['La Reina Alta', 'Nueva La Reina', 'La Reina Centro'],
-  Huechuraba: ['Ciudad Empresarial', 'Pedro Fontova'],
-  'La Florida': ['Trinidad', 'Walker Martínez', 'Bellavista', 'Gerónimo de Alderete'],
-  Maipú: ['Ciudad Satélite', 'El Abrazo', 'Maipú Centro'],
-  'Puente Alto': ['Eyzaguirre', 'Malloco Colorado', 'Balmaceda'],
-  Colina: ['Chicureo Oriente', 'Chicureo Poniente', 'Piedra Roja', 'Las Brisas', 'Santa Elena'],
-  'Peñalolén': ['Los Presidentes', 'San Luis', 'Altos de Peñalolén'],
-  Macul: ['Macul Centro', 'Emilio Rojas', 'Los Plátanos'],
-  Lampa: ['Valle Grande', 'Chicauma'],
-  Talagante: ['Talagante Centro', 'Isla de Maipo Norte'],
-  Limache: ['Limache Viejo', 'Limache Nuevo', 'San Francisco', 'Lliu Lliu'],
-  'Viña del Mar': ['Reñaca', 'Jardín del Mar', 'Oriente', 'Centro'],
-  Concón: ['Bosques de Montemar', 'Costa de Montemar', 'Concón Centro'],
-  Valdivia: ['Isla Teja', 'Torreones', 'Las Ánimas', 'Regional'],
+  'Las Condes': ['El Golf','Nueva Las Condes','San Damián','Estoril','Los Dominicos','Cantagallo','Apoquindo'],
+  Vitacura: ['Santa María de Manquehue','Lo Curro','Jardín del Este','Vitacura Centro','Parque Bicentenario'],
+  'Lo Barnechea': ['La Dehesa','Los Trapenses','El Huinganal','Valle La Dehesa'],
+  Providencia: ['Los Leones','Pedro de Valdivia','Providencia Centro','Bellavista'],
+  Ñuñoa: ['Plaza Ñuñoa','Villa Frei','Irarrazabal','Suárez Mujica'],
+  Santiago: ['Centro','Lastarria','Parque Almagro','Barrio Brasil','Yungay'],
+  'La Reina': ['La Reina Alta','Nueva La Reina','La Reina Centro'],
+  Huechuraba: ['Ciudad Empresarial','Pedro Fontova'],
+  'La Florida': ['Trinidad','Walker Martínez','Bellavista','Gerónimo de Alderete'],
+  Maipú: ['Ciudad Satélite','El Abrazo','Maipú Centro'],
+  'Puente Alto': ['Eyzaguirre','Malloco Colorado','Balmaceda'],
+  Colina: ['Chicureo Oriente','Chicureo Poniente','Piedra Roja','Las Brisas','Santa Elena'],
+  'Peñalolén': ['Los Presidentes','San Luis','Altos de Peñalolén'],
+  Macul: ['Macul Centro','Emilio Rojas','Los Plátanos'],
+  Lampa: ['Valle Grande','Chicauma'],
+  Talagante: ['Talagante Centro','Isla de Maipo Norte'],
+  Limache: ['Limache Viejo','Limache Nuevo','San Francisco','Lliu Lliu'],
+  'Viña del Mar': ['Reñaca','Jardín del Mar','Oriente','Centro'],
+  Concón: ['Bosques de Montemar','Costa de Montemar','Concón Centro'],
+  Valdivia: ['Isla Teja','Torreones','Las Ánimas','Regional'],
 };
 
 /** Devuelve región confiable de una ficha */
@@ -736,7 +691,7 @@ export default function PropiedadesPage() {
             PROPIEDADES DISPONIBLES
           </h2>
 
-          {/* Acciones: limpiar orden + abrir menú */}
+        {/* Acciones: limpiar orden + abrir menú */}
           <div className="relative flex items-center gap-2">
             <button
               type="button"
@@ -839,8 +794,17 @@ export default function PropiedadesPage() {
                 (p.tipo || '').toLowerCase().includes('sitio');
               const bodega = (p.tipo || '').toLowerCase().includes('bodega');
 
-              // ← NUEVO: usa id o slug para construir la ruta
+              // Usa id o slug para construir la ruta
               const linkId = (p.id || p.slug || '').toString();
+
+              // ⬇️ NUEVO: prioriza portada_url, luego coverImage, luego fallback
+              const cardImage =
+                (p.portada_url && String(p.portada_url).trim().length ? p.portada_url : '') ||
+                (p.coverImage || '') ||
+                'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
+
+              // ⬇️ NUEVO: capitaliza el tipo para mostrar “Casa / Departamento / Terreno”
+              const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
 
               return (
                 <Link
@@ -850,10 +814,7 @@ export default function PropiedadesPage() {
                 >
                   <div className="aspect-[4/3] bg-slate-100">
                     <img
-                      src={
-                        p.coverImage ||
-                        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop'
-                      }
+                      src={cardImage}
                       alt={p.titulo || 'Propiedad'}
                       className="w-full h-full object-cover group-hover:opacity-95 transition"
                     />
@@ -863,7 +824,7 @@ export default function PropiedadesPage() {
                       {p.titulo || 'Propiedad'}
                     </h3>
                     <p className="mt-1 text-sm text-slate-600">
-                      {[p.comuna || '', p.tipo ? String(p.tipo) : '', p.operacion ? capFirst(String(p.operacion)) : '']
+                      {[p.comuna || '', tipoCap, p.operacion ? capFirst(String(p.operacion)) : '']
                         .filter(Boolean)
                         .join(' · ')}
                     </p>
@@ -907,67 +868,18 @@ export default function PropiedadesPage() {
                       </div>
                     ) : terreno ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Bed className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <ShowerHead className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Car className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Ruler className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Square className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                          </div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
                       </div>
                     ) : (
                       <div className="mt-3 grid grid-cols-4 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Bed className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <ShowerHead className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.banos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Ruler className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                          </div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Car className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
                       </div>
                     )}
 
