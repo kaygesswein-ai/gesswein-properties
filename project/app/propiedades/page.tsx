@@ -287,8 +287,10 @@ export default function PropiedadesPage() {
     minValor, maxValor, moneda, minDorm, minBanos, minM2Const, minM2Terreno, estac
   ]);
 
-  // Ordenamiento
+  // ===== CLPfromUF (FALTABA y rompía el build) =====
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
+
+  // Ordenamiento
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
     if (p.precio_clp && p.precio_clp > 0 && CLPfromUF) return p.precio_clp / CLPfromUF;
@@ -426,7 +428,7 @@ export default function PropiedadesPage() {
             PROPIEDADES DISPONIBLES
           </h2>
 
-        {/* Acciones de orden */}
+          {/* Acciones de orden */}
           <div className="relative flex items-center gap-2">
             <button
               type="button"
