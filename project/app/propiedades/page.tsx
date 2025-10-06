@@ -39,12 +39,11 @@ type Property = {
 };
 
 const BRAND_BLUE = '#0A2E57';
-const BTN_GRAY_BORDER = '#e2e8f0'; // borde gris claro
+const BTN_GRAY_BORDER = '#e2e8f0';
 const HERO_IMG =
-  // ← CAMBIA ESTA URL si quieres otro hero para esta página
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=2000';
 
-// ← CAMBIA ESTA URL para tu “sin foto”
+// “sin foto”
 const CARD_FALLBACK =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
@@ -81,7 +80,7 @@ function useUfValue() {
 }
 
 /* ==== SOLO RM y Valparaíso ==== */
-const REGIONES = ['Metropolitana de Santiago', 'Valparaíso'] as const;
+const REGIONES: string[] = ['Metropolitana de Santiago', 'Valparaíso'];
 
 const COMUNAS: Record<string, string[]> = {
   'Metropolitana de Santiago': [
@@ -271,11 +270,10 @@ export default function PropiedadesPage() {
       if (vUF != null) {
         if (vUF < minUF || vUF > maxUF) return false;
       } else if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
-        // si no tiene precio y el usuario puso límites, no calza
         return false;
       }
 
-      // avanzados (todos son ">= mínimo")
+      // avanzados (>= mínimo)
       if (!Number.isNaN(dMin) && (x.dormitorios ?? -Infinity) < dMin) return false;
       if (!Number.isNaN(bMin) && (x.banos ?? -Infinity) < bMin) return false;
       if (!Number.isNaN(cMin) && (x.superficie_util_m2 ?? -Infinity) < cMin) return false;
@@ -311,14 +309,13 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  // Helpers UI
   const regionOptions = REGIONES;
   const comunaOptions = region ? COMUNAS[region] || [] : [];
   const barrioOptions = comuna && BARRIOS[comuna] ? BARRIOS[comuna] : [];
 
   return (
     <main className="bg-white">
-      {/* HERO a pantalla completa */}
+      {/* HERO */}
       <section
         className="relative bg-cover min-h-[100svh]"
         style={{ backgroundImage: `url(${HERO_IMG})`, backgroundPosition: '50% 82%' }}
@@ -429,9 +426,8 @@ export default function PropiedadesPage() {
             PROPIEDADES DISPONIBLES
           </h2>
 
-          {/* Acciones de orden: estilos que pediste */}
+        {/* Acciones de orden */}
           <div className="relative flex items-center gap-2">
-            {/* Basurero: borde negro, fondo blanco, icono negro */}
             <button
               type="button"
               aria-label="Limpiar orden"
@@ -443,7 +439,6 @@ export default function PropiedadesPage() {
               <Trash2 className="h-5 w-5" />
             </button>
 
-            {/* Filtrar/ordenar: igual a “Buscar” (fondo azul, borde gris, icono blanco) */}
             <button
               type="button"
               onClick={() => setSortOpen((s) => !s)}
