@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -154,19 +153,19 @@ function inferRegion(prop: Property): string | undefined {
 }
 
 export default function PropiedadesPage() {
-  // — Filtros (PENDIENTES / UI) —
+  // — Filtros (UI) —
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<string>('');
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
-  // — UF / CLP (PENDIENTES / UI) —
+  // — UF / CLP (UI) —
   const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  // — Avanzada (PENDIENTES / UI) —
+  // — Avanzada (UI) —
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
   const [minDorm, setMinDorm] = useState('');
   const [minBanos, setMinBanos] = useState('');
@@ -174,7 +173,7 @@ export default function PropiedadesPage() {
   const [minM2Terreno, setMinM2Terreno] = useState('');
   const [estac, setEstac] = useState('');
 
-  // — Filtros APLICADOS (los que realmente buscan) —
+  // — Filtros APLICADOS —
   const [aOperacion, setAOperacion] = useState('');
   const [aTipo, setATipo] = useState('');
   const [aRegion, setARegion] = useState<string>('');
@@ -259,7 +258,74 @@ export default function PropiedadesPage() {
     return () => { cancel = true; };
   }, [trigger]); // <- SOLO cambia con “Buscar”
 
-  // Ordenamiento (sobre items recibidos)
+  /* ========= FILTRO LOCAL (aplicado) — garantiza que filtre bien ========= */
+  const filteredItems = useMemo(() => {
+    const norm = (s?: string) => normalize(s || '');
+
+    // precio a UF
+    const toUF = (p: Property) => {
+      if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
+      if (p.precio_clp && p.precio_clp > 0 && ufValue) return Math.round(p.precio_clp / ufValue);
+      return null;
+    };
+
+    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
+
+    // rangos aplicados
+    const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
+    const minN = toInt(aMinValor);
+    const maxN = toInt(aMaxValor);
+    const minUF = Number.isNaN(minN) ? -Infinity : (isCLP && ufValue ? Math.round(minN / ufValue) : minN);
+    const maxUF = Number.isNaN(maxN) ?  Infinity : (isCLP && ufValue ? Math.round(maxN / ufValue) : maxN);
+
+    const dMin = toInt(aMinDorm);
+    const bMin = toInt(aMinBanos);
+    const cMin = toInt(aMinM2Const);
+    const tMin = toInt(aMinM2Terreno);
+    const eMin = toInt(aEstac);
+
+    return (items || []).filter((x) => {
+      if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
+
+      if (aTipo) {
+        // “Casa” no debe traer “Terreno”, etc.
+        if (!x.tipo) return false;
+        if (norm(x.tipo) !== norm(aTipo)) return false;
+      }
+
+      if (aRegion) {
+        const effRegion = x.region || inferRegion(x) || '';
+        if (norm(effRegion) !== norm(aRegion)) return false;
+      }
+
+      if (aComuna && norm(x.comuna) !== norm(aComuna)) return false;
+      if (aBarrio && norm(x.barrio) !== norm(aBarrio)) return false;
+
+      // Precio en UF (si hay rango)
+      if (!Number.isNaN(minUF) || !Number.isNaN(maxUF)) {
+        const v = toUF(x);
+        if (v == null) return false;
+        if (v < minUF || v > maxUF) return false;
+      }
+
+      // Avanzados (mínimos)
+      if (!Number.isNaN(dMin) && (x.dormitorios ?? -Infinity) < dMin) return false;
+      if (!Number.isNaN(bMin) && (x.banos ?? -Infinity) < bMin) return false;
+      if (!Number.isNaN(cMin) && (x.superficie_util_m2 ?? -Infinity) < cMin) return false;
+      if (!Number.isNaN(tMin) && (x.superficie_terreno_m2 ?? -Infinity) < tMin) return false;
+      if (!Number.isNaN(eMin) && (x.estacionamientos ?? -Infinity) < eMin) return false;
+
+      return true;
+    });
+  }, [
+    items,
+    aOperacion, aTipo, aRegion, aComuna, aBarrio,
+    aMoneda, aMinValor, aMaxValor,
+    aMinDorm, aMinBanos, aMinM2Const, aMinM2Terreno, aEstac,
+    ufValue
+  ]);
+
+  // Ordenamiento (sobre filtrados)
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
@@ -267,11 +333,11 @@ export default function PropiedadesPage() {
     return -Infinity;
   };
   const displayedItems = useMemo(() => {
-    const arr = items.slice();
+    const arr = filteredItems.slice();
     if (sortMode === 'price-desc') arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
     else if (sortMode === 'price-asc') arr.sort((a, b) => getComparablePriceUF(a) - getComparablePriceUF(b));
     return arr;
-  }, [items, sortMode, CLPfromUF]);
+  }, [filteredItems, sortMode, CLPfromUF]);
 
   // LIMPIAR (limpia UI y aplicados, y vuelve a buscar)
   const handleClear = () => {
