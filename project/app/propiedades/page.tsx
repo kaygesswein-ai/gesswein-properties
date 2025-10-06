@@ -33,34 +33,30 @@ type Property = {
   coverImage?: string;
   imagenes?: string[] | null;
   createdAt?: string;
-  destacada?: boolean;
 
-  // claves de portada que podemos recibir desde la API
   portada_url?: string | null;
   portada_fija_url?: string | null;
 };
 
 const BRAND_BLUE = '#0A2E57';
-const BTN_GRAY = '#2a2f36'; // gris corporativo para los 2 botones de orden
+const BTN_GRAY_BORDER = '#e2e8f0'; // borde gris claro
 const HERO_IMG =
+  // ← CAMBIA ESTA URL si quieres otro hero para esta página
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=2000';
 
-// ⬇️ Cambia aquí tu imagen “sin foto”
+// ← CAMBIA ESTA URL para tu “sin foto”
 const CARD_FALLBACK =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
-/* ==== Helpers ==== */
-const fmtMiles = (raw: string) => {
-  const digits = (raw || '').replace(/\D+/g, '');
-  if (!digits) return '';
-  return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(
-    parseInt(digits, 10),
-  );
-};
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+const fmtMiles = (raw: string) => {
+  const digits = (raw || '').replace(/\D+/g, '');
+  if (!digits) return '';
+  return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(parseInt(digits, 10));
+};
 
 /* ==== Hook UF ==== */
 function useUfValue() {
@@ -84,131 +80,72 @@ function useUfValue() {
   return uf;
 }
 
-/* ==== Regiones (UI) ==== */
-const REGIONES = [
-  'Metropolitana de Santiago',
-  'Arica y Parinacota',
-  'Tarapacá',
-  'Antofagasta',
-  'Atacama',
-  'Coquimbo',
-  'Valparaíso',
-  "O'Higgins",
-  'Maule',
-  'Ñuble',
-  'Biobío',
-  'La Araucanía',
-  'Los Ríos',
-  'Los Lagos',
-  'Aysén',
-  'Magallanes',
-] as const;
-
-const REG_N_ARABIC: Record<string, number> = {
-  'Arica y Parinacota': 15,
-  Tarapacá: 1,
-  Antofagasta: 2,
-  Atacama: 3,
-  Coquimbo: 4,
-  Valparaíso: 5,
-  "O'Higgins": 6,
-  Maule: 7,
-  Ñuble: 16,
-  Biobío: 8,
-  'La Araucanía': 9,
-  'Los Ríos': 14,
-  'Los Lagos': 10,
-  Aysén: 11,
-  Magallanes: 12,
-  'Metropolitana de Santiago': 13,
-};
-const toRoman = (n?: number) => {
-  if (!n || Number.isNaN(n)) return '';
-  const m: [number, string][] = [
-    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'],
-    [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'],
-    [5, 'V'], [4, 'IV'], [1, 'I'],
-  ];
-  let s = '', x = n;
-  for (const [v, r] of m) while (x >= v) { s += r; x -= v; }
-  return s;
-};
-const regionDisplay = (r: string) => {
-  if (r === 'Metropolitana de Santiago') return `RM - ${r}`;
-  const num = REG_N_ARABIC[r];
-  const roman = toRoman(num);
-  return roman ? `${roman} - ${r}` : r;
-};
-
-/* ==== Normalización ==== */
-const stripDiacritics = (s: string) =>
-  (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-const normalize = (s?: string) =>
-  stripDiacritics((s || '').toLowerCase())
-    .replace(/regi[oó]n/g, '')
-    .replace(/\bmetropolitana(?:\s+de\s+santiago)?/g, 'metropolitana')
-    .replace(/\brm\b/g, 'metropolitana')
-    .replace(/\bde\b|\bdel\b|\bla\b|\bel\b/g, '')
-    .replace(/^\s*(?:[ivxlcdm]+)\s*-\s*/i, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const sameRegion = (a?: string, b?: string) => {
-  const na = normalize(a), nb = normalize(b);
-  if (!na || !nb) return false;
-  return na === nb || na.includes(nb) || nb.includes(na);
-};
+/* ==== SOLO RM y Valparaíso ==== */
+const REGIONES = ['Metropolitana de Santiago', 'Valparaíso'] as const;
 
 const COMUNAS: Record<string, string[]> = {
-  'Arica y Parinacota': ['Arica', 'Camarones', 'Putre', 'General Lagos'],
-  Tarapacá: ['Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica'],
-  Antofagasta: ['Antofagasta', 'Calama', 'San Pedro de Atacama'],
-  Atacama: ['Copiapó', 'Caldera', 'Vallenar'],
-  Coquimbo: ['La Serena', 'Coquimbo', 'Ovalle'],
-  Valparaíso: ['Viña del Mar','Valparaíso','Concón','Quilpué','Villa Alemana','Limache','Olmué'],
-  "O'Higgins": ['Rancagua','Machalí','San Fernando','Santa Cruz'],
-  Maule: ['Talca','Curicó','Linares'],
-  Ñuble: ['Chillán','San Carlos'],
-  Biobío: ['Concepción','San Pedro de la Paz','Talcahuano','Hualpén'],
-  'La Araucanía': ['Temuco','Villarrica','Pucón'],
-  'Los Ríos': ['Valdivia','Panguipulli','La Unión'],
-  'Los Lagos': ['Puerto Montt','Puerto Varas','Osorno','Castro','Ancud'],
-  Aysén: ['Coyhaique','Aysén'],
-  Magallanes: ['Punta Arenas','Puerto Natales'],
   'Metropolitana de Santiago': [
-    'Las Condes','Vitacura','Lo Barnechea','Providencia','Santiago','Ñuñoa','La Reina','Huechuraba',
-    'La Florida','Maipú','Puente Alto','Colina','Lampa','Talagante','Peñalolén','Macul',
+    'Las Condes',
+    'Vitacura',
+    'Lo Barnechea',
+    'Providencia',
+    'Santiago',
+    'Ñuñoa',
+    'La Reina',
+    'Huechuraba',
+    'La Florida',
+    'Maipú',
+    'Puente Alto',
+    'Colina',
+    'Lampa',
+    'Talagante',
+    'Peñalolén',
+    'Macul',
+  ],
+  Valparaíso: [
+    'Viña del Mar',
+    'Valparaíso',
+    'Concón',
+    'Quilpué',
+    'Villa Alemana',
+    'Limache',
+    'Olmué',
   ],
 };
 
 const BARRIOS: Record<string, string[]> = {
-  'Las Condes': ['El Golf','Nueva Las Condes','San Damián','Estoril','Los Dominicos','Cantagallo','Apoquindo'],
-  Vitacura: ['Santa María de Manquehue','Lo Curro','Jardín del Este','Vitacura Centro','Parque Bicentenario'],
-  'Lo Barnechea': ['La Dehesa','Los Trapenses','El Huinganal','Valle La Dehesa'],
-  Providencia: ['Los Leones','Pedro de Valdivia','Providencia Centro','Bellavista'],
-  Ñuñoa: ['Plaza Ñuñoa','Villa Frei','Irarrazabal','Suárez Mujica'],
-  Santiago: ['Centro','Lastarria','Parque Almagro','Barrio Brasil','Yungay'],
-  'La Reina': ['La Reina Alta','Nueva La Reina','La Reina Centro'],
-  Huechuraba: ['Ciudad Empresarial','Pedro Fontova'],
-  'La Florida': ['Trinidad','Walker Martínez','Bellavista','Gerónimo de Alderete'],
-  Maipú: ['Ciudad Satélite','El Abrazo','Maipú Centro'],
-  'Puente Alto': ['Eyzaguirre','Malloco Colorado','Balmaceda'],
-  Colina: ['Chicureo Oriente','Chicureo Poniente','Piedra Roja','Las Brisas','Santa Elena'],
-  'Peñalolén': ['Los Presidentes','San Luis','Altos de Peñalolén'],
-  Macul: ['Macul Centro','Emilio Rojas','Los Plátanos'],
-  Lampa: ['Valle Grande','Chicauma'],
-  Talagante: ['Talagante Centro','Isla de Maipo Norte'],
-  Limache: ['Limache Viejo','Limache Nuevo','San Francisco','Lliu Lliu'],
-  'Viña del Mar': ['Reñaca','Jardín del Mar','Oriente','Centro'],
-  Concón: ['Bosques de Montemar','Costa de Montemar','Concón Centro'],
-  Valdivia: ['Isla Teja','Torreones','Las Ánimas','Regional'],
+  'Las Condes': ['El Golf', 'Nueva Las Condes', 'San Damián', 'Estoril', 'Los Dominicos', 'Cantagallo', 'Apoquindo'],
+  Vitacura: ['Santa María de Manquehue', 'Lo Curro', 'Jardín del Este', 'Vitacura Centro', 'Parque Bicentenario'],
+  'Lo Barnechea': ['La Dehesa', 'Los Trapenses', 'El Huinganal', 'Valle La Dehesa'],
+  Providencia: ['Los Leones', 'Pedro de Valdivia', 'Providencia Centro', 'Bellavista'],
+  Ñuñoa: ['Plaza Ñuñoa', 'Villa Frei', 'Irarrazabal', 'Suárez Mujica'],
+  Santiago: ['Centro', 'Lastarria', 'Parque Almagro', 'Barrio Brasil', 'Yungay'],
+  'La Reina': ['La Reina Alta', 'Nueva La Reina', 'La Reina Centro'],
+  Huechuraba: ['Ciudad Empresarial', 'Pedro Fontova'],
+  'La Florida': ['Trinidad', 'Walker Martínez', 'Bellavista', 'Gerónimo de Alderete'],
+  Maipú: ['Ciudad Satélite', 'El Abrazo', 'Maipú Centro'],
+  'Puente Alto': ['Eyzaguirre', 'Malloco Colorado', 'Balmaceda'],
+  Colina: ['Chicureo Oriente', 'Chicureo Poniente', 'Piedra Roja', 'Las Brisas', 'Santa Elena'],
+  'Peñalolén': ['Los Presidentes', 'San Luis', 'Altos de Peñalolén'],
+  Macul: ['Macul Centro', 'Emilio Rojas', 'Los Plátanos'],
+  Lampa: ['Valle Grande', 'Chicauma'],
+  Talagante: ['Talagante Centro', 'Isla de Maipo Norte'],
+  'Viña del Mar': ['Reñaca', 'Jardín del Mar', 'Oriente', 'Centro'],
+  Valparaíso: ['Cerro Alegre', 'Cerro Concepción', 'Barón', 'Playa Ancha'],
+  Concón: ['Bosques de Montemar', 'Costa de Montemar', 'Concón Centro'],
+  Limache: ['Limache Viejo', 'Limache Nuevo', 'San Francisco', 'Lliu Lliu'],
+  'Villa Alemana': ['Peñablanca', 'El Álamo', 'El Carmen'],
+  Quilpué: ['El Sol', 'Belloto', 'Los Pinos'],
+  Olmué: ['Olmué Centro', 'Lo Narváez'],
 };
 
-/** Devuelve región confiable de una ficha */
+/* ==== Normalización y región ==== */
+const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const normalize = (s?: string) =>
+  stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
+
 function inferRegion(prop: Property): string | undefined {
-  if (prop.region && normalize(prop.region)) return prop.region!;
-  const c = prop.comuna ? normalize(prop.comuna) : '';
+  const c = normalize(prop.comuna);
   if (!c) return undefined;
   for (const [reg, comunas] of Object.entries(COMUNAS)) {
     if (comunas.some((co) => normalize(co) === c)) return reg;
@@ -217,10 +154,9 @@ function inferRegion(prop: Property): string | undefined {
 }
 
 export default function PropiedadesPage() {
-  // — Filtros comunes —
+  // — Filtros —
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
-  const [regionInput, setRegionInput] = useState('');
   const [region, setRegion] = useState<string>('');
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
@@ -241,47 +177,26 @@ export default function PropiedadesPage() {
   // — Resultados —
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
-
   const [trigger, setTrigger] = useState(0);
 
   // Orden
-  const [sortMode, setSortMode] = useState<
-    'price-desc' | 'price-asc' | 'hipoteca' | 'flipping' | 'subdivision' | ''
-  >('');
+  const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | 'hipoteca' | 'flipping' | 'subdivision' | ''>('');
   const [sortOpen, setSortOpen] = useState(false);
 
   const ufValue = useUfValue();
 
-  // Región: acepta “RM - …”, “X - …” o solo el nombre (NO dispara búsqueda)
-  useEffect(() => {
-    const cleaned = (regionInput || '').trim();
-    const m = cleaned.match(/^\s*(?:[IVXLCDM]+|RM)\s*-\s*(.+)$/i);
-    const name = (m ? m[1] : cleaned) as string;
-    if (name && REG_N_ARABIC[name] != null) setRegion(name);
-    else setRegion('');
-  }, [regionInput]);
+  // Carga inicial
+  useEffect(() => { setTrigger((v) => v + 1); }, []);
 
-  // Búsqueda inicial (una vez)
-  useEffect(() => {
-    setTrigger((v) => v + 1);
-  }, []);
-
-  /* Build params + fetch (sin caché) — SOLO cuando cambia "trigger" o UF */
+  /* Fetch (solo cuando cambia trigger o UF) */
   useEffect(() => {
     const p = new URLSearchParams();
-
     if (operacion) p.set('operacion', operacion);
     if (tipo) p.set('tipo', tipo);
     if (region) p.set('region', region);
     if (comuna) p.set('comuna', comuna);
     if (barrio) p.set('barrio', barrio);
-    if (minDorm) p.set('minDorm', minDorm);
-    if (minBanos) p.set('minBanos', minBanos);
-    if (minM2Const) p.set('minM2Const', minM2Const.replace(/\./g, ''));
-    if (minM2Terreno) p.set('minM2Terreno', minM2Terreno.replace(/\./g, ''));
-    if (estac) p.set('minEstac', estac);
 
-    // --- MIN/MAX con UF o CLP ---
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(minValor);
     const maxN = toInt(maxValor);
@@ -303,131 +218,109 @@ export default function PropiedadesPage() {
       }
     }
 
-    let cancel = false;
     setLoading(true);
+    let cancel = false;
+
     fetch(`/api/propiedades?${p.toString()}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => {
         if (cancel) return;
-        let arr = Array.isArray(j?.data) ? (j.data as Property[]) : [];
-
-        // ——— Filtro de respaldo en el cliente (garantiza que funcione) ———
-        const norm = (s?: string) => normalize(s || '');
-
-        // operación
-        if (operacion) {
-          const op = norm(operacion);
-          arr = arr.filter((x) => norm(x.operacion) === op);
-        }
-
-        // tipo (igualdad laxa)
-        if (tipo) {
-          const t = norm(tipo);
-          arr = arr.filter((x) => norm(x.tipo).startsWith(t));
-        }
-
-        // región
-        if (region) {
-          arr = arr.filter((prop) => sameRegion(inferRegion(prop), region));
-        }
-
-        // comuna
-        if (comuna) {
-          const c = norm(comuna);
-          arr = arr.filter((x) => norm(x.comuna) === c);
-        }
-
-        // barrio (si la ficha lo trae)
-        if (barrio) {
-          const b = norm(barrio);
-          arr = arr.filter((x) => norm(x.barrio) === b);
-        }
-
-        // rango de precio (UF / CLP)
-        const toUFComparable = (p: Property) => {
-          if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
-          if (p.precio_clp && p.precio_clp > 0 && ufValue) return p.precio_clp / ufValue;
-          return Number.POSITIVE_INFINITY; // para que “sin precio” no pase el filtro si hay min
-        };
-
-        if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
-          const isCLP = moneda === 'CLP' || moneda === 'CLP$';
-          const minUF = Number.isNaN(minN)
-            ? -Infinity
-            : isCLP && ufValue ? minN / ufValue : minN;
-          const maxUF = Number.isNaN(maxN)
-            ? Infinity
-            : isCLP && ufValue ? maxN / ufValue : maxN;
-
-          arr = arr.filter((p) => {
-            const v = toUFComparable(p);
-            return v >= minUF && v <= maxUF;
-          });
-        }
-
-        setItems(arr);
+        setItems(Array.isArray(j?.data) ? (j.data as Property[]) : []);
       })
-      .catch(() => {
-        if (!cancel) setItems([]);
-      })
-      .finally(() => {
-        if (!cancel) setLoading(false);
-      });
+      .catch(() => { if (!cancel) setItems([]); })
+      .finally(() => { if (!cancel) setLoading(false); });
 
-    return () => {
-      cancel = true;
+    return () => { cancel = true; };
+  }, [trigger, ufValue]); // <- NO depende de “region” para no disparar sola
+
+  // Filtro cliente (garantiza funcionamiento)
+  const filteredItems = useMemo(() => {
+    const norm = (s?: string) => normalize(s || '');
+    const toUF = (p: Property) => {
+      if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
+      if (p.precio_clp && p.precio_clp > 0 && ufValue) return p.precio_clp / ufValue;
+      return null;
     };
-  }, [trigger, ufValue]); // <- ¡sin “region”! ya no dispara sola
+    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
 
-  // LIMPIAR
-  const handleClear = () => {
-    setOperacion('');
-    setTipo('');
-    setRegionInput('');
-    setRegion('');
-    setComuna('');
-    setBarrio('');
-    setMoneda('');
-    setMinValor('');
-    setMaxValor('');
-    setMinDorm('');
-    setMinBanos('');
-    setMinM2Const('');
-    setMinM2Terreno('');
-    setEstac('');
-    setTrigger((v) => v + 1);
-  };
+    const minN = toInt(minValor);
+    const maxN = toInt(maxValor);
+    const isCLP = moneda === 'CLP' || moneda === 'CLP$';
+    const minUF = Number.isNaN(minN) ? -Infinity : (isCLP && ufValue ? minN / ufValue : minN);
+    const maxUF = Number.isNaN(maxN) ? Infinity   : (isCLP && ufValue ? maxN / ufValue : maxN);
 
-  const isTerreno = (p: Property) =>
-    (p.tipo || '').toLowerCase().includes('terreno') ||
-    (p.tipo || '').toLowerCase().includes('sitio');
+    const dMin = toInt(minDorm);
+    const bMin = toInt(minBanos);
+    const cMin = toInt(minM2Const);
+    const tMin = toInt(minM2Terreno);
+    const eMin = toInt(estac);
 
-  const isBodega = (p: Property) => (p.tipo || '').toLowerCase().includes('bodega');
+    return (items || []).filter((x) => {
+      if (operacion && norm(x.operacion) !== norm(operacion)) return false;
+      if (tipo       && !norm(x.tipo).startsWith(norm(tipo))) return false;
 
-  const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
+      if (region) {
+        const r = inferRegion(x);
+        if (normalize(r) !== normalize(region)) return false;
+      }
+      if (comuna && norm(x.comuna) !== norm(comuna)) return false;
+      if (barrio && norm(x.barrio) !== norm(barrio)) return false;
+
+      // rango precio
+      const vUF = toUF(x);
+      if (vUF != null) {
+        if (vUF < minUF || vUF > maxUF) return false;
+      } else if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
+        // si no tiene precio y el usuario puso límites, no calza
+        return false;
+      }
+
+      // avanzados (todos son ">= mínimo")
+      if (!Number.isNaN(dMin) && (x.dormitorios ?? -Infinity) < dMin) return false;
+      if (!Number.isNaN(bMin) && (x.banos ?? -Infinity) < bMin) return false;
+      if (!Number.isNaN(cMin) && (x.superficie_util_m2 ?? -Infinity) < cMin) return false;
+      if (!Number.isNaN(tMin) && (x.superficie_terreno_m2 ?? -Infinity) < tMin) return false;
+      if (!Number.isNaN(eMin) && (x.estacionamientos ?? -Infinity) < eMin) return false;
+
+      return true;
+    });
+  }, [
+    items, ufValue, operacion, tipo, region, comuna, barrio,
+    minValor, maxValor, moneda, minDorm, minBanos, minM2Const, minM2Terreno, estac
+  ]);
 
   // Ordenamiento
+  const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
     if (p.precio_clp && p.precio_clp > 0 && CLPfromUF) return p.precio_clp / CLPfromUF;
     return -Infinity;
   };
-
   const displayedItems = useMemo(() => {
-    const arr = items.slice();
-    if (sortMode === 'price-desc') {
-      arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
-    } else if (sortMode === 'price-asc') {
-      arr.sort((a, b) => getComparablePriceUF(a) - getComparablePriceUF(b));
-    }
+    const arr = filteredItems.slice();
+    if (sortMode === 'price-desc') arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
+    else if (sortMode === 'price-asc') arr.sort((a, b) => getComparablePriceUF(a) - getComparablePriceUF(b));
     return arr;
-  }, [items, sortMode, CLPfromUF]);
+  }, [filteredItems, sortMode, CLPfromUF]);
+
+  // LIMPIAR
+  const handleClear = () => {
+    setOperacion(''); setTipo(''); setRegion(''); setComuna(''); setBarrio('');
+    setMoneda(''); setMinValor(''); setMaxValor('');
+    setMinDorm(''); setMinBanos(''); setMinM2Const(''); setMinM2Terreno(''); setEstac('');
+    setTrigger((v) => v + 1);
+  };
+
+  // Helpers UI
+  const regionOptions = REGIONES;
+  const comunaOptions = region ? COMUNAS[region] || [] : [];
+  const barrioOptions = comuna && BARRIOS[comuna] ? BARRIOS[comuna] : [];
 
   return (
     <main className="bg-white">
-      {/* HERO sin buscador por calle */}
+      {/* HERO a pantalla completa */}
       <section
-        className="relative bg-cover min-h-[60svh]"
+        className="relative bg-cover min-h-[100svh]"
         style={{ backgroundImage: `url(${HERO_IMG})`, backgroundPosition: '50% 82%' }}
       >
         <div className="absolute inset-0 bg-black/35" />
@@ -435,12 +328,8 @@ export default function PropiedadesPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="pl-2 sm:pl-4">
               <div className="max-w-3xl">
-                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
-                  PROPIEDADES
-                </h1>
-                <p className="text-white/85 mt-2">
-                  Encuentra tu próxima inversión o tu nuevo hogar.
-                </p>
+                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">PROPIEDADES</h1>
+                <p className="text-white/85 mt-2">Encuentra tu próxima inversión o tu nuevo hogar.</p>
               </div>
             </div>
           </div>
@@ -461,10 +350,8 @@ export default function PropiedadesPage() {
               type="button"
               onClick={() => setAdvancedMode('rapida')}
               className={`px-3 py-2 text-sm rounded-none border ${
-                advancedMode === 'rapida'
-                  ? 'bg-gray-200 border-gray-300 text-slate-900'
-                  : 'bg-gray-50 border-gray-300 text-slate-700'
-              }`}
+                advancedMode === 'rapida' ? 'bg-gray-200 border-gray-300 text-slate-900'
+                                          : 'bg-gray-50 border-gray-300 text-slate-700'}`}
             >
               Búsqueda rápida
             </button>
@@ -472,10 +359,8 @@ export default function PropiedadesPage() {
               type="button"
               onClick={() => setAdvancedMode('avanzada')}
               className={`px-3 py-2 text-sm rounded-none border ${
-                advancedMode === 'avanzada'
-                  ? 'bg-gray-200 border-gray-300 text-slate-900'
-                  : 'bg-gray-50 border-gray-300 text-slate-700'
-              }`}
+                advancedMode === 'avanzada' ? 'bg-gray-200 border-gray-300 text-slate-900'
+                                            : 'bg-gray-50 border-gray-300 text-slate-700'}`}
             >
               Búsqueda avanzada
             </button>
@@ -485,93 +370,22 @@ export default function PropiedadesPage() {
           {advancedMode === 'rapida' && (
             <>
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
                 <SmartSelect
-                  options={['Venta', 'Arriendo']}
-                  value={operacion}
-                  onChange={setOperacion}
-                  placeholder="Operación"
+                  options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']}
+                  value={tipo} onChange={setTipo} placeholder="Tipo de propiedad"
                 />
-                <SmartSelect
-                  options={[
-                    'Casa',
-                    'Departamento',
-                    'Bodega',
-                    'Oficina',
-                    'Local comercial',
-                    'Terreno',
-                  ]}
-                  value={tipo}
-                  onChange={setTipo}
-                  placeholder="Tipo de propiedad"
-                />
-                <SmartSelect
-                  options={REGIONES.map((r) => regionDisplay(r))}
-                  value={regionInput}
-                  onChange={(v) => {
-                    setRegionInput(v);
-                    setComuna('');
-                    setBarrio('');
-                  }}
-                  placeholder="Región"
-                />
-                <SmartSelect
-                  options={region ? COMUNAS[region] || [] : []}
-                  value={comuna}
-                  onChange={(v) => {
-                    setComuna(v);
-                    setBarrio('');
-                  }}
-                  placeholder="Comuna"
-                  disabled={!region}
-                />
-                <SmartSelect
-                  options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []}
-                  value={barrio}
-                  onChange={setBarrio}
-                  placeholder="Barrio"
-                  disabled={!comuna || !BARRIOS[comuna]}
-                />
+                <SmartSelect options={regionOptions} value={region} onChange={(v)=>{ setRegion(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
+                <SmartSelect options={comunaOptions} value={comuna} onChange={(v)=>{ setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
+                <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect
-                  options={['UF', 'CLP$']}
-                  value={moneda}
-                  onChange={(v) => setMoneda((v as any) || '')}
-                  placeholder="UF/CLP$"
-                />
-                <input
-                  value={minValor}
-                  onChange={(e) => setMinValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Mín"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                />
-                <input
-                  value={maxValor}
-                  onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Máx"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                />
-                <button
-                  onClick={handleClear}
-                  className="w-full px-5 py-2 text-sm rounded-none border"
-                  style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                >
-                  Limpiar
-                </button>
-                <button
-                  onClick={() => setTrigger((v) => v + 1)}
-                  className="w-full px-5 py-2 text-sm text-white rounded-none"
-                  style={{
-                    background: BRAND_BLUE,
-                    boxShadow:
-                      'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
-                  }}
-                >
-                  Buscar
-                </button>
+                <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
+                <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
+                <button onClick={()=>setTrigger(v=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
@@ -584,128 +398,24 @@ export default function PropiedadesPage() {
               </div>
 
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect
-                  options={['Venta', 'Arriendo']}
-                  value={operacion}
-                  onChange={setOperacion}
-                  placeholder="Operación"
-                />
-                <SmartSelect
-                  options={[
-                    'Casa',
-                    'Departamento',
-                    'Bodega',
-                    'Oficina',
-                    'Local comercial',
-                    'Terreno',
-                  ]}
-                  value={tipo}
-                  onChange={setTipo}
-                  placeholder="Tipo de propiedad"
-                />
-                <SmartSelect
-                  options={REGIONES.map((r) => regionDisplay(r))}
-                  value={regionInput}
-                  onChange={(v) => {
-                    setRegionInput(v);
-                    setComuna('');
-                    setBarrio('');
-                  }}
-                  placeholder="Región"
-                />
-                <SmartSelect
-                  options={region ? COMUNAS[region] || [] : []}
-                  value={comuna}
-                  onChange={(v) => {
-                    setComuna(v);
-                    setBarrio('');
-                  }}
-                  placeholder="Comuna"
-                  disabled={!region}
-                />
-                <SmartSelect
-                  options={comuna && BARRIOS[comuna] ? BARRIOS[comuna] : []}
-                  value={barrio}
-                  onChange={setBarrio}
-                  placeholder="Barrio"
-                  disabled={!comuna || !BARRIOS[comuna]}
-                />
+                <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
+                <SmartSelect options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']} value={tipo} onChange={setTipo} placeholder="Tipo de propiedad" />
+                <SmartSelect options={regionOptions} value={region} onChange={(v)=>{ setRegion(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
+                <SmartSelect options={comunaOptions} value={comuna} onChange={(v)=>{ setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
+                <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect
-                  options={['UF', 'CLP', 'CLP$']}
-                  value={moneda}
-                  onChange={(v) => setMoneda((v as any) || '')}
-                  placeholder="UF/CLP$"
-                />
-                <input
-                  value={minValor}
-                  onChange={(e) => setMinValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Mín"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={maxValor}
-                  onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Máx"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={minDorm}
-                  onChange={(e) => setMinDorm((e.target.value || '').replace(/\D+/g, ''))}
-                  inputMode="numeric"
-                  placeholder="Mín. dormitorios"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={minBanos}
-                  onChange={(e) => setMinBanos((e.target.value || '').replace(/\D+/g, ''))}
-                  inputMode="numeric"
-                  placeholder="Mín. baños"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={minM2Const}
-                  onChange={(e) => setMinM2Const(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Mín. m² construidos"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={minM2Terreno}
-                  onChange={(e) => setMinM2Terreno(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Mín. m² terreno"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={estac}
-                  onChange={(e) => setEstac((e.target.value || '').replace(/\D+/g, ''))}
-                  inputMode="numeric"
-                  placeholder="Estacionamientos"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <button
-                  onClick={handleClear}
-                  className="w-full px-5 py-2 text-sm rounded-none border"
-                  style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                >
-                  Limpiar
-                </button>
-                <button
-                  onClick={() => setTrigger((v) => v + 1)}
-                  className="w-full px-5 py-2 text-sm text-white rounded-none"
-                  style={{
-                    background: BRAND_BLUE,
-                    boxShadow:
-                      'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
-                  }}
-                >
-                  Buscar
-                </button>
+                <SmartSelect options={['UF', 'CLP', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
+                <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={minDorm} onChange={(e)=>setMinDorm((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={minBanos} onChange={(e)=>setMinBanos((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
+                <button onClick={()=>setTrigger(v=>v+1)} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
@@ -714,33 +424,31 @@ export default function PropiedadesPage() {
 
       {/* LISTADO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Título + botones de orden */}
         <div className="flex items-center justify-between mb-4 relative">
           <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
             PROPIEDADES DISPONIBLES
           </h2>
 
-          {/* Acciones: limpiar orden + abrir menú */}
+          {/* Acciones de orden: estilos que pediste */}
           <div className="relative flex items-center gap-2">
+            {/* Basurero: borde negro, fondo blanco, icono negro */}
             <button
               type="button"
               aria-label="Limpiar orden"
-              onClick={() => {
-                setSortMode('');
-                setSortOpen(false);
-              }}
-              className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
-              style={{ background: BTN_GRAY }}
+              onClick={() => { setSortMode(''); setSortOpen(false); }}
+              className="inline-flex items-center justify-center px-3 py-2 rounded-none"
+              style={{ background: '#fff', border: '1px solid #000', color: '#000' }}
               title="Limpiar orden"
             >
               <Trash2 className="h-5 w-5" />
             </button>
 
+            {/* Filtrar/ordenar: igual a “Buscar” (fondo azul, borde gris, icono blanco) */}
             <button
               type="button"
               onClick={() => setSortOpen((s) => !s)}
               className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
-              style={{ background: BTN_GRAY }}
+              style={{ background: BRAND_BLUE, border: `1px solid ${BTN_GRAY_BORDER}` }}
               aria-haspopup="menu"
               aria-expanded={sortOpen}
               title="Filtrar / ordenar"
@@ -749,54 +457,21 @@ export default function PropiedadesPage() {
             </button>
 
             {sortOpen && (
-              <div
-                className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 shadow-lg z-10"
-                role="menu"
-              >
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                  onClick={() => {
-                    setSortMode('price-desc');
-                    setSortOpen(false);
-                  }}
-                >
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 shadow-lg z-10" role="menu">
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-desc'); setSortOpen(false); }}>
                   Precio: mayor a menor
                 </button>
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                  onClick={() => {
-                    setSortMode('price-asc');
-                    setSortOpen(false);
-                  }}
-                >
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-asc'); setSortOpen(false); }}>
                   Precio: menor a mayor
                 </button>
                 <div className="h-px bg-slate-200 my-1" />
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                  onClick={() => {
-                    setSortMode('hipoteca');
-                    setSortOpen(false);
-                  }}
-                >
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('hipoteca'); setSortOpen(false); }}>
                   Novación hipotecaria
                 </button>
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                  onClick={() => {
-                    setSortMode('flipping');
-                    setSortOpen(false);
-                  }}
-                >
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('flipping'); setSortOpen(false); }}>
                   Oportunidad de flipping
                 </button>
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                  onClick={() => {
-                    setSortMode('subdivision');
-                    setSortOpen(false);
-                  }}
-                >
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('subdivision'); setSortOpen(false); }}>
                   Oportunidad de subdivisión
                 </button>
               </div>
@@ -818,15 +493,9 @@ export default function PropiedadesPage() {
                 return null;
               })();
 
-              const terreno =
-                (p.tipo || '').toLowerCase().includes('terreno') ||
-                (p.tipo || '').toLowerCase().includes('sitio');
+              const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
               const bodega = (p.tipo || '').toLowerCase().includes('bodega');
-
-              // id o slug para la ruta
               const linkId = (p.id || p.slug || '').toString();
-
-              // Portada: portada_url -> portada_fija_url -> coverImage -> imagenes[0] -> fallback
               const cardImage =
                 (p.portada_url && String(p.portada_url).trim()) ||
                 (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
@@ -843,58 +512,21 @@ export default function PropiedadesPage() {
                   className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
                 >
                   <div className="aspect-[4/3] bg-slate-100">
-                    <img
-                      src={cardImage}
-                      alt={p.titulo || 'Propiedad'}
-                      className="w-full h-full object-cover group-hover:opacity-95 transition"
-                    />
+                    <img src={cardImage} alt={p.titulo || 'Propiedad'} className="w-full h-full object-cover group-hover:opacity-95 transition" />
                   </div>
                   <div className="p-4 flex flex-col">
-                    <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
-                      {p.titulo || 'Propiedad'}
-                    </h3>
+                    <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">{p.titulo || 'Propiedad'}</h3>
                     <p className="mt-1 text-sm text-slate-600">
-                      {[p.comuna || '', tipoCap, p.operacion ? capFirst(String(p.operacion)) : '']
-                        .filter(Boolean)
-                        .join(' · ')}
+                      {[p.comuna || '', tipoCap, p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
                     {!terreno && !bodega ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Bed className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <ShowerHead className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.banos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Car className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Ruler className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                          </div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Square className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                          </div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
                       </div>
                     ) : terreno ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
@@ -914,17 +546,16 @@ export default function PropiedadesPage() {
                     )}
 
                     <div className="mt-4 flex items-center justify-between">
-                      <span
-                        className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
-                        style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                      >
+                      <span className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>
                         Ver más
                       </span>
                       <div className="text-right">
                         <div className="font-semibold" style={{ color: BRAND_BLUE }}>
                           {showUF ? `UF ${nfUF.format(p.precio_uf as number)}` : 'Consultar'}
                         </div>
-                        <div className="text-xs text-slate-500">{clp ? `$ ${nfCLP.format(clp)}` : ''}</div>
+                        <div className="text-xs text-slate-500">
+                          {clp ? `$ ${nfCLP.format(clp)}` : ''}
+                        </div>
                       </div>
                     </div>
                   </div>
