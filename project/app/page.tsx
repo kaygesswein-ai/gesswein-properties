@@ -37,7 +37,7 @@ type Property = {
   images?: string[];
   coverImage?: string;
   destacada?: boolean;
-  // (No es obligatorio, pero si vienen, las usamos)
+  // puede venir pero no es obligatorio:
   // portada_url?: string | null;
   // portada_fija_url?: string | null;
 };
@@ -70,11 +70,17 @@ const capWords = (s?:string|null) =>
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-function getHeroImage(p?:Property){
+/** Elige la mejor imagen disponible para el HERO */
+function getHeroImage(p?:Property, portadasById?:Record<string,string>){
   if(!p) return HERO_FALLBACK;
   const anyP:any = p;
-  // PRIORIDAD: portada_url / portada_fija_url (Supabase) -> cover/imagenes habituales -> fallback
+
+  // 1) si ya hidratamos portada por id, úsala
+  const portadaHidratada = p.id && portadasById ? portadasById[p.id] : '';
+
+  // 2) prioridad: portada_url / portada_fija_url (si llegan en la lista)
   const cand:(string|undefined|null)[]=[
+    portadaHidratada,
     anyP.portada_url,
     anyP.portada_fija_url,
     p.coverImage,
@@ -114,6 +120,9 @@ export default function HomePage(){
   const priceBoxRef = useRef<HTMLDivElement|null>(null);
   const verMasRef   = useRef<HTMLAnchorElement|null>(null);
 
+  // mapa de portadas hidratadas por id (para cuando el listado no trae portada_url)
+  const [portadasById, setPortadasById] = useState<Record<string,string>>({});
+
   /* ---------- fetch propiedades destacadas ---------- */
   useEffect(()=>{
     let mounted=true;
@@ -131,6 +140,52 @@ export default function HomePage(){
     })();
     return()=>{ mounted=false; };
   },[]);
+
+  /* ---------- hidratar portada_url / portada_fija_url por id ---------- */
+  useEffect(()=>{
+    // ids que necesitan portada (no viene en el listado y no la hemos traído aún)
+    const need = destacadas
+      .filter(p=>{
+        const anyP:any = p;
+        const yaTrae = (anyP.portada_url && String(anyP.portada_url).trim()) ||
+                       (anyP.portada_fija_url && String(anyP.portada_fija_url).trim());
+        return p.id && !yaTrae && !portadasById[p.id];
+      })
+      .map(p=>p.id);
+
+    if(need.length===0) return;
+
+    let cancel=false;
+    (async()=>{
+      try{
+        const entries: [string,string][] = [];
+        for(const id of need){
+          try{
+            const r = await fetch(`/api/propiedades/${encodeURIComponent(id)}`, { cache:'no-store' });
+            const j = await r.json().catch(()=>null);
+            const data = j?.data ?? j ?? {};
+            const img =
+              (data?.portada_url && String(data.portada_url).trim()) ||
+              (data?.portada_fija_url && String(data.portada_fija_url).trim()) ||
+              (Array.isArray(data?.imagenes) && data.imagenes[0]) ||
+              (Array.isArray(data?.images) && data.images[0]) ||
+              (data?.coverImage && String(data.coverImage).trim()) ||
+              '';
+            if(img) entries.push([id, img]);
+          }catch{/* ignore */}
+        }
+        if(!cancel && entries.length){
+          setPortadasById(prev=>{
+            const next={...prev};
+            for(const [k,v] of entries) next[k]=v;
+            return next;
+          });
+        }
+      }catch{/* ignore */}
+    })();
+
+    return()=>{ cancel=true; };
+  },[destacadas, portadasById]);
 
   /* ---------- autoplay ---------- */
   useEffect(()=>{
@@ -172,7 +227,7 @@ export default function HomePage(){
 
   /* ---------- hero data ---------- */
   const active=destacadas[i];
-  const bg=useMemo(()=>getHeroImage(active),[active]);
+  const bg=useMemo(()=>getHeroImage(active, portadasById),[active, portadasById]);
 
   const lineaSecundaria=[
     capWords(active?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
