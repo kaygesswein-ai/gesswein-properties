@@ -117,7 +117,7 @@ const BARRIOS: Record<string, string[]> = {
   'Villa Alemana': ['Peñablanca','El Álamo','El Carmen'],
   Quilpué: ['El Sol','Belloto','Los Pinos'],
   Olmué: ['Olmué Centro','Lo Narváez'],
-  // >>> Solo “Tunquén” para Casablanca (se filtra tolerantemente en cliente)
+  // Solo “Tunquén” para Casablanca (el filtro acepta variantes)
   Casablanca: ['Tunquén'],
 };
 
@@ -132,7 +132,6 @@ function inferRegion(comuna?: string, barrio?: string): string | undefined {
   const cNorm = normalize(comuna);
   const bNorm = normalize(barrio);
 
-  // Mapear Tunquén aunque venga en comuna o barrio
   const comunaEfectiva =
     cNorm === 'tunquen' || bNorm.includes('tunquen') ? 'Casablanca' : (comuna || '');
 
@@ -207,8 +206,7 @@ export default function PropiedadesPage() {
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
     if (aComuna) p.set('comuna', aComuna);
-    // >>> No enviamos 'barrio' al backend: lo filtramos en cliente con coincidencia flexible
-    // if (aBarrio) p.set('barrio', aBarrio);
+    // NO enviamos 'barrio' al backend; se filtra en cliente.
 
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(aMinValor);
@@ -330,10 +328,15 @@ export default function PropiedadesPage() {
         if (cItem !== norm(aComuna)) return false;
       }
 
+      // >>> AJUSTE BARRIO: tolerante a datos vacíos o variantes “El Rosario de Tunquén”
       if (aBarrio) {
-        const bx = norm(x.barrio);
-        // Coincidencia flexible: “Tunquén” hace match con “El Rosario de Tunquén” también
-        if (!bx.includes(norm(aBarrio))) return false;
+        const sel = norm(aBarrio);           // tunquen
+        const bx  = norm(x.barrio);          // barrio normalizado (puede venir vacío)
+        const cx  = norm(x.comuna);          // por si la comuna viene “tunquen”
+        const passBarrio =
+          (bx && bx.includes(sel)) ||        // “tunquen” o “el rosario de tunquen”
+          (!bx && cx === 'tunquen');         // sin barrio, pero comuna = Tunquén
+        if (!passBarrio) return false;
       }
 
       let vUF: number | null = null;
@@ -389,7 +392,7 @@ export default function PropiedadesPage() {
     setMinDorm(''); setMinBanos(''); setMinM2Const(''); setMinM2Terreno(''); setEstac('');
 
     setAOperacion(''); setATipo(''); setARegion(''); setAComuna(''); setABarrio('');
-    setAMoneda(''); setAMinValor(''); setAMaxValor('>');
+    setAMoneda(''); setAMinValor(''); setAMaxValor('');
     setAMinDorm(''); setAMinBanos(''); setAMinM2Const(''); setAMinM2Terreno(''); setAEstac('');
 
     setTrigger((v) => v + 1);
@@ -416,7 +419,7 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  /* ENTER -> Buscar */
+  /* ENTER -> Buscar (atajo) */
   const handleKeyDownSearch = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -511,7 +514,6 @@ export default function PropiedadesPage() {
                 <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
               </div>
 
-              {/* Reordenado ya aplicado en tu código */}
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
                 <SmartSelect options={['UF', 'CLP', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
                 <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
