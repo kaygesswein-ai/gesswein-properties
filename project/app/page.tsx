@@ -37,6 +37,10 @@ type Property = {
   images?: string[];
   coverImage?: string;
   destacada?: boolean;
+
+  // pueden venir o no en el listado
+  portada_url?: string | null;
+  portada_fija_url?: string | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -74,33 +78,40 @@ const HERO_FALLBACK =
    4) images[0] / imagenes[0]
    5) fallback
 */
-function getHeroImage(p?:Property){
+function getHeroImage(p?:Partial<Property>){
   if(!p) return HERO_FALLBACK;
   const anyP:any = p;
-  const cand:(string|undefined)[]=[
-    anyP.portada_url,
-    anyP.portada_fija_url,
+  const cand:(string|undefined|null)[]=[
+    p.portada_url,
+    p.portada_fija_url,
     p.coverImage, anyP.imagen, anyP.image, anyP.foto,
     p.images?.[0], p.imagenes?.[0],
   ];
   const src=cand.find(s=>typeof s==='string' && s.trim().length>4);
-  return src || HERO_FALLBACK;
+  return (src as string) || HERO_FALLBACK;
 }
 
 /* ------------------------------------------------------------------ */
-/*                      DATOS CHILE – SELECTS                         */
+/*                 REGIONES (solo para el formulario)                  */
 /* ------------------------------------------------------------------ */
-const REGIONES:readonly string[]=[
-  'Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo','Valparaíso',
-  "O'Higgins",'Maule','Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos',
-  'Aysén','Magallanes','Metropolitana de Santiago',
+const REGIONES_UI: readonly string[] = [
+  'XV - Arica y Parinacota',
+  'I - Tarapacá',
+  'II - Antofagasta',
+  'III - Atacama',
+  'IV - Coquimbo',
+  'V - Valparaíso',
+  'RM - Región Metropolitana de Santiago',
+  'VI - Libertador General Bernardo O’Higgins',
+  'VII - Maule',
+  'XVI - Ñuble',
+  'VIII - Biobío',
+  'IX - La Araucanía',
+  'XIV - Los Ríos',
+  'X - Los Lagos',
+  'XI - Aysén',
+  'XII - Magallanes y la Antártica Chilena',
 ];
-type Region = (typeof REGIONES)[number];
-
-const displayRegion=(r:Region)=>{
-  const roman=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI'][REGIONES.indexOf(r)]||'';
-  return roman ? `${roman} - ${r}` : r;
-};
 
 const SERVICIOS = ['Comprar','Vender','Arrendar','Gestionar un arriendo','Consultoría específica'];
 const TIPO_PROPIEDAD = ['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno'];
@@ -112,6 +123,9 @@ export default function HomePage(){
   const [destacadas,setDestacadas]=useState<Property[]>([]);
   const [i,setI]=useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>|null>(null);
+
+  // 🔹 cache con portadas traídas por id (hidratación)
+  const [detailById, setDetailById] = useState<Record<string, {portada_url?:string|null, portada_fija_url?:string|null}>>({});
 
   const priceBoxRef = useRef<HTMLDivElement|null>(null);
   const verMasRef   = useRef<HTMLAnchorElement|null>(null);
@@ -133,6 +147,33 @@ export default function HomePage(){
     })();
     return()=>{ mounted=false; };
   },[]);
+
+  /* ---------- HIDRATAR portadas por id si no vinieron en el listado ---------- */
+  useEffect(()=>{
+    const need = destacadas
+      .filter(p => !(p.portada_url || p.portada_fija_url))
+      .map(p => p.id)
+      .filter(id => !detailById[id]);
+
+    if(need.length===0) return;
+
+    let cancel=false;
+    (async()=>{
+      for(const id of need){
+        try{
+          const r = await fetch(`/api/propiedades/${encodeURIComponent(id)}`, { cache:'no-store' });
+          const j = await r.json().catch(()=>null);
+          const d = j?.data || j || {};
+          const portada_url = d?.portada_url || null;
+          const portada_fija_url = d?.portada_fija_url || null;
+          if(cancel) return;
+          setDetailById(prev => ({ ...prev, [id]: { portada_url, portada_fija_url } }));
+        }catch{/* ignore */}
+      }
+    })();
+
+    return()=>{ cancel=true; };
+  },[destacadas, detailById]);
 
   /* ---------- autoplay con “reset” al navegar manual ---------- */
   const startAutoplay=()=>{
@@ -186,8 +227,10 @@ export default function HomePage(){
   };
 
   /* ---------- hero data ---------- */
-  const active=destacadas[i];
-  const bg=useMemo(()=>getHeroImage(active),[active]);
+  const active = destacadas[i];
+  // mezcla el detalle hidratado si existe
+  const enrichedActive = active ? { ...active, ...(detailById[active.id]||{}) } : undefined;
+  const bg = useMemo(()=>getHeroImage(enrichedActive),[enrichedActive]);
 
   const lineaSecundaria=[
     capWords(active?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
@@ -367,7 +410,7 @@ export default function HomePage(){
                               group-hover:bg-[#0A2E57]/90 group-active:bg-[#0A2E57]/90
                               focus-within:bg-[#0A2E57]/90 transition duration-300" />
 
-              <div className="absolute inset-0 flex items-end opacity-0
+              <div className="absolute inset-0 flex items/end opacity-0
                               group-hover:opacity-100 group-active:opacity-100
                               focus-within:opacity-100 transition duration-300">
                 <div className="w-full p-4 text-white">
@@ -389,7 +432,6 @@ export default function HomePage(){
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            {/* 🔽 más pequeño + mayúsculas + tracking igual que “EQUIPO” */}
             <h2 className="mt-3 text-xl md:text-2xl uppercase tracking-[0.25em]">
               PROGRAMA DE REFERIDOS CON EXCLUSIVIDAD
             </h2>
@@ -477,11 +519,11 @@ export default function HomePage(){
                   className="w-full"
                 />
               </div>
-              {/* región */}
+              {/* región → TU LISTA LITERAL */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
-                  options={REGIONES.map(r=>displayRegion(r as Region))}
+                  options={REGIONES_UI as string[]}
                   value={''}
                   onChange={()=>{}}
                   placeholder="Seleccionar o escribir…"
