@@ -71,13 +71,7 @@ const capWords = (s?:string|null) =>
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-/* ✅ PRIORIDAD de portada:
-   1) portada_url (Supabase)
-   2) portada_fija_url (Supabase)
-   3) coverImage / imagen / image / foto
-   4) images[0] / imagenes[0]
-   5) fallback
-*/
+/* ✅ PRIORIDAD de portada */
 function getHeroImage(p?:Partial<Property>){
   if(!p) return HERO_FALLBACK;
   const anyP:any = p;
@@ -112,6 +106,19 @@ const REGIONES_UI: readonly string[] = [
   'XI - Aysén',
   'XII - Magallanes y la Antártica Chilena',
 ];
+
+/* 🔹 Comunas por región para habilitar el selector */
+const COMUNAS_UI: Record<string, string[]> = {
+  'RM - Región Metropolitana de Santiago': [
+    'Las Condes','Vitacura','Lo Barnechea','Providencia','Santiago','Ñuñoa','La Reina',
+    'Huechuraba','La Florida','Maipú','Puente Alto','Colina','Lampa','Talagante',
+    'Peñalolén','Macul',
+  ],
+  'V - Valparaíso': [
+    'Casablanca','Viña del Mar','Valparaíso','Concón','Quilpué','Villa Alemana','Limache','Olmué',
+  ],
+  // Puedes ir agregando más regiones/comunas cuando quieras
+};
 
 const SERVICIOS = ['Comprar','Vender','Arrendar','Gestionar un arriendo','Consultoría específica'];
 const TIPO_PROPIEDAD = ['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno'];
@@ -277,6 +284,11 @@ export default function HomePage(){
   const dash='—';
   const fmtInt=(n:number|null|undefined)=>
     typeof n==='number' ? new Intl.NumberFormat('es-CL',{maximumFractionDigits:0}).format(n) : dash;
+
+  /* ================== ESTADO SOLO PARA REGION/COMUNA (FORM) ================== */
+  const [regionRef, setRegionRef] = useState('');
+  const [comunaRef, setComunaRef] = useState('');
+  const comunaOpts = regionRef ? (COMUNAS_UI[regionRef] || []) : [];
 
   /* ------------------------------------------------------------------ */
   return(
@@ -524,21 +536,21 @@ export default function HomePage(){
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
                   options={REGIONES_UI as string[]}
-                  value={''}
-                  onChange={()=>{}}
+                  value={regionRef}
+                  onChange={(v)=>{ setRegionRef(v); setComunaRef(''); }}
                   placeholder="Seleccionar o escribir…"
                   className="w-full"
                 />
               </div>
-              {/* comuna */}
+              {/* comuna (habilitada solo si hay región) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
-                  options={[]}
-                  value={''}
-                  onChange={()=>{}}
-                  placeholder="Selecciona una región primero"
-                  disabled
+                  options={comunaOpts}
+                  value={comunaRef}
+                  onChange={setComunaRef}
+                  placeholder={regionRef ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
+                  disabled={!regionRef || comunaOpts.length===0}
                   className="w-full"
                 />
               </div>
