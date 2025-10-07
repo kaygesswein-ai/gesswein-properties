@@ -37,9 +37,6 @@ type Property = {
   images?: string[];
   coverImage?: string;
   destacada?: boolean;
-  // puede venir pero no es obligatorio:
-  // portada_url?: string | null;
-  // portada_fija_url?: string | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -70,25 +67,15 @@ const capWords = (s?:string|null) =>
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-/** Elige la mejor imagen disponible para el HERO */
-function getHeroImage(p?:Property, portadasById?:Record<string,string>){
+function getHeroImage(p?:Property){
   if(!p) return HERO_FALLBACK;
   const anyP:any = p;
-
-  // 1) si ya hidratamos portada por id, úsala
-  const portadaHidratada = p.id && portadasById ? portadasById[p.id] : '';
-
-  // 2) prioridad: portada_url / portada_fija_url (si llegan en la lista)
-  const cand:(string|undefined|null)[]=[
-    portadaHidratada,
-    anyP.portada_url,
-    anyP.portada_fija_url,
-    p.coverImage,
-    anyP.imagen, anyP.image, anyP.foto,
-    p.images?.[0], p.imagenes?.[0],
+  const cand:(string|undefined)[]=[
+    p.coverImage, anyP.imagen, anyP.image, anyP.foto,
+    p.images?.[0], p.imagenes?.[0]
   ];
   const src=cand.find(s=>typeof s==='string' && s.trim().length>4);
-  return (src as string) || HERO_FALLBACK;
+  return src || HERO_FALLBACK;
 }
 
 /* ------------------------------------------------------------------ */
@@ -120,9 +107,6 @@ export default function HomePage(){
   const priceBoxRef = useRef<HTMLDivElement|null>(null);
   const verMasRef   = useRef<HTMLAnchorElement|null>(null);
 
-  // mapa de portadas hidratadas por id (para cuando el listado no trae portada_url)
-  const [portadasById, setPortadasById] = useState<Record<string,string>>({});
-
   /* ---------- fetch propiedades destacadas ---------- */
   useEffect(()=>{
     let mounted=true;
@@ -141,57 +125,15 @@ export default function HomePage(){
     return()=>{ mounted=false; };
   },[]);
 
-  /* ---------- hidratar portada_url / portada_fija_url por id ---------- */
-  useEffect(()=>{
-    // ids que necesitan portada (no viene en el listado y no la hemos traído aún)
-    const need = destacadas
-      .filter(p=>{
-        const anyP:any = p;
-        const yaTrae = (anyP.portada_url && String(anyP.portada_url).trim()) ||
-                       (anyP.portada_fija_url && String(anyP.portada_fija_url).trim());
-        return p.id && !yaTrae && !portadasById[p.id];
-      })
-      .map(p=>p.id);
-
-    if(need.length===0) return;
-
-    let cancel=false;
-    (async()=>{
-      try{
-        const entries: [string,string][] = [];
-        for(const id of need){
-          try{
-            const r = await fetch(`/api/propiedades/${encodeURIComponent(id)}`, { cache:'no-store' });
-            const j = await r.json().catch(()=>null);
-            const data = j?.data ?? j ?? {};
-            const img =
-              (data?.portada_url && String(data.portada_url).trim()) ||
-              (data?.portada_fija_url && String(data.portada_fija_url).trim()) ||
-              (Array.isArray(data?.imagenes) && data.imagenes[0]) ||
-              (Array.isArray(data?.images) && data.images[0]) ||
-              (data?.coverImage && String(data.coverImage).trim()) ||
-              '';
-            if(img) entries.push([id, img]);
-          }catch{/* ignore */}
-        }
-        if(!cancel && entries.length){
-          setPortadasById(prev=>{
-            const next={...prev};
-            for(const [k,v] of entries) next[k]=v;
-            return next;
-          });
-        }
-      }catch{/* ignore */}
-    })();
-
-    return()=>{ cancel=true; };
-  },[destacadas, portadasById]);
-
-  /* ---------- autoplay ---------- */
-  useEffect(()=>{
-    if(!destacadas.length) return;
+  /* ---------- autoplay con reset ---------- */
+  const startAuto = () => {
     if(timerRef.current) clearInterval(timerRef.current);
+    if(!destacadas.length) return;
     timerRef.current=setInterval(()=>setI(p=>(p+1)%destacadas.length),4000);
+  };
+
+  useEffect(()=>{
+    startAuto();
     return()=>{ if(timerRef.current) clearInterval(timerRef.current); };
   },[destacadas.length]);
 
@@ -201,7 +143,19 @@ export default function HomePage(){
       const n=destacadas.length;
       return ((p+dir)%n+n)%n;
     });
+    // reset del temporizador cuando hay interacción manual
+    startAuto();
   };
+
+  /* ---------- teclado (←/→) ---------- */
+  useEffect(()=>{
+    const onKey=(e:KeyboardEvent)=>{
+      if(e.key==='ArrowRight'){ e.preventDefault(); go(1); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); go(-1); }
+    };
+    window.addEventListener('keydown', onKey);
+    return ()=> window.removeEventListener('keydown', onKey);
+  },[destacadas.length]); // depende de la lista para que go conozca el length
 
   /* ---------- touch swipe ---------- */
   const touchStartX=useRef<number|null>(null);
@@ -220,14 +174,12 @@ export default function HomePage(){
     const dx=touchDeltaX.current;
     if(Math.abs(dx)>50){ dx<0?go(1):go(-1); }
     touchStartX.current=null; touchDeltaX.current=0;
-    if(destacadas.length){
-      timerRef.current=setInterval(()=>setI(p=>(p+1)%destacadas.length),4000);
-    }
+    startAuto(); // reset después del swipe
   };
 
   /* ---------- hero data ---------- */
   const active=destacadas[i];
-  const bg=useMemo(()=>getHeroImage(active, portadasById),[active, portadasById]);
+  const bg=useMemo(()=>getHeroImage(active),[active]);
 
   const lineaSecundaria=[
     capWords(active?.comuna?.replace(/^lo barnechea/i,'Lo Barnechea')),
@@ -429,7 +381,7 @@ export default function HomePage(){
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="mt-3 text-2xl md:text-3xl">
+            <h2 className="mt-3 text-2xl md:text-3xl uppercase tracking-[0.25em]">
               Programa de Referidos con exclusividad
             </h2>
             <p className="mt-2 text-slate-600">
@@ -440,22 +392,22 @@ export default function HomePage(){
           {/* formulario */}
           <div className="px-6 pb-8">
             {/* ---------- referente ---------- */}
-            <h3 className="text-lg">Tus datos (referente)</h3>
+            <h3 className="text-lg uppercase tracking-[0.25em]">Tus datos (referente)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Nombre completo *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="Tu nombre completo" />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Email *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="tu@email.com" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Teléfono</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="+56 9 1234 5678" />
@@ -463,22 +415,22 @@ export default function HomePage(){
             </div>
 
             {/* ---------- referido ---------- */}
-            <h3 className="mt-8 text-lg">Datos del referido</h3>
+            <h3 className="mt-8 text-lg uppercase tracking-[0.25em]">Datos del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Nombre completo *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="Nombre del referido" />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Email *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="correo@referido.com" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Teléfono</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="+56 9 1234 5678" />
@@ -486,11 +438,11 @@ export default function HomePage(){
             </div>
 
             {/* ---------- preferencias ---------- */}
-            <h3 className="mt-8 text-lg">Preferencias del referido</h3>
+            <h3 className="mt-8 text-lg uppercase tracking-[0.25em]">Preferencias del referido</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               {/* servicio */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">¿Qué servicio necesita?</label>
                 <SmartSelect
                   options={SERVICIOS}
                   value={''}
@@ -501,7 +453,7 @@ export default function HomePage(){
               </div>
               {/* tipo propiedad */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Tipo de propiedad</label>
                 <SmartSelect
                   options={TIPO_PROPIEDAD}
                   value={''}
@@ -512,7 +464,7 @@ export default function HomePage(){
               </div>
               {/* región */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Región</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Región</label>
                 <SmartSelect
                   options={REGIONES.map(r=>displayRegion(r as Region))}
                   value={''}
@@ -523,7 +475,7 @@ export default function HomePage(){
               </div>
               {/* comuna */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Comuna</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Comuna</label>
                 <SmartSelect
                   options={[]}
                   value={''}
@@ -535,14 +487,14 @@ export default function HomePage(){
               </div>
               {/* presupuesto */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Presupuesto mínimo (UF)</label>
                 <input inputMode="numeric"
                        className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="0" />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Presupuesto máximo (UF)</label>
                 <input inputMode="numeric"
                        className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
@@ -550,7 +502,7 @@ export default function HomePage(){
               </div>
               {/* comentarios */}
               <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
+                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Comentarios adicionales</label>
                 <textarea rows={4}
                           className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                      text-slate-700 placeholder-slate-400"
