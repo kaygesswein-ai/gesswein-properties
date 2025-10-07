@@ -37,6 +37,9 @@ type Property = {
   images?: string[];
   coverImage?: string;
   destacada?: boolean;
+  // (No es obligatorio, pero si vienen, las usamos)
+  // portada_url?: string | null;
+  // portada_fija_url?: string | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -70,12 +73,16 @@ const HERO_FALLBACK =
 function getHeroImage(p?:Property){
   if(!p) return HERO_FALLBACK;
   const anyP:any = p;
-  const cand:(string|undefined)[]=[
-    p.coverImage, anyP.imagen, anyP.image, anyP.foto,
-    p.images?.[0], p.imagenes?.[0]
+  // PRIORIDAD: portada_url / portada_fija_url (Supabase) -> cover/imagenes habituales -> fallback
+  const cand:(string|undefined|null)[]=[
+    anyP.portada_url,
+    anyP.portada_fija_url,
+    p.coverImage,
+    anyP.imagen, anyP.image, anyP.foto,
+    p.images?.[0], p.imagenes?.[0],
   ];
   const src=cand.find(s=>typeof s==='string' && s.trim().length>4);
-  return src || HERO_FALLBACK;
+  return (src as string) || HERO_FALLBACK;
 }
 
 /* ------------------------------------------------------------------ */
