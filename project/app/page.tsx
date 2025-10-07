@@ -67,12 +67,21 @@ const capWords = (s?:string|null) =>
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
+/* ✅ PRIORIDAD de portada:
+   1) portada_url (Supabase)
+   2) portada_fija_url (Supabase)
+   3) coverImage / imagen / image / foto
+   4) images[0] / imagenes[0]
+   5) fallback
+*/
 function getHeroImage(p?:Property){
   if(!p) return HERO_FALLBACK;
   const anyP:any = p;
   const cand:(string|undefined)[]=[
+    anyP.portada_url,
+    anyP.portada_fija_url,
     p.coverImage, anyP.imagen, anyP.image, anyP.foto,
-    p.images?.[0], p.imagenes?.[0]
+    p.images?.[0], p.imagenes?.[0],
   ];
   const src=cand.find(s=>typeof s==='string' && s.trim().length>4);
   return src || HERO_FALLBACK;
@@ -125,15 +134,14 @@ export default function HomePage(){
     return()=>{ mounted=false; };
   },[]);
 
-  /* ---------- autoplay con reset ---------- */
-  const startAuto = () => {
+  /* ---------- autoplay con “reset” al navegar manual ---------- */
+  const startAutoplay=()=>{
     if(timerRef.current) clearInterval(timerRef.current);
-    if(!destacadas.length) return;
-    timerRef.current=setInterval(()=>setI(p=>(p+1)%destacadas.length),4000);
+    timerRef.current=setInterval(()=>setI(p=>(p+1)%Math.max(destacadas.length,1)),5000);
   };
-
   useEffect(()=>{
-    startAuto();
+    if(!destacadas.length) return;
+    startAutoplay();
     return()=>{ if(timerRef.current) clearInterval(timerRef.current); };
   },[destacadas.length]);
 
@@ -143,19 +151,19 @@ export default function HomePage(){
       const n=destacadas.length;
       return ((p+dir)%n+n)%n;
     });
-    // reset del temporizador cuando hay interacción manual
-    startAuto();
+    // reset del temporizador al navegar manual
+    startAutoplay();
   };
 
-  /* ---------- teclado (←/→) ---------- */
+  /* ---------- teclado: flechas izquierda/derecha ---------- */
   useEffect(()=>{
     const onKey=(e:KeyboardEvent)=>{
-      if(e.key==='ArrowRight'){ e.preventDefault(); go(1); }
-      else if(e.key==='ArrowLeft'){ e.preventDefault(); go(-1); }
+      if(e.key==='ArrowRight') go(1);
+      else if(e.key==='ArrowLeft') go(-1);
     };
-    window.addEventListener('keydown', onKey);
-    return ()=> window.removeEventListener('keydown', onKey);
-  },[destacadas.length]); // depende de la lista para que go conozca el length
+    window.addEventListener('keydown',onKey);
+    return()=>window.removeEventListener('keydown',onKey);
+  },[destacadas.length]);
 
   /* ---------- touch swipe ---------- */
   const touchStartX=useRef<number|null>(null);
@@ -174,7 +182,7 @@ export default function HomePage(){
     const dx=touchDeltaX.current;
     if(Math.abs(dx)>50){ dx<0?go(1):go(-1); }
     touchStartX.current=null; touchDeltaX.current=0;
-    startAuto(); // reset después del swipe
+    if(destacadas.length) startAutoplay();
   };
 
   /* ---------- hero data ---------- */
@@ -381,8 +389,9 @@ export default function HomePage(){
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="mt-3 text-2xl md:text-3xl uppercase tracking-[0.25em]">
-              Programa de Referidos con exclusividad
+            {/* 🔽 más pequeño + mayúsculas + tracking igual que “EQUIPO” */}
+            <h2 className="mt-3 text-xl md:text-2xl uppercase tracking-[0.25em]">
+              PROGRAMA DE REFERIDOS CON EXCLUSIVIDAD
             </h2>
             <p className="mt-2 text-slate-600">
               ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
@@ -392,22 +401,24 @@ export default function HomePage(){
           {/* formulario */}
           <div className="px-6 pb-8">
             {/* ---------- referente ---------- */}
-            <h3 className="text-lg uppercase tracking-[0.25em]">Tus datos (referente)</h3>
+            <h3 className="text-sm md:text-base uppercase tracking-[0.25em]">
+              TUS DATOS (REFERENTE)
+            </h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Nombre completo *</label>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="Tu nombre completo" />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Email *</label>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="tu@email.com" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Teléfono</label>
+                <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="+56 9 1234 5678" />
@@ -415,22 +426,24 @@ export default function HomePage(){
             </div>
 
             {/* ---------- referido ---------- */}
-            <h3 className="mt-8 text-lg uppercase tracking-[0.25em]">Datos del referido</h3>
+            <h3 className="mt-8 text-sm md:text-base uppercase tracking-[0.25em]">
+              DATOS DEL REFERIDO
+            </h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Nombre completo *</label>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="Nombre del referido" />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Email *</label>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="correo@referido.com" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Teléfono</label>
+                <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
                 <input className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="+56 9 1234 5678" />
@@ -438,11 +451,13 @@ export default function HomePage(){
             </div>
 
             {/* ---------- preferencias ---------- */}
-            <h3 className="mt-8 text-lg uppercase tracking-[0.25em]">Preferencias del referido</h3>
+            <h3 className="mt-8 text-sm md:text-base uppercase tracking-[0.25em]">
+              PREFERENCIAS DEL REFERIDO
+            </h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               {/* servicio */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">¿Qué servicio necesita?</label>
+                <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <SmartSelect
                   options={SERVICIOS}
                   value={''}
@@ -453,7 +468,7 @@ export default function HomePage(){
               </div>
               {/* tipo propiedad */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Tipo de propiedad</label>
+                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <SmartSelect
                   options={TIPO_PROPIEDAD}
                   value={''}
@@ -464,7 +479,7 @@ export default function HomePage(){
               </div>
               {/* región */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Región</label>
+                <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
                   options={REGIONES.map(r=>displayRegion(r as Region))}
                   value={''}
@@ -475,7 +490,7 @@ export default function HomePage(){
               </div>
               {/* comuna */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Comuna</label>
+                <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
                   options={[]}
                   value={''}
@@ -487,14 +502,14 @@ export default function HomePage(){
               </div>
               {/* presupuesto */}
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Presupuesto mínimo (UF)</label>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
                 <input inputMode="numeric"
                        className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
                        placeholder="0" />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Presupuesto máximo (UF)</label>
+                <label className="block text-sm text-slate-700 mb-1">Presupuesto máximo (UF)</label>
                 <input inputMode="numeric"
                        className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                   text-slate-700 placeholder-slate-400"
@@ -502,7 +517,7 @@ export default function HomePage(){
               </div>
               {/* comentarios */}
               <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1 uppercase tracking-[0.25em]">Comentarios adicionales</label>
+                <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
                 <textarea rows={4}
                           className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2
                                      text-slate-700 placeholder-slate-400"
