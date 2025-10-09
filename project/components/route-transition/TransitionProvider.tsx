@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
 
 interface TransitionCtx {
   start: (opts?: { minDurationMs?: number }) => void;
@@ -9,7 +9,6 @@ interface TransitionCtx {
 }
 
 const Ctx = createContext<TransitionCtx | null>(null);
-
 export function useRouteTransition() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('useRouteTransition must be used within <RouteTransitionProvider>');
@@ -22,23 +21,29 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const tsRef = useRef<number>(0);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
+  // bloquea scroll del body mientras corre overlay
+  useEffect(() => {
+    if (isActive) document.documentElement.classList.add('gp-lock');
+    else document.documentElement.classList.remove('gp-lock');
+    return () => document.documentElement.classList.remove('gp-lock');
+  }, [isActive]);
+
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    const minDur = opts?.minDurationMs ?? 320;
+    const minDur = opts?.minDurationMs ?? 900; // ← más notorio
     tsRef.current = Date.now();
     setFadeout(false);
     setActive(true);
-    // barra de progreso simple
     if (progressRef.current) {
-      progressRef.current.style.width = '20%';
-      setTimeout(() => progressRef.current && (progressRef.current.style.width = '65%'), 100);
+      progressRef.current.style.width = '25%';
+      setTimeout(() => progressRef.current && (progressRef.current.style.width = '70%'), 120);
     }
-    // garantía de duración mínima
+    // el “minDur” se respeta en end()
     setTimeout(() => {}, minDur);
   }, []);
 
   const end = useCallback(() => {
     const elapsed = Date.now() - tsRef.current;
-    const minDur = 320;
+    const minDur = 900;
     const remain = Math.max(0, minDur - elapsed);
     setTimeout(() => {
       if (progressRef.current) progressRef.current.style.width = '100%';
@@ -47,30 +52,26 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         setActive(false);
         setFadeout(false);
         if (progressRef.current) progressRef.current.style.width = '0%';
-      }, 220);
+      }, 300); // fade out
     }, remain);
   }, []);
 
   return (
     <Ctx.Provider value={{ start, end, isActive }}>
-      {/* progress bar */}
+      {/* barra superior (opcional) */}
       <div ref={progressRef} className="gp-progress" />
       {/* overlay */}
       <div className={`gp-route-overlay ${fadeout ? 'fadeout' : ''}`} hidden={!isActive} aria-hidden={!isActive}>
         <div className="gp-logo-wrap">
-          {/* Beams detrás */}
+          {/* Logo blanco centrado */}
+          <img
+            src="/logo-white.svg"             /* ← asegúrate de tener este SVG en /public */
+            alt="Gesswein Properties"
+            className="gp-logo"
+          />
+          {/* Beams ENCIMA del logo */}
           <div className="gp-beam" />
           <div className="gp-beam gp-beam-3" />
-          {/* Logo — usa /public/logo-gesswein.svg si existe; si no, texto como fallback */}
-          <img
-            src="/logo-gesswein.svg"
-            alt="Gesswein Properties"
-            className="w-full h-auto drop-shadow-lg"
-            onError={(e) => {
-              const el = e.currentTarget;
-              el.outerHTML = `<div style="font-weight:700;font-size:28px;color:white;letter-spacing:.06em;text-align:center">GESSWEIN<br/>PROPERTIES</div>`;
-            }}
-          />
         </div>
       </div>
       {children}
