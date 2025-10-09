@@ -201,3 +201,61 @@ html, body {
   filter: blur(2px); animation: gpBeamDiag 1200ms ease-in-out infinite;
 }
 .gp-beam::after { top: 62%; width: 60%; height: 6px; animation-duration: 1400ms; animation-delay: 160ms; }
+/* ========== Láser dibujando el logo (con máscara del SVG) ========== */
+
+/* Si quieres usar el SVG “Logos Oficiales.svg”, súbelo a /public
+   como /logos-oficiales.svg y cambia la url() de abajo. */
+.gp-laser-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 140;                  /* por ENCIMA del logo base */
+  pointer-events: none;
+
+  /* La máscara recorta las “barras de luz” a la silueta del logo */
+  -webkit-mask: url('/logo-white.svg') center / 82% no-repeat;
+          mask: url('/logo-white.svg') center / 82% no-repeat;
+  mix-blend-mode: screen;        /* brillo sobre el fondo azul */
+  filter: blur(0.5px);
+}
+
+/* Barras de luz que barren la máscara */
+.gp-laser-sweep {
+  position: absolute;
+  left: -40%;
+  top: 50%;
+  width: 180%;
+  height: 14%;
+  transform: translateY(-50%) skewX(-16deg);
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(248,250,252,0.95) 35%,
+    rgba(125,211,252,0.85) 55%,
+    rgba(255,255,255,0) 100%
+  );
+  border-radius: 9999px;
+  opacity: 0;
+  animation: gpLogoSweep 1200ms ease-in-out infinite;
+}
+
+.gp-laser-sweep--1 { top: 42%; animation-delay: 0ms; }
+.gp-laser-sweep--2 { top: 54%; height: 11%; animation-duration: 1350ms; animation-delay: 120ms; }
+.gp-laser-sweep--3 { top: 34%; height: 10%; animation-duration: 1500ms; animation-delay: 240ms; }
+
+@keyframes gpLogoSweep {
+  0%   { transform: translate(-25%, -50%) skewX(-16deg); opacity: 0; }
+  12%  { opacity: .45; }
+  50%  { transform: translate(25%, -50%) skewX(-16deg); opacity: .75; }
+  88%  { opacity: .45; }
+  100% { transform: translate(75%, -50%) skewX(-16deg); opacity: 0; }
+}
+
+/* Leve aparición del logo base debajo de los láseres */
+.gp-logo--fadein {
+  animation: gpLogoBaseIn 700ms ease forwards;
+  opacity: 0;
+}
+@keyframes gpLogoBaseIn {
+  from { opacity: 0; filter: drop-shadow(0 1px 6px rgba(0,0,0,.15)); }
+  to   { opacity: 1; filter: drop-shadow(0 2px 10px rgba(0,0,0,.20)); }
+}
