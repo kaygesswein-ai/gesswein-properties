@@ -1,7 +1,12 @@
 'use client';
 
 import React, {
-  createContext, useContext, useState, useRef, useCallback, useEffect,
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
 } from 'react';
 
 interface TransitionCtx {
@@ -9,22 +14,23 @@ interface TransitionCtx {
   end: () => void;
   isActive: boolean;
 }
+
 const Ctx = createContext<TransitionCtx | null>(null);
-export const useRouteTransition = () => {
+
+export function useRouteTransition() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('useRouteTransition must be used within <RouteTransitionProvider>');
   return ctx;
-};
+}
 
 export function RouteTransitionProvider({ children }: { children: React.ReactNode }) {
   const [isActive, setActive] = useState(false);
   const [fadeout, setFadeout] = useState(false);
-  const startedAtRef = useRef(0);
-  const minDurRef = useRef(900);
-  const progressRef = useRef<HTMLDivElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const startedAt = useRef(0);
+  const minDurRef = useRef(900); // ms
+  const safetyTimer = useRef<number | null>(null);
 
-  // bloquea el scroll cuando la capa está activa
+  // Evita scroll de fondo
   useEffect(() => {
     const root = document.documentElement;
     if (isActive) root.classList.add('gp-lock');
@@ -34,52 +40,35 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
     minDurRef.current = Math.max(300, opts?.minDurationMs ?? 900);
-    startedAtRef.current = Date.now();
+    startedAt.current = Date.now();
     setFadeout(false);
     setActive(true);
-
-    // arranca barra y video
-    if (progressRef.current) {
-      progressRef.current.style.width = '20%';
-      setTimeout(() => {
-        if (progressRef.current) progressRef.current.style.width = '70%';
-      }, 120);
-    }
-    if (videoRef.current) {
-      try {
-        videoRef.current.currentTime = 0;
-        // en móviles iOS es obligatorio muted+playsInline
-        videoRef.current.play().catch(() => {});
-      } catch {}
-    }
   }, []);
 
   const end = useCallback(() => {
-    const elapsed = Date.now() - startedAtRef.current;
+    const elapsed = Date.now() - startedAt.current;
     const remain = Math.max(0, minDurRef.current - elapsed);
-
-    setTimeout(() => {
-      if (progressRef.current) progressRef.current.style.width = '100%';
+    window.setTimeout(() => {
       setFadeout(true);
-      setTimeout(() => {
+      window.setTimeout(() => {
         setActive(false);
         setFadeout(false);
-        if (progressRef.current) progressRef.current.style.width = '0%';
       }, 300); // coincide con .gp-route-overlay.fadeout
     }, remain);
   }, []);
 
-  // Cuando el video termina, cerramos (respetando minDuration por si carga muy rápido)
-  const handleEnded = useCallback(() => {
-    end();
+  // Fallback por si el evento "ended" del video no dispara
+  const armSafety = useCallback((durationMs: number) => {
+    if (safetyTimer.current) window.clearTimeout(safetyTimer.current);
+    // 1.2x de la duración para margen
+    safetyTimer.current = window.setTimeout(() => {
+      end();
+    }, Math.max(durationMs * 1.2, minDurRef.current + 300)) as unknown as number;
   }, [end]);
 
   return (
     <Ctx.Provider value={{ start, end, isActive }}>
-      {/* barra superior (opcional) */}
-      <div ref={progressRef} className="gp-progress" />
-
-      {/* overlay corporativo (tapa por completo la página) */}
+      {/* Overlay con el video */}
       <div
         className={`gp-route-overlay ${fadeout ? 'fadeout' : ''}`}
         hidden={!isActive}
@@ -87,27 +76,30 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         role="status"
         aria-live="polite"
       >
-        <div className="gp-logo-wrap" aria-label="Transición de página Gesswein Properties">
-          {/* Capa 1: logo base sin techos */}
-          <img
-            src="/logo-core.svg"
-            alt="Gesswein Properties"
-            className="gp-logo"
-            draggable={false}
-          />
-
-          {/* Capa 2: video de líneas/techos encima */}
+        <div className="gp-logo-wrap" aria-label="Transición Gesswein Properties">
+          {/* Video único que contiene TODO (fondo + logo + líneas) */}
           <video
-            ref={videoRef}
             className="gp-video-lines"
+            autoPlay
             muted
             playsInline
-            preload="auto"
-            // si exportas un webm con transparencia, se usará primero:
-            onEnded={handleEnded}
+            // Si tienes WebM con alfa, déjalo primero para navegadores que lo soportan
+            // Si sólo usas MP4 (Canva), deja solo la segunda fuente.
+            onLoadedMetadata={(e) => {
+              const v = e.currentTarget;
+              // programa fallback por si no llega 'ended'
+              if (!isNaN(v.duration) && isFinite(v.duration)) {
+                armSafety(v.duration * 1000);
+              } else {
+                armSafety(2000); // por las dudas
+              }
+            }}
+            onEnded={() => end()}
           >
-            <source src="/gp-lines.webm" type="video/webm" />
-            <source src="/gp-lines.mp4"  type="video/mp4" />
+            {/* Fuente con transparencia (opcional, Opción B) */}
+            <source src="/transition/gp-transition.webm" type="video/webm" />
+            {/* Fallback MP4 (Opción A o respaldo) */}
+            <source src="/transition/gp-transition.mp4" type="video/mp4" />
           </video>
         </div>
       </div>
