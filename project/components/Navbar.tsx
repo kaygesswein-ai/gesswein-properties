@@ -42,7 +42,8 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`${wrapper} ${bg}`}>
+      {/* ⬇️ SOLO agregado: data-no-transition */}
+      <header data-no-transition className={`${wrapper} ${bg}`}>
         {/* pl-* alinea el logo con el “Ver Propiedades” del hero */}
         <div className="mx-auto max-w-7xl pr-4 sm:pr-6 lg:pr-8 pl-6 md:pl-10 lg:pl-12 xl:pl-16">
           <div className="h-16 md:h-18 flex items-center">
@@ -98,18 +99,15 @@ export default function Navbar() {
                 </Link>
               </nav>
 
-              {/* Redes (mismo orden/tamaño que acordamos) */}
+              {/* Redes */}
               <div className="flex items-center gap-3 text-white">
-                {/* WhatsApp – igual al footer (burbuja + teléfono superpuesto) */}
                 <Link
                   href="https://wa.me/56900000000"
                   aria-label="WhatsApp"
                   className={linkBase}
                 >
                   <span className="relative inline-flex h-[18px] w-[18px] items-center justify-center">
-                    {/* Burbuja */}
                     <MessageCircle className="absolute inset-0 h-full w-full stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke]" />
-                    {/* Teléfono centrado y con ángulo tipo footer */}
                     <Phone className="absolute h-[11px] w-[11px] stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke] rotate-[24deg] translate-x-[0.1px] -translate-y-[0.2px]" />
                   </span>
                 </Link>
@@ -155,9 +153,10 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Panel móvil (overlay gris translúcido + texto negro corporativo) */}
+      {/* Panel móvil */}
       <div
         id="mobile-menu"
+        data-no-transition /* ⬅️ añadido también para excluir menú móvil */
         className={`md:hidden fixed inset-x-0 top-16 z-40
                     bg-white/80 backdrop-blur-sm border-t border-black/10
                     transition-all duration-200
@@ -204,6 +203,4 @@ export default function Navbar() {
     </>
   )
 }
-
-
 
