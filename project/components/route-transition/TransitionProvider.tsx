@@ -8,13 +8,11 @@ import React, {
   useCallback,
   useEffect,
 } from 'react';
+import AnimatedLogo from '@/components/route-transition/AnimatedLogo';
 
 interface TransitionCtx {
-  /** Arranca la transición. Puedes forzar una duración mínima si quieres */
   start: (opts?: { minDurationMs?: number }) => void;
-  /** Cierra la transición (respetando minDuration si aplica) */
   end: () => void;
-  /** True cuando el overlay está visible */
   isActive: boolean;
 }
 
@@ -29,11 +27,12 @@ export function useRouteTransition() {
 export function RouteTransitionProvider({ children }: { children: React.ReactNode }) {
   const [isActive, setActive] = useState(false);
   const [fadeout, setFadeout] = useState(false);
+
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(900); // default: 900ms (más notorio)
+  const minDurRef = useRef<number>(900); // duración mínima por defecto
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  // Bloquear scroll de la página bajo el overlay
+  // Bloquea el scroll del documento bajo el overlay
   useEffect(() => {
     const root = document.documentElement;
     if (isActive) root.classList.add('gp-lock');
@@ -51,7 +50,6 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     // barra de progreso opcional
     if (progressRef.current) {
       progressRef.current.style.width = '20%';
-      // Primer “salto” rápido para dar feedback
       setTimeout(() => {
         if (progressRef.current) progressRef.current.style.width = '70%';
       }, 120);
@@ -62,13 +60,11 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     const elapsed = Date.now() - startedAtRef.current;
     const remain = Math.max(0, minDurRef.current - elapsed);
 
-    // Espera a cumplir la duración mínima antes de cerrar
     setTimeout(() => {
       if (progressRef.current) progressRef.current.style.width = '100%';
 
       setFadeout(true);
-      // Tiempo de fade-out del overlay (debe calzar con .gp-route-overlay.fadeout)
-      const FADE_MS = 300;
+      const FADE_MS = 300; // debe calzar con .gp-route-overlay.fadeout
       setTimeout(() => {
         setActive(false);
         setFadeout(false);
@@ -82,7 +78,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
       {/* Barra superior (opcional) */}
       <div ref={progressRef} className="gp-progress" />
 
-      {/* Overlay corporativo (opaco; tapa completamente la página mientras anima) */}
+      {/* Overlay corporativo */}
       <div
         className={`gp-route-overlay ${fadeout ? 'fadeout' : ''}`}
         hidden={!isActive}
@@ -90,25 +86,8 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         role="status"
         aria-live="polite"
       >
-        <div className="gp-logo-wrap" aria-label="Transición de página Gesswein Properties">
-          {/* Logo blanco centrado */}
-          <img
-            src="/logo-white.svg"          /* Asegúrate de tener este SVG en /public */
-            alt="Gesswein Properties"
-            className="gp-logo"
-            draggable={false}
-          />
-
-          {/* Líneas horizontales que pasan “por encima” del logo */}
-          <div className="gp-lines" aria-hidden="true">
-            <span className="gp-line l1" />
-            <span className="gp-line l2" />
-            <span className="gp-line l3" />
-          </div>
-
-          {/* Rayos diagonales sutiles (encima) */}
-          <div className="gp-beam" aria-hidden="true" />
-        </div>
+        {/* Logo + láseres enmascarados */}
+        <AnimatedLogo />
       </div>
 
       {children}
