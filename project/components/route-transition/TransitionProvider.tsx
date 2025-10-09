@@ -22,16 +22,18 @@ export function useRouteTransition() {
   return ctx;
 }
 
+const TARGET_DURATION_MS = 1800; // ⬅️ 1.8s exactos
+
 export function RouteTransitionProvider({ children }: { children: React.ReactNode }) {
   const [isActive, setActive] = useState(false);
   const [fadeout, setFadeout] = useState(false);
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(1200);                 // ⬅️ subimos a ~1.2s para calzar con el video
+  const minDurRef = useRef<number>(TARGET_DURATION_MS);
   const progressRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [videoKey, setVideoKey] = useState(0);            // fuerza restart del <video>
+  const [videoKey, setVideoKey] = useState(0); // forzar remontaje del <video>
 
-  // Bloquear scroll mientras corre overlay
+  // Bloquea/desbloquea scroll del documento bajo el overlay
   useEffect(() => {
     const root = document.documentElement;
     if (isActive) root.classList.add('gp-lock');
@@ -39,35 +41,40 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     return () => root.classList.remove('gp-lock');
   }, [isActive]);
 
-  const playVideo = useCallback(async () => {
+  const tryPlay = useCallback(async () => {
     const v = videoRef.current;
     if (!v) return;
     try {
       v.currentTime = 0;
-      await v.play();                                     // intenta autoplay
+      // Ajuste de velocidad a 1.8s exactos si el video ya reporta duración
+      if (v.duration && Number.isFinite(v.duration)) {
+        v.playbackRate = v.duration / (TARGET_DURATION_MS / 1000);
+      }
+      await v.play();
     } catch {
-      // fallback silencioso si el navegador bloquea algo
+      // Reintento suave en el próximo frame (iOS/WebKit suele necesitar tiempo)
+      requestAnimationFrame(() => {
+        v.play().catch(() => {});
+      });
     }
   }, []);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(800, opts?.minDurationMs ?? 1300); // ⬅️ 1.3s por defecto
+    minDurRef.current = Math.max(TARGET_DURATION_MS, opts?.minDurationMs ?? TARGET_DURATION_MS);
     startedAtRef.current = Date.now();
-
-    // reinicia barra
-    if (progressRef.current) {
-      progressRef.current.style.width = '20%';
-      setTimeout(() => progressRef.current && (progressRef.current.style.width = '65%'), 120);
-    }
-
     setFadeout(false);
     setActive(true);
 
-    // reinicia el <video> forzando nueva clave y luego play
-    setVideoKey(k => k + 1);
-    // pequeño delay para que el DOM monte el <video> antes de play()
-    setTimeout(playVideo, 30);
-  }, [playVideo]);
+    // Barra de progreso opcional
+    if (progressRef.current) {
+      progressRef.current.style.width = '25%';
+      setTimeout(() => progressRef.current && (progressRef.current.style.width = '70%'), 120);
+    }
+
+    // Fuerza a “remontar” el <video> y luego play
+    setVideoKey((k) => k + 1);
+    setTimeout(tryPlay, 30);
+  }, [tryPlay]);
 
   const end = useCallback(() => {
     const elapsed = Date.now() - startedAtRef.current;
@@ -76,21 +83,39 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     setTimeout(() => {
       if (progressRef.current) progressRef.current.style.width = '100%';
       setFadeout(true);
-
       setTimeout(() => {
         setActive(false);
         setFadeout(false);
         if (progressRef.current) progressRef.current.style.width = '0%';
-      }, 300); // coincide con .fadeout
+      }, 300); // coincide con el fadeout del overlay
     }, remain);
   }, []);
 
+  // Cierra también cuando el video termina (respetando minDuration)
+  const handleEnded = useCallback(() => {
+    end();
+  }, [end]);
+
+  const handleLoadedMetadata = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    // Ajuste fino a 1.8s exactos
+    if (v.duration && Number.isFinite(v.duration)) {
+      v.playbackRate = v.duration / (TARGET_DURATION_MS / 1000);
+    }
+    tryPlay();
+  }, [tryPlay]);
+
+  const handleCanPlay = useCallback(() => {
+    tryPlay();
+  }, [tryPlay]);
+
   return (
     <Ctx.Provider value={{ start, end, isActive }}>
-      {/* barra superior (opcional) */}
+      {/* Barra superior (opcional) */}
       <div ref={progressRef} className="gp-progress" />
 
-      {/* overlay corporativo */}
+      {/* Overlay corporativo */}
       <div
         className={`gp-route-overlay ${fadeout ? 'fadeout' : ''}`}
         hidden={!isActive}
@@ -98,8 +123,8 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         role="status"
         aria-live="polite"
       >
-        <div className="gp-logo-wrap" aria-label="Transición de página Gesswein Properties">
-          {/* Logo base (opcional, debajo del video) */}
+        <div className="gp-logo-wrap" aria-label="Transición Gesswein Properties">
+          {/* Logo debajo (opcional) */}
           <img
             src="/logo-white.svg"
             alt="Gesswein Properties"
@@ -107,7 +132,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
             draggable={false}
           />
 
-          {/* Video de líneas – asegúrate de que exista: /public/brand/transition.mp4 */}
+          {/* Video líneas (encima del logo). Coloca el archivo en /public/brand/transition.mp4 */}
           <video
             key={videoKey}
             ref={videoRef}
@@ -117,8 +142,10 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
             playsInline
             preload="auto"
             autoPlay
-            // si quieres que siga brillando mientras el overlay está activo:
-            // loop
+            disablePictureInPicture
+            onLoadedMetadata={handleLoadedMetadata}
+            onCanPlay={handleCanPlay}
+            onEnded={handleEnded}
           />
         </div>
       </div>
