@@ -134,15 +134,12 @@ export default function ServiciosPage() {
             </p>
           </div>
 
-          {/* DESKTOP / TABLET: línea horizontal + 4 hitos centrados (coincide con tu referencia) */}
+          {/* DESKTOP / TABLET — NO TOCAR */}
           <div className="hidden sm:block relative">
-            {/* línea */}
             <div className="absolute left-[5%] right-[5%] top-8 h-px bg-[#0A2E57]/30" />
-            {/* items */}
             <div className="grid grid-cols-4 gap-8 text-center">
               {PROCESO.map((p, i) => (
                 <div key={p.title} className="pt-10">
-                  {/* punto */}
                   <span className="mx-auto -mt-7 mb-5 block h-2 w-2 rounded-full bg-[#0A2E57] ring-2 ring-[#0A2E57]/25" />
                   <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                     Paso {i + 1}
@@ -156,22 +153,15 @@ export default function ServiciosPage() {
             </div>
           </div>
 
-          {/* MÓVIL: línea vertical limpia; punto alineado con “PASO X” */}
-          <div className="sm:hidden relative pl-9">
+          {/* MÓVIL — sin puntos, misma línea vertical y tipografía */}
+          <div className="sm:hidden relative pl-8">
             {/* línea vertical */}
             <div className="absolute left-3 top-0 bottom-0 w-px bg-[#0A2E57]/25" />
             <ol className="flex flex-col gap-8">
               {PROCESO.map((p, i) => (
                 <li key={p.title} className="relative">
-                  {/* punto — centrado en la línea y alineado con la 1ª línea del PASO */}
-                  <span
-                    className="
-                      absolute left-3 -translate-x-1/2
-                      top-[1.05rem]          /* ajustar fino: 1.00–1.10 si lo quieres 1px arriba/abajo */
-                      block h-2 w-2 rounded-full bg-[#0A2E57] ring-2 ring-[#0A2E57]/25
-                    "
-                  />
-                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                  {/* sin pelotitas en mobile */}
+                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase ml-1">
                     Paso {i + 1}
                   </div>
                   <h3 className="mt-1 text-[14px] text-black/90 font-medium">{p.title}</h3>
