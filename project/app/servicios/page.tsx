@@ -1,296 +1,271 @@
-import { Metadata } from 'next'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import LeadForm from '@/components/LeadForm'
-import { 
-  Building2, 
-  FileText, 
-  Users, 
-  Calculator, 
-  MapPin, 
-  Clock,
-  CheckCircle,
-  Star
-} from 'lucide-react'
+// project/app/servicios/page.tsx
+import type { Metadata } from 'next'
+import Image from 'next/image'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Servicios - Gesswein Properties',
-  description: 'Corretaje inmobiliario, asesoría arquitectónica y consultoría normativa. Servicios integrales para tu próxima inversión inmobiliaria.',
+  title: 'Servicios',
+  description:
+    'Asesoría inmobiliaria integral: venta, arriendo, tasación, preparación de propiedad, marketing premium, negociación y cierre.',
 }
-
-const services = [
-  {
-    icon: Building2,
-    title: 'Corretaje Inmobiliario',
-    description: 'Servicio completo de compra, venta y arriendo de propiedades premium',
-    features: [
-      'Valuación profesional de propiedades',
-      'Marketing digital especializado',
-      'Acompañamiento en todo el proceso',
-      'Red de contactos exclusiva',
-      'Gestión de documentación legal'
-    ],
-    highlight: 'Más vendido'
-  },
-  {
-    icon: FileText,
-    title: 'Asesoría Arquitectónica',
-    description: 'Consultoría especializada en proyectos arquitectónicos y remodelaciones',
-    features: [
-      'Diseño y planificación de proyectos',
-      'Permisos de edificación',
-      'Supervisión de obras',
-      'Optimización de espacios',
-      'Sustentabilidad y eficiencia energética'
-    ],
-    highlight: null
-  },
-  {
-    icon: Users,
-    title: 'Consultoría Normativa',
-    description: 'Asesoría especializada en normativas municipales y regulaciones',
-    features: [
-      'Análisis de factibilidad',
-      'Tramitación de permisos',
-      'Cumplimiento normativo',
-      'Gestión municipal',
-      'Resolución de conflictos normativos'
-    ],
-    highlight: null
-  }
-]
-
-const processSteps = [
-  {
-    step: 1,
-    title: 'Consulta Inicial',
-    description: 'Reunión para entender tus necesidades y objetivos'
-  },
-  {
-    step: 2,
-    title: 'Propuesta Personalizada',
-    description: 'Plan de trabajo adaptado a tu proyecto específico'
-  },
-  {
-    step: 3,
-    title: 'Ejecución',
-    description: 'Desarrollo del proyecto con seguimiento constante'
-  },
-  {
-    step: 4,
-    title: 'Entrega',
-    description: 'Finalización exitosa y entrega de resultados'
-  }
-]
 
 export default function ServiciosPage() {
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <section className="bg-gradient-to-br from-blue-900 to-blue-700 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Nuestros Servicios
-            </h1>
-            <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              Ofrecemos servicios integrales para cubrir todas tus necesidades inmobiliarias 
-              y arquitectónicas con la máxima profesionalidad
-            </p>
+    <div className="bg-white text-black">
+      {/* HERO — misma altura que Propiedades */}
+      <section className="relative isolate">
+        {/* Fondo (puedes reemplazar la imagen por una propia en /public) */}
+        <div className="absolute inset-0 -z-10">
+          <Image
+            src="/hero-servicios.jpg" // opcional: sube un jpg en /public; si no existe, se verá un fondo azul sólido
+            alt=""
+            fill
+            priority
+            className="object-cover opacity-80"
+          />
+          <div className="absolute inset-0 bg-[#0A2E57] mix-blend-multiply" />
+        </div>
+
+        {/* Altura alineada a la portada de Propiedades */}
+        <div className="min-h-[420px] sm:min-h-[460px] lg:min-h-[520px] flex items-center">
+          <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16 w-full">
+            <div className="max-w-3xl">
+              <h1 className="text-white text-3xl sm:text-4xl lg:text-[44px] leading-tight font-semibold">
+                Servicios inmobiliarios de alto estándar
+              </h1>
+              <p className="mt-4 text-white/85 text-base lg:text-lg max-w-2xl">
+                Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
+                con la mejor experiencia y resultados.
+              </p>
+              <div className="mt-6 flex gap-3">
+                <Link
+                  href="/contacto"
+                  className="inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#0A2E57] hover:opacity-90 transition"
+                >
+                  Conversemos
+                </Link>
+                <Link
+                  href="/propiedades"
+                  className="inline-flex items-center rounded-xl border border-white/70 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
+                >
+                  Ver propiedades
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Services */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {services.map((service, index) => {
-              const Icon = service.icon
-              return (
-                <Card key={index} className="relative hover:shadow-lg transition-shadow">
-                  {service.highlight && (
-                    <Badge className="absolute -top-2 left-4 bg-yellow-500 text-yellow-900">
-                      {service.highlight}
-                    </Badge>
-                  )}
-                  
-                  <CardHeader className="text-center pb-4">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Icon className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <CardTitle className="text-xl">{service.title}</CardTitle>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-4">
-                    <p className="text-gray-600 text-center">
-                      {service.description}
-                    </p>
-                    
-                    <ul className="space-y-2">
-                      {service.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-start gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Process */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Nuestro Proceso de Trabajo
+      {/* GRID DE SERVICIOS PRINCIPALES */}
+      <section className="py-14 sm:py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
+          <header className="max-w-3xl">
+            <h2 className="text-2xl sm:text-[28px] font-semibold text-[#0A2E57]">
+              ¿Qué hacemos por ti?
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Un proceso estructurado y transparente para garantizar los mejores resultados
+            <p className="mt-3 text-black/70">
+              Un servicio integral, enfocado en la excelencia, que cubre cada etapa del ciclo
+              inmobiliario.
             </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {processSteps.map((step, index) => (
-              <Card key={index} className="text-center relative">
-                <CardContent className="pt-6">
-                  <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4">
-                    {step.step}
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
-                  <p className="text-gray-600 text-sm">{step.description}</p>
-                </CardContent>
-                
-                {index < processSteps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2">
-                    <div className="w-6 h-0.5 bg-blue-200"></div>
-                  </div>
+          </header>
+
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {SERVICIOS.map((s) => (
+              <article
+                key={s.title}
+                className="rounded-2xl border border-black/10 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,.08)] transition"
+              >
+                <div className="text-[#0A2E57] text-base font-semibold tracking-[.25em] uppercase">
+                  {s.kicker}
+                </div>
+                <h3 className="mt-1 text-lg font-semibold text-black">{s.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-black/70">{s.description}</p>
+
+                {/* Lista con formato fino (•) */}
+                {s.items && (
+                  <ul className="mt-4 space-y-2 text-sm text-black/80">
+                    {s.items.map((it) => (
+                      <li key={it} className="pl-4 relative">
+                        <span className="absolute left-0 top-2 size-[6px] rounded-full bg-[#0A2E57]" />
+                        {it}
+                      </li>
+                    ))}
+                  </ul>
                 )}
-              </Card>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Carolina San Martín highlight */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-6 h-6 text-yellow-500" />
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                      Arquitecta Líder
-                    </Badge>
-                  </div>
-                  
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
-                    Carolina San Martín
-                  </h3>
-                  
-                  <p className="text-lg text-gray-700 leading-relaxed">
-                    Arquitecta con más de 15 años de experiencia especializada en proyectos 
-                    residenciales de alto estándar. Lidera nuestro equipo de asesoría 
-                    arquitectónica y consultoría normativa.
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">Arquitectura Residencial</Badge>
-                    <Badge variant="outline">Normativa Municipal</Badge>
-                    <Badge variant="outline">Sustentabilidad</Badge>
-                  </div>
-                  
-                  <Button variant="outline" className="mt-4">
-                    Conocer más del equipo
-                  </Button>
-                </div>
-                
-                <div className="text-center lg:text-right">
-                  <div className="w-48 h-48 bg-gray-200 rounded-full mx-auto lg:mx-0 mb-4 flex items-center justify-center">
-                    <Users className="w-16 h-16 text-gray-400" />
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    "La excelencia en cada proyecto es nuestro compromiso"
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Why choose us */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              ¿Por qué elegirnos?
+      {/* PROCESO / CÓMO TRABAJAMOS */}
+      <section className="py-14 sm:py-16 lg:py-20 bg-slate-50">
+        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
+          <header className="max-w-3xl">
+            <h2 className="text-2xl sm:text-[28px] font-semibold text-[#0A2E57]">
+              Un proceso claro y transparente
             </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="font-semibold mb-2">+10 años</h3>
-              <p className="text-gray-600 text-sm">de experiencia en el mercado</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <h3 className="font-semibold mb-2">500+</h3>
-              <p className="text-gray-600 text-sm">proyectos exitosos</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="font-semibold mb-2">Equipo</h3>
-              <p className="text-gray-600 text-sm">multidisciplinario experto</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-6 h-6 text-yellow-600" />
-              </div>
-              <h3 className="font-semibold mb-2">98%</h3>
-              <p className="text-gray-600 text-sm">satisfacción de clientes</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact form */}
-      <section className="py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              ¿Necesitas nuestros servicios?
-            </h2>
-            <p className="text-xl text-gray-600">
-              Cuéntanos sobre tu proyecto y te ayudaremos a hacerlo realidad
+            <p className="mt-3 text-black/70">
+              Metodología probada para lograr un resultado superior.
             </p>
+          </header>
+
+          <ol className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {PROCESO.map((p, i) => (
+              <li
+                key={p.title}
+                className="relative rounded-2xl border border-black/10 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,.06)]"
+              >
+                <div className="text-[#0A2E57] text-[12px] tracking-[.30em] uppercase">
+                  Paso {i + 1}
+                </div>
+                <h3 className="mt-1 text-base font-semibold text-black">{p.title}</h3>
+                <p className="mt-2 text-sm text-black/70">{p.text}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* DESTACADOS / DIFERENCIADORES */}
+      <section className="py-14 sm:py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
+          <header className="max-w-3xl">
+            <h2 className="text-2xl sm:text-[28px] font-semibold text-[#0A2E57]">
+              ¿Por qué Gesswein Properties?
+            </h2>
+            <p className="mt-3 text-black/70">
+              Enfoque boutique, trato cercano y marketing de alto impacto.
+            </p>
+          </header>
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            {DESTACADOS.map((d) => (
+              <article
+                key={d.title}
+                className="rounded-2xl border border-black/10 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,.06)]"
+              >
+                <h3 className="text-lg font-semibold text-black">{d.title}</h3>
+                <p className="mt-2 text-sm text-black/70">{d.text}</p>
+              </article>
+            ))}
           </div>
-          
-          <LeadForm
-            type="general"
-            title="Solicita una consulta"
-            description="Completa el formulario y nos pondremos en contacto para discutir tu proyecto"
-          />
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section className="py-14 sm:py-16 lg:py-20 bg-[#0A2E57]">
+        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
+          <div className="rounded-2xl bg-white/5 border border-white/15 p-7 md:p-8 lg:p-10">
+            <div className="grid gap-6 md:grid-cols-2 md:items-center">
+              <div>
+                <h2 className="text-white text-2xl font-semibold">
+                  Hablemos de tu propiedad
+                </h2>
+                <p className="mt-2 text-white/80 text-sm">
+                  Te asesoramos en precio, preparación y estrategia comercial.
+                </p>
+              </div>
+              <div className="md:justify-self-end flex gap-3">
+                <Link
+                  href="/contacto"
+                  className="inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#0A2E57] hover:opacity-90 transition"
+                >
+                  Contáctanos
+                </Link>
+                <Link
+                  href="/equipo"
+                  className="inline-flex items-center rounded-xl border border-white/70 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
+                >
+                  Conoce al equipo
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
   )
 }
+
+/* ===== Datos (puedes editar libremente) ===== */
+
+const SERVICIOS = [
+  {
+    kicker: 'Venta',
+    title: 'Comercialización integral',
+    description:
+      'Diagnóstico de precio, preparación, plan de marketing y acompañamiento total hasta la escritura.',
+    items: [
+      'Análisis comparativo de mercado (ACM)',
+      'Plan de difusión digital y segmentación',
+      'Reportes de interés y visitas',
+      'Negociación y cierre',
+    ],
+  },
+  {
+    kicker: 'Arriendo',
+    title: 'Colocación y administración',
+    description:
+      'Encontramos a tu arrendatario ideal y, si lo deseas, administramos el contrato mes a mes.',
+    items: ['Filtrado y scoring de candidatos', 'Contrato y estado de entrega', 'Gestión mensual opcional'],
+  },
+  {
+    kicker: 'Valoración',
+    title: 'Tasación orientativa',
+    description:
+      'Estimación de valor para definir estrategia comercial con fundamentos objetivos.',
+    items: ['Inspección técnica', 'ACM + tendencias por zona'],
+  },
+  {
+    kicker: 'Preparación',
+    title: 'Home staging & producción visual',
+    description:
+      'Pequeños cambios, gran impacto. Fotos profesionales, video y tour 360.',
+    items: ['Check de reparaciones', 'Home staging liviano', 'Producción audiovisual'],
+  },
+  {
+    kicker: 'Marketing',
+    title: 'Campañas premium',
+    description:
+      'Contenido atractivo y pauta inteligente para maximizar alcance y calidad de leads.',
+    items: ['Fichas optimizadas', 'CRM + seguimiento', 'Pauta digital multicanal'],
+  },
+  {
+    kicker: 'Asesoría',
+    title: 'Legal y financiera',
+    description:
+      'Acompañamiento en promesas, financiamiento y documentos hasta el final del proceso.',
+    items: ['Revisión documental', 'Coordinación con bancos y notarías'],
+  },
+]
+
+const PROCESO = [
+  {
+    title: 'Diagnóstico & precio',
+    text: 'Reunión, inspección y propuesta de valor basada en datos.',
+  },
+  {
+    title: 'Preparación',
+    text: 'Ajustes rápidos y producción visual profesional.',
+  },
+  {
+    title: 'Lanzamiento',
+    text: 'Publicación, segmentación y respuesta ágil a interesados.',
+  },
+  {
+    title: 'Negociación & cierre',
+    text: 'Aseguramos el mejor acuerdo y acompañamos hasta la escritura.',
+  },
+]
+
+const DESTACADOS = [
+  {
+    title: 'Marketing que vende',
+    text: 'Fotografía, video y pauta con segmentación inteligente. Reportes claros del desempeño.',
+  },
+  {
+    title: 'Atención boutique',
+    text: 'Trato cercano, comunicación transparente y foco en el detalle.',
+  },
+]
