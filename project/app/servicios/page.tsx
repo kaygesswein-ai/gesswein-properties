@@ -28,7 +28,7 @@ export default function ServiciosPage() {
             <div className="pl-2 sm:pl-4">
               <div className="max-w-3xl">
                 <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
-                  SERVICIOS INMOBILIARIOS DE ALTO ESTÁNDAR
+                  SERVICIOS
                 </h1>
                 <p className="text-white/85 mt-2">
                   Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
