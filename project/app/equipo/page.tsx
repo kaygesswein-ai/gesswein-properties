@@ -1,323 +1,412 @@
-import { Metadata } from 'next'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Linkedin, Mail, Phone, Users, Award, Briefcase } from 'lucide-react'
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Nuestro Equipo - Gesswein Properties',
-  description: 'Conoce a nuestro equipo de profesionales especializados en el mercado inmobiliario chileno, liderados por Carolina San Martín.',
-}
+import Image from 'next/image';
+import {
+  Users,
+  Award,
+  Briefcase,
+  Mail,
+  Phone,
+  Linkedin,
+} from 'lucide-react';
 
-const teamMembers = [
+/* =========================
+   DATA (edítalo libremente)
+   ========================= */
+
+// Portada
+const HERO_IMG =
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Gemini_Generated_Image_1c3kp91c3kp91c3k.png';
+
+// Foto de Carolina (pon aquí la misma del inicio si ya la tienes en /public)
+const LEADER_PHOTO = '/team/carolina.jpg';
+
+// Equipo
+const TEAM = [
   {
     name: 'Carolina San Martín',
     role: 'Arquitecta Líder & Fundadora',
-    description: 'Arquitecta con más de 15 años de experiencia en proyectos residenciales de alto estándar. Especialista en normativas municipales y sustentabilidad.',
-    specialties: ['Arquitectura Residencial', 'Normativa Municipal', 'Sustentabilidad', 'Gestión de Proyectos'],
-    education: 'Arquitecta Universidad de Chile, Magíster en Desarrollo Urbano Sostenible',
-    experience: '15+ años',
+    desc:
+      'Arquitecta con más de 15 años de experiencia en proyectos residenciales de alto estándar. Especialista en normativas municipales y sustentabilidad.',
+    exp: '15+ años',
+    education:
+      'Arquitecta Universidad de Chile, Magíster en Desarrollo Urbano Sostenible',
+    specialties: [
+      'Arquitectura Residencial',
+      'Normativa Municipal',
+      'Sustentabilidad',
+      'Gestión de Proyectos',
+    ],
     email: 'carolina@gessweinproperties.cl',
     phone: '+56 9 1234 5678',
     linkedin: '#',
-    featured: true
+    featured: true,
+    photo: LEADER_PHOTO,
   },
   {
     name: 'Roberto Gesswein',
     role: 'Director Comercial',
-    description: 'Experto en corretaje inmobiliario con amplio conocimiento del mercado de Santiago Oriente. Especializado en propiedades premium.',
-    specialties: ['Corretaje Inmobiliario', 'Valuación', 'Negociación', 'Marketing'],
+    desc:
+      'Experto en corretaje inmobiliario con amplio conocimiento del mercado de Santiago Oriente. Especializado en propiedades premium.',
+    exp: '12+ años',
     education: 'Ingeniero Comercial UC, Diplomado en Real Estate',
-    experience: '12+ años',
+    specialties: ['Corretaje Inmobiliario', 'Valuación', 'Negociación', 'Marketing'],
     email: 'roberto@gessweinproperties.cl',
     phone: '+56 9 8765 4321',
     linkedin: '#',
-    featured: false
   },
   {
     name: 'María José González',
     role: 'Consultora Legal',
-    description: 'Abogada especializada en derecho inmobiliario y regulaciones urbanas. Encargada de todos los aspectos legales de nuestras operaciones.',
-    specialties: ['Derecho Inmobiliario', 'Contratos', 'Due Diligence', 'Regulación Urbana'],
+    desc:
+      'Abogada especializada en derecho inmobiliario y regulaciones urbanas. Encargada de todos los aspectos legales de nuestras operaciones.',
+    exp: '10+ años',
     education: 'Abogada Universidad de los Andes, LLM Real Estate Law',
-    experience: '10+ años',
+    specialties: ['Derecho Inmobiliario', 'Contratos', 'Due Diligence', 'Regulación Urbana'],
     email: 'legal@gessweinproperties.cl',
     phone: '+56 9 5555 1234',
     linkedin: '#',
-    featured: false
   },
   {
     name: 'Felipe Rodríguez',
     role: 'Especialista en Marketing Digital',
-    description: 'Experto en marketing inmobiliario digital y fotografía de propiedades. Responsable de la presencia online y estrategias de marketing.',
-    specialties: ['Marketing Digital', 'Fotografía', 'Redes Sociales', 'Analytics'],
+    desc:
+      'Experto en marketing inmobiliario digital y fotografía de propiedades. Responsable de la presencia online y estrategias de marketing.',
+    exp: '8+ años',
     education: 'Publicista UDP, Especialización en Marketing Digital',
-    experience: '8+ años',
+    specialties: ['Marketing Digital', 'Fotografía', 'Redes Sociales', 'Analytics'],
     email: 'marketing@gessweinproperties.cl',
     phone: '+56 9 6666 7890',
     linkedin: '#',
-    featured: false
-  }
-]
+  },
+];
+
+// Alianzas / colaboradores (ejemplos – edita/añade)
+const ALLIES = [
+  { name: 'Irene Puelma', area: 'Arquitectura', photo: '/allies/irene.jpg', blurb: 'Colaboración en proyectos residenciales.' },
+  { name: 'Estudio DF', area: 'Diseño Interior', photo: '/allies/ally-2.jpg', blurb: 'Interiorismo y styling.' },
+  { name: 'ProStudio', area: 'Render & 3D', photo: '/allies/ally-3.jpg', blurb: 'Visualización arquitectónica.' },
+  { name: 'Legal Partners', area: 'Legal', photo: '/allies/ally-4.jpg', blurb: 'Apoyo contractual y regulatorio.' },
+  { name: 'BrokerLab', area: 'Finanzas', photo: '/allies/ally-5.jpg', blurb: 'Hipotecas y financiamiento.' },
+  { name: 'Foto360', area: 'Producción Visual', photo: '/allies/ally-6.jpg', blurb: 'Foto, video y tour 360.' },
+  { name: 'GeoData', area: 'Estudios Urbanos', photo: '/allies/ally-7.jpg', blurb: 'ACM y data territorial.' },
+  { name: 'Press PR', area: 'Comunicación', photo: '/allies/ally-8.jpg', blurb: 'Prensa y difusión.' },
+];
+
+// Cultura
+const CULTURE = [
+  {
+    icon: Award,
+    title: 'Excelencia',
+    text:
+      'Buscamos la perfección en cada detalle, desde el primer contacto hasta la entrega de llaves.',
+  },
+  {
+    icon: Users,
+    title: 'Transparencia',
+    text:
+      'Comunicación clara y honesta en todos nuestros procesos y relaciones comerciales.',
+  },
+  {
+    icon: Briefcase,
+    title: 'Innovación',
+    text:
+      'Adoptamos las mejores tecnologías y metodologías para ofrecer un servicio superior.',
+  },
+];
 
 export default function EquipoPage() {
-  const featuredMember = teamMembers.find(member => member.featured)
-  const otherMembers = teamMembers.filter(member => !member.featured)
+  const leader = TEAM.find((m) => m.featured) || TEAM[0];
+  const others = TEAM.filter((m) => m !== leader);
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <section className="bg-gradient-to-br from-blue-900 to-blue-700 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Nuestro Equipo
-            </h1>
-            <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              Profesionales expertos unidos por la pasión de ayudarte a encontrar 
-              la propiedad perfecta
-            </p>
+    <main className="bg-white">
+
+      {/* ================= HERO (idéntico estilo Servicios) ================= */}
+      <section className="relative min-h-[100svh]">
+        <img
+          src={HERO_IMG}
+          alt="Portada Equipo"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: '50% 35%' }}
+        />
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute bottom-6 left-0 right-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="pl-2 sm:pl-4">
+              <div className="max-w-3xl">
+                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                  NUESTRO EQUIPO
+                </h1>
+                <p className="text-white/85 mt-2 text-[14px] md:text-[15px] leading-relaxed">
+                  Profesionales expertos unidos por la pasión de ayudarte a encontrar la propiedad perfecta.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Featured member - Carolina San Martín */}
-      {featuredMember && (
-        <section className="py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-none shadow-lg">
-              <CardContent className="p-8 lg:p-12">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Award className="w-6 h-6 text-yellow-500" />
-                        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                          Arquitecta Líder
-                        </Badge>
-                      </div>
-                      
-                      <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-                        {featuredMember.name}
-                      </h2>
-                      
-                      <p className="text-lg text-blue-600 font-medium">
-                        {featuredMember.role}
-                      </p>
-                    </div>
-                    
-                    <p className="text-gray-700 leading-relaxed text-lg">
-                      {featuredMember.description}
-                    </p>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Briefcase className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-600">Experiencia:</span>
-                        <span className="font-medium">{featuredMember.experience}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 text-sm">
-                        <Award className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-600">Educación:</span>
-                        <span className="font-medium">{featuredMember.education}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-600 font-medium">Especialidades:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {featuredMember.specialties.map((specialty, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {specialty}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-3">
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        {featuredMember.email}
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <Phone className="w-4 h-4" />
-                        {featuredMember.phone}
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <Linkedin className="w-4 h-4" />
-                        LinkedIn
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="w-64 h-64 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full mx-auto mb-6 flex items-center justify-center">
-                      <Users className="w-24 h-24 text-blue-600 opacity-80" />
-                    </div>
-                    <blockquote className="text-lg italic text-gray-700">
-                      "La arquitectura no es solo construir espacios, es crear hogares donde las familias escriben sus historias"
-                    </blockquote>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      )}
-
-      {/* Other team members */}
-      <section className="py-16 bg-gray-50">
+      {/* ================= LÍDER: CAROLINA ================= */}
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              El Resto del Equipo
-            </h2>
-            <p className="text-xl text-gray-600">
-              Profesionales especializados que complementan nuestra propuesta de valor
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center border border-black/10 bg-white p-8 shadow-sm">
+            <div className="space-y-5">
+              <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                Arquitecta Líder
+              </div>
+              <h2 className="text-[22px] text-black/90">{leader.name}</h2>
+              <p className="text-[13px] text-[#0A2E57]">{leader.role}</p>
+
+              <p className="text-[14px] text-black/70 leading-relaxed">
+                {leader.desc}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="text-[13px] text-black/70">
+                  <span className="inline-flex items-center gap-2 text-black/60">
+                    <Briefcase className="size-4 text-black/40" />
+                    <span>Experiencia:</span>
+                  </span>
+                  <div className="mt-1 text-black/90">{leader.exp}</div>
+                </div>
+                <div className="text-[13px] text-black/70">
+                  <span className="inline-flex items-center gap-2 text-black/60">
+                    <Award className="size-4 text-black/40" />
+                    <span>Educación:</span>
+                  </span>
+                  <div className="mt-1 text-black/90">{leader.education}</div>
+                </div>
+              </div>
+
+              <div className="pt-3">
+                <div className="text-[12px] text-black/60 uppercase tracking-[.2em] mb-2">
+                  Especialidades
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {leader.specialties.map((s) => (
+                    <span
+                      key={s}
+                      className="px-2 py-1 text-[12px] bg-slate-100 border border-black/10"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-3">
+                <a
+                  href={`mailto:${leader.email}`}
+                  className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]"
+                >
+                  <Mail className="size-4" />
+                  {leader.email}
+                </a>
+                <a
+                  href={`tel:${leader.phone.replace(/\s+/g, '')}`}
+                  className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]"
+                >
+                  <Phone className="size-4" />
+                  {leader.phone}
+                </a>
+                <a
+                  href={leader.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]"
+                >
+                  <Linkedin className="size-4" />
+                  LinkedIn
+                </a>
+              </div>
+            </div>
+
+            <div className="relative">
+              {leader.photo ? (
+                <div className="w-64 h-64 mx-auto border border-black/10 shadow-sm overflow-hidden">
+                  <Image
+                    src={leader.photo}
+                    alt={leader.name}
+                    width={512}
+                    height={512}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-64 h-64 mx-auto bg-slate-100 border border-black/10 flex items-center justify-center">
+                  <Users className="size-16 text-slate-400" />
+                </div>
+              )}
+              <blockquote className="mt-6 text-[14px] text-black/70 italic text-center max-w-md mx-auto">
+                “La arquitectura no es solo construir espacios, es crear hogares donde las familias escriben sus historias”.
+              </blockquote>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= RESTO DEL EQUIPO ================= */}
+      <section className="py-16 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="pl-2 sm:pl-4 mb-10">
+            <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
+              El resto del equipo
+            </h3>
+            <p className="text-[14px] text-black/70 mt-3">
+              Profesionales especializados que complementan nuestra propuesta de valor.
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {otherMembers.map((member, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6 space-y-4">
-                  <div className="text-center">
-                    <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <Users className="w-8 h-8 text-gray-400" />
-                    </div>
-                    
-                    <h3 className="font-bold text-xl text-gray-900 mb-1">
-                      {member.name}
-                    </h3>
-                    
-                    <p className="text-blue-600 font-medium mb-3">
-                      {member.role}
-                    </p>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {others.map((m) => (
+              <article
+                key={m.name}
+                className="border border-black/10 bg-white p-6 shadow-sm hover:shadow-md transition"
+              >
+                <div className="w-24 h-24 bg-slate-100 border border-black/10 flex items-center justify-center mb-4">
+                  <Users className="size-8 text-slate-400" />
+                </div>
+
+                <h4 className="text-[15px] text-black/90">{m.name}</h4>
+                <div className="text-[12px] text-[#0A2E57]">{m.role}</div>
+
+                <p className="text-[13px] text-black/70 leading-relaxed mt-3">
+                  {m.desc}
+                </p>
+
+                <div className="mt-4 text-[12px] text-black/60">
+                  <div>
+                    <span className="text-black/70">{m.exp}</span> • {m.education}
                   </div>
-                  
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {member.description}
-                  </p>
-                  
-                  <div className="space-y-3 pt-2">
-                    <div className="text-xs text-gray-500">
-                      <span className="font-medium">{member.experience}</span> • {member.education}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <p className="text-xs text-gray-600 font-medium">Especialidades:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {member.specialties.slice(0, 3).map((specialty, specIndex) => (
-                          <Badge key={specIndex} variant="secondary" className="text-xs">
-                            {specialty}
-                          </Badge>
-                        ))}
-                        {member.specialties.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{member.specialties.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2 pt-2">
-                      <Button variant="ghost" size="sm" className="flex-1 text-xs">
-                        <Mail className="w-3 h-3 mr-1" />
-                        Email
-                      </Button>
-                      <Button variant="ghost" size="sm" className="flex-1 text-xs">
-                        <Phone className="w-3 h-3 mr-1" />
-                        Llamar
-                      </Button>
-                    </div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="text-[11px] text-black/60 uppercase tracking-[.2em] mb-1">
+                    Especialidades
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex flex-wrap gap-2">
+                    {m.specialties.slice(0, 3).map((s) => (
+                      <span key={s} className="px-2 py-1 text-[12px] bg-slate-100 border border-black/10">
+                        {s}
+                      </span>
+                    ))}
+                    {m.specialties.length > 3 && (
+                      <span className="px-2 py-1 text-[12px] border border-black/10">
+                        +{m.specialties.length - 3}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-4">
+                  <a
+                    href={`mailto:${m.email}`}
+                    className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[12px] flex-1 justify-center"
+                  >
+                    <Mail className="size-4" /> Email
+                  </a>
+                  <a
+                    href={`tel:${m.phone.replace(/\s+/g, '')}`}
+                    className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[12px] flex-1 justify-center"
+                  >
+                    <Phone className="size-4" /> Llamar
+                  </a>
+                </div>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Company culture */}
-      <section className="py-16">
+      {/* ================= NUESTRA CULTURA ================= */}
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Nuestra Cultura
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Los valores que nos definen y guían cada decisión en nuestro trabajo
+            <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
+              Nuestra cultura
+            </h3>
+            <p className="text-[14px] text-black/70 mt-3">
+              Los valores que nos definen y guían cada decisión en nuestro trabajo.
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center p-6">
-              <CardContent className="pt-6">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Award className="w-6 h-6 text-blue-600" />
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {CULTURE.map((c) => (
+              <article key={c.title} className="border border-black/10 bg-white p-6 text-center shadow-sm">
+                <div className="w-12 h-12 bg-slate-100 border border-black/10 mx-auto mb-4 flex items-center justify-center">
+                  <c.icon className="size-6 text-[#0A2E57]" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Excelencia</h3>
-                <p className="text-gray-600 text-sm">
-                  Buscamos la perfección en cada detalle, desde el primer contacto hasta la entrega de llaves.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center p-6">
-              <CardContent className="pt-6">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">Transparencia</h3>
-                <p className="text-gray-600 text-sm">
-                  Comunicación clara y honesta en todos nuestros procesos y relaciones comerciales.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center p-6">
-              <CardContent className="pt-6">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Briefcase className="w-6 h-6 text-purple-600" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">Innovación</h3>
-                <p className="text-gray-600 text-sm">
-                  Adoptamos las mejores tecnologías y metodologías para ofrecer un servicio superior.
-                </p>
-              </CardContent>
-            </Card>
+                <h4 className="text-[15px] text-black/90">{c.title}</h4>
+                <p className="text-[13px] text-black/70 mt-2 leading-relaxed">{c.text}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 bg-blue-900 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            ¿Quieres trabajar con nosotros?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Nuestro equipo está listo para ayudarte a alcanzar tus objetivos inmobiliarios
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-blue-900 hover:bg-blue-50">
-              Contáctanos
-            </Button>
-            
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-900">
-              <a
-                href="https://wa.me/56912345678?text=Hola%2C%20quiero%20trabajar%20con%20el%20equipo%20de%20Gesswein%20Properties"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                WhatsApp
-              </a>
-            </Button>
+      {/* ================= ALIANZAS & COLABORADORES ================= */}
+      <section className="py-16 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="pl-2 sm:pl-4 mb-10">
+            <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
+              Alianzas & colaboradores
+            </h3>
+            <p className="text-[14px] text-black/70 mt-3">
+              Profesionales y estudios con los que trabajamos para elevar el estándar de cada proyecto.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {ALLIES.map((a) => (
+              <article key={a.name} className="border border-black/10 bg-white p-5 shadow-sm hover:shadow-md transition">
+                <div className="w-full aspect-square bg-slate-100 border border-black/10 mb-4 overflow-hidden">
+                  {/* Reemplaza las rutas /allies/* por tus fotos reales */}
+                  <Image
+                    src={a.photo}
+                    alt={a.name}
+                    width={600}
+                    height={600}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h4 className="text-[15px] text-black/90">{a.name}</h4>
+                <div className="text-[12px] text-[#0A2E57]">{a.area}</div>
+                <p className="text-[13px] text-black/70 mt-2 leading-relaxed">{a.blurb}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
-    </div>
-  )
+
+      {/* ================= CTA FINAL (sobrio) ================= */}
+      <section className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
+            ¿Quieres trabajar con nosotros?
+          </h3>
+          <p className="text-[14px] text-black/70 mt-3">
+            Súmate para ayudarnos a **captar propiedades** y crecer la comunidad Gesswein Properties.
+          </p>
+
+          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href="mailto:contacto@gessweinproperties.cl?subject=Quiero%20trabajar%20con%20ustedes"
+              className="inline-flex items-center justify-center px-5 py-3 border border-black/20"
+            >
+              Enviar correo
+            </a>
+            <a
+              href="https://wa.me/56912345678?text=Hola%2C%20quiero%20sumarme%20al%20equipo%20de%20Gesswein%20Properties"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center px-5 py-3 border border-black/20"
+            >
+              WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }
