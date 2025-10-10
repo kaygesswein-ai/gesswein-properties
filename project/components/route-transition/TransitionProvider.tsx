@@ -26,13 +26,13 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const [isActive, setActive] = useState(false);
   const [fadeout, setFadeout] = useState(false);
 
-  // Duraciones: entrada suave (700–900ms), beams ~900–1100ms, salida 300ms
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(1200);
+  const minDurRef = useRef<number>(1100); // duración total (≈ láseres)
 
+  // barra (opcional)
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  // Bloquear scroll bajo overlay
+  // bloquea scroll cuando overlay está activo
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle('gp-lock', isActive);
@@ -40,16 +40,14 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   }, [isActive]);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(600, opts?.minDurationMs ?? 1200);
+    minDurRef.current = Math.max(400, opts?.minDurationMs ?? 1100);
     startedAtRef.current = Date.now();
 
+    // reinicia barra
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
       requestAnimationFrame(() => {
-        if (progressRef.current) progressRef.current.style.width = '25%';
-        setTimeout(() => {
-          if (progressRef.current) progressRef.current.style.width = '70%';
-        }, 120);
+        if (progressRef.current) progressRef.current.style.width = '65%';
       });
     }
 
@@ -63,28 +61,23 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
 
     setTimeout(() => {
       if (progressRef.current) progressRef.current.style.width = '100%';
+
       setFadeout(true);
       setTimeout(() => {
         setActive(false);
         setFadeout(false);
         if (progressRef.current) progressRef.current.style.width = '0%';
-      }, 300);
+      }, 260); // coincide con .gp-route-overlay.fadeout
     }, remain);
   }, []);
 
-  // Guard-rail por si la navegación termina MUY rápido
-  useEffect(() => {
-    if (!isActive) return;
-    const t = setTimeout(() => end(), 1800);
-    return () => clearTimeout(t);
-  }, [isActive, end]);
+  // por si el navegador termina las animaciones antes de minDur, cerramos igual
+  const onLasersEnded = () => end();
 
   return (
     <Ctx.Provider value={{ start, end, isActive }}>
-      {/* Barra superior (opcional) */}
       <div ref={progressRef} className="gp-progress" />
 
-      {/* Overlay corporativo */}
       <div
         className={`gp-route-overlay ${fadeout ? 'fadeout' : ''}`}
         hidden={!isActive}
@@ -92,20 +85,20 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         role="status"
         aria-live="polite"
       >
-        <div className="gp-logo-wrap" aria-label="Transición Gesswein Properties">
-          {/* Logo blanco estático (sólo fade-in) */}
+        <div className="gp-logo-wrap" aria-label="Transición de página Gesswein Properties">
+          {/* Logo blanco estático */}
           <img
             src="/logo-white.svg"
             alt="Gesswein Properties"
-            className="gp-logo gp-logo--fadein"
+            className="gp-logo"
             draggable={false}
           />
 
-          {/* Beams sutiles – inferiores (por debajo de las letras) */}
-          <div className="gp-beams gp-beams--lower" aria-hidden="true" />
-
-          {/* Beams sutiles – superiores (sobre la línea de los techos) */}
-          <div className="gp-beams gp-beams--upper" aria-hidden="true" />
+          {/* EXACTAMENTE DOS LÁSERES, una sola pasada */}
+          <div className="gp-lasers" onAnimationEnd={onLasersEnded} aria-hidden="true">
+            <span className="gp-laser l1" />
+            <span className="gp-laser l2" />
+          </div>
         </div>
       </div>
 
