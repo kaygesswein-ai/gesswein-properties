@@ -82,12 +82,12 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-      {/* ================= QUÉ HACEMOS POR TI ================= */}
+      {/* ================= QUÉ SERVICIOS OFRECEMOS ================= */}
       <section className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="pl-2 sm:pl-4 max-w-4xl">
             <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-              ¿Qué hacemos por ti?
+              ¿Qué servicios ofrecemos?
             </h2>
             <p className="text-black/70 text-[14px] leading-relaxed mb-12">
               Un servicio integral, enfocado en la excelencia, que cubre cada etapa del ciclo inmobiliario.
