@@ -23,15 +23,16 @@ export const useRouteTransition = () => {
 };
 
 export function RouteTransitionProvider({ children }: { children: React.ReactNode }) {
-  // --- timings: entrada 900ms, sweep ~900–1200ms, salida 300ms ---
   const [isActive, setActive] = useState(false);
   const [fadeout, setFadeout] = useState(false);
+
+  // Duraciones: entrada suave (700–900ms), beams ~900–1100ms, salida 300ms
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(1200); // Duración mínima visible (ajusta 1100–1500)
+  const minDurRef = useRef<number>(1200);
 
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  // Bloquear scroll bajo overlay mientras está activo
+  // Bloquear scroll bajo overlay
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle('gp-lock', isActive);
@@ -42,14 +43,13 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     minDurRef.current = Math.max(600, opts?.minDurationMs ?? 1200);
     startedAtRef.current = Date.now();
 
-    // barra
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
       requestAnimationFrame(() => {
         if (progressRef.current) progressRef.current.style.width = '25%';
         setTimeout(() => {
           if (progressRef.current) progressRef.current.style.width = '70%';
-        }, 150);
+        }, 120);
       });
     }
 
@@ -68,14 +68,14 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         setActive(false);
         setFadeout(false);
         if (progressRef.current) progressRef.current.style.width = '0%';
-      }, 300); // fade-out
+      }, 300);
     }, remain);
   }, []);
 
-  // Cierre por seguridad si algo navega ultra-rápido
+  // Guard-rail por si la navegación termina MUY rápido
   useEffect(() => {
     if (!isActive) return;
-    const t = setTimeout(() => end(), 1800); // guard-rail
+    const t = setTimeout(() => end(), 1800);
     return () => clearTimeout(t);
   }, [isActive, end]);
 
@@ -93,7 +93,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         aria-live="polite"
       >
         <div className="gp-logo-wrap" aria-label="Transición Gesswein Properties">
-          {/* Logo blanco centrado (vectorial) */}
+          {/* Logo blanco estático (sólo fade-in) */}
           <img
             src="/logo-white.svg"
             alt="Gesswein Properties"
@@ -101,12 +101,11 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
             draggable={false}
           />
 
-          {/* Efecto “láser” que dibuja el logo usando la máscara del SVG */}
-          <div className="gp-logo-sweep" aria-hidden="true" />
+          {/* Beams sutiles – inferiores (por debajo de las letras) */}
+          <div className="gp-beams gp-beams--lower" aria-hidden="true" />
 
-          {/* Beams sutiles por delante del logo */}
-          <div className="gp-beam" aria-hidden="true" />
-          <div className="gp-beam gp-beam--delay" aria-hidden="true" />
+          {/* Beams sutiles – superiores (sobre la línea de los techos) */}
+          <div className="gp-beams gp-beams--upper" aria-hidden="true" />
         </div>
       </div>
 
