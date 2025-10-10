@@ -26,14 +26,18 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const [isActive, setActive] = useState(false);
   const [fadeout, setFadeout] = useState(false);
 
+  // Duración mínima de la transición (1.8s por el video)
+  const DEFAULT_MIN_MS = 1800;
+
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(1800); // 1.8s exacto
+  const minDurRef = useRef<number>(DEFAULT_MIN_MS);
 
   const progressRef = useRef<HTMLDivElement | null>(null);
 
   // Video (reiniciado en cada transición)
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [videoKey, setVideoKey] = useState(0);
+  const endedOnceRef = useRef(false);
 
   // Bloquear scroll bajo overlay mientras está activo
   useEffect(() => {
@@ -43,8 +47,9 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   }, [isActive]);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(300, opts?.minDurationMs ?? 1800);
+    minDurRef.current = Math.max(300, opts?.minDurationMs ?? DEFAULT_MIN_MS);
     startedAtRef.current = Date.now();
+    endedOnceRef.current = false;
 
     // Reinicia video y barra
     setVideoKey((k) => k + 1);
@@ -53,7 +58,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     setFadeout(false);
     setActive(true);
 
-    // Feedback quick de la barra
+    // Feedback rápido de la barra
     if (progressRef.current) {
       progressRef.current.style.width = '25%';
       setTimeout(() => {
@@ -63,6 +68,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   }, []);
 
   const end = useCallback(() => {
+    // Respeta la duración mínima
     const elapsed = Date.now() - startedAtRef.current;
     const remain = Math.max(0, minDurRef.current - elapsed);
 
@@ -77,12 +83,23 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     }, remain);
   }, []);
 
-  // Sincroniza el cierre con el fin del video (ideal si dura ~1.8s)
-  const handleEnded = () => end();
+  // Cierre sincronizado con el fin del video (evita dobles cierres)
+  const handleEnded = () => {
+    if (endedOnceRef.current) return;
+    endedOnceRef.current = true;
+    end();
+  };
 
   // iOS/autoplay safety
   const handleCanPlay = () => {
-    videoRef.current?.play().catch(() => {/* ignore autoplay errors */});
+    videoRef.current?.play().catch(() => {
+      /* ignore autoplay errors */
+    });
+  };
+
+  // Fallback: si el video falla, cerramos al cumplir el mínimo
+  const handleError = () => {
+    end();
   };
 
   return (
@@ -119,10 +136,11 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
             disablePictureInPicture
             onCanPlay={handleCanPlay}
             onEnded={handleEnded}
+            onError={handleError}
           >
-            {/* WebM primero (calidad/peso), MP4 como fallback */}
+            {/* WebM primero (mejor compresión), MP4 como fallback */}
             <source src="/transition/gp-transition.webm" type="video/webm" />
-            <source src="/transition/gp-transition.mp4"  type="video/mp4"  />
+            <source src="/transition/gp-transition.mp4"  type="video/mp4" />
           </video>
         </div>
       </div>
