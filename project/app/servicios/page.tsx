@@ -12,7 +12,8 @@ import {
 export default function ServiciosPage() {
   return (
     <main className="bg-white">
-      {/* ================= HERO (idéntico al de Propiedades) ================= */}
+
+      {/* ================= HERO (idéntico a Propiedades) ================= */}
       <section className="relative min-h-[100svh]">
         <img
           src="https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_5437%20(1).jpeg"
@@ -118,7 +119,7 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-      {/* ================= PROCESO — LÍNEA DE TIEMPO (desktop OK, móvil ajustado) ================= */}
+      {/* ================= PROCESO — LÍNEA DE TIEMPO ================= */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="pl-2 sm:pl-4 max-w-4xl mb-12">
@@ -130,42 +131,40 @@ export default function ServiciosPage() {
             </p>
           </div>
 
-          {/* Contenedor responsive: vertical (mobile) / horizontal (sm+) */}
-          <div className="relative pl-8 sm:pl-4">
-            {/* Línea VERTICAL (solo mobile) */}
-            <div className="absolute left-4 top-1 bottom-1 w-px bg-[#0A2E57]/30 sm:hidden" />
+          {/* Contenedor: vertical (mobile) / horizontal (sm+) */}
+          <div className="relative pl-10 sm:pl-4">
+            {/* Línea vertical (mobile) */}
+            <div className="absolute left-5 top-[0.6rem] bottom-[0.6rem] w-px bg-[#0A2E57]/30 sm:hidden" />
 
-            {/* Línea HORIZONTAL (solo desktop/tablet) */}
+            {/* Línea horizontal (desktop) */}
             <div className="hidden sm:block absolute top-4 left-[5%] right-[5%] h-px bg-[#0A2E57]/30" />
 
-            {/* Items */}
             <ol
               role="list"
-              className="flex flex-col gap-10 sm:flex-row sm:justify-between sm:items-start"
+              className="flex flex-col gap-10 sm:gap-0 sm:flex-row sm:justify-between sm:items-start"
             >
               {PROCESO.map((p, i) => (
                 <li
                   key={p.title}
-                  className="relative sm:flex-1 sm:text-center sm:px-4 pl-8" /* ← padding extra en móvil */
+                  className="relative sm:flex-1 sm:text-center sm:px-4"
                 >
-                  {/* Punto (mobile: alineado a la guía; desktop: centrado arriba) */}
+                  {/* Punto */}
                   <span
                     className="
                       absolute
-                      left-4 top-[6px]                 /* móvil */
-                      sm:left-1/2 sm:top-0 sm:-translate-x-1/2  /* desktop */
-                      w-2.5 h-2.5 rounded-full bg-[#0A2E57]
-                      ring-2 ring-white shadow-sm
+                      left-5 top-[0.9em] -translate-x-1/2 -translate-y-1/2
+                      w-2.5 h-2.5 rounded-full bg-[#0A2E57] sm:left-1/2 sm:top-0 sm:translate-x-[-50%] sm:translate-y-0
                     "
                   />
-
-                  {/* Contenido */}
+                  {/* Card de contenido */}
                   <div className="sm:pt-3">
-                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase font-medium mb-1">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase font-medium mb-1 sm:mb-1">
                       Paso {i + 1}
                     </div>
-                    <h3 className="text-[14px] font-medium text-black/90">{p.title}</h3>
-                    <p className="mt-1 text-[13px] text-black/70 leading-relaxed max-w-[260px] sm:max-w-none">
+                    <h3 className="text-[14px] font-medium text-black/90 leading-tight sm:leading-normal">
+                      {p.title}
+                    </h3>
+                    <p className="mt-1 text-[13px] text-black/70 leading-relaxed max-w-[280px] sm:max-w-none">
                       {p.text}
                     </p>
                   </div>
