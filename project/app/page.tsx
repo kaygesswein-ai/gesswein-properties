@@ -403,10 +403,10 @@ export default function HomePage(){
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { nombre:'Carolina San Martín', cargo:'SOCIA FUNDADORA', profesion:'Arquitecta', foto:'/team/carolina-san-martin.png' },
-            { nombre:'Alberto Gesswein',     cargo:'SOCIO',           profesion:'Periodista y gestor de proyectos', foto:'/team/alberto-gesswein.png' },
-            { nombre:'Jan Gesswein',         cargo:'SOCIO',           profesion:'Abogado', foto:'/team/jan-gesswein.png' },
-            { nombre:'Kay Gesswein',         cargo:'SOCIO',           profesion:'Ingeniero comercial · Magíster en finanzas', foto:'/team/kay-gesswein.png' },
+            { nombre:'Carolina San Martín', cargo:'MANAGING PARTNER', profesion:'Arquitecta', foto:'/team/carolina-san-martin.png' },
+            { nombre:'Alberto Gesswein',     cargo:'PARTNER',           profesion:'Periodista · Productor Ejecutivo', foto:'/team/alberto-gesswein.png' },
+            { nombre:'Jan Gesswein',         cargo:'PARTNER',           profesion:'Abogado', foto:'/team/jan-gesswein.png' },
+            { nombre:'Kay Gesswein',         cargo:'PARTNER',           profesion:'Ingeniero comercial · Magíster en finanzas', foto:'/team/kay-gesswein.png' },
           ].map(m=>(
             <article key={m.nombre}
                      className="group relative rounded-2xl overflow-hidden border border-slate-200
