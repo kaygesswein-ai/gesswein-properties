@@ -7,7 +7,6 @@ html, body {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-/* Utilidades que ya usabas */
 .heading-serif { font-family: inherit; font-weight: inherit; letter-spacing: inherit; }
 .nav-caps { text-transform: uppercase; letter-spacing: 0.28em; }
 @media (max-width: 640px) {
@@ -29,7 +28,7 @@ html, body {
 .gp-mobile-icon { display:inline-flex; align-items:center; justify-content:center; padding:8px; border:1px solid rgba(255,255,255,0.25); border-radius:8px; color:#fff; }
 
 /* =================================================================
-   GP Route Transition – overlay corporativo (sin video)
+   GP Route Transition – logo estático + beams sutiles
    ================================================================= */
 
 /* Bloquea scroll mientras corre la transición */
@@ -44,7 +43,7 @@ html, body {
   position:fixed; inset:0; z-index:110;
   display:grid; place-items:center;
   background:#0A2E57;                 /* Azul corporativo */
-  animation: gpIn 900ms cubic-bezier(.22,.61,.36,1) forwards;
+  animation: gpIn 800ms cubic-bezier(.22,.61,.36,1) forwards;
   pointer-events:all;
 }
 .gp-route-overlay[hidden]{ display:none; }
@@ -68,92 +67,74 @@ html, body {
 /* Contenedor del logo / efectos */
 .gp-logo-wrap{
   position:relative;
-  width:min(58vw, 420px);            /* tamaño del bloque */
-  aspect-ratio: 3/2;                 /* relación estable para el logo */
+  width:min(58vw, 420px);
+  aspect-ratio: 3/2;
   display:grid;
   place-items:center;
 }
 
-/* Logo base (SVG blanco) */
+/* Logo blanco estático */
 .gp-logo{
   width:82%;
   height:auto;
   z-index:130;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,.25));
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.22));
   will-change: opacity, transform;
 }
 
-/* === “Láser” que cruza y “dibuja” el logo usando la máscara del SVG === */
-.gp-logo-sweep{
-  position:absolute; inset:0; z-index:140; pointer-events:none;
-  /* usamos el propio logo como máscara de recorte del brillo */
-  -webkit-mask: url('/logo-white.svg') center / 82% no-repeat;
-          mask: url('/logo-white.svg') center / 82% no-repeat;
-  background:
-    linear-gradient(90deg,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,.35) 38%,
-      rgba(255,255,255,.95) 50%,
-      rgba(125,211,252,.85) 58%,
-      rgba(255,255,255,0) 100%);
-  transform: translateX(-120%);
-  animation: gpSweep 900ms ease-in-out 120ms forwards; /* +120ms tras la entrada */
-  mix-blend-mode: screen;
-  filter: blur(0.6px);
-}
-@keyframes gpSweep{
-  to { transform: translateX(120%); }
-}
-
-/* Beams sutiles por delante del logo */
-.gp-beam{
-  position:absolute; inset:0; z-index:145; pointer-events:none;
-  mix-blend-mode: screen;
-}
-.gp-beam::before,
-.gp-beam::after{
-  content:""; position:absolute; left:-35%; width:60%; height:7px;
-  top:48%;
-  background: linear-gradient(90deg,
-    rgba(255,255,255,0) 0%,
-    rgba(248,250,252,.9) 50%,
-    rgba(125,211,252,.75) 100%);
-  border-radius:9999px;
-  filter: blur(1.8px);
-  transform: translateX(-25%) translateY(-50%) skewX(-16deg);
-  opacity:0;
-  animation: gpBeam 1000ms ease-in-out forwards;
-}
-.gp-beam::after{
-  top:58%;
-  height:6px; width:66%;
-  animation-duration: 1150ms;
-  animation-delay: 100ms;
-}
-.gp-beam--delay::before,
-.gp-beam--delay::after{
-  animation-delay: 220ms;
-}
-@keyframes gpBeam{
-  10% { opacity:.35; }
-  50% { opacity:.6; transform: translateX(80%) translateY(-50%) skewX(-16deg); }
-  90% { opacity:.35; }
-  100%{ opacity:0; transform: translateX(140%) translateY(-50%) skewX(-16deg); }
-}
-
-/* Leve aparición del logo base */
+/* Aparición MUY suave del logo */
 .gp-logo--fadein{
-  animation: gpLogoBaseIn 700ms ease forwards;
+  animation: gpLogoBaseIn 450ms ease-out forwards;
   opacity:0;
 }
 @keyframes gpLogoBaseIn{
-  from { opacity:0; filter: drop-shadow(0 1px 6px rgba(0,0,0,.15)); transform: translateY(2px) scale(.995); }
-  to   { opacity:1; filter: drop-shadow(0 2px 10px rgba(0,0,0,.20)); transform: translateY(0) scale(1); }
+  from { opacity:0; transform: translateY(1px) scale(.997); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
 }
+
+/* ====== BEAMS SUTILES (sin duplicar logo) ====== */
+/* Animación horizontal de izquierda a derecha */
+@keyframes gpBeamH {
+  0%   { transform: translateX(-35%) skewX(-16deg); opacity: 0; }
+  20%  { opacity: .18; }
+  55%  { opacity: .28; }
+  100% { transform: translateX(135%) skewX(-16deg); opacity: 0; }
+}
+
+/* Contenedor de beams (delante del logo, muy sutil) */
+.gp-beams{
+  position:absolute; inset:0; z-index:145; pointer-events:none;
+  mix-blend-mode: screen; /* brillo ligero sobre el logo blanco */
+}
+
+/* Cada gp-beams pinta dos pasadas (before/after) muy finas */
+.gp-beams::before,
+.gp-beams::after{
+  content:"";
+  position:absolute; left:-35%; width:70%;
+  height:6px; border-radius:9999px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(248,250,252,.85) 45%,
+    rgba(125,211,252,.55) 60%,
+    rgba(255,255,255,0) 100%);
+  filter: blur(1.4px);
+  opacity:0;
+  animation: gpBeamH 950ms ease-in-out forwards;
+}
+
+/* Banda INFERIOR – “debajo” de las letras (pilares/verticales) */
+.gp-beams--lower::before{ top:62%; }
+.gp-beams--lower::after { top:66%; height:5px; animation-delay:120ms; }
+
+/* Banda SUPERIOR – sobre la línea horizontal de techos */
+.gp-beams--upper::before{ top:38%; height:5px; animation-delay:220ms; }
+.gp-beams--upper::after { top:42%; height:5px; animation-delay:340ms; }
 
 /* Accesibilidad: menos movimiento */
 @media (prefers-reduced-motion: reduce){
   .gp-route-overlay{ animation:none; }
   .gp-route-overlay.fadeout{ animation:none; }
-  .gp-logo-sweep, .gp-beam{ animation:none !important; }
+  .gp-beams{ animation:none !important; }
+  .gp-beams::before, .gp-beams::after{ animation:none !important; }
 }
