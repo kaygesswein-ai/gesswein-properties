@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import Link from 'next/link'
 import {
   Home,
   Key,
@@ -13,13 +12,13 @@ import {
 export const metadata: Metadata = {
   title: 'Servicios | Gesswein Properties',
   description:
-    'Asesoría inmobiliaria integral: venta, arriendo, tasación, marketing y gestión de propiedades premium.',
+    'Asesoría inmobiliaria integral: compra-venta, arriendo, valoración, marketing y gestión de propiedades premium.',
 }
 
 export default function ServiciosPage() {
   return (
     <div className="bg-white text-black">
-      {/* ================= HERO (idéntico a PROPIEDADES) ================= */}
+      {/* HERO — igual que Propiedades */}
       <section className="relative min-h-screen flex items-end justify-center isolate">
         <Image
           src="https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_5437%20(1).jpeg"
@@ -38,34 +37,54 @@ export default function ServiciosPage() {
             Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
             con la mejor experiencia y resultados.
           </p>
+        </div>
+      </section>
 
-          <div className="mt-8 flex justify-center gap-3 flex-wrap">
-            <Link
-              href="/contacto"
-              className="rounded-none bg-white text-[#0A2E57] px-7 py-2 text-[12px] tracking-[.25em] uppercase font-medium hover:opacity-85 transition"
-            >
-              Conversemos
-            </Link>
-            <Link
-              href="/propiedades"
-              className="rounded-none border border-white/90 text-white px-7 py-2 text-[12px] tracking-[.25em] uppercase font-medium hover:bg-white/10 transition"
-            >
-              Ver propiedades
-            </Link>
+      {/* ================== POR QUÉ GESSWEIN ================== */}
+      <section className="py-20 bg-white">
+        <div className="mx-auto max-w-5xl px-6 md:px-10 lg:px-12 xl:px-16 text-center">
+          <h2 className="text-[#0A2E57] text-[18px] tracking-[.28em] uppercase font-medium mb-6">
+            ¿Por qué Gesswein Properties?
+          </h2>
+
+          <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl mx-auto">
+            En Gesswein Properties nos definimos por un enfoque boutique, que combina excelencia técnica,
+            comunicación cercana y una estética moderna aplicada a cada proyecto inmobiliario. Nuestro
+            compromiso es ofrecer un servicio profesional, transparente y con alto estándar de ejecución.
+          </p>
+
+          <div className="mt-12 grid sm:grid-cols-2 gap-8 text-left">
+            <div>
+              <h3 className="text-[#0A2E57] uppercase text-[13px] tracking-[.25em] font-medium mb-2">
+                Misión
+              </h3>
+              <p className="text-black/80 text-[14px] leading-relaxed">
+                Brindar asesoría inmobiliaria integral, basada en confianza, precisión técnica y diseño,
+                conectando a nuestros clientes con oportunidades únicas de inversión y hogar.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-[#0A2E57] uppercase text-[13px] tracking-[.25em] font-medium mb-2">
+                Visión
+              </h3>
+              <p className="text-black/80 text-[14px] leading-relaxed">
+                Ser la firma inmobiliaria de referencia en Chile por su excelencia estética, profesionalismo
+                y compromiso con la calidad de vida de quienes confían en nosotros.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ================= SECCIÓN SERVICIOS ================= */}
-      <section className="py-20 bg-white">
+      {/* ================== QUÉ HACEMOS POR TI ================== */}
+      <section className="py-20 bg-slate-50">
         <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
           <header className="max-w-3xl mb-12">
             <h2 className="text-[#0A2E57] text-[18px] tracking-[.28em] uppercase font-medium">
               ¿Qué hacemos por ti?
             </h2>
             <p className="mt-2 text-black/70 text-[14px] leading-relaxed">
-              Un servicio integral, enfocado en la excelencia, que cubre cada etapa del ciclo
-              inmobiliario.
+              Un servicio integral, enfocado en la excelencia, que cubre cada etapa del ciclo inmobiliario.
             </p>
           </header>
 
@@ -79,12 +98,8 @@ export default function ServiciosPage() {
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase font-medium mb-1">
                   {s.kicker}
                 </div>
-                <h3 className="text-[15px] font-medium text-black/90 tracking-wide">
-                  {s.title}
-                </h3>
-                <p className="mt-2 text-[13px] text-black/70 leading-relaxed">
-                  {s.description}
-                </p>
+                <h3 className="text-[15px] font-medium text-black/90 tracking-wide">{s.title}</h3>
+                <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{s.description}</p>
                 {s.items && (
                   <ul className="mt-3 space-y-1.5 text-[13px] text-black/80 leading-relaxed">
                     {s.items.map((it) => (
@@ -101,62 +116,31 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-      {/* ================= PROCESO ================= */}
-      <section className="py-20 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
-          <header className="max-w-3xl mb-12">
-            <h2 className="text-[#0A2E57] text-[18px] tracking-[.28em] uppercase font-medium">
-              Un proceso claro y transparente
-            </h2>
-            <p className="mt-2 text-black/70 text-[14px] leading-relaxed">
-              Metodología probada para lograr un resultado superior.
-            </p>
-          </header>
-
-          <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {PROCESO.map((p, i) => (
-              <li
-                key={p.title}
-                className="border border-black/10 bg-white p-6 shadow-sm hover:shadow-md transition duration-300"
-              >
-                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase font-medium mb-1">
-                  Paso {i + 1}
-                </div>
-                <h3 className="text-[15px] font-medium text-black/90 tracking-wide">
-                  {p.title}
-                </h3>
-                <p className="mt-2 text-[13px] text-black/70 leading-relaxed">
-                  {p.text}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* ================= DIFERENCIADORES ================= */}
+      {/* ================== PROCESO — línea de tiempo ================== */}
       <section className="py-20 bg-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
-          <header className="max-w-3xl mb-12">
-            <h2 className="text-[#0A2E57] text-[18px] tracking-[.28em] uppercase font-medium">
-              ¿Por qué Gesswein Properties?
-            </h2>
-            <p className="mt-2 text-black/70 text-[14px] leading-relaxed">
-              Enfoque boutique, trato cercano y marketing de alto impacto.
-            </p>
-          </header>
+        <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12 xl:px-16 text-center">
+          <h2 className="text-[#0A2E57] text-[18px] tracking-[.28em] uppercase font-medium mb-12">
+            Un proceso claro y transparente
+          </h2>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {DESTACADOS.map((d) => (
-              <article
-                key={d.title}
-                className="border border-black/10 bg-white p-6 shadow-sm hover:shadow-md transition duration-300"
-              >
-                <h3 className="text-[15px] font-medium text-black/90 tracking-wide">
-                  {d.title}
-                </h3>
-                <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{d.text}</p>
-              </article>
+          <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div className="absolute top-4 left-[5%] right-[5%] h-[1px] bg-[#0A2E57]/30 hidden sm:block"></div>
+
+            {PROCESO.map((p, i) => (
+              <div key={p.title} className="relative flex-1 text-left sm:text-center px-4">
+                <div className="flex items-center gap-3 sm:flex-col">
+                  <div className="w-[9px] h-[9px] bg-[#0A2E57] rounded-full sm:mb-2"></div>
+                  <div>
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase font-medium mb-1">
+                      Paso {i + 1}
+                    </div>
+                    <h3 className="text-[14px] font-medium text-black/90">{p.title}</h3>
+                    <p className="mt-1 text-[13px] text-black/70 leading-relaxed max-w-[220px] sm:max-w-none">
+                      {p.text}
+                    </p>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -169,7 +153,7 @@ export default function ServiciosPage() {
 
 const SERVICIOS = [
   {
-    kicker: 'Venta',
+    kicker: 'Compra-Venta',
     title: 'Comercialización integral',
     description:
       'Diagnóstico de precio, preparación, plan de marketing y acompañamiento total hasta la escritura.',
@@ -190,12 +174,12 @@ const SERVICIOS = [
     items: ['Filtrado y scoring de candidatos', 'Contrato y entrega', 'Gestión mensual opcional'],
   },
   {
-    kicker: 'Valoración',
-    title: 'Tasación orientativa',
+    kicker: 'Asesoría',
+    title: 'Legal y financiera',
     description:
-      'Estimación de valor para definir estrategia comercial con fundamentos objetivos.',
+      'Acompañamiento en promesas, financiamiento y documentos hasta el final del proceso.',
     icon: Scale,
-    items: ['Inspección técnica', 'ACM + tendencias por zona'],
+    items: ['Revisión documental', 'Coordinación con bancos y notarías'],
   },
   {
     kicker: 'Preparación',
@@ -214,12 +198,12 @@ const SERVICIOS = [
     items: ['Fichas optimizadas', 'CRM + seguimiento', 'Pauta digital multicanal'],
   },
   {
-    kicker: 'Asesoría',
-    title: 'Legal y financiera',
+    kicker: 'Valoración',
+    title: 'Tasación orientativa',
     description:
-      'Acompañamiento en promesas, financiamiento y documentos hasta el final del proceso.',
+      'Estimación de valor para definir estrategia comercial con fundamentos objetivos.',
     icon: FileText,
-    items: ['Revisión documental', 'Coordinación con bancos y notarías'],
+    items: ['Inspección técnica', 'ACM + tendencias por zona'],
   },
 ]
 
@@ -239,16 +223,5 @@ const PROCESO = [
   {
     title: 'Negociación & cierre',
     text: 'Aseguramos el mejor acuerdo y acompañamos hasta la escritura.',
-  },
-]
-
-const DESTACADOS = [
-  {
-    title: 'Marketing que vende',
-    text: 'Fotografía, video y pauta con segmentación inteligente. Reportes claros del desempeño.',
-  },
-  {
-    title: 'Atención boutique',
-    text: 'Trato cercano, comunicación transparente y foco en el detalle.',
   },
 ]
