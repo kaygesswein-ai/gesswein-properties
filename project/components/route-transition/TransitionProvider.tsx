@@ -23,21 +23,13 @@ export const useRouteTransition = () => {
 };
 
 export function RouteTransitionProvider({ children }: { children: React.ReactNode }) {
+  // --- timings: entrada 900ms, sweep ~900–1200ms, salida 300ms ---
   const [isActive, setActive] = useState(false);
   const [fadeout, setFadeout] = useState(false);
-
-  // Duración mínima de la transición (1.8s por el video)
-  const DEFAULT_MIN_MS = 1800;
-
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(DEFAULT_MIN_MS);
+  const minDurRef = useRef<number>(1200); // Duración mínima visible (ajusta 1100–1500)
 
   const progressRef = useRef<HTMLDivElement | null>(null);
-
-  // Video (reiniciado en cada transición)
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [videoKey, setVideoKey] = useState(0);
-  const endedOnceRef = useRef(false);
 
   // Bloquear scroll bajo overlay mientras está activo
   useEffect(() => {
@@ -47,28 +39,25 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   }, [isActive]);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(300, opts?.minDurationMs ?? DEFAULT_MIN_MS);
+    minDurRef.current = Math.max(600, opts?.minDurationMs ?? 1200);
     startedAtRef.current = Date.now();
-    endedOnceRef.current = false;
 
-    // Reinicia video y barra
-    setVideoKey((k) => k + 1);
-    if (progressRef.current) progressRef.current.style.width = '0%';
+    // barra
+    if (progressRef.current) {
+      progressRef.current.style.width = '0%';
+      requestAnimationFrame(() => {
+        if (progressRef.current) progressRef.current.style.width = '25%';
+        setTimeout(() => {
+          if (progressRef.current) progressRef.current.style.width = '70%';
+        }, 150);
+      });
+    }
 
     setFadeout(false);
     setActive(true);
-
-    // Feedback rápido de la barra
-    if (progressRef.current) {
-      progressRef.current.style.width = '25%';
-      setTimeout(() => {
-        if (progressRef.current) progressRef.current.style.width = '70%';
-      }, 150);
-    }
   }, []);
 
   const end = useCallback(() => {
-    // Respeta la duración mínima
     const elapsed = Date.now() - startedAtRef.current;
     const remain = Math.max(0, minDurRef.current - elapsed);
 
@@ -83,24 +72,12 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     }, remain);
   }, []);
 
-  // Cierre sincronizado con el fin del video (evita dobles cierres)
-  const handleEnded = () => {
-    if (endedOnceRef.current) return;
-    endedOnceRef.current = true;
-    end();
-  };
-
-  // iOS/autoplay safety
-  const handleCanPlay = () => {
-    videoRef.current?.play().catch(() => {
-      /* ignore autoplay errors */
-    });
-  };
-
-  // Fallback: si el video falla, cerramos al cumplir el mínimo
-  const handleError = () => {
-    end();
-  };
+  // Cierre por seguridad si algo navega ultra-rápido
+  useEffect(() => {
+    if (!isActive) return;
+    const t = setTimeout(() => end(), 1800); // guard-rail
+    return () => clearTimeout(t);
+  }, [isActive, end]);
 
   return (
     <Ctx.Provider value={{ start, end, isActive }}>
@@ -115,33 +92,21 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         role="status"
         aria-live="polite"
       >
-        <div className="gp-logo-wrap" aria-label="Transición de página Gesswein Properties">
-          {/* Logo base (si no tienes /brand/logo-base.svg, usa /logo-white.svg) */}
+        <div className="gp-logo-wrap" aria-label="Transición Gesswein Properties">
+          {/* Logo blanco centrado (vectorial) */}
           <img
-            src="/brand/logo-base.svg"
+            src="/logo-white.svg"
             alt="Gesswein Properties"
             className="gp-logo gp-logo--fadein"
             draggable={false}
           />
 
-          {/* Video de líneas/techos ENCIMA del logo (una sola reproducción) */}
-          <video
-            key={videoKey}
-            ref={videoRef}
-            className="gp-video-lines"
-            muted
-            playsInline
-            preload="auto"
-            autoPlay
-            disablePictureInPicture
-            onCanPlay={handleCanPlay}
-            onEnded={handleEnded}
-            onError={handleError}
-          >
-            {/* WebM primero (mejor compresión), MP4 como fallback */}
-            <source src="/transition/gp-transition.webm" type="video/webm" />
-            <source src="/transition/gp-transition.mp4"  type="video/mp4" />
-          </video>
+          {/* Efecto “láser” que dibuja el logo usando la máscara del SVG */}
+          <div className="gp-logo-sweep" aria-hidden="true" />
+
+          {/* Beams sutiles por delante del logo */}
+          <div className="gp-beam" aria-hidden="true" />
+          <div className="gp-beam gp-beam--delay" aria-hidden="true" />
         </div>
       </div>
 
