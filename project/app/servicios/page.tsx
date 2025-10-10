@@ -1,92 +1,93 @@
-// project/app/servicios/page.tsx
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import {
+  Home,
+  Key,
+  Scale,
+  Brush,
+  Megaphone,
+  FileText,
+  Building2,
+} from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Servicios',
+  title: 'Servicios | Gesswein Properties',
   description:
-    'Asesoría inmobiliaria integral: venta, arriendo, tasación, preparación de propiedad, marketing premium, negociación y cierre.',
+    'Asesoría inmobiliaria integral: venta, arriendo, tasación, marketing y gestión de propiedades premium.',
 }
 
 export default function ServiciosPage() {
   return (
     <div className="bg-white text-black">
-      {/* HERO — misma altura que Propiedades */}
-      <section className="relative isolate">
-        {/* Fondo (puedes reemplazar la imagen por una propia en /public) */}
-        <div className="absolute inset-0 -z-10">
-          <Image
-            src="/hero-servicios.jpg" // opcional: sube un jpg en /public; si no existe, se verá un fondo azul sólido
-            alt=""
-            fill
-            priority
-            className="object-cover opacity-80"
-          />
-          <div className="absolute inset-0 bg-[#0A2E57] mix-blend-multiply" />
-        </div>
+      {/* HERO — ocupa todo el viewport */}
+      <section className="relative min-h-screen flex items-center justify-center isolate">
+        <Image
+          src="https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_5437%20(1).jpeg"
+          alt="Portada Servicios Gesswein Properties"
+          fill
+          priority
+          className="object-cover brightness-[0.55]"
+        />
 
-        {/* Altura alineada a la portada de Propiedades */}
-        <div className="min-h-[420px] sm:min-h-[460px] lg:min-h-[520px] flex items-center">
-          <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16 w-full">
-            <div className="max-w-3xl">
-              <h1 className="text-white text-3xl sm:text-4xl lg:text-[44px] leading-tight font-semibold">
-                Servicios inmobiliarios de alto estándar
-              </h1>
-              <p className="mt-4 text-white/85 text-base lg:text-lg max-w-2xl">
-                Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
-                con la mejor experiencia y resultados.
-              </p>
-              <div className="mt-6 flex gap-3">
-                <Link
-                  href="/contacto"
-                  className="inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#0A2E57] hover:opacity-90 transition"
-                >
-                  Conversemos
-                </Link>
-                <Link
-                  href="/propiedades"
-                  className="inline-flex items-center rounded-xl border border-white/70 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
-                >
-                  Ver propiedades
-                </Link>
-              </div>
-            </div>
+        <div className="relative z-10 text-center px-6 md:px-10 lg:px-12 xl:px-16">
+          <h1 className="text-white text-[22px] sm:text-[26px] md:text-[28px] tracking-[.25em] uppercase font-medium leading-[1.3]">
+            SERVICIOS INMOBILIARIOS DE ALTO ESTÁNDAR
+          </h1>
+          <p className="mt-4 text-white/85 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+            Combinamos datos, diseño y marketing premium para vender o arrendar tu
+            propiedad con la mejor experiencia y resultados.
+          </p>
+
+          <div className="mt-8 flex justify-center gap-3 flex-wrap">
+            <Link
+              href="/contacto"
+              className="rounded-none bg-white text-[#0A2E57] px-6 py-2 text-[13px] font-semibold tracking-[.18em] uppercase transition hover:opacity-85"
+            >
+              Conversemos
+            </Link>
+            <Link
+              href="/propiedades"
+              className="rounded-none border border-white/90 text-white px-6 py-2 text-[13px] font-semibold tracking-[.18em] uppercase transition hover:bg-white/10"
+            >
+              Ver propiedades
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* GRID DE SERVICIOS PRINCIPALES */}
-      <section className="py-14 sm:py-16 lg:py-20">
+      {/* SERVICIOS PRINCIPALES */}
+      <section className="py-20 bg-white">
         <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
-          <header className="max-w-3xl">
-            <h2 className="text-2xl sm:text-[28px] font-semibold text-[#0A2E57]">
+          <header className="max-w-3xl mb-10">
+            <h2 className="text-[#0A2E57] text-[22px] tracking-[.28em] uppercase font-medium">
               ¿Qué hacemos por ti?
             </h2>
-            <p className="mt-3 text-black/70">
-              Un servicio integral, enfocado en la excelencia, que cubre cada etapa del ciclo
-              inmobiliario.
+            <p className="mt-2 text-black/70 text-sm leading-relaxed">
+              Un servicio integral, enfocado en la excelencia, que cubre cada etapa
+              del ciclo inmobiliario.
             </p>
           </header>
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {SERVICIOS.map((s) => (
               <article
                 key={s.title}
-                className="rounded-2xl border border-black/10 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,.08)] transition"
+                className="relative border border-black/10 bg-white p-6 shadow-sm hover:shadow-md transition duration-300"
               >
-                <div className="text-[#0A2E57] text-base font-semibold tracking-[.25em] uppercase">
+                <s.icon className="absolute top-5 right-5 size-5 text-[#0A2E57]/70" />
+                <div className="text-[#0A2E57] text-[12px] tracking-[.25em] uppercase font-semibold mb-1">
                   {s.kicker}
                 </div>
-                <h3 className="mt-1 text-lg font-semibold text-black">{s.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-black/70">{s.description}</p>
-
-                {/* Lista con formato fino (•) */}
+                <h3 className="text-[16px] font-semibold">{s.title}</h3>
+                <p className="mt-2 text-sm text-black/70 leading-relaxed">
+                  {s.description}
+                </p>
                 {s.items && (
-                  <ul className="mt-4 space-y-2 text-sm text-black/80">
+                  <ul className="mt-3 space-y-1.5 text-sm text-black/80">
                     {s.items.map((it) => (
-                      <li key={it} className="pl-4 relative">
-                        <span className="absolute left-0 top-2 size-[6px] rounded-full bg-[#0A2E57]" />
+                      <li key={it} className="pl-3 relative">
+                        <span className="absolute left-0 top-2 size-[5px] bg-[#0A2E57]"></span>
                         {it}
                       </li>
                     ))}
@@ -98,89 +99,57 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-      {/* PROCESO / CÓMO TRABAJAMOS */}
-      <section className="py-14 sm:py-16 lg:py-20 bg-slate-50">
+      {/* PROCESO */}
+      <section className="py-20 bg-slate-50">
         <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
-          <header className="max-w-3xl">
-            <h2 className="text-2xl sm:text-[28px] font-semibold text-[#0A2E57]">
+          <header className="max-w-3xl mb-10">
+            <h2 className="text-[#0A2E57] text-[22px] tracking-[.28em] uppercase font-medium">
               Un proceso claro y transparente
             </h2>
-            <p className="mt-3 text-black/70">
+            <p className="mt-2 text-black/70 text-sm leading-relaxed">
               Metodología probada para lograr un resultado superior.
             </p>
           </header>
 
-          <ol className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {PROCESO.map((p, i) => (
               <li
                 key={p.title}
-                className="relative rounded-2xl border border-black/10 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,.06)]"
+                className="border border-black/10 bg-white p-6 shadow-sm hover:shadow-md transition duration-300"
               >
-                <div className="text-[#0A2E57] text-[12px] tracking-[.30em] uppercase">
+                <div className="text-[#0A2E57] text-[12px] tracking-[.25em] uppercase font-semibold mb-1">
                   Paso {i + 1}
                 </div>
-                <h3 className="mt-1 text-base font-semibold text-black">{p.title}</h3>
-                <p className="mt-2 text-sm text-black/70">{p.text}</p>
+                <h3 className="text-[15px] font-semibold">{p.title}</h3>
+                <p className="mt-2 text-sm text-black/70 leading-relaxed">{p.text}</p>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      {/* DESTACADOS / DIFERENCIADORES */}
-      <section className="py-14 sm:py-16 lg:py-20">
+      {/* DIFERENCIADORES */}
+      <section className="py-20 bg-white">
         <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
-          <header className="max-w-3xl">
-            <h2 className="text-2xl sm:text-[28px] font-semibold text-[#0A2E57]">
+          <header className="max-w-3xl mb-10">
+            <h2 className="text-[#0A2E57] text-[22px] tracking-[.28em] uppercase font-medium">
               ¿Por qué Gesswein Properties?
             </h2>
-            <p className="mt-3 text-black/70">
+            <p className="mt-2 text-black/70 text-sm leading-relaxed">
               Enfoque boutique, trato cercano y marketing de alto impacto.
             </p>
           </header>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2">
             {DESTACADOS.map((d) => (
               <article
                 key={d.title}
-                className="rounded-2xl border border-black/10 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,.06)]"
+                className="border border-black/10 bg-white p-6 shadow-sm hover:shadow-md transition duration-300"
               >
-                <h3 className="text-lg font-semibold text-black">{d.title}</h3>
-                <p className="mt-2 text-sm text-black/70">{d.text}</p>
+                <h3 className="text-[16px] font-semibold">{d.title}</h3>
+                <p className="mt-2 text-sm text-black/70 leading-relaxed">{d.text}</p>
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA FINAL */}
-      <section className="py-14 sm:py-16 lg:py-20 bg-[#0A2E57]">
-        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
-          <div className="rounded-2xl bg-white/5 border border-white/15 p-7 md:p-8 lg:p-10">
-            <div className="grid gap-6 md:grid-cols-2 md:items-center">
-              <div>
-                <h2 className="text-white text-2xl font-semibold">
-                  Hablemos de tu propiedad
-                </h2>
-                <p className="mt-2 text-white/80 text-sm">
-                  Te asesoramos en precio, preparación y estrategia comercial.
-                </p>
-              </div>
-              <div className="md:justify-self-end flex gap-3">
-                <Link
-                  href="/contacto"
-                  className="inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#0A2E57] hover:opacity-90 transition"
-                >
-                  Contáctanos
-                </Link>
-                <Link
-                  href="/equipo"
-                  className="inline-flex items-center rounded-xl border border-white/70 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
-                >
-                  Conoce al equipo
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -188,17 +157,16 @@ export default function ServiciosPage() {
   )
 }
 
-/* ===== Datos (puedes editar libremente) ===== */
-
 const SERVICIOS = [
   {
     kicker: 'Venta',
     title: 'Comercialización integral',
     description:
       'Diagnóstico de precio, preparación, plan de marketing y acompañamiento total hasta la escritura.',
+    icon: Home,
     items: [
       'Análisis comparativo de mercado (ACM)',
-      'Plan de difusión digital y segmentación',
+      'Plan de difusión digital',
       'Reportes de interés y visitas',
       'Negociación y cierre',
     ],
@@ -208,13 +176,15 @@ const SERVICIOS = [
     title: 'Colocación y administración',
     description:
       'Encontramos a tu arrendatario ideal y, si lo deseas, administramos el contrato mes a mes.',
-    items: ['Filtrado y scoring de candidatos', 'Contrato y estado de entrega', 'Gestión mensual opcional'],
+    icon: Key,
+    items: ['Filtrado y scoring de candidatos', 'Contrato y entrega', 'Gestión mensual opcional'],
   },
   {
     kicker: 'Valoración',
     title: 'Tasación orientativa',
     description:
       'Estimación de valor para definir estrategia comercial con fundamentos objetivos.',
+    icon: Scale,
     items: ['Inspección técnica', 'ACM + tendencias por zona'],
   },
   {
@@ -222,6 +192,7 @@ const SERVICIOS = [
     title: 'Home staging & producción visual',
     description:
       'Pequeños cambios, gran impacto. Fotos profesionales, video y tour 360.',
+    icon: Brush,
     items: ['Check de reparaciones', 'Home staging liviano', 'Producción audiovisual'],
   },
   {
@@ -229,6 +200,7 @@ const SERVICIOS = [
     title: 'Campañas premium',
     description:
       'Contenido atractivo y pauta inteligente para maximizar alcance y calidad de leads.',
+    icon: Megaphone,
     items: ['Fichas optimizadas', 'CRM + seguimiento', 'Pauta digital multicanal'],
   },
   {
@@ -236,6 +208,7 @@ const SERVICIOS = [
     title: 'Legal y financiera',
     description:
       'Acompañamiento en promesas, financiamiento y documentos hasta el final del proceso.',
+    icon: FileText,
     items: ['Revisión documental', 'Coordinación con bancos y notarías'],
   },
 ]
