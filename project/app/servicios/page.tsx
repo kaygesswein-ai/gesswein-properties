@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import {
   Home,
   Key,
@@ -9,6 +8,70 @@ import {
   Megaphone,
   FileText,
 } from 'lucide-react';
+
+/* ================= DATOS ================= */
+const SERVICIOS = [
+  {
+    kicker: 'Compra-Venta',
+    title: 'Comercialización integral',
+    description:
+      'Diagnóstico de precio, preparación, plan de marketing y acompañamiento total hasta la escritura.',
+    icon: Home,
+    items: [
+      'Análisis comparativo de mercado (ACM)',
+      'Plan de difusión digital',
+      'Reportes de interés y visitas',
+      'Negociación y cierre',
+    ],
+  },
+  {
+    kicker: 'Arriendo',
+    title: 'Colocación y administración',
+    description:
+      'Encontramos a tu arrendatario ideal y, si lo deseas, administramos el contrato mes a mes.',
+    icon: Key,
+    items: ['Filtrado y scoring de candidatos', 'Contrato y entrega', 'Gestión mensual opcional'],
+  },
+  {
+    kicker: 'Asesoría',
+    title: 'Legal y financiera',
+    description:
+      'Acompañamiento en promesas, financiamiento y documentos hasta el final del proceso.',
+    icon: Scale,
+    items: ['Revisión documental', 'Coordinación con bancos y notarías'],
+  },
+  {
+    kicker: 'Preparación',
+    title: 'Home staging & producción visual',
+    description:
+      'Pequeños cambios, gran impacto. Fotos profesionales, video y tour 360.',
+    icon: Brush,
+    items: ['Check de reparaciones', 'Home staging liviano', 'Producción audiovisual'],
+  },
+  {
+    kicker: 'Marketing',
+    title: 'Campañas premium',
+    description:
+      'Contenido atractivo y pauta inteligente para maximizar alcance y calidad de leads.',
+    icon: Megaphone,
+    items: ['Fichas optimizadas', 'CRM + seguimiento', 'Pauta digital multicanal'],
+  },
+  {
+    kicker: 'Valoración',
+    title: 'Tasación orientativa',
+    description:
+      'Estimación de valor para definir estrategia comercial con fundamentos objetivos.',
+    icon: FileText,
+    items: ['Inspección técnica', 'ACM + tendencias por zona'],
+  },
+];
+
+const PROCESO = [
+  { title: 'Diagnóstico & precio', text: 'Reunión, inspección y propuesta de valor basada en datos.' },
+  { title: 'Preparación',          text: 'Ajustes rápidos y producción visual profesional.' },
+  { title: 'Lanzamiento',          text: 'Publicación, segmentación y respuesta ágil a interesados.' },
+  { title: 'Negociación & cierre', text: 'Aseguramos el mejor acuerdo y acompañamos hasta la escritura.' },
+];
 
 export default function ServiciosPage() {
   return (
@@ -98,7 +161,7 @@ export default function ServiciosPage() {
                 key={s.title}
                 className="relative border border-black/10 bg-white p-6 shadow-sm hover:shadow-md transition duration-300"
               >
-                <s.icon className="absolute top-5 right-5 size-5 text-[#0A2E57]/70" />
+                <s.icon className="absolute top-5 right-5 h-5 w-5 text-[#0A2E57]/70" />
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase font-medium mb-1">
                   {s.kicker}
                 </div>
@@ -108,7 +171,7 @@ export default function ServiciosPage() {
                   <ul className="mt-3 space-y-1.5 text-[13px] text-black/80 leading-relaxed">
                     {s.items.map((it) => (
                       <li key={it} className="pl-3 relative">
-                        <span className="absolute left-0 top-2 size-[5px] bg-[#0A2E57]" />
+                        <span className="absolute left-0 top-2 w-[5px] h-[5px] bg-[#0A2E57]" />
                         {it}
                       </li>
                     ))}
@@ -120,152 +183,52 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-    {/* ================= PROCESO — LÍNEA DE TIEMPO (responsivo) ================= */}
-<section className="py-20 bg-white">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="pl-2 sm:pl-4 max-w-4xl mb-12">
-      <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-        Un proceso claro y transparente
-      </h2>
-      <p className="text-black/70 text-[14px] leading-relaxed">
-        Metodología probada para lograr un resultado superior.
-      </p>
-    </div>
+      {/* ================= PROCESO — LÍNEA DE TIEMPO (responsivo) ================= */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="pl-2 sm:pl-4 max-w-4xl mb-12">
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
+              Un proceso claro y transparente
+            </h2>
+            <p className="text-black/70 text-[14px] leading-relaxed">
+              Metodología probada para lograr un resultado superior.
+            </p>
+          </div>
 
-    {/* Contenedor responsive: vertical (mobile) / horizontal (sm+) */}
-    <div className="relative pl-8 sm:pl-4">
-      {/* Línea VERTICAL (solo mobile) */}
-      <div className="absolute left-3 top-2 bottom-2 w-px bg-[#0A2E57]/30 sm:hidden" />
+          {/* Contenedor responsive: vertical (mobile) / horizontal (sm+) */}
+          <div className="relative pl-8 sm:pl-4">
+            {/* Línea VERTICAL (solo mobile) */}
+            <div className="absolute left-3 top-2 bottom-2 w-px bg-[#0A2E57]/30 sm:hidden" />
+            {/* Línea HORIZONTAL (solo desktop/tablet) */}
+            <div className="hidden sm:block absolute top-4 left-[5%] right-[5%] h-px bg-[#0A2E57]/30" />
 
-      {/* Línea HORIZONTAL (solo desktop/tablet) */}
-      <div className="hidden sm:block absolute top-4 left-[5%] right-[5%] h-px bg-[#0A2E57]/30" />
+            <ol role="list" className="flex flex-col gap-8 sm:flex-row sm:justify-between sm:items-start">
+              {PROCESO.map((p, i) => (
+                <li key={p.title} className="relative sm:flex-1 sm:text-center sm:px-4">
+                  {/* Punto */}
+                  <span
+                    className="
+                      absolute -left-[5px] top-[6px]
+                      sm:left-1/2 sm:top-0 sm:-translate-x-1/2
+                      w-2 h-2 rounded-full bg-[#0A2E57] z-10
+                    "
+                  />
+                  <div className="sm:pt-3">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase font-medium mb-1">
+                      Paso {i + 1}
+                    </div>
+                    <h3 className="text-[14px] font-medium text-black/90">{p.title}</h3>
+                    <p className="mt-1 text-[13px] text-black/70 leading-relaxed max-w-[260px] sm:max-w-none">
+                      {p.text}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
 
-      {/* Items */}
-      <ol
-        role="list"
-        className="flex flex-col gap-8 sm:flex-row sm:justify-between sm:items-start"
-      >
-        {[
-          {
-            title: 'Diagnóstico & precio',
-            text: 'Reunión, inspección y propuesta de valor basada en datos.',
-          },
-          {
-            title: 'Preparación',
-            text: 'Ajustes rápidos y producción visual profesional.',
-          },
-          {
-            title: 'Lanzamiento',
-            text: 'Publicación, segmentación y respuesta ágil a interesados.',
-          },
-          {
-            title: 'Negociación & cierre',
-            text: 'Aseguramos el mejor acuerdo y acompañamos hasta la escritura.',
-          },
-        ].map((p, i) => (
-          <li
-            key={p.title}
-            className="relative sm:flex-1 sm:text-center sm:px-4"
-          >
-            {/* Punto (mobile: a la izquierda / desktop: centrado) */}
-            <span
-              className="
-                absolute
-                -left-[5px] top-[6px]  /* mobile */
-                sm:left-1/2 sm:top-0 sm:-translate-x-1/2 /* desktop */
-                w-2 h-2 rounded-full bg-[#0A2E57] z-10
-              "
-            />
-
-            {/* Contenido */}
-            <div className="sm:pt-3">
-              <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase font-medium mb-1">
-                Paso {i + 1}
-              </div>
-              <h3 className="text-[14px] font-medium text-black/90">{p.title}</h3>
-              <p className="mt-1 text-[13px] text-black/70 leading-relaxed max-w-[260px] sm:max-w-none">
-                {p.text}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </div>
-  </div>
-</section>
-
-/* ================= DATOS ================= */
-const SERVICIOS = [
-  {
-    kicker: 'Compra-Venta',
-    title: 'Comercialización integral',
-    description:
-      'Diagnóstico de precio, preparación, plan de marketing y acompañamiento total hasta la escritura.',
-    icon: Home,
-    items: [
-      'Análisis comparativo de mercado (ACM)',
-      'Plan de difusión digital',
-      'Reportes de interés y visitas',
-      'Negociación y cierre',
-    ],
-  },
-  {
-    kicker: 'Arriendo',
-    title: 'Colocación y administración',
-    description:
-      'Encontramos a tu arrendatario ideal y, si lo deseas, administramos el contrato mes a mes.',
-    icon: Key,
-    items: ['Filtrado y scoring de candidatos', 'Contrato y entrega', 'Gestión mensual opcional'],
-  },
-  {
-    kicker: 'Asesoría',
-    title: 'Legal y financiera',
-    description:
-      'Acompañamiento en promesas, financiamiento y documentos hasta el final del proceso.',
-    icon: Scale,
-    items: ['Revisión documental', 'Coordinación con bancos y notarías'],
-  },
-  {
-    kicker: 'Preparación',
-    title: 'Home staging & producción visual',
-    description:
-      'Pequeños cambios, gran impacto. Fotos profesionales, video y tour 360.',
-    icon: Brush,
-    items: ['Check de reparaciones', 'Home staging liviano', 'Producción audiovisual'],
-  },
-  {
-    kicker: 'Marketing',
-    title: 'Campañas premium',
-    description:
-      'Contenido atractivo y pauta inteligente para maximizar alcance y calidad de leads.',
-    icon: Megaphone,
-    items: ['Fichas optimizadas', 'CRM + seguimiento', 'Pauta digital multicanal'],
-  },
-  {
-    kicker: 'Valoración',
-    title: 'Tasación orientativa',
-    description:
-      'Estimación de valor para definir estrategia comercial con fundamentos objetivos.',
-    icon: FileText,
-    items: ['Inspección técnica', 'ACM + tendencias por zona'],
-  },
-];
-
-const PROCESO = [
-  {
-    title: 'Diagnóstico & precio',
-    text: 'Reunión, inspección y propuesta de valor basada en datos.',
-  },
-  {
-    title: 'Preparación',
-    text: 'Ajustes rápidos y producción visual profesional.',
-  },
-  {
-    title: 'Lanzamiento',
-    text: 'Publicación, segmentación y respuesta ágil a interesados.',
-  },
-  {
-    title: 'Negociación & cierre',
-    text: 'Aseguramos el mejor acuerdo y acompañamos hasta la escritura.',
-  },
-];
+    </main>
+  );
+}
