@@ -15,7 +15,7 @@ html, body {
   .hero-safe-left { margin-left: 1rem; }
 }
 
-/* ========= NAV (lo que ya tenías) ========= */
+/* ========= NAV ========= */
 .nav-list{ display:flex; align-items:center; gap:26px; flex-wrap:nowrap; white-space:nowrap; }
 .nav-li{ position:relative; }
 .nav-li + .nav-li::before{ content:''; position:absolute; left:-13px; top:50%; width:1px; height:16px; transform:translateY(-50%); background:rgba(255,255,255,0.65); }
@@ -43,7 +43,7 @@ html, body {
 .gp-route-overlay{
   position:fixed; inset:0; z-index:110;
   display:grid; place-items:center;
-  background:#0A2E57;
+  background:#0A2E57;                 /* Azul corporativo */
   animation: gpIn 900ms cubic-bezier(.22,.61,.36,1) forwards;
   pointer-events:all;
 }
@@ -82,19 +82,20 @@ html, body {
   filter: drop-shadow(0 2px 8px rgba(0,0,0,.25));
 }
 
-/* Video de líneas encima del logo */
+/* ===== Video de líneas encima del logo (clave para buena nitidez) ===== */
 .gp-video-lines{
   position:absolute;
   inset:0;
   margin:auto;
-  width:min(80vw, 480px);
+  width:82%;                 /* calza con el ancho del logo */
   height:auto;
-  object-fit:contain;   /* ← evita que se deforme */
+  object-fit: contain;       /* evita deformación */
   z-index:140;
   pointer-events:none;
-  background-color: transparent; /* no toca el color del overlay */
-  mix-blend-mode: normal;        /* evita virajes de color */
-  filter:none;
+  image-rendering: auto;     /* deja al navegador elegir mejor escalado */
+  background-color: transparent;
+  mix-blend-mode: normal;    /* sin mezclas que laven el color */
+  filter:none;               /* sin blur ni sombras que pierdan definición */
 }
 
 /* Leve aparición del logo base debajo del video */
