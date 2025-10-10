@@ -1,5 +1,6 @@
-import type { Metadata } from 'next'
-import Image from 'next/image'
+'use client';
+
+import Image from 'next/image';
 import {
   Home,
   Key,
@@ -7,86 +8,89 @@ import {
   Brush,
   Megaphone,
   FileText,
-} from 'lucide-react'
-
-export const metadata: Metadata = {
-  title: 'Servicios | Gesswein Properties',
-  description:
-    'Asesoría inmobiliaria integral: compra-venta, arriendo, valoración, marketing y gestión de propiedades premium.',
-}
+} from 'lucide-react';
 
 export default function ServiciosPage() {
   return (
-    <div className="bg-white text-black">
-      {/* HERO — igual que Propiedades */}
-      <section className="relative min-h-screen flex items-end justify-center isolate">
-        <Image
+    <main className="bg-white">
+
+      {/* ================= HERO (idéntico al de Propiedades) ================= */}
+      <section className="relative min-h-[100svh]">
+        <img
           src="https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_5437%20(1).jpeg"
-          alt="Portada Servicios Gesswein Properties"
-          fill
-          priority
-          className="object-cover brightness-[0.55]"
+          alt="Portada Servicios"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: '50% 35%' }}
         />
-        <div className="absolute inset-0 bg-black/20" />
-
-        <div className="relative z-10 text-center mb-20 px-6">
-          <h1 className="text-white text-[18px] sm:text-[20px] md:text-[22px] tracking-[.28em] uppercase font-medium leading-[1.5]">
-            SERVICIOS INMOBILIARIOS DE ALTO ESTÁNDAR
-          </h1>
-          <p className="mt-3 text-white/85 text-[13px] sm:text-[14px] leading-relaxed max-w-xl mx-auto">
-            Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
-            con la mejor experiencia y resultados.
-          </p>
-        </div>
-      </section>
-
-      {/* ================== POR QUÉ GESSWEIN ================== */}
-      <section className="py-20 bg-white">
-        <div className="mx-auto max-w-5xl px-6 md:px-10 lg:px-12 xl:px-16 text-center">
-          <h2 className="text-[#0A2E57] text-[18px] tracking-[.28em] uppercase font-medium mb-6">
-            ¿Por qué Gesswein Properties?
-          </h2>
-
-          <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl mx-auto">
-            En Gesswein Properties nos definimos por un enfoque boutique, que combina excelencia técnica,
-            comunicación cercana y una estética moderna aplicada a cada proyecto inmobiliario. Nuestro
-            compromiso es ofrecer un servicio profesional, transparente y con alto estándar de ejecución.
-          </p>
-
-          <div className="mt-12 grid sm:grid-cols-2 gap-8 text-left">
-            <div>
-              <h3 className="text-[#0A2E57] uppercase text-[13px] tracking-[.25em] font-medium mb-2">
-                Misión
-              </h3>
-              <p className="text-black/80 text-[14px] leading-relaxed">
-                Brindar asesoría inmobiliaria integral, basada en confianza, precisión técnica y diseño,
-                conectando a nuestros clientes con oportunidades únicas de inversión y hogar.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-[#0A2E57] uppercase text-[13px] tracking-[.25em] font-medium mb-2">
-                Visión
-              </h3>
-              <p className="text-black/80 text-[14px] leading-relaxed">
-                Ser la firma inmobiliaria de referencia en Chile por su excelencia estética, profesionalismo
-                y compromiso con la calidad de vida de quienes confían en nosotros.
-              </p>
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute bottom-6 left-0 right-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="pl-2 sm:pl-4">
+              <div className="max-w-3xl">
+                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                  SERVICIOS INMOBILIARIOS DE ALTO ESTÁNDAR
+                </h1>
+                <p className="text-white/85 mt-2">
+                  Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
+                  con la mejor experiencia y resultados.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================== QUÉ HACEMOS POR TI ================== */}
+      {/* ================= POR QUÉ GESSWEIN PROPERTIES ================= */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="pl-2 sm:pl-4 max-w-4xl">
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
+              ¿Por qué Gesswein Properties?
+            </h2>
+            <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl">
+              En Gesswein Properties nos definimos por un enfoque boutique, que combina excelencia
+              técnica, comunicación cercana y una estética moderna aplicada a cada proyecto
+              inmobiliario. Nuestro compromiso es ofrecer un servicio profesional, transparente
+              y con alto estándar de ejecución.
+            </p>
+
+            <div className="mt-12 grid md:grid-cols-2 gap-6">
+              <article className="border border-black/10 bg-white p-6 shadow-sm">
+                <h3 className="text-[15px] font-medium text-black/90 tracking-wide uppercase mb-2">
+                  Misión
+                </h3>
+                <p className="text-[13px] text-black/70 leading-relaxed">
+                  Brindar asesoría inmobiliaria integral, basada en confianza, precisión técnica
+                  y diseño, conectando a nuestros clientes con oportunidades únicas de inversión
+                  y hogar.
+                </p>
+              </article>
+
+              <article className="border border-black/10 bg-white p-6 shadow-sm">
+                <h3 className="text-[15px] font-medium text-black/90 tracking-wide uppercase mb-2">
+                  Visión
+                </h3>
+                <p className="text-[13px] text-black/70 leading-relaxed">
+                  Ser la firma inmobiliaria de referencia en Chile por su excelencia estética,
+                  profesionalismo y compromiso con la calidad de vida de quienes confían en nosotros.
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= QUÉ HACEMOS POR TI ================= */}
       <section className="py-20 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
-          <header className="max-w-3xl mb-12">
-            <h2 className="text-[#0A2E57] text-[18px] tracking-[.28em] uppercase font-medium">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="pl-2 sm:pl-4 max-w-4xl">
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
               ¿Qué hacemos por ti?
             </h2>
-            <p className="mt-2 text-black/70 text-[14px] leading-relaxed">
+            <p className="text-black/70 text-[14px] leading-relaxed mb-12">
               Un servicio integral, enfocado en la excelencia, que cubre cada etapa del ciclo inmobiliario.
             </p>
-          </header>
+          </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {SERVICIOS.map((s) => (
@@ -116,19 +120,24 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-      {/* ================== PROCESO — línea de tiempo ================== */}
+      {/* ================= PROCESO — LÍNEA DE TIEMPO ================= */}
       <section className="py-20 bg-white">
-        <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12 xl:px-16 text-center">
-          <h2 className="text-[#0A2E57] text-[18px] tracking-[.28em] uppercase font-medium mb-12">
-            Un proceso claro y transparente
-          </h2>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="pl-2 sm:pl-4 max-w-4xl mb-12">
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
+              Un proceso claro y transparente
+            </h2>
+            <p className="text-black/70 text-[14px] leading-relaxed">
+              Metodología probada para lograr un resultado superior.
+            </p>
+          </div>
 
-          <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center pl-2 sm:pl-4">
             <div className="absolute top-4 left-[5%] right-[5%] h-[1px] bg-[#0A2E57]/30 hidden sm:block"></div>
 
             {PROCESO.map((p, i) => (
               <div key={p.title} className="relative flex-1 text-left sm:text-center px-4">
-                <div className="flex items-center gap-3 sm:flex-col">
+                <div className="flex items-start sm:items-center gap-3 sm:flex-col">
                   <div className="w-[9px] h-[9px] bg-[#0A2E57] rounded-full sm:mb-2"></div>
                   <div>
                     <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase font-medium mb-1">
@@ -145,12 +154,11 @@ export default function ServiciosPage() {
           </div>
         </div>
       </section>
-    </div>
-  )
+    </main>
+  );
 }
 
 /* ================= DATOS ================= */
-
 const SERVICIOS = [
   {
     kicker: 'Compra-Venta',
@@ -205,7 +213,7 @@ const SERVICIOS = [
     icon: FileText,
     items: ['Inspección técnica', 'ACM + tendencias por zona'],
   },
-]
+];
 
 const PROCESO = [
   {
@@ -224,4 +232,4 @@ const PROCESO = [
     title: 'Negociación & cierre',
     text: 'Aseguramos el mejor acuerdo y acompañamos hasta la escritura.',
   },
-]
+];
