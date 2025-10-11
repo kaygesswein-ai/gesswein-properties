@@ -30,7 +30,7 @@ const TEAM = [
       'Arquitecta con más de 15 años de experiencia en proyectos residenciales de alto estándar. Especialista en normativas municipales y sustentabilidad.',
     exp: '15+ años',
     education:
-      'Arquitecta Potificia Universidad Católica de Chile',
+      'Arquitecto Potificia Universidad Católica de Chile',
     specialties: [
       'Arquitectura Residencial',
       'Normativa Municipal',
@@ -39,7 +39,7 @@ const TEAM = [
     ],
     email: 'carolina@gessweinproperties.cl',
     phone: '+56 9 9331 8039',
-    linkedin: '#',
+    linkedin: 'https://www.linkedin.com/in/carolina-san-martin-fern%C3%A1ndez-83207044/',
     featured: true,
     photo: LEADER_PHOTO,
   },
@@ -53,7 +53,7 @@ const TEAM = [
     specialties: ['Corretaje Inmobiliario', 'Valuación', 'Negociación', 'Marketing'],
     email: 'alberto@gesswein.tv',
     phone: '+56 9 9887 1751',
-    linkedin: '#',
+    linkedin: 'https://www.linkedin.com/in/alberto-gesswein-4a8246101/',
   },
   {
     name: 'Jan Gesswein',
@@ -77,7 +77,7 @@ const TEAM = [
     specialties: ['Marketing Digital', 'Fotografía', 'Redes Sociales', 'Analytics'],
     email: 'kaygesswein@gmail.com',
     phone: '+56 9 9334 5413',
-    linkedin: '#',
+    linkedin: 'https://www.linkedin.com/in/kay-gesswein-san-martin/',
   },
 ];
 
