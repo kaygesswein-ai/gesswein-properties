@@ -19,18 +19,18 @@ const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Gemini_Generated_Image_1c3kp91c3kp91c3k.png';
 
 // Foto de Carolina (pon aquí la misma del inicio si ya la tienes en /public)
-const LEADER_PHOTO = '/team/carolina.jpg';
+const LEADER_PHOTO = '/team/carolina-san-martin.png';
 
 // Equipo
 const TEAM = [
   {
     name: 'Carolina San Martín',
-    role: 'Arquitecta Líder & Fundadora',
+    role: 'Arquitecta Líder & Managing Partner',
     desc:
       'Arquitecta con más de 15 años de experiencia en proyectos residenciales de alto estándar. Especialista en normativas municipales y sustentabilidad.',
     exp: '15+ años',
     education:
-      'Arquitecta Universidad de Chile, Magíster en Desarrollo Urbano Sostenible',
+      'Arquitecta Potificia Universidad Católica de Chile',
     specialties: [
       'Arquitectura Residencial',
       'Normativa Municipal',
@@ -38,45 +38,45 @@ const TEAM = [
       'Gestión de Proyectos',
     ],
     email: 'carolina@gessweinproperties.cl',
-    phone: '+56 9 1234 5678',
+    phone: '+56 9 9331 8039',
     linkedin: '#',
     featured: true,
     photo: LEADER_PHOTO,
   },
   {
-    name: 'Roberto Gesswein',
-    role: 'Director Comercial',
+    name: 'Alberto Gesswein',
+    role: 'Periodista · Productor Ejecutivo · Experto en Marketing & Comunicaciones',
     desc:
       'Experto en corretaje inmobiliario con amplio conocimiento del mercado de Santiago Oriente. Especializado en propiedades premium.',
     exp: '12+ años',
-    education: 'Ingeniero Comercial UC, Diplomado en Real Estate',
+    education: 'Periodista Pontificia Universidad Católica de Chile',
     specialties: ['Corretaje Inmobiliario', 'Valuación', 'Negociación', 'Marketing'],
-    email: 'roberto@gessweinproperties.cl',
-    phone: '+56 9 8765 4321',
+    email: 'alberto@gesswein.tv',
+    phone: '+56 9 9887 1751',
     linkedin: '#',
   },
   {
-    name: 'María José González',
-    role: 'Consultora Legal',
+    name: 'Jan Gesswein',
+    role: 'Abogado',
     desc:
-      'Abogada especializada en derecho inmobiliario y regulaciones urbanas. Encargada de todos los aspectos legales de nuestras operaciones.',
+      'Abogado especializado en derecho inmobiliario y regulaciones urbanas. Encargad de todos los aspectos legales de nuestras operaciones.',
     exp: '10+ años',
-    education: 'Abogada Universidad de los Andes, LLM Real Estate Law',
-    specialties: ['Derecho Inmobiliario', 'Contratos', 'Due Diligence', 'Regulación Urbana'],
-    email: 'legal@gessweinproperties.cl',
-    phone: '+56 9 5555 1234',
+    education: 'Abogada Universidad del Desarrollo',
+    specialties: ['Derecho Inmobiliario', 'Contratos', 'Due Diligence Legal', 'Regulación Urbana'],
+    email: 'jangesswein@gmail.com',
+    phone: '+56 9 9909 9502',
     linkedin: '#',
   },
   {
-    name: 'Felipe Rodríguez',
-    role: 'Especialista en Marketing Digital',
+    name: 'Kay Gesswein',
+    role: 'Ingeniero Comercial · Magíster en Finanzas',
     desc:
       'Experto en marketing inmobiliario digital y fotografía de propiedades. Responsable de la presencia online y estrategias de marketing.',
     exp: '8+ años',
-    education: 'Publicista UDP, Especialización en Marketing Digital',
+    education: 'Ingeniero Coercial Universidad Adolfo Ibáñez, Magíster en Finanzas',
     specialties: ['Marketing Digital', 'Fotografía', 'Redes Sociales', 'Analytics'],
-    email: 'marketing@gessweinproperties.cl',
-    phone: '+56 9 6666 7890',
+    email: 'kaygesswein@gmail.com',
+    phone: '+56 9 9334 5413',
     linkedin: '#',
   },
 ];
