@@ -42,12 +42,10 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ⬇️ SOLO agregado: data-no-transition */}
       <header data-no-transition className={`${wrapper} ${bg}`}>
-        {/* pl-* alinea el logo con el “Ver Propiedades” del hero */}
         <div className="mx-auto max-w-7xl pr-4 sm:pr-6 lg:pr-8 pl-6 md:pl-10 lg:pl-12 xl:pl-16">
           <div className="h-16 md:h-18 flex items-center">
-            {/* LOGO (usa /public/logo-white.svg) */}
+            {/* LOGO */}
             <Link href="/" aria-label="Gesswein Properties" className="shrink-0">
               <Image
                 src="/logo-white.svg"
@@ -61,65 +59,34 @@ export default function Navbar() {
 
             {/* Menú + redes a la derecha */}
             <div className="ml-auto flex items-center gap-3 md:gap-4">
-              {/* MENÚ Desktop (con separadores) */}
+              {/* MENÚ Desktop */}
               <nav className="hidden md:flex items-center text-white">
-                <Link
-                  href="/"
-                  className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-                >
-                  Inicio
-                </Link>
+                <Link href="/" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Inicio</Link>
                 <span className="mx-2 text-white/60">|</span>
-                <Link
-                  href="/propiedades"
-                  className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-                >
-                  Propiedades
-                </Link>
+                <Link href="/propiedades" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Propiedades</Link>
                 <span className="mx-2 text-white/60">|</span>
-                <Link
-                  href="/servicios"
-                  className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-                >
-                  Servicios
-                </Link>
+                <Link href="/servicios" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Servicios</Link>
                 <span className="mx-2 text-white/60">|</span>
-                <Link
-                  href="/equipo"
-                  className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-                >
-                  Equipo
-                </Link>
+                <Link href="/equipo" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Equipo</Link>
                 <span className="mx-2 text-white/60">|</span>
-                <Link
-                  href="/contacto"
-                  className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
-                >
-                  Contacto
-                </Link>
+                <Link href="/contacto" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Contacto</Link>
               </nav>
 
               {/* Redes */}
               <div className="flex items-center gap-3 text-white">
-                {/* WhatsApp — mismo dibujo que el footer, manteniendo tamaño 18px */}
+                {/* WhatsApp — igual que footer, con un leve ajuste vertical */}
                 <Link
                   href="https://wa.me/56900000000"
                   aria-label="WhatsApp"
                   className={linkBase}
                 >
-                  <span className="relative inline-flex h-[18px] w-[18px] items-center justify-center">
-                    {/* Burbuja */}
+                  <span className="relative inline-flex h-[18px] w-[18px] items-center justify-center translate-y-[1px]">
                     <MessageCircle className="absolute h-full w-full stroke-[1.6] [vector-effect:non-scaling-stroke]" />
-                    {/* Teléfono dentro (mismo enfoque del footer, adaptado a 18px) */}
                     <Phone className="absolute h-[11px] w-[11px] md:h-[12px] md:w-[12px] stroke-[1.8] [vector-effect:non-scaling-stroke]" />
                   </span>
                 </Link>
 
-                <Link
-                  href="mailto:hola@gessweinproperties.cl"
-                  aria-label="Email"
-                  className={linkBase}
-                >
+                <Link href="mailto:hola@gessweinproperties.cl" aria-label="Email" className={linkBase}>
                   <Mail className="h-[18px] w-[18px]" />
                 </Link>
 
@@ -140,7 +107,7 @@ export default function Navbar() {
                 </Link>
               </div>
 
-              {/* Botón hamburguesa – SOLO móvil */}
+              {/* Botón hamburguesa – móvil */}
               <button
                 type="button"
                 aria-label="Abrir menú"
@@ -159,48 +126,18 @@ export default function Navbar() {
       {/* Panel móvil */}
       <div
         id="mobile-menu"
-        data-no-transition /* ⬅️ añadido también para excluir menú móvil */
+        data-no-transition
         className={`md:hidden fixed inset-x-0 top-16 z-40
                     bg-white/80 backdrop-blur-sm border-t border-black/10
                     transition-all duration-200
                     ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
         <nav className="flex flex-col py-3">
-          <Link
-            href="/"
-            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-            onClick={() => setOpen(false)}
-          >
-            Inicio
-          </Link>
-          <Link
-            href="/propiedades"
-            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-            onClick={() => setOpen(false)}
-          >
-            Propiedades
-          </Link>
-          <Link
-            href="/servicios"
-            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-            onClick={() => setOpen(false)}
-          >
-            Servicios
-          </Link>
-          <Link
-            href="/equipo"
-            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-            onClick={() => setOpen(false)}
-          >
-            Equipo
-          </Link>
-          <Link
-            href="/contacto"
-            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80"
-            onClick={() => setOpen(false)}
-          >
-            Contacto
-          </Link>
+          <Link href="/" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Inicio</Link>
+          <Link href="/propiedades" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Propiedades</Link>
+          <Link href="/servicios" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Servicios</Link>
+          <Link href="/equipo" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Equipo</Link>
+          <Link href="/contacto" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Contacto</Link>
         </nav>
       </div>
     </>
