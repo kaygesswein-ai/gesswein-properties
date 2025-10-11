@@ -33,7 +33,7 @@ export default function ServiciosPage() {
                   SERVICIOS
                 </h1>
                 <p className="text-white/85 mt-2">
-                  Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
+                  Combinamos datos, diseño y marketing efectivo para vender o arrendar tu propiedad
                   con la mejor experiencia y resultados.
                 </p>
               </div>
@@ -50,10 +50,9 @@ export default function ServiciosPage() {
               ¿Por qué Gesswein Properties?
             </h2>
             <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl">
-              En Gesswein Properties nos definimos por un enfoque boutique, que combina excelencia
-              técnica, comunicación cercana y una estética moderna aplicada a cada proyecto
-              inmobiliario. Nuestro compromiso es ofrecer un servicio profesional, transparente
-              y con alto estándar de ejecución.
+             En Gesswein Properties nos definimos por un enfoque boutique que combina precisión técnica, diseño contemporáneo y gestión estratégica.
+Nuestro servicio une análisis financiero, arquitectura, marketing y asesoría legal para ofrecer una experiencia transparente, medible y de alto estándar.
+No solo gestionamos propiedades: guiamos decisiones patrimoniales con visión de largo plazo.
             </p>
 
             <div className="mt-12 grid md:grid-cols-2 gap-6">
@@ -62,9 +61,7 @@ export default function ServiciosPage() {
                   Misión
                 </h3>
                 <p className="text-[13px] text-black/70 leading-relaxed">
-                  Brindar asesoría inmobiliaria integral, basada en confianza, precisión técnica
-                  y diseño, conectando a nuestros clientes con oportunidades únicas de inversión
-                  y hogar.
+                Acompañar a personas y familias en Chile en el proceso de planificar, adquirir y gestionar su patrimonio inmobiliario, entregando una asesoría integral, independiente y basada en datos, que transforme la experiencia de invertir o habitar en una propiedad en un proceso seguro, claro y estratégico.
                 </p>
               </article>
 
@@ -73,8 +70,7 @@ export default function ServiciosPage() {
                   Visión
                 </h3>
                 <p className="text-[13px] text-black/70 leading-relaxed">
-                  Ser la firma inmobiliaria de referencia en Chile por su excelencia estética,
-                  profesionalismo y compromiso con la calidad de vida de quienes confían en nosotros.
+                  Ser la boutique líder en Chile en private real-estate advisory, reconocida por alinear incentivos con el cliente, elevar el estándar de transparencia del mercado y transformar la experiencia inmobiliaria en un proceso claro, medible y placentero.
                 </p>
               </article>
             </div>
@@ -90,7 +86,7 @@ export default function ServiciosPage() {
               ¿Qué servicios ofrecemos?
             </h2>
             <p className="text-black/70 text-[14px] leading-relaxed mb-12">
-              Un servicio integral, enfocado en la excelencia, que cubre cada etapa del ciclo inmobiliario.
+             Un servicio integral enfocado en la excelencia, que cubre cada etapa del ciclo inmobiliario —desde la estrategia patrimonial inicial hasta la gestión y valorización del activo.
             </p>
           </div>
 
@@ -130,7 +126,8 @@ export default function ServiciosPage() {
               Un proceso claro y transparente
             </h2>
             <p className="text-black/70 text-[14px] leading-relaxed">
-              Metodología probada para lograr un resultado superior.
+              Metodología probada para entregar resultados superiores.
+Cada etapa está diseñada para ofrecer una experiencia ordenada, profesional y predecible.
             </p>
           </div>
 
