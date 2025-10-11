@@ -101,14 +101,17 @@ export default function Navbar() {
 
               {/* Redes */}
               <div className="flex items-center gap-3 text-white">
+                {/* WhatsApp — mismo dibujo que el footer, manteniendo tamaño 18px */}
                 <Link
                   href="https://wa.me/56900000000"
                   aria-label="WhatsApp"
                   className={linkBase}
                 >
                   <span className="relative inline-flex h-[18px] w-[18px] items-center justify-center">
-                    <MessageCircle className="absolute inset-0 h-full w-full stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke]" />
-                    <Phone className="absolute h-[11px] w-[11px] stroke-current stroke-[1.8] [vector-effect:non-scaling-stroke] rotate-[24deg] translate-x-[0.1px] -translate-y-[0.2px]" />
+                    {/* Burbuja */}
+                    <MessageCircle className="absolute h-full w-full stroke-[1.6] [vector-effect:non-scaling-stroke]" />
+                    {/* Teléfono dentro (mismo enfoque del footer, adaptado a 18px) */}
+                    <Phone className="absolute h-[11px] w-[11px] md:h-[12px] md:w-[12px] stroke-[1.8] [vector-effect:non-scaling-stroke]" />
                   </span>
                 </Link>
 
@@ -203,4 +206,3 @@ export default function Navbar() {
     </>
   )
 }
-
