@@ -168,7 +168,7 @@ function ServiciosEtapasSeccion() {
           </div>
         </header>
 
-        {/* ======= BLOQUE I — encabezado simplificado ======= */}
+        {/* ======= BLOQUE I ======= */}
         <div className="mt-12 pl-2 sm:pl-4">
           <div className="text-[#0A2E57] text-[13px] tracking-[.25em] uppercase">
             Gestión del Activo Inmobiliario
@@ -187,7 +187,7 @@ function ServiciosEtapasSeccion() {
           className="mt-8"
         />
 
-        {/* ======= BLOQUE II — encabezado simplificado ======= */}
+        {/* ======= BLOQUE II ======= */}
         <div className="mt-16 pl-2 sm:pl-4">
           <div className="text-[#0A2E57] text-[13px] tracking-[.25em] uppercase">
             Gestión Patrimonial & Familiar
@@ -319,10 +319,12 @@ function CardsGrid({
                 ].join(' ')}
               >
                 <div className="p-5">
+                  {/* ÚNICA LÍNEA DE ENCABEZADO (formato kicker) */}
                   <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                    {c.kicker}
+                    {c.title}
                   </div>
-                  <h4 className="mt-1 text-[16px] text-black/90">{c.title}</h4>
+
+                  {/* Resumen */}
                   <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{c.summary}</p>
 
                   <div className="mt-4">
@@ -372,15 +374,15 @@ function ServiceModal({
         'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
       );
       if (!focusables || focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
     };
     document.addEventListener('keydown', handler);
     return () => {
@@ -443,7 +445,7 @@ function ServiceModal({
 
 /* ====================== TIPOS Y DATOS ====================== */
 type ServiceCard = {
-  kicker: string;
+  kicker: string; // ya no se muestra en la card, pero lo mantenemos por si se usa luego
   title: string;
   summary: string;
   details: string[];
