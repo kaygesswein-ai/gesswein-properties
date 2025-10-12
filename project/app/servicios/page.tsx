@@ -9,6 +9,7 @@ import {
   Ruler,
   ClipboardList,
   TrendingUp,
+  X,
 } from 'lucide-react';
 
 /** =========================================================
@@ -52,7 +53,7 @@ export default function ServiciosPage() {
               Un proceso claro y transparente
             </h2>
             <p className="text-black/70 text-[14px] leading-relaxed">
-              Estructuramos nuestro proceso en etapas cuidadosamente diseñadas, aplicables de manera transversal a cada servicio, garantizando una experiencia coherente, transparente y de excelencia en todos nuestros proyectos.
+              Metodología probada para lograr un resultado superior.
             </p>
           </div>
 
@@ -95,311 +96,466 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-      {/* ================= ¿QUÉ SERVICIOS OFRECEMOS? — ZIGZAG VERTICAL ================= */}
+      {/* ================= NUEVA SECCIÓN: SERVICIOS GESSWEIN PROPERTIES ================= */}
       <ServiciosEtapasSeccion />
     </main>
   );
 }
 
-/* ================= COMPONENTE: SECCIÓN DE ETAPAS (ZIGZAG RE-DESIGN) ================= */
+/* ============================================================================
+ *  SECCIÓN “Servicios Gesswein Properties”
+ *  - Dos bloques con cards interactivas y modal de ficha técnica
+ *  - Estilo sobrio, corporativo, sin bordes redondeados (regla del proyecto)
+ * ========================================================================== */
 function ServiciosEtapasSeccion() {
-  const [open, setOpen] = useState<number | null>(null);
+  // Estado del modal
+  const [modal, setModal] = useState<null | { block: 'ACTIVO' | 'PATRIMONIAL'; index: number }>(null);
+
+  // Accesibilidad: bloquear scroll y manejar ESC
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setModal(null);
+    };
+    if (modal) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', onEsc);
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onEsc);
+    };
+  }, [modal]);
 
   return (
     <section className="py-20 bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* Título + Intro + aspiracional */}
-        <div className="pl-2 sm:pl-4 max-w-3xl mx-auto text-center">
-          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium mb-4">
-            ¿Qué servicios ofrecemos?
+        {/* Header sección */}
+        <header className="pl-2 sm:pl-4 max-w-4xl">
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
+            Servicios Gesswein Properties
           </h2>
-
-          <p className="text-black/70 text-[15px] leading-relaxed">
-            Dominamos cada etapa del proceso inmobiliario — desde la estrategia patrimonial hasta la gestión
-            y valorización del activo. Elige solo las etapas que necesitas o recorre el flujo completo.
+          <p className="text-black/70 text-[14px] leading-relaxed mt-3">
+            Combinamos datos, estrategia y diseño para acompañarte en cada etapa del ciclo inmobiliario.
+            Nuestros servicios se agrupan en dos áreas complementarias: Gestión del Activo Inmobiliario y
+            Gestión Patrimonial & Familiar.
           </p>
+        </header>
 
-          {/* Frase aspiracional */}
-          <p className="mt-3 text-black/80 text-[13px] italic">
-            Diseñamos procesos tan claros como los resultados que entregamos.
-          </p>
-
-          {/* Nota editorial */}
-          <div className="mt-6 border border-black/10 bg-[#F9FAFB] text-black/70 text-[13px] leading-relaxed p-4 italic">
-            Estas etapas reflejan el proceso completo de compra, venta o arriendo. No es necesario realizarlas todas:
-            cada cliente define su propio recorrido y nosotros nos adaptamos, manteniendo el mismo estándar boutique
-            en cada paso.
+        {/* ======= BLOQUE I — Gestión del Activo Inmobiliario ======= */}
+        <div className="mt-12 pl-2 sm:pl-4">
+          <div className="text-[13px] uppercase tracking-[.25em] text-[#0A2E57]">
+            BLOQUE I
           </div>
+          <h3 className="mt-1 text-[18px] text-black/90">
+            Gestión del Activo Inmobiliario
+          </h3>
+          <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
+            Cuidamos cada detalle del activo físico: su valor, su potencial y su expresión arquitectónica.
+          </p>
         </div>
 
-        {/* Eje vertical central */}
-        <div className="relative mt-14">
-          <span
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-px bg-[#D1D5DB]"
-          />
+        <CardsGrid
+          cards={ACTIVO_CARDS}
+          onOpen={(i) => setModal({ block: 'ACTIVO', index: i })}
+          cols={{ base: 1, md: 2, xl: 3 }}
+          className="mt-8"
+        />
 
-          <ol className="space-y-16 md:space-y-24">
-            {ETAPAS.map((etapa, i) => (
-              <ZigzagItem
-                key={etapa.title}
-                etapa={etapa}
-                index={i}
-                expanded={open === i}
-                onToggle={() => setOpen(open === i ? null : i)}
-              />
-            ))}
-          </ol>
+        {/* ======= BLOQUE II — Gestión Patrimonial & Familiar ======= */}
+        <div className="mt-16 pl-2 sm:pl-4">
+          <div className="text-[13px] uppercase tracking-[.25em] text-[#0A2E57]">
+            BLOQUE II
+          </div>
+          <h3 className="mt-1 text-[18px] text-black/90">
+            Gestión Patrimonial & Familiar
+          </h3>
+          <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
+            Acompañamos a las personas y familias detrás de cada inversión, con visión financiera, legal y humana.
+          </p>
         </div>
+
+        <CardsGrid
+          cards={PATRIMONIAL_CARDS}
+          onOpen={(i) => setModal({ block: 'PATRIMONIAL', index: i })}
+          cols={{ base: 1, md: 2, xl: 3 }}
+          className="mt-8"
+        />
       </div>
+
+      {/* Modal */}
+      {modal && (
+        <ServiceModal
+          title={
+            modal.block === 'ACTIVO'
+              ? ACTIVO_CARDS[modal.index].title
+              : PATRIMONIAL_CARDS[modal.index].title
+          }
+          summary={
+            modal.block === 'ACTIVO'
+              ? ACTIVO_CARDS[modal.index].summary
+              : PATRIMONIAL_CARDS[modal.index].summary
+          }
+          items={
+            modal.block === 'ACTIVO'
+              ? ACTIVO_CARDS[modal.index].details
+              : PATRIMONIAL_CARDS[modal.index].details
+          }
+          onClose={() => setModal(null)}
+        />
+      )}
     </section>
   );
 }
 
-/* ================= ITEM ZIGZAG ================= */
-function ZigzagItem({
-  etapa,
-  index,
-  expanded,
-  onToggle,
+/* ====== GRID DE CARDS ====== */
+function CardsGrid({
+  cards,
+  onOpen,
+  cols,
+  className = '',
 }: {
-  etapa: Etapa;
-  index: number;
-  expanded: boolean;
-  onToggle: () => void;
+  cards: ServiceCard[];
+  onOpen: (index: number) => void;
+  cols: { base: number; md: number; xl: number };
+  className?: string;
 }) {
-  const alignRight = index % 2 === 0; // alterna izquierda/derecha
-  const Icon = etapa.icon;
-
-  // Reveal on scroll (sin librerías)
-  const ref = useRef<HTMLLIElement>(null);
-  const [inView, setInView] = useState(false);
+  // Reveal on scroll (stagger)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState<boolean[]>(Array(cards.length).fill(false));
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    const nodes = containerRef.current?.querySelectorAll('[data-card]') ?? [];
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
-          if (e.isIntersecting) setInView(true);
+          if (e.isIntersecting) {
+            const idx = Number((e.target as HTMLElement).dataset.index);
+            setVisible((v) => {
+              const next = [...v];
+              next[idx] = true;
+              return next;
+            });
+          }
         });
       },
-      { rootMargin: '0px 0px -10% 0px', threshold: 0.15 }
+      { threshold: 0.18, rootMargin: '0px 0px -10% 0px' }
     );
-    io.observe(el);
+    nodes.forEach((n) => io.observe(n));
     return () => io.disconnect();
+  }, [cards.length]);
+
+  const gridClass = [
+    'grid gap-6 xl:gap-8',
+    `grid-cols-1`,
+    `md:grid-cols-${cols.md}`,
+    `xl:grid-cols-${cols.xl}`,
+  ].join(' ');
+
+  return (
+    <div ref={containerRef} className={`${gridClass} ${className}`}>
+      {cards.map((c, i) => (
+        <article
+          key={c.title}
+          data-card
+          data-index={i}
+          className={[
+            'relative overflow-hidden border border-slate-200 bg-white shadow-sm',
+            'transition transform',
+            'hover:-translate-y-[4px] hover:shadow-md',
+            visible[i] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
+          ].join(' ')}
+          style={{ transitionDuration: '600ms', transitionTimingFunction: 'ease-out' }}
+        >
+          {/* Imagen */}
+          <div className="relative aspect-[4/3]">
+            <img
+              src={c.img}
+              alt={c.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-300" />
+          </div>
+
+          {/* Contenido */}
+          <div className="p-6">
+            <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+              {c.kicker}
+            </div>
+            <h4 className="mt-1 text-[16px] text-black/90">{c.title}</h4>
+            <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{c.summary}</p>
+
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => onOpen(i)}
+                className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+              >
+                Ver más
+              </button>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+/* ====== MODAL ====== */
+function ServiceModal({
+  title,
+  summary,
+  items,
+  onClose,
+}: {
+  title: string;
+  summary: string;
+  items: string[];
+  onClose: () => void;
+}) {
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  // Focus trap simple
+  const firstBtnRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    firstBtnRef.current?.focus();
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusables = backdropRef.current?.querySelectorAll<HTMLElement>(
+        'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusables || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => {
+      document.removeEventListener('keydown', handler);
+      prev?.focus();
+    };
   }, []);
 
   return (
-    <li
-      ref={ref}
-      className={[
-        'relative grid md:grid-cols-2 items-stretch',
-        alignRight ? '' : 'md:grid-flow-col-dense',
-      ].join(' ')}
+    <div
+      ref={backdropRef}
+      className="fixed inset-0 z-[80] bg-black/50"
+      onClick={(e) => {
+        if (e.target === backdropRef.current) onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
     >
-      {/* Nodo en eje */}
-      <span
-        aria-hidden
-        className="absolute left-1/2 -translate-x-1/2 md:top-8 h-[10px] w-[10px] bg-[#0A2E57]"
-      />
-
-      {/* Bloque texto */}
       <div
-        className={[
-          'order-2 md:order-none',
-          alignRight ? 'md:pr-10' : 'md:pl-10',
-          'transition-all duration-700 ease-out',
-          inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[14px]',
-        ].join(' ')}
+        className="absolute inset-0 flex items-center justify-center p-4"
+        style={{ contain: 'content' }}
       >
-        <article
-          className="border border-black/10 bg-white p-6 shadow-sm transition duration-300 hover:shadow-md hover:-translate-y-[3px]"
+        <div
+          className={[
+            'w-full max-w-[720px] bg-white border border-black/10 shadow-xl',
+            'opacity-100 scale-100',
+            'transition duration-200',
+          ].join(' ')}
         >
-          <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-            Etapa {index + 1}
+          <div className="flex items-start justify-between p-6 border-b border-black/10">
+            <div>
+              <h4 className="text-[16px] text-black/90">{title}</h4>
+              <p className="mt-1 text-[13px] text-black/70">{summary}</p>
+            </div>
+            <button
+              ref={firstBtnRef}
+              onClick={onClose}
+              aria-label="Cerrar modal"
+              className="p-2 border border-black/20 hover:bg-slate-50 transition"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <h3 className="mt-1 text-[18px] text-black/90 tracking-wide">
-            {etapa.title}
-          </h3>
-          <p className="mt-2 text-[14px] text-black/70 leading-relaxed">
-            {etapa.summary}
-          </p>
 
-          <button
-            type="button"
-            onClick={onToggle}
-            className="mt-4 text-[12px] uppercase tracking-[.25em] text-[#0A2E57] underline underline-offset-4"
-            aria-expanded={expanded}
-            aria-controls={`etapa-${index}-content`}
-          >
-            {expanded ? 'Cerrar' : 'Ver detalle'}
-          </button>
-
-          <div
-            id={`etapa-${index}-content`}
-            className={[
-              'overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
-              expanded ? 'max-h-[560px] opacity-100 mt-3' : 'max-h-0 opacity-0',
-            ].join(' ')}
-          >
+          <div className="p-6">
             <ul className="space-y-1.5 text-[13px] text-black/80 leading-relaxed">
-              {etapa.items.map((it) => (
+              {items.map((it) => (
                 <li key={it} className="pl-3 relative">
                   <span className="absolute left-0 top-[9px] h-[5px] w-[5px] bg-[#0A2E57]" />
                   {it}
                 </li>
               ))}
             </ul>
-          </div>
-        </article>
-      </div>
 
-      {/* Bloque icono + conector al eje */}
-      <div
-        className={[
-          'relative flex items-start justify-center md:items-start',
-          alignRight ? 'md:justify-start' : 'md:justify-end',
-          'py-8 md:py-0',
-          'transition-all duration-700 ease-out',
-          inView ? 'opacity-100' : alignRight ? 'opacity-0 -translate-x-[12px]' : 'opacity-0 translate-x-[12px]',
-        ].join(' ')}
-      >
-        {/* línea hacia el eje (solo desktop) */}
-        <span
-          aria-hidden
-          className={[
-            'hidden md:block absolute top-8 h-px w-10 bg-[#D1D5DB]',
-            alignRight ? 'left-[calc(50%+1px)]' : 'right-[calc(50%+1px)]',
-          ].join(' ')}
-        />
-        <span className="inline-flex h-14 w-14 items-center justify-center">
-          <Icon className="h-12 w-12 text-[#0A2E57] transition-transform duration-300 group-hover:scale-105" />
-        </span>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </li>
+    </div>
   );
 }
 
-/* ================= DATOS NUEVA SECCIÓN ================= */
-type Etapa = {
+/* ====================== TIPOS Y DATOS ====================== */
+type ServiceCard = {
+  kicker: string;
   title: string;
   summary: string;
-  icon: React.ComponentType<{ className?: string }>;
-  items: string[];
+  details: string[];
+  img: string;
 };
 
-const ETAPAS: Etapa[] = [
+/* BLOQUE I — Gestión del Activo Inmobiliario (5 cards) */
+const ACTIVO_CARDS: ServiceCard[] = [
   {
-    title: 'Estrategia patrimonial & planificación financiera',
+    kicker: 'Compra-Venta',
+    title: 'Compra-venta de propiedades',
     summary:
-      'Definimos el punto de partida, la capacidad de deuda y la hoja de ruta de inversión o vivienda.',
-    icon: LineChart,
-    items: [
-      'Diagnóstico patrimonial y flujos',
-      'Simulaciones hipotecarias y capacidad de crédito',
-      'Estrategia de inversión (vivienda, renta o desarrollo)',
-      'Lineamientos tributarios y estructura (persona natural, SpA, comunidad)',
-      'Plan de acción y cronograma',
+      'Acompañamos todo el proceso de compra o venta, desde la búsqueda hasta el cierre, con estrategia y control absoluto.',
+    details: [
+      'Búsqueda on/off market y análisis comparativo de mercado (ACM)',
+      'Tasación, due diligence técnica y legal',
+      'Negociación de oferta y condiciones comerciales',
+      'Firma notarial e inscripción del título de propiedad en el Conservador de Bienes Raíces',
+      'Control documental y seguimiento post-cierre',
+      'Estrategia de venta con storytelling visual y gestión comercial premium',
     ],
+    img: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=1600&auto=format&fit=crop',
   },
   {
-    title: 'Búsqueda, curaduría y evaluación técnica',
+    kicker: 'Arriendos',
+    title: 'Arriendos y gestión integral',
     summary:
-      'Encontramos y comparamos oportunidades alineadas con tus objetivos.',
-    icon: Building2,
-    items: [
-      'Sourcing on/off-market y visitas privadas',
-      'Análisis comparativo de mercado (ACM)',
-      'Tasación y proyección de valorización',
-      'Due diligence técnico, legal y de copropiedad',
-      'Informe integral por propiedad (riesgos y plusvalía)',
+      'Buscamos o administramos tu propiedad en arriendo, con un enfoque personalizado y financiero.',
+    details: [
+      'Búsqueda de propiedades de arriendo según tus necesidades',
+      'Asesoría contractual y negociación de condiciones',
+      'Scoring y selección de arrendatarios',
+      'Cobranza, reajustes, mantenciones y seguros',
+      'Administración integral con reportes mensuales',
+      'Estrategias de rentabilidad y control de flujos',
     ],
+    img: 'https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1600&auto=format&fit=crop',
   },
   {
-    title: 'Estructuración legal y financiera',
+    kicker: 'Valoración',
+    title: 'Tasación y valoración inmobiliaria',
     summary:
-      'Diseñamos y coordinamos la operación completa hasta el cierre.',
-    icon: Gavel,
-    items: [
-      'Negociación de oferta y condiciones',
-      'Promesa y escritura con revisión jurídica',
-      'Crédito o leasing (banco/mutuaria, CAE y seguros)',
-      'Coordinación con notaría y Conservador de Bienes Raíces',
-      'Control documental y calendario de hitos',
+      'Determinamos el valor real de tus activos con rigor profesional y enfoque integral de valorización.',
+    details: [
+      'Tasación de mercado, reposición y flujo descontado',
+      'Estudio normativo, entorno y plusvalía',
+      'Benchmark comparativo de zona y tendencias',
+      'Modelos financieros de valorización y sensibilidad',
+      'Informes técnicos con respaldo profesional y certificación',
     ],
+    img: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1600&auto=format&fit=crop',
   },
   {
-    title: 'Diseño, arquitectura y puesta en valor',
+    kicker: 'Arquitectura',
+    title: 'Arquitectura y remodelación',
     summary:
-      'Optimizamos la propiedad para maximizar su uso y valor.',
-    icon: Ruler,
-    items: [
-      'Proyecto arquitectónico y/o remodelación',
-      'Interiorismo y selección de materiales',
-      'Permisos y regularizaciones ante DOM',
-      'Project management de obra (calidad, plazos, costos)',
-      'Home staging, fotografía, video y tour 360°',
+      'Desarrollamos proyectos arquitectónicos y remodelaciones integrales con control de calidad y diseño coherente.',
+    details: [
+      'Anteproyecto y diseño arquitectónico',
+      'Regularización y permisos municipales (DOM)',
+      'Remodelaciones parciales o integrales',
+      'Licitación y supervisión de contratistas',
+      'Gestión de plazos, costos y calidad',
+      'Recepción de obra y entrega llave en mano',
     ],
+    img: 'https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=1600&auto=format&fit=crop',
   },
   {
-    title: 'Comercialización y marketing',
+    kicker: 'Interiores',
+    title: 'Diseño de interiores',
     summary:
-      'Estrategia comercial premium para vender o arrendar con impacto.',
-    icon: Megaphone,
-    items: [
-      'Diagnóstico de precio y posicionamiento',
-      'Storytelling visual y fichas optimizadas',
-      'Campañas multicanal (pauta + CRM + seguimiento)',
-      'Gestión de leads, visitas y reportes de desempeño',
-      'Negociación y cierre',
+      'Creamos espacios que combinan estética, funcionalidad y valorización patrimonial.',
+    details: [
+      'Diseño interior residencial o corporativo',
+      'Selección de materiales, mobiliario y luminarias',
+      'Propuesta estética alineada al perfil del cliente',
+      'Supervisión de implementación y detalles finales',
+      'Home staging para potenciar venta o arriendo',
     ],
+    img: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop',
+  },
+];
+
+/* BLOQUE II — Gestión Patrimonial & Familiar (3 cards) */
+const PATRIMONIAL_CARDS: ServiceCard[] = [
+  {
+    kicker: 'Asesoría integral',
+    title: 'Asesoría legal, tributaria y financiera',
+    summary:
+      'Estrategia personalizada que integra lo legal, tributario y financiero para optimizar tus decisiones inmobiliarias.',
+    details: [
+      'Diagnóstico patrimonial y análisis crediticio',
+      'Definición de la estructura jurídica ideal (natural, SpA, sociedad familiar)',
+      'Optimización tributaria y planificación sucesoria',
+      'Búsqueda y negociación de financiamiento con bancos o mutuarias',
+      'Estructuración de operaciones en UF o USD según perfil de riesgo',
+      'Estrategia de inversión y gestión de activos',
+    ],
+    img: 'https://images.unsplash.com/photo-1554224155-3a589877462f?q=80&w=1600&auto=format&fit=crop',
   },
   {
-    title: 'Colocación y administración',
+    kicker: 'Gestión continua',
+    title: 'Gestión activa y asesoría continua',
     summary:
-      'Operamos tu activo con control y previsibilidad.',
-    icon: ClipboardList,
-    items: [
-      'Filtrado y scoring de arrendatarios',
-      'Contratos, entrega e inventario',
-      'Cobranza y reajustes automáticos',
-      'Mantenciones, seguros y siniestros',
-      'Reportes mensuales y control financiero',
+      'Supervisamos tu portafolio inmobiliario de forma permanente, asegurando control, eficiencia y crecimiento sostenido.',
+    details: [
+      'Revisión de tasas y refinanciamiento hipotecario',
+      'Evaluación de ROI, flujos y rentas netas',
+      'Estrategias de reinversión o desinversión',
+      'Consolidación de deuda y proyección de valorización',
+      'Reportes anuales de performance inmobiliario',
+      'Planificación patrimonial y sucesoria familiar',
     ],
+    img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop',
   },
   {
-    title: 'Postcompra, optimización y valorización',
+    kicker: 'Relocation',
+    title: 'Relocation & asesoría internacional',
     summary:
-      'Acompañamiento continuo para mejorar rentabilidad y tomar decisiones informadas.',
-    icon: TrendingUp,
-    items: [
-      'Refinanciamiento y consolidación de deuda',
-      'Reajuste de renta y mejora de cash flow',
-      'Planificación sucesoria y estructuración familiar',
-      'Indicadores anuales de rentabilidad y valorización',
-      'Asesoría para reinversión o venta estratégica',
+      'Acompañamos a familias, ejecutivos o embajadas en su instalación en Chile, gestionando un proceso llave en mano.',
+    details: [
+      'Búsqueda y adecuación de vivienda (compra o arriendo)',
+      'Remodelación, diseño y entrega lista para habitar',
+      'Coordinación con colegios, bancos y servicios',
+      'Asistencia legal y logística de instalación',
+      'Seguimiento post-arribo y gestión personalizada',
     ],
+    img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop',
   },
 ];
 
 /* ================= PROCESO (SE MANTIENE, SOLO SE MOVIÓ ARRIBA) ================= */
 const PROCESO = [
   {
-    title: 'Alcance del Trabajo & Propuesta de servicios',
-    text: 'Iniciamos con una reunión personalizada y una evaluación detallada de los requerimientos, para luego presentar una propuesta de valor a medida, diseñada para reflejar las verdaderas necesidades y aspiraciones del cliente.',
+    title: 'Diagnóstico & precio',
+    text: 'Reunión, inspección y propuesta de valor basada en datos.',
   },
   {
-    title: 'Puesta en Marcha',
-    text: 'Transformamos los objetivos del cliente en un plan de acción concreto, definiendo cada etapa con precisión y poniendo en movimiento las gestiones necesarias para materializar su visión.',
+    title: 'Preparación',
+    text: 'Ajustes rápidos y producción visual profesional.',
   },
   {
-    title: 'Ejecución & Seguimiento',
-    text: 'Llevamos a cabo el plan definido, supervisando los avances y asegurando una comunicación constante con el cliente para garantizar alineación y resultados coherentes con sus expectativas.',
+    title: 'Lanzamiento',
+    text: 'Publicación, segmentación y respuesta ágil a interesados.',
   },
   {
-    title: 'Cierre & Satisfacción',
-    text: 'Consolidamos los resultados, verificamos el cumplimiento de cada detalle y nos aseguramos de que la experiencia final refleje plenamente la calidad y excelencia que distinguen a nuestra firma.',
+    title: 'Negociación & cierre',
+    text: 'Aseguramos el mejor acuerdo y acompañamos hasta la escritura.',
   },
 ] as const;
