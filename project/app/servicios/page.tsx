@@ -1,44 +1,54 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
+  Megaphone,
   LineChart,
   Building2,
   Gavel,
   Ruler,
-  Megaphone,
   ClipboardList,
   TrendingUp,
 } from 'lucide-react';
 
 /** =========================================================
- *  Página de Servicios — versión zigzag vertical (sin fotos)
- *  Mantiene identidad: títulos en mayúsculas + tracking,
- *  sin negritas en párrafo, bordes rectos, azul #0A2E57.
+ *  Página de Servicios — coherente con Inicio y Propiedades
  *  ========================================================= */
 export default function ServiciosPage() {
   return (
     <main className="bg-white">
-      {/* ================= ENCABEZADO SIMPLE (sin foto de fondo) ================= */}
-      <section className="relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="pl-2 sm:pl-4 max-w-3xl">
-            <h1 className="text-[#0A2E57] text-3xl md:text-4xl uppercase tracking-[0.25em]">
-              SERVICIOS
-            </h1>
-            <p className="text-black/80 mt-3 text-[14px] leading-relaxed">
-              Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
-              con la mejor experiencia y resultados.
-            </p>
+
+      {/* ================= HERO (igual a Propiedades) ================= */}
+      <section className="relative min-h-[100svh]">
+        <img
+          src="https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_5437%20(1).jpeg"
+          alt="Portada Servicios"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: '50% 35%' }}
+        />
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute bottom-6 left-0 right-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="pl-2 sm:pl-4">
+              <div className="max-w-3xl">
+                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                  SERVICIOS
+                </h1>
+                <p className="text-white/85 mt-2">
+                  Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
+                  con la mejor experiencia y resultados.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ================= POR QUÉ GESSWEIN PROPERTIES ================= */}
-      <section className="py-14 md:py-20 bg-white">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="pl-2 sm:pl-4 max-w-4xl">
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase mb-6">
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
               ¿Por qué Gesswein Properties?
             </h2>
             <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl">
@@ -48,7 +58,7 @@ export default function ServiciosPage() {
               y con alto estándar de ejecución.
             </p>
 
-            <div className="mt-10 grid md:grid-cols-2 gap-6">
+            <div className="mt-12 grid md:grid-cols-2 gap-6">
               <article className="border border-black/10 bg-white p-6 shadow-sm">
                 <h3 className="text-[15px] text-black/90 tracking-wide uppercase mb-2">
                   Misión
@@ -74,19 +84,56 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-      {/* ================= ¿QUÉ SERVICIOS OFRECEMOS? — ZIGZAG ================= */}
-      <ServiciosZigzagSeccion />
+      {/* ================= QUÉ SERVICIOS OFRECEMOS (ZIGZAG VERTICAL) ================= */}
+      <ServiciosEtapasSeccion />
 
-      {/* ================= PROCESO — (opcional) breve refuerzo ================= */}
-      <section className="py-16 md:py-20 bg-white">
+      {/* ================= PROCESO — LÍNEA DE TIEMPO (SE DEJA IGUAL) ================= */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="pl-2 sm:pl-4 max-w-4xl">
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase mb-6">
+          <div className="pl-2 sm:pl-4 max-w-4xl mb-12">
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
               Un proceso claro y transparente
             </h2>
-            <p className="text-black/70 text-[14px] leading-relaxed max-w-3xl">
-              Metodología probada para lograr un resultado superior, con seguimiento y reportes en cada hito.
+            <p className="text-black/70 text-[14px] leading-relaxed">
+              Metodología probada para lograr un resultado superior.
             </p>
+          </div>
+
+          {/* DESKTOP / TABLET — NO TOCAR */}
+          <div className="hidden sm:block relative">
+            <div className="absolute left-[5%] right-[5%] top-8 h-px bg-[#0A2E57]/30" />
+            <div className="grid grid-cols-4 gap-8 text-center">
+              {PROCESO.map((p, i) => (
+                <div key={p.title} className="pt-10">
+                  <span className="mx-auto -mt-7 mb-5 block h-2 w-2 bg-[#0A2E57] ring-2 ring-[#0A2E57]/25" />
+                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                    Paso {i + 1}
+                  </div>
+                  <h3 className="mt-1 text-[14px] text-black/90">{p.title}</h3>
+                  <p className="mt-2 text-[13px] text-black/70 leading-relaxed max-w-[260px] mx-auto">
+                    {p.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MÓVIL — sin puntos, misma línea vertical y tipografía */}
+          <div className="sm:hidden relative pl-8">
+            <div className="absolute left-3 top-0 bottom-0 w-px bg-[#0A2E57]/25" />
+            <ol className="flex flex-col gap-8">
+              {PROCESO.map((p, i) => (
+                <li key={p.title} className="relative">
+                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase ml-1">
+                    Paso {i + 1}
+                  </div>
+                  <h3 className="mt-1 text-[14px] text-black/90">{p.title}</h3>
+                  <p className="mt-1 text-[13px] text-black/70 leading-relaxed">
+                    {p.text}
+                  </p>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </section>
@@ -94,33 +141,37 @@ export default function ServiciosPage() {
   );
 }
 
-/* ================= COMPONENTE PRINCIPAL: SECCIÓN ZIGZAG ================= */
-function ServiciosZigzagSeccion() {
+/* ================= COMPONENTE: SECCIÓN DE ETAPAS (ZIGZAG RE-DESIGN) ================= */
+function ServiciosEtapasSeccion() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-20 bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
         {/* Título + Intro + aspiracional */}
-        <header className="pl-2 sm:pl-4 max-w-3xl mx-auto text-center">
-          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase mb-4">
+        <div className="pl-2 sm:pl-4 max-w-3xl mx-auto text-center">
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium mb-4">
             ¿Qué servicios ofrecemos?
           </h2>
+
           <p className="text-black/70 text-[15px] leading-relaxed">
             Dominamos cada etapa del proceso inmobiliario — desde la estrategia patrimonial hasta la gestión
             y valorización del activo. Elige solo las etapas que necesitas o recorre el flujo completo.
           </p>
+
+          {/* Frase aspiracional */}
           <p className="mt-3 text-black/80 text-[13px] italic">
             Diseñamos procesos tan claros como los resultados que entregamos.
           </p>
 
-          {/* Nota editorial (centrada) */}
+          {/* Nota editorial */}
           <div className="mt-6 border border-black/10 bg-[#F9FAFB] text-black/70 text-[13px] leading-relaxed p-4 italic">
             Estas etapas reflejan el proceso completo de compra, venta o arriendo. No es necesario realizarlas todas:
             cada cliente define su propio recorrido y nosotros nos adaptamos, manteniendo el mismo estándar boutique
             en cada paso.
           </div>
-        </header>
+        </div>
 
         {/* Eje vertical central */}
         <div className="relative mt-14">
@@ -161,9 +212,10 @@ function ZigzagItem({
   const alignRight = index % 2 === 0; // alterna izquierda/derecha
   const Icon = etapa.icon;
 
-  // Reveal on scroll (sin libs)
-  const ref = useRef<HTMLDivElement>(null);
+  // Reveal on scroll (sin librerías)
+  const ref = useRef<HTMLLIElement>(null);
   const [inView, setInView] = useState(false);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -187,13 +239,13 @@ function ZigzagItem({
         alignRight ? '' : 'md:grid-flow-col-dense',
       ].join(' ')}
     >
-      {/* Conector al eje (nodo) */}
+      {/* Nodo en eje */}
       <span
         aria-hidden
-        className="absolute left-1/2 -translate-x-1/2 mt-2 md:mt-0 md:top-8 h-[10px] w-[10px] bg-[#0A2E57]"
+        className="absolute left-1/2 -translate-x-1/2 md:top-8 h-[10px] w-[10px] bg-[#0A2E57]"
       />
 
-      {/* Lado A (texto) */}
+      {/* Bloque texto */}
       <div
         className={[
           'order-2 md:order-none',
@@ -203,10 +255,7 @@ function ZigzagItem({
         ].join(' ')}
       >
         <article
-          className={[
-            'border border-black/10 bg-white p-6 shadow-sm',
-            'transition duration-300 hover:shadow-md hover:-translate-y-[3px]',
-          ].join(' ')}
+          className="border border-black/10 bg-white p-6 shadow-sm transition duration-300 hover:shadow-md hover:-translate-y-[3px]"
         >
           <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
             Etapa {index + 1}
@@ -247,23 +296,17 @@ function ZigzagItem({
         </article>
       </div>
 
-      {/* Lado B (ícono grande y conector) */}
+      {/* Bloque icono + conector al eje */}
       <div
         className={[
           'relative flex items-start justify-center md:items-start',
           alignRight ? 'md:justify-start' : 'md:justify-end',
           'py-8 md:py-0',
           'transition-all duration-700 ease-out',
-          inView
-            ? alignRight
-              ? 'opacity-100 translate-x-0'
-              : 'opacity-100 translate-x-0'
-            : alignRight
-            ? 'opacity-0 -translate-x-[12px]'
-            : 'opacity-0 translate-x-[12px]',
+          inView ? 'opacity-100' : alignRight ? 'opacity-0 -translate-x-[12px]' : 'opacity-0 translate-x-[12px]',
         ].join(' ')}
       >
-        {/* línea que toca el eje central en desktop */}
+        {/* línea hacia el eje (solo desktop) */}
         <span
           aria-hidden
           className={[
@@ -271,7 +314,6 @@ function ZigzagItem({
             alignRight ? 'left-[calc(50%+1px)]' : 'right-[calc(50%+1px)]',
           ].join(' ')}
         />
-        {/* Ícono */}
         <span className="inline-flex h-14 w-14 items-center justify-center">
           <Icon className="h-12 w-12 text-[#0A2E57] transition-transform duration-300 group-hover:scale-105" />
         </span>
@@ -280,7 +322,7 @@ function ZigzagItem({
   );
 }
 
-/* ================= TIPOS Y DATOS ================= */
+/* ================= DATOS NUEVA SECCIÓN ================= */
 type Etapa = {
   title: string;
   summary: string;
@@ -304,7 +346,8 @@ const ETAPAS: Etapa[] = [
   },
   {
     title: 'Búsqueda, curaduría y evaluación técnica',
-    summary: 'Encontramos y comparamos oportunidades alineadas con tus objetivos.',
+    summary:
+      'Encontramos y comparamos oportunidades alineadas con tus objetivos.',
     icon: Building2,
     items: [
       'Sourcing on/off-market y visitas privadas',
@@ -316,7 +359,8 @@ const ETAPAS: Etapa[] = [
   },
   {
     title: 'Estructuración legal y financiera',
-    summary: 'Diseñamos y coordinamos la operación completa hasta el cierre.',
+    summary:
+      'Diseñamos y coordinamos la operación completa hasta el cierre.',
     icon: Gavel,
     items: [
       'Negociación de oferta y condiciones',
@@ -328,7 +372,8 @@ const ETAPAS: Etapa[] = [
   },
   {
     title: 'Diseño, arquitectura y puesta en valor',
-    summary: 'Optimizamos la propiedad para maximizar su uso y valor.',
+    summary:
+      'Optimizamos la propiedad para maximizar su uso y valor.',
     icon: Ruler,
     items: [
       'Proyecto arquitectónico y/o remodelación',
@@ -340,7 +385,8 @@ const ETAPAS: Etapa[] = [
   },
   {
     title: 'Comercialización y marketing',
-    summary: 'Estrategia comercial premium para vender o arrendar con impacto.',
+    summary:
+      'Estrategia comercial premium para vender o arrendar con impacto.',
     icon: Megaphone,
     items: [
       'Diagnóstico de precio y posicionamiento',
@@ -352,7 +398,8 @@ const ETAPAS: Etapa[] = [
   },
   {
     title: 'Colocación y administración',
-    summary: 'Operamos tu activo con control y previsibilidad.',
+    summary:
+      'Operamos tu activo con control y previsibilidad.',
     icon: ClipboardList,
     items: [
       'Filtrado y scoring de arrendatarios',
@@ -376,3 +423,23 @@ const ETAPAS: Etapa[] = [
     ],
   },
 ];
+
+/* ================= PROCESO (SE MANTIENE DEL ARCHIVO ORIGINAL) ================= */
+const PROCESO = [
+  {
+    title: 'Diagnóstico & precio',
+    text: 'Reunión, inspección y propuesta de valor basada en datos.',
+  },
+  {
+    title: 'Preparación',
+    text: 'Ajustes rápidos y producción visual profesional.',
+  },
+  {
+    title: 'Lanzamiento',
+    text: 'Publicación, segmentación y respuesta ágil a interesados.',
+  },
+  {
+    title: 'Negociación & cierre',
+    text: 'Aseguramos el mejor acuerdo y acompañamos hasta la escritura.',
+  },
+] as const;
