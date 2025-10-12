@@ -8,6 +8,7 @@ import {
   Mail,
   Phone,
   Linkedin,
+  Palette,
 } from 'lucide-react';
 
 /* =========================
@@ -18,111 +19,141 @@ import {
 const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Gemini_Generated_Image_1c3kp91c3kp91c3k.png';
 
-// Foto de Carolina (pon aquí la misma del inicio si ya la tienes en /public)
-const LEADER_PHOTO = '/team/carolina-san-martin.png';
+// Fotos (reemplaza por rutas reales al tenerlas)
+const PHOTOS = {
+  carolina: '/team/carolina-san-martin.png',
+  alberto: '/team/alberto-gesswein.jpg',
+  jan: '/team/jan-gesswein.jpg',
+  kay: '/team/kay-gesswein.jpg',
+};
 
-// Equipo
-const TEAM = [
+// Bloque: Equipo principal (zig-zag)
+type Member = {
+  name: string;
+  roleLine: string; // título bajo el nombre
+  bio: string[];    // párrafos
+  education: string;
+  specialties: string[];
+  email?: string;
+  phone?: string;
+  linkedin?: string;
+  photo?: string;
+  align: 'left' | 'right'; // foto a la izquierda o derecha
+};
+
+const TEAM_PRINCIPAL: Member[] = [
   {
     name: 'Carolina San Martín',
-    role: 'Arquitecta Líder & Managing Partner',
-    desc:
-      'Arquitecta con más de 15 años de experiencia en proyectos residenciales de alto estándar. Especialista en normativas municipales y sustentabilidad.',
-    exp: '15+ años',
-    education:
-      'Arquitecto Potificia Universidad Católica de Chile',
-    specialties: [
-      'Arquitectura Residencial',
-      'Normativa Municipal',
-      'Sustentabilidad',
-      'Gestión de Proyectos',
+    roleLine: 'Managing Partner · Arquitecta',
+    bio: [
+      'Arquitecta con más de 15 años de experiencia liderando proyectos residenciales de alto estándar.',
+      'Especialista en normativas municipales, sustentabilidad y gestión integral de diseño.',
+      'Dirige el desarrollo arquitectónico de Gesswein Properties, asegurando que cada propiedad combine belleza, funcionalidad y valorización a largo plazo.',
     ],
+    education: 'Arquitecta, Pontificia Universidad Católica de Chile.',
+    specialties: ['Arquitectura residencial', 'Sustentabilidad', 'Gestión de proyectos'],
     email: 'carolina@gessweinproperties.cl',
     phone: '+56 9 9331 8039',
-    linkedin: 'https://www.linkedin.com/in/carolina-san-martin-fern%C3%A1ndez-83207044/',
-    featured: true,
-    photo: LEADER_PHOTO,
+    linkedin:
+      'https://www.linkedin.com/in/carolina-san-martin-fern%C3%A1ndez-83207044/',
+    photo: PHOTOS.carolina,
+    align: 'left',
   },
   {
     name: 'Alberto Gesswein',
-    role: 'Periodista · Productor Ejecutivo · Experto en Marketing & Comunicaciones',
-    desc:
-      'Experto en corretaje inmobiliario con amplio conocimiento del mercado de Santiago Oriente. Especializado en propiedades premium.',
-    exp: '12+ años',
-    education: 'Periodista Pontificia Universidad Católica de Chile',
-    specialties: ['Corretaje Inmobiliario', 'Valuación', 'Negociación', 'Marketing'],
+    roleLine: 'Managing Partner · Productor Ejecutivo',
+    bio: [
+      'Periodista con más de 20 años de trayectoria en dirección y comunicación estratégica.',
+      'Encabeza la visión institucional de Gesswein Properties, integrando excelencia técnica y un enfoque humano en cada negocio.',
+      'Su experiencia en liderazgo y negociación otorga solidez y coherencia a la firma.',
+    ],
+    education: 'Periodista, Pontificia Universidad Católica de Chile.',
+    specialties: ['Corretaje inmobiliario', 'Comunicación estratégica', 'Negociación'],
     email: 'alberto@gesswein.tv',
     phone: '+56 9 9887 1751',
     linkedin: 'https://www.linkedin.com/in/alberto-gesswein-4a8246101/',
+    photo: PHOTOS.alberto,
+    align: 'right',
   },
   {
     name: 'Jan Gesswein',
-    role: 'Abogado',
-    desc:
-      'Abogado especializado en derecho inmobiliario y regulaciones urbanas. Encargad de todos los aspectos legales de nuestras operaciones.',
-    exp: '10+ años',
-    education: 'Abogada Universidad del Desarrollo',
-    specialties: ['Derecho Inmobiliario', 'Contratos', 'Due Diligence Legal', 'Regulación Urbana'],
+    roleLine: 'Socio Legal · Abogado',
+    bio: [
+      'Abogado especializado en derecho inmobiliario y regulaciones urbanas.',
+      'Supervisa todos los aspectos legales de las operaciones, asegurando procesos transparentes, contratos sólidos y cumplimiento normativo.',
+      'Su mirada jurídica garantiza la seguridad y la confianza en cada transacción.',
+    ],
+    education: 'Abogado, Universidad del Desarrollo.',
+    specialties: ['Derecho inmobiliario', 'Contratos', 'Due Diligence Legal'],
     email: 'jangesswein@gmail.com',
     phone: '+56 9 9909 9502',
     linkedin: '#',
+    photo: PHOTOS.jan,
+    align: 'left',
   },
   {
     name: 'Kay Gesswein',
-    role: 'Ingeniero Comercial · Magíster en Finanzas',
-    desc:
-      'Experto en marketing inmobiliario digital y fotografía de propiedades. Responsable de la presencia online y estrategias de marketing.',
-    exp: '8+ años',
-    education: 'Ingeniero Coercial Universidad Adolfo Ibáñez, Magíster en Finanzas',
-    specialties: ['Marketing Digital', 'Fotografía', 'Redes Sociales', 'Analytics'],
+    roleLine: 'Socio de Finanzas y Marketing · Ingeniero Comercial',
+    bio: [
+      'Ingeniero Comercial con Magíster en Finanzas.',
+      'Experto en marketing digital y producción visual inmobiliaria.',
+      'Lidera la estrategia digital y el posicionamiento de Gesswein Properties, integrando análisis financiero con comunicación visual de alto impacto.',
+    ],
+    education: 'Ingeniero Comercial, Universidad Adolfo Ibáñez.',
+    specialties: ['Finanzas', 'Marketing Digital', 'Fotografía Inmobiliaria'],
     email: 'kaygesswein@gmail.com',
     phone: '+56 9 9334 5413',
     linkedin: 'https://www.linkedin.com/in/kay-gesswein-san-martin/',
+    photo: PHOTOS.kay,
+    align: 'right',
   },
 ];
 
-// Alianzas / colaboradores (ejemplos – edita/añade)
+// Alianzas / colaboradores (puedes editar/añadir)
 const ALLIES = [
-  { name: 'Irene Puelma', area: 'Arquitectura', photo: '/allies/irene.jpg', blurb: 'Colaboración en proyectos residenciales.' },
-  { name: 'Estudio DF', area: 'Diseño Interior', photo: '/allies/ally-2.jpg', blurb: 'Interiorismo y styling.' },
-  { name: 'ProStudio', area: 'Render & 3D', photo: '/allies/ally-3.jpg', blurb: 'Visualización arquitectónica.' },
+  { name: 'Irene Puelma', area: 'Arquitectura', photo: '/allies/irene.jpg', blurb: 'Colaboración en proyectos residenciales de alto estándar.' },
+  { name: 'Estudio DF', area: 'Diseño Interior', photo: '/allies/ally-2.jpg', blurb: 'Interiorismo y styling de espacios.' },
+  { name: 'ProStudio', area: 'Render & 3D', photo: '/allies/ally-3.jpg', blurb: 'Visualización arquitectónica y renders fotorrealistas.' },
   { name: 'Legal Partners', area: 'Legal', photo: '/allies/ally-4.jpg', blurb: 'Apoyo contractual y regulatorio.' },
-  { name: 'BrokerLab', area: 'Finanzas', photo: '/allies/ally-5.jpg', blurb: 'Hipotecas y financiamiento.' },
-  { name: 'Foto360', area: 'Producción Visual', photo: '/allies/ally-6.jpg', blurb: 'Foto, video y tour 360.' },
+  { name: 'BrokerLab', area: 'Finanzas', photo: '/allies/ally-5.jpg', blurb: 'Hipotecas y estructuración de financiamiento.' },
+  { name: 'Foto360', area: 'Producción Visual', photo: '/allies/ally-6.jpg', blurb: 'Foto, video y tour 360°.' },
   { name: 'GeoData', area: 'Estudios Urbanos', photo: '/allies/ally-7.jpg', blurb: 'ACM y data territorial.' },
-  { name: 'Press PR', area: 'Comunicación', photo: '/allies/ally-8.jpg', blurb: 'Prensa y difusión.' },
+  { name: 'Press PR', area: 'Comunicación', photo: '/allies/ally-8.jpg', blurb: 'Prensa y difusión estratégica.' },
 ];
 
-// Cultura
+// Cultura (4 pilares, minimal)
 const CULTURE = [
   {
     icon: Award,
     title: 'Excelencia',
     text:
-      'Buscamos la perfección en cada detalle, desde el primer contacto hasta la entrega de llaves.',
+      'Buscamos la perfección en cada detalle, desde la asesoría inicial hasta la entrega final.',
   },
   {
     icon: Users,
     title: 'Transparencia',
     text:
-      'Comunicación clara y honesta en todos nuestros procesos y relaciones comerciales.',
+      'Comunicación directa, procesos claros y decisiones fundadas en información verificable.',
   },
   {
     icon: Briefcase,
     title: 'Innovación',
     text:
-      'Adoptamos las mejores tecnologías y metodologías para ofrecer un servicio superior.',
+      'Metodologías y herramientas digitales para mejorar cada experiencia.',
+  },
+  {
+    icon: Palette,
+    title: 'Criterio & Estilo',
+    text:
+      'Visión arquitectónica, rigor financiero y sensibilidad estética en cada proyecto.',
   },
 ];
 
 export default function EquipoPage() {
-  const leader = TEAM.find((m) => m.featured) || TEAM[0];
-  const others = TEAM.filter((m) => m !== leader);
-
   return (
     <main className="bg-white">
 
-      {/* ================= HERO (idéntico estilo Servicios) ================= */}
+      {/* ================= HERO ================= */}
       <section className="relative min-h-[100svh]">
         <img
           src={HERO_IMG}
@@ -147,7 +178,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* ================= NUEVO SEGMENTO INICIAL: ¿POR QUÉ GP? + MISIÓN/VISIÓN ================= */}
+      {/* ================= BLOQUE 1: ¿POR QUÉ GP? + MISIÓN/VISIÓN ================= */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="pl-2 sm:pl-4 max-w-4xl">
@@ -163,7 +194,8 @@ export default function EquipoPage() {
 
             <div className="mt-12 grid md:grid-cols-2 gap-6">
               <article className="border border-black/10 bg-white p-6 shadow-sm">
-                <h3 className="text-[15px] font-medium text-black/90 tracking-wide uppercase mb-2">
+                {/* subtítulo institucional (mismo tamaño, color corporativo y espaciado) */}
+                <h3 className="text-[15px] tracking-wide uppercase text-[#0A2E57] mb-2">
                   Misión
                 </h3>
                 <p className="text-[13px] text-black/70 leading-relaxed">
@@ -174,7 +206,7 @@ export default function EquipoPage() {
               </article>
 
               <article className="border border-black/10 bg-white p-6 shadow-sm">
-                <h3 className="text-[15px] font-medium text-black/90 tracking-wide uppercase mb-2">
+                <h3 className="text-[15px] tracking-wide uppercase text-[#0A2E57] mb-2">
                   Visión
                 </h3>
                 <p className="text-[13px] text-black/70 leading-relaxed">
@@ -187,197 +219,27 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* ================= LÍDER: CAROLINA ================= */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center border border-black/10 bg-white p-8 shadow-sm">
-            <div className="space-y-5">
-              <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                Arquitecta Líder
-              </div>
-              <h2 className="text-[22px] text-black/90">{leader.name}</h2>
-              <p className="text-[13px] text-[#0A2E57]">{leader.role}</p>
-
-              <p className="text-[14px] text-black/70 leading-relaxed">
-                {leader.desc}
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="text-[13px] text-black/70">
-                  <span className="inline-flex items-center gap-2 text-black/60">
-                    <Briefcase className="size-4 text-black/40" />
-                    <span>Experiencia:</span>
-                  </span>
-                  <div className="mt-1 text-black/90">{leader.exp}</div>
-                </div>
-                <div className="text-[13px] text-black/70">
-                  <span className="inline-flex items-center gap-2 text-black/60">
-                    <Award className="size-4 text-black/40" />
-                    <span>Educación:</span>
-                  </span>
-                  <div className="mt-1 text-black/90">{leader.education}</div>
-                </div>
-              </div>
-
-              <div className="pt-3">
-                <div className="text-[12px] text-black/60 uppercase tracking-[.2em] mb-2">
-                  Especialidades
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {leader.specialties.map((s) => (
-                    <span
-                      key={s}
-                      className="px-2 py-1 text-[12px] bg-slate-100 border border-black/10"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-3">
-                <a
-                  href={`mailto:${leader.email}`}
-                  className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]"
-                >
-                  <Mail className="size-4" />
-                  {leader.email}
-                </a>
-                <a
-                  href={`tel:${leader.phone.replace(/\s+/g, '')}`}
-                  className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]"
-                >
-                  <Phone className="size-4" />
-                  {leader.phone}
-                </a>
-                <a
-                  href={leader.linkedin}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]"
-                >
-                  <Linkedin className="size-4" />
-                  LinkedIn
-                </a>
-              </div>
-            </div>
-
-            <div className="relative">
-              {leader.photo ? (
-                <div className="w-64 h-64 mx-auto border border-black/10 shadow-sm overflow-hidden">
-                  <Image
-                    src={leader.photo}
-                    alt={leader.name}
-                    width={512}
-                    height={512}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-64 h-64 mx-auto bg-slate-100 border border-black/10 flex items-center justify-center">
-                  <Users className="size-16 text-slate-400" />
-                </div>
-              )}
-              <blockquote className="mt-6 text-[14px] text-black/70 italic text-center max-w-md mx-auto">
-                “La arquitectura no es solo construir espacios, es crear hogares donde las familias escriben sus historias”.
-              </blockquote>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= RESTO DEL EQUIPO ================= */}
-      <section className="py-16 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="pl-2 sm:pl-4 mb-10">
-            <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
-              El resto del equipo
-            </h3>
-            <p className="text-[14px] text-black/70 mt-3">
-              Profesionales especializados que complementan nuestra propuesta de valor.
-            </p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {others.map((m) => (
-              <article
-                key={m.name}
-                className="border border-black/10 bg-white p-6 shadow-sm hover:shadow-md transition"
-              >
-                <div className="w-24 h-24 bg-slate-100 border border-black/10 flex items-center justify-center mb-4">
-                  <Users className="size-8 text-slate-400" />
-                </div>
-
-                <h4 className="text-[15px] text-black/90">{m.name}</h4>
-                <div className="text-[12px] text-[#0A2E57]">{m.role}</div>
-
-                <p className="text-[13px] text-black/70 leading-relaxed mt-3">
-                  {m.desc}
-                </p>
-
-                <div className="mt-4 text-[12px] text-black/60">
-                  <div>
-                    <span className="text-black/70">{m.exp}</span> • {m.education}
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <div className="text-[11px] text-black/60 uppercase tracking-[.2em] mb-1">
-                    Especialidades
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {m.specialties.slice(0, 3).map((s) => (
-                      <span key={s} className="px-2 py-1 text-[12px] bg-slate-100 border border-black/10">
-                        {s}
-                      </span>
-                    ))}
-                    {m.specialties.length > 3 && (
-                      <span className="px-2 py-1 text-[12px] border border-black/10">
-                        +{m.specialties.length - 3}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-2 mt-4">
-                  <a
-                    href={`mailto:${m.email}`}
-                    className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[12px] flex-1 justify-center"
-                  >
-                    <Mail className="size-4" /> Email
-                  </a>
-                  <a
-                    href={`tel:${m.phone.replace(/\s+/g, '')}`}
-                    className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[12px] flex-1 justify-center"
-                  >
-                    <Phone className="size-4" /> Llamar
-                  </a>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ================= NUESTRA CULTURA ================= */}
+      {/* ================= BLOQUE 2: NUESTRA CULTURA ================= */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
-              Nuestra cultura
+              NUESTRA CULTURA
             </h3>
             <p className="text-[14px] text-black/70 mt-3">
-              Los valores que nos definen y guían cada decisión en nuestro trabajo.
+              Los valores que nos guían en cada decisión y en cada proyecto.
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-4">
             {CULTURE.map((c) => (
               <article key={c.title} className="border border-black/10 bg-white p-6 text-center shadow-sm">
                 <div className="w-12 h-12 bg-slate-100 border border-black/10 mx-auto mb-4 flex items-center justify-center">
-                  <c.icon className="size-6 text-[#0A2E57]" />
+                  <c.icon className="h-6 w-6 text-[#0A2E57]" />
                 </div>
-                <h4 className="text-[15px] text-black/90">{c.title}</h4>
+                <h4 className="text-[13px] tracking-[.18em] uppercase text-black/90">
+                  {c.title}
+                </h4>
                 <p className="text-[13px] text-black/70 mt-2 leading-relaxed">{c.text}</p>
               </article>
             ))}
@@ -385,23 +247,51 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* ================= ALIANZAS & COLABORADORES ================= */}
+      {/* ================= BLOQUE 3: EQUIPO (ZIG-ZAG) ================= */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
+              EQUIPO
+            </h3>
+            <p className="text-[14px] text-black/70 mt-3 max-w-3xl mx-auto">
+              En Gesswein Properties combinamos criterio arquitectónico, respaldo legal y mirada financiera
+              para que cada decisión inmobiliaria sea segura, rentable y estética.
+            </p>
+          </div>
+
+          <div className="space-y-12">
+            {TEAM_PRINCIPAL.map((m) => (
+              <TeamRow key={m.name} m={m} />
+            ))}
+          </div>
+
+          <p className="text-[14px] text-black/70 mt-12 leading-relaxed text-center max-w-4xl mx-auto">
+            En Gesswein Properties, cada integrante aporta una mirada complementaria: arquitectura, derecho,
+            finanzas y comunicación se integran para elevar cada proyecto a su máxima expresión.
+          </p>
+        </div>
+      </section>
+
+      {/* ================= BLOQUE 4: ALIANZAS & COLABORADORES ================= */}
       <section className="py-16 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="pl-2 sm:pl-4 mb-10">
             <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
-              Alianzas & colaboradores
+              ALIANZAS & COLABORADORES
             </h3>
             <p className="text-[14px] text-black/70 mt-3">
               Profesionales y estudios con los que trabajamos para elevar el estándar de cada proyecto.
             </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-3">
             {ALLIES.map((a) => (
-              <article key={a.name} className="border border-black/10 bg-white p-5 shadow-sm hover:shadow-md transition">
+              <article
+                key={a.name}
+                className="border border-black/10 bg-white p-5 shadow-sm transition will-change-transform"
+              >
                 <div className="w-full aspect-square bg-slate-100 border border-black/10 mb-4 overflow-hidden">
-                  {/* Reemplaza las rutas /allies/* por tus fotos reales */}
                   <Image
                     src={a.photo}
                     alt={a.name}
@@ -419,14 +309,14 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* ================= CTA FINAL (sobrio) ================= */}
+      {/* ================= CTA FINAL ================= */}
       <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
             ¿Quieres trabajar con nosotros?
           </h3>
           <p className="text-[14px] text-black/70 mt-3">
-            Súmate para ayudarnos a **captar propiedades** y crecer la comunidad Gesswein Properties.
+            Súmate para ayudarnos a captar propiedades y crecer junto a la comunidad Gesswein Properties.
           </p>
 
           <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
@@ -448,5 +338,97 @@ export default function EquipoPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+/* ================= COMPONENTES ================= */
+
+function TeamRow({ m }: { m: Member }) {
+  const photoBlock = (
+    <div className="w-full">
+      <div className="w-full aspect-[4/3] border border-black/10 bg-slate-100 overflow-hidden">
+        {m.photo ? (
+          <Image
+            src={m.photo}
+            alt={m.name}
+            width={1200}
+            height={900}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Users className="h-12 w-12 text-slate-400" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const textBlock = (
+    <div className="w-full">
+      <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">{m.roleLine}</div>
+      <h4 className="mt-1 text-[20px] text-black/90">{m.name}</h4>
+
+      <div className="mt-3 space-y-2">
+        {m.bio.map((p, idx) => (
+          <p key={idx} className="text-[14px] text-black/70 leading-relaxed">{p}</p>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+        <div className="text-[13px] text-black/70">
+          <span className="inline-flex items-center gap-2 text-black/60">
+            <Award className="h-4 w-4 text-black/40" />
+            <span>Educación:</span>
+          </span>
+          <div className="mt-1 text-black/90">{m.education}</div>
+        </div>
+        <div className="text-[13px] text-black/70">
+          <span className="inline-flex items-center gap-2 text-black/60">
+            <Briefcase className="h-4 w-4 text-black/40" />
+            <span>Especialidades:</span>
+          </span>
+          <div className="mt-1 text-black/90">
+            {m.specialties.join(' · ')}
+          </div>
+        </div>
+      </div>
+
+      {(m.email || m.phone || m.linkedin) && (
+        <div className="flex flex-wrap gap-2 mt-4">
+          {m.email && (
+            <a href={`mailto:${m.email}`} className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]">
+              <Mail className="h-4 w-4" /> {m.email}
+            </a>
+          )}
+          {m.phone && (
+            <a href={`tel:${m.phone.replace(/\s+/g, '')}`} className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]">
+              <Phone className="h-4 w-4" /> {m.phone}
+            </a>
+          )}
+          {m.linkedin && (
+            <a href={m.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]">
+              <Linkedin className="h-4 w-4" /> LinkedIn
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start border border-black/10 bg-white p-8 shadow-sm">
+      {m.align === 'left' ? (
+        <>
+          {photoBlock}
+          {textBlock}
+        </>
+      ) : (
+        <>
+          {textBlock}
+          {photoBlock}
+        </>
+      )}
+    </div>
   );
 }
