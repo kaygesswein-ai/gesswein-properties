@@ -44,50 +44,7 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-      {/* ================= POR QUÉ GESSWEIN PROPERTIES ================= */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="pl-2 sm:pl-4 max-w-4xl">
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-              ¿Por qué Gesswein Properties?
-            </h2>
-            <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl">
-              En Gesswein Properties nos definimos por un enfoque boutique, que combina excelencia
-              técnica, comunicación cercana y una estética moderna aplicada a cada proyecto
-              inmobiliario. Nuestro compromiso es ofrecer un servicio profesional, transparente
-              y con alto estándar de ejecución.
-            </p>
-
-            <div className="mt-12 grid md:grid-cols-2 gap-6">
-              <article className="border border-black/10 bg-white p-6 shadow-sm">
-                <h3 className="text-[15px] text-black/90 tracking-wide uppercase mb-2">
-                  Misión
-                </h3>
-                <p className="text-[13px] text-black/70 leading-relaxed">
-                  Brindar asesoría inmobiliaria integral, basada en confianza, precisión técnica
-                  y diseño, conectando a nuestros clientes con oportunidades únicas de inversión
-                  y hogar.
-                </p>
-              </article>
-
-              <article className="border border-black/10 bg-white p-6 shadow-sm">
-                <h3 className="text-[15px] text-black/90 tracking-wide uppercase mb-2">
-                  Visión
-                </h3>
-                <p className="text-[13px] text-black/70 leading-relaxed">
-                  Ser la firma inmobiliaria de referencia en Chile por su excelencia estética,
-                  profesionalismo y compromiso con la calidad de vida de quienes confían en nosotros.
-                </p>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= QUÉ SERVICIOS OFRECEMOS (ZIGZAG VERTICAL) ================= */}
-      <ServiciosEtapasSeccion />
-
-      {/* ================= PROCESO — LÍNEA DE TIEMPO (SE DEJA IGUAL) ================= */}
+      {/* ================= (MOVIDO AL INICIO) PROCESO — LÍNEA DE TIEMPO ================= */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="pl-2 sm:pl-4 max-w-4xl mb-12">
@@ -137,6 +94,9 @@ export default function ServiciosPage() {
           </div>
         </div>
       </section>
+
+      {/* ================= ¿QUÉ SERVICIOS OFRECEMOS? — ZIGZAG VERTICAL ================= */}
+      <ServiciosEtapasSeccion />
     </main>
   );
 }
@@ -424,7 +384,7 @@ const ETAPAS: Etapa[] = [
   },
 ];
 
-/* ================= PROCESO (SE MANTIENE DEL ARCHIVO ORIGINAL) ================= */
+/* ================= PROCESO (SE MANTIENE, SOLO SE MOVIÓ ARRIBA) ================= */
 const PROCESO = [
   {
     title: 'Diagnóstico & precio',
