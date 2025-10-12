@@ -110,7 +110,7 @@ export default function ServiciosPage() {
 function ServiciosEtapasSeccion() {
   const [modal, setModal] = useState<null | { block: 'ACTIVO' | 'PATRIMONIAL'; index: number }>(null);
   const [isCoarse, setIsCoarse] = useState(false);
-  const [activeIdx, setActiveIdx] = useState<number | null>(null); // para tocar en móvil
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
   // Accesibilidad + detección de puntero táctil
   useEffect(() => {
@@ -133,7 +133,6 @@ function ServiciosEtapasSeccion() {
     return () => mq.removeEventListener?.('change', listener);
   }, []);
 
-  // Cierra overlay móvil al abrir modal
   useEffect(() => {
     if (modal) setActiveIdx(null);
   }, [modal]);
@@ -148,32 +147,32 @@ function ServiciosEtapasSeccion() {
             Servicios Gesswein Properties
           </h2>
 
-          {/* Línea 1 (dominamos cada etapa...) */}
+          {/* Línea 1 */}
           <p className="text-black/70 text-[14px] leading-relaxed mt-3">
             Dominamos cada etapa del proceso inmobiliario — desde la estrategia patrimonial hasta la gestión y
             valorización del activo, con el fin de acompañarte en cada decisión y ser el sustento que necesitas
             para llevar a cabo tu inversión y tu proyecto de vida.
           </p>
 
-          {/* Línea 2 (bajada de agrupación en 2 áreas) */}
+          {/* Línea 2 */}
           <p className="text-black/70 text-[14px] leading-relaxed mt-2">
             Nuestros servicios se agrupan en dos áreas complementarias: Gestión del Activo Inmobiliario y
             Gestión Patrimonial & Familiar.
           </p>
 
-          {/* Nota editorial */}
+          {/* Nota editorial — TEXTO ACTUALIZADO */}
           <div className="mt-6 border border-black/10 bg-[#F9FAFB] text-black/70 text-[13px] leading-relaxed p-4 italic">
-            Estas son las etapas que puedes recorrer en un proceso de compra, venta o arriendo. Estamos preparados
-            para ejecutarlas todas, pero siempre te propondremos el pack o la combinación de servicios que mejor se
-            adapte a tu situación actual.
+            Cada servicio forma parte de una cadena integral que cubre todo el ciclo inmobiliario.<br />
+            Podemos ejecutarlos de manera independiente o combinada, diseñando la solución que mejor se adapta a tus
+            objetivos, tu momento y tu inversión.
           </div>
         </header>
 
-        {/* ======= BLOQUE I — Gestión del Activo Inmobiliario ======= */}
+        {/* ======= BLOQUE I — encabezado simplificado ======= */}
         <div className="mt-12 pl-2 sm:pl-4">
-          <h3 className="text-[18px] text-black/90">
-            <span className="uppercase tracking-[.25em] text-[#0A2E57]">BLOQUE I</span> — Gestión del Activo Inmobiliario
-          </h3>
+          <div className="text-[#0A2E57] text-[13px] tracking-[.25em] uppercase">
+            Gestión del Activo Inmobiliario
+          </div>
           <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
             Cuidamos cada detalle del activo físico: su valor, su potencial y su expresión arquitectónica.
           </p>
@@ -188,11 +187,11 @@ function ServiciosEtapasSeccion() {
           className="mt-8"
         />
 
-        {/* ======= BLOQUE II — Gestión Patrimonial & Familiar ======= */}
+        {/* ======= BLOQUE II — encabezado simplificado ======= */}
         <div className="mt-16 pl-2 sm:pl-4">
-          <h3 className="text-[18px] text-black/90">
-            <span className="uppercase tracking-[.25em] text-[#0A2E57]">BLOQUE II</span> — Gestión Patrimonial & Familiar
-          </h3>
+          <div className="text-[#0A2E57] text-[13px] tracking-[.25em] uppercase">
+            Gestión Patrimonial & Familiar
+          </div>
           <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
             Acompañamos a las personas y familias detrás de cada inversión, con visión financiera, legal y humana.
           </p>
