@@ -467,7 +467,7 @@ const ACTIVO_CARDS: ServiceCard[] = [
       'Control documental y seguimiento post-cierre',
       'Estrategia de venta con storytelling visual y gestión comercial premium',
     ],
-    img: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=1600&auto=format&fit=crop',
+    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Compra-venta.jpeg',
   },
   {
     kicker: 'Arriendos',
@@ -482,7 +482,7 @@ const ACTIVO_CARDS: ServiceCard[] = [
       'Administración integral con reportes mensuales',
       'Estrategias de rentabilidad y control de flujos',
     ],
-    img: 'https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1600&auto=format&fit=crop',
+    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Depto.jpg',
   },
   {
     kicker: 'Valoración',
@@ -511,7 +511,7 @@ const ACTIVO_CARDS: ServiceCard[] = [
       'Gestión de plazos, costos y calidad',
       'Recepción de obra y entrega llave en mano',
     ],
-    img: 'https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=1600&auto=format&fit=crop',
+    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Arquitectura.jpg',
   },
   {
     kicker: 'Interiores',
@@ -525,7 +525,7 @@ const ACTIVO_CARDS: ServiceCard[] = [
       'Supervisión de implementación y detalles finales',
       'Home staging para potenciar venta o arriendo',
     ],
-    img: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop',
+    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Interiores.jpeg',
   },
 ];
 
@@ -544,7 +544,7 @@ const PATRIMONIAL_CARDS: ServiceCard[] = [
       'Estructuración de operaciones en UF o USD según perfil de riesgo',
       'Estrategia de inversión y gestión de activos',
     ],
-    img: 'https://images.unsplash.com/photo-1554224155-3a589877462f?q=80&w=1600&auto=format&fit=crop',
+    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/job-5382501_1920.jpg',
   },
   {
     kicker: 'Gestión continua',
@@ -559,7 +559,7 @@ const PATRIMONIAL_CARDS: ServiceCard[] = [
       'Reportes anuales de performance inmobiliario',
       'Planificación patrimonial y sucesoria familiar',
     ],
-    img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop',
+    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Asesoria%20Continua.jpg',
   },
   {
     kicker: 'Relocation',
@@ -573,7 +573,7 @@ const PATRIMONIAL_CARDS: ServiceCard[] = [
       'Asistencia legal y logística de instalación',
       'Seguimiento post-arribo y gestión personalizada',
     ],
-    img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop',
+    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/move-2481718_1920.jpg',
   },
 ];
 
