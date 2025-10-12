@@ -57,17 +57,16 @@ export default function ServiciosPage() {
             </p>
           </div>
 
-          {/* DESKTOP / TABLET — NO TOCAR */}
+          {/* DESKTOP / TABLET — SOLO CAMBIOS SOLICITADOS */}
           <div className="hidden sm:block relative">
             <div className="absolute left-[5%] right-[5%] top-8 h-px bg-[#0A2E57]/30" />
             <div className="grid grid-cols-4 gap-8 text-center">
-              {PROCESO.map((p, i) => (
+              {PROCESO.map((p) => (
                 <div key={p.title} className="pt-10">
-                  <span className="mx-auto -mt-7 mb-5 block h-2 w-2 bg-[#0A2E57] ring-2 ring-[#0A2E57]/25" />
+                  {/* Eliminado el punto/marker y "Paso N" */}
                   <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                    Paso {i + 1}
+                    {p.title}
                   </div>
-                  <h3 className="mt-1 text-[14px] text-black/90">{p.title}</h3>
                   <p className="mt-2 text-[13px] text-black/70 leading-relaxed max-w-[260px] mx-auto">
                     {p.text}
                   </p>
@@ -76,16 +75,16 @@ export default function ServiciosPage() {
             </div>
           </div>
 
-          {/* MÓVIL — sin puntos, misma línea vertical y tipografía */}
+          {/* MÓVIL — SOLO CAMBIOS SOLICITADOS */}
           <div className="sm:hidden relative pl-8">
             <div className="absolute left-3 top-0 bottom-0 w-px bg-[#0A2E57]/25" />
             <ol className="flex flex-col gap-8">
-              {PROCESO.map((p, i) => (
+              {PROCESO.map((p) => (
                 <li key={p.title} className="relative">
-                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase ml-1">
-                    Paso {i + 1}
-                  </div>
-                  <h3 className="mt-1 text-[14px] text-black/90">{p.title}</h3>
+                  {/* Reemplaza "Paso N" por el título con el MISMO formato */}
+                  <h3 className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                    {p.title}
+                  </h3>
                   <p className="mt-1 text-[13px] text-black/70 leading-relaxed">
                     {p.text}
                   </p>
@@ -374,15 +373,15 @@ function ServiceModal({
         'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
       );
       if (!focusables || focusables.length === 0) return;
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', handler);
     return () => {
@@ -581,18 +580,22 @@ const PATRIMONIAL_CARDS: ServiceCard[] = [
 const PROCESO = [
   {
     title: 'Alcance del Trabajo & Propuesta de servicios',
-    text: 'Iniciamos con una reunión personalizada y una evaluación detallada de los requerimientos, para luego presentar una propuesta de valor a medida, diseñada para reflejar las verdaderas necesidades y aspiraciones del cliente.',
+    text:
+      'Iniciamos con una reunión personalizada y una evaluación detallada de los requerimientos, para luego presentar una propuesta de valor a medida, diseñada para reflejar las verdaderas necesidades y aspiraciones del cliente.',
   },
   {
     title: 'Puesta en Marcha',
-    text: 'Transformamos los objetivos del cliente en un plan de acción concreto, definiendo cada etapa con precisión y poniendo en movimiento las gestiones necesarias para materializar su visión.',
+    text:
+      'Transformamos los objetivos del cliente en un plan de acción concreto, definiendo cada etapa con precisión y poniendo en movimiento las gestiones necesarias para materializar su visión.',
   },
   {
     title: 'Ejecución & Seguimiento',
-    text: 'Llevamos a cabo el plan definido, supervisando los avances y asegurando una comunicación constante con el cliente para garantizar alineación y resultados coherentes con sus expectativas.',
+    text:
+      'Llevamos a cabo el plan definido, supervisando los avances y asegurando una comunicación constante con el cliente para garantizar alineación y resultados coherentes con sus expectativas.',
   },
   {
     title: 'Cierre & Satisfacción',
-    text: 'Consolidamos los resultados, verificamos el cumplimiento de cada detalle y nos aseguramos de que la experiencia final refleje plenamente la calidad y excelencia que distinguen a nuestra firma.',
+    text:
+      'Consolidamos los resultados, verificamos el cumplimiento de cada detalle y nos aseguramos de que la experiencia final refleje plenamente la calidad y excelencia que distinguen a nuestra firma.',
   },
 ] as const;
