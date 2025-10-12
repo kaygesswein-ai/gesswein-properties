@@ -52,7 +52,7 @@ export default function ServiciosPage() {
               Un proceso claro y transparente
             </h2>
             <p className="text-black/70 text-[14px] leading-relaxed">
-              Metodología probada para lograr un resultado superior.
+              Estructuramos nuestro proceso en etapas cuidadosamente diseñadas, aplicables de manera transversal a cada servicio, garantizando una experiencia coherente, transparente y de excelencia en todos nuestros proyectos.
             </p>
           </div>
 
@@ -387,19 +387,19 @@ const ETAPAS: Etapa[] = [
 /* ================= PROCESO (SE MANTIENE, SOLO SE MOVIÓ ARRIBA) ================= */
 const PROCESO = [
   {
-    title: 'Diagnóstico & precio',
-    text: 'Reunión, inspección y propuesta de valor basada en datos.',
+    title: 'Alcance del Trabajo & Propuesta de servicios',
+    text: 'Iniciamos con una reunión personalizada y una evaluación detallada de los requerimientos, para luego presentar una propuesta de valor a medida, diseñada para reflejar las verdaderas necesidades y aspiraciones del cliente.',
   },
   {
-    title: 'Preparación',
-    text: 'Ajustes rápidos y producción visual profesional.',
+    title: 'Puesta en Marcha',
+    text: 'Transformamos los objetivos del cliente en un plan de acción concreto, definiendo cada etapa con precisión y poniendo en movimiento las gestiones necesarias para materializar su visión.',
   },
   {
-    title: 'Lanzamiento',
-    text: 'Publicación, segmentación y respuesta ágil a interesados.',
+    title: 'Ejecución & Seguimiento',
+    text: 'Llevamos a cabo el plan definido, supervisando los avances y asegurando una comunicación constante con el cliente para garantizar alineación y resultados coherentes con sus expectativas.',
   },
   {
-    title: 'Negociación & cierre',
-    text: 'Aseguramos el mejor acuerdo y acompañamos hasta la escritura.',
+    title: 'Cierre & Satisfacción',
+    text: 'Consolidamos los resultados, verificamos el cumplimiento de cada detalle y nos aseguramos de que la experiencia final refleje plenamente la calidad y excelencia que distinguen a nuestra firma.',
   },
 ] as const;
