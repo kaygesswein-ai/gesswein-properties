@@ -105,17 +105,16 @@ export default function ServiciosPage() {
 /* ============================================================================
  *  SECCIÓN “Servicios Gesswein Properties”
  *  - Dos bloques con cards interactivas y modal de ficha técnica
- *  - Estilo sobrio, corporativo, sin bordes redondeados (regla del proyecto)
+ *  - Overlay que sube desde abajo sobre la foto (hover/touch)
  * ========================================================================== */
 function ServiciosEtapasSeccion() {
-  // Estado del modal
   const [modal, setModal] = useState<null | { block: 'ACTIVO' | 'PATRIMONIAL'; index: number }>(null);
+  const [isCoarse, setIsCoarse] = useState(false);
+  const [activeIdx, setActiveIdx] = useState<number | null>(null); // para tocar en móvil
 
-  // Accesibilidad: bloquear scroll y manejar ESC
+  // Accesibilidad + detección de puntero táctil
   useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setModal(null);
-    };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setModal(null); };
     if (modal) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', onEsc);
@@ -124,6 +123,19 @@ function ServiciosEtapasSeccion() {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onEsc);
     };
+  }, [modal]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(pointer: coarse)');
+    setIsCoarse(mq.matches);
+    const listener = (e: MediaQueryListEvent) => setIsCoarse(e.matches);
+    mq.addEventListener?.('change', listener);
+    return () => mq.removeEventListener?.('change', listener);
+  }, []);
+
+  // Cierra overlay móvil al abrir modal
+  useEffect(() => {
+    if (modal) setActiveIdx(null);
   }, [modal]);
 
   return (
@@ -135,20 +147,32 @@ function ServiciosEtapasSeccion() {
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
             Servicios Gesswein Properties
           </h2>
+
+          {/* Línea 1 (dominamos cada etapa...) */}
           <p className="text-black/70 text-[14px] leading-relaxed mt-3">
-            Combinamos datos, estrategia y diseño para acompañarte en cada etapa del ciclo inmobiliario.
+            Dominamos cada etapa del proceso inmobiliario — desde la estrategia patrimonial hasta la gestión y
+            valorización del activo, con el fin de acompañarte en cada decisión y ser el sustento que necesitas
+            para llevar a cabo tu inversión y tu proyecto de vida.
+          </p>
+
+          {/* Línea 2 (bajada de agrupación en 2 áreas) */}
+          <p className="text-black/70 text-[14px] leading-relaxed mt-2">
             Nuestros servicios se agrupan en dos áreas complementarias: Gestión del Activo Inmobiliario y
             Gestión Patrimonial & Familiar.
           </p>
+
+          {/* Nota editorial */}
+          <div className="mt-6 border border-black/10 bg-[#F9FAFB] text-black/70 text-[13px] leading-relaxed p-4 italic">
+            Estas son las etapas que puedes recorrer en un proceso de compra, venta o arriendo. Estamos preparados
+            para ejecutarlas todas, pero siempre te propondremos el pack o la combinación de servicios que mejor se
+            adapte a tu situación actual.
+          </div>
         </header>
 
         {/* ======= BLOQUE I — Gestión del Activo Inmobiliario ======= */}
         <div className="mt-12 pl-2 sm:pl-4">
-          <div className="text-[13px] uppercase tracking-[.25em] text-[#0A2E57]">
-            BLOQUE I
-          </div>
-          <h3 className="mt-1 text-[18px] text-black/90">
-            Gestión del Activo Inmobiliario
+          <h3 className="text-[18px] text-black/90">
+            <span className="uppercase tracking-[.25em] text-[#0A2E57]">BLOQUE I</span> — Gestión del Activo Inmobiliario
           </h3>
           <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
             Cuidamos cada detalle del activo físico: su valor, su potencial y su expresión arquitectónica.
@@ -158,17 +182,16 @@ function ServiciosEtapasSeccion() {
         <CardsGrid
           cards={ACTIVO_CARDS}
           onOpen={(i) => setModal({ block: 'ACTIVO', index: i })}
+          onToggleOverlay={(i) => isCoarse && setActiveIdx((curr) => (curr === i ? null : i))}
+          isOverlayActive={(i) => (isCoarse ? activeIdx === i : false)}
           cols={{ base: 1, md: 2, xl: 3 }}
           className="mt-8"
         />
 
         {/* ======= BLOQUE II — Gestión Patrimonial & Familiar ======= */}
         <div className="mt-16 pl-2 sm:pl-4">
-          <div className="text-[13px] uppercase tracking-[.25em] text-[#0A2E57]">
-            BLOQUE II
-          </div>
-          <h3 className="mt-1 text-[18px] text-black/90">
-            Gestión Patrimonial & Familiar
+          <h3 className="text-[18px] text-black/90">
+            <span className="uppercase tracking-[.25em] text-[#0A2E57]">BLOQUE II</span> — Gestión Patrimonial & Familiar
           </h3>
           <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
             Acompañamos a las personas y familias detrás de cada inversión, con visión financiera, legal y humana.
@@ -178,6 +201,8 @@ function ServiciosEtapasSeccion() {
         <CardsGrid
           cards={PATRIMONIAL_CARDS}
           onOpen={(i) => setModal({ block: 'PATRIMONIAL', index: i })}
+          onToggleOverlay={(i) => isCoarse && setActiveIdx((curr) => (curr === i ? null : i))}
+          isOverlayActive={(i) => (isCoarse ? activeIdx === i : false)}
           cols={{ base: 1, md: 2, xl: 3 }}
           className="mt-8"
         />
@@ -208,15 +233,19 @@ function ServiciosEtapasSeccion() {
   );
 }
 
-/* ====== GRID DE CARDS ====== */
+/* ====== GRID DE CARDS (overlay desde abajo) ====== */
 function CardsGrid({
   cards,
   onOpen,
+  onToggleOverlay,
+  isOverlayActive,
   cols,
   className = '',
 }: {
   cards: ServiceCard[];
   onOpen: (index: number) => void;
+  onToggleOverlay: (index: number) => void;
+  isOverlayActive: (index: number) => boolean;
   cols: { base: number; md: number; xl: number };
   className?: string;
 }) {
@@ -254,50 +283,67 @@ function CardsGrid({
 
   return (
     <div ref={containerRef} className={`${gridClass} ${className}`}>
-      {cards.map((c, i) => (
-        <article
-          key={c.title}
-          data-card
-          data-index={i}
-          className={[
-            'relative overflow-hidden border border-slate-200 bg-white shadow-sm',
-            'transition transform',
-            'hover:-translate-y-[4px] hover:shadow-md',
-            visible[i] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
-          ].join(' ')}
-          style={{ transitionDuration: '600ms', transitionTimingFunction: 'ease-out' }}
-        >
-          {/* Imagen */}
-          <div className="relative aspect-[4/3]">
-            <img
-              src={c.img}
-              alt={c.title}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-300" />
-          </div>
+      {cards.map((c, i) => {
+        const showOverlay = isOverlayActive(i);
+        return (
+          <article
+            key={c.title}
+            data-card
+            data-index={i}
+            className={[
+              'group relative overflow-hidden border border-slate-200 bg-white shadow-sm select-none',
+              'transition transform',
+              'hover:-translate-y-[4px] hover:shadow-md',
+              visible[i] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
+            ].join(' ')}
+            style={{ transitionDuration: '600ms', transitionTimingFunction: 'ease-out' }}
+          >
+            {/* Imagen */}
+            <div
+              className="relative aspect-[4/3] cursor-pointer"
+              onClick={() => onToggleOverlay(i)}
+            >
+              <img
+                src={c.img}
+                alt={c.title}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
 
-          {/* Contenido */}
-          <div className="p-6">
-            <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-              {c.kicker}
-            </div>
-            <h4 className="mt-1 text-[16px] text-black/90">{c.title}</h4>
-            <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{c.summary}</p>
-
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => onOpen(i)}
-                className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+              {/* Overlay: sube desde abajo (hover en desktop / toggle en touch) */}
+              <div
+                className={[
+                  'absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-[1px] border-t border-black/10',
+                  'translate-y-full opacity-0',
+                  'group-hover:translate-y-0 group-hover:opacity-100',
+                  'transition-transform duration-300 ease-out',
+                  showOverlay ? '!translate-y-0 !opacity-100' : '',
+                ].join(' ')}
               >
-                Ver más
-              </button>
+                <div className="p-5">
+                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                    {c.kicker}
+                  </div>
+                  <h4 className="mt-1 text-[16px] text-black/90">{c.title}</h4>
+                  <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{c.summary}</p>
+
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpen(i);
+                      }}
+                      className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+                    >
+                      Ver más
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
   );
 }
@@ -315,9 +361,8 @@ function ServiceModal({
   onClose: () => void;
 }) {
   const backdropRef = useRef<HTMLDivElement>(null);
-
-  // Focus trap simple
   const firstBtnRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     firstBtnRef.current?.focus();
@@ -355,17 +400,8 @@ function ServiceModal({
       role="dialog"
       aria-modal="true"
     >
-      <div
-        className="absolute inset-0 flex items-center justify-center p-4"
-        style={{ contain: 'content' }}
-      >
-        <div
-          className={[
-            'w-full max-w-[720px] bg-white border border-black/10 shadow-xl',
-            'opacity-100 scale-100',
-            'transition duration-200',
-          ].join(' ')}
-        >
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div className="w-full max-w-[720px] bg-white border border-black/10 shadow-xl transition duration-200">
           <div className="flex items-start justify-between p-6 border-b border-black/10">
             <div>
               <h4 className="text-[16px] text-black/90">{title}</h4>
