@@ -9,7 +9,6 @@ import {
   Ruler,
   ClipboardList,
   TrendingUp,
-  X,
 } from 'lucide-react';
 
 /** =========================================================
@@ -104,38 +103,19 @@ export default function ServiciosPage() {
 
 /* ============================================================================
  *  SECCIÓN “Servicios Gesswein Properties”
- *  - Dos bloques con cards interactivas y modal de ficha técnica
- *  - Overlay que sube desde abajo sobre la foto (hover/touch)
+ *  - Dos bloques con cards interactivas
+ *  - Overlay que sube desde abajo y, al clic, EXPANDE a toda la foto con el detalle
  * ========================================================================== */
 function ServiciosEtapasSeccion() {
-  const [modal, setModal] = useState<null | { block: 'ACTIVO' | 'PATRIMONIAL'; index: number }>(null);
-  const [isCoarse, setIsCoarse] = useState(false);
-  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  // índice de card expandida (full overlay). null = ninguna
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
-  // Accesibilidad + detección de puntero táctil
+  // cerrar al presionar Escape (accesibilidad)
   useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setModal(null); };
-    if (modal) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', onEsc);
-    }
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', onEsc);
-    };
-  }, [modal]);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(pointer: coarse)');
-    setIsCoarse(mq.matches);
-    const listener = (e: MediaQueryListEvent) => setIsCoarse(e.matches);
-    mq.addEventListener?.('change', listener);
-    return () => mq.removeEventListener?.('change', listener);
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setExpandedIdx(null); };
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
   }, []);
-
-  useEffect(() => {
-    if (modal) setActiveIdx(null);
-  }, [modal]);
 
   return (
     <section className="py-20 bg-white">
@@ -160,7 +140,7 @@ function ServiciosEtapasSeccion() {
             Gestión Patrimonial & Familiar.
           </p>
 
-          {/* Nota editorial — TEXTO ACTUALIZADO */}
+          {/* Nota editorial */}
           <div className="mt-6 border border-black/10 bg-[#F9FAFB] text-black/70 text-[13px] leading-relaxed p-4 italic">
             Cada servicio forma parte de una cadena integral que cubre todo el ciclo inmobiliario.<br />
             Podemos ejecutarlos de manera independiente o combinada, diseñando la solución que mejor se adapta a tus
@@ -180,10 +160,9 @@ function ServiciosEtapasSeccion() {
 
         <CardsGrid
           cards={ACTIVO_CARDS}
-          onOpen={(i) => setModal({ block: 'ACTIVO', index: i })}
-          onToggleOverlay={(i) => isCoarse && setActiveIdx((curr) => (curr === i ? null : i))}
-          isOverlayActive={(i) => (isCoarse ? activeIdx === i : false)}
-          cols={{ base: 1, md: 2, xl: 3 }}
+          expandedIdx={expandedIdx}
+          setExpandedIdx={setExpandedIdx}
+          cols={{ md: 2, xl: 3 }}
           className="mt-8"
         />
 
@@ -199,59 +178,34 @@ function ServiciosEtapasSeccion() {
 
         <CardsGrid
           cards={PATRIMONIAL_CARDS}
-          onOpen={(i) => setModal({ block: 'PATRIMONIAL', index: i })}
-          onToggleOverlay={(i) => isCoarse && setActiveIdx((curr) => (curr === i ? null : i))}
-          isOverlayActive={(i) => (isCoarse ? activeIdx === i : false)}
-          cols={{ base: 1, md: 2, xl: 3 }}
+          expandedIdx={expandedIdx}
+          setExpandedIdx={setExpandedIdx}
+          cols={{ md: 2, xl: 3 }}
           className="mt-8"
         />
       </div>
-
-      {/* Modal */}
-      {modal && (
-        <ServiceModal
-          title={
-            modal.block === 'ACTIVO'
-              ? ACTIVO_CARDS[modal.index].title
-              : PATRIMONIAL_CARDS[modal.index].title
-          }
-          summary={
-            modal.block === 'ACTIVO'
-              ? ACTIVO_CARDS[modal.index].summary
-              : PATRIMONIAL_CARDS[modal.index].summary
-          }
-          items={
-            modal.block === 'ACTIVO'
-              ? ACTIVO_CARDS[modal.index].details
-              : PATRIMONIAL_CARDS[modal.index].details
-          }
-          onClose={() => setModal(null)}
-        />
-      )}
     </section>
   );
 }
 
-/* ====== GRID DE CARDS (overlay desde abajo) ====== */
+/* ====== GRID DE CARDS (overlay desde abajo → full overlay al clic) ====== */
 function CardsGrid({
   cards,
-  onOpen,
-  onToggleOverlay,
-  isOverlayActive,
+  expandedIdx,
+  setExpandedIdx,
   cols,
   className = '',
 }: {
   cards: ServiceCard[];
-  onOpen: (index: number) => void;
-  onToggleOverlay: (index: number) => void;
-  isOverlayActive: (index: number) => boolean;
-  cols: { base: number; md: number; xl: number };
+  expandedIdx: number | null;
+  setExpandedIdx: (v: number | null) => void;
+  cols: { md: number; xl: number };
   className?: string;
 }) {
-  // Reveal on scroll (stagger)
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<boolean[]>(Array(cards.length).fill(false));
 
+  // reveal on scroll
   useEffect(() => {
     const nodes = containerRef.current?.querySelectorAll('[data-card]') ?? [];
     const io = new IntersectionObserver(
@@ -260,9 +214,9 @@ function CardsGrid({
           if (e.isIntersecting) {
             const idx = Number((e.target as HTMLElement).dataset.index);
             setVisible((v) => {
-              const next = [...v];
-              next[idx] = true;
-              return next;
+              const n = [...v];
+              n[idx] = true;
+              return n;
             });
           }
         });
@@ -275,7 +229,7 @@ function CardsGrid({
 
   const gridClass = [
     'grid gap-6 xl:gap-8',
-    `grid-cols-1`,
+    'grid-cols-1',
     `md:grid-cols-${cols.md}`,
     `xl:grid-cols-${cols.xl}`,
   ].join(' ');
@@ -283,7 +237,10 @@ function CardsGrid({
   return (
     <div ref={containerRef} className={`${gridClass} ${className}`}>
       {cards.map((c, i) => {
-        const showOverlay = isOverlayActive(i);
+        const isExpanded = expandedIdx === i;
+
+        const toggle = () => setExpandedIdx(isExpanded ? null : i);
+
         return (
           <article
             key={c.title}
@@ -297,10 +254,10 @@ function CardsGrid({
             ].join(' ')}
             style={{ transitionDuration: '600ms', transitionTimingFunction: 'ease-out' }}
           >
-            {/* Imagen */}
+            {/* Imagen + click en cualquier parte */}
             <div
               className="relative aspect-[4/3] cursor-pointer"
-              onClick={() => onToggleOverlay(i)}
+              onClick={toggle}
             >
               <img
                 src={c.img}
@@ -308,18 +265,21 @@ function CardsGrid({
                 className="absolute inset-0 w-full h-full object-cover"
               />
 
-              {/* Overlay: sube desde abajo (hover en desktop / toggle en touch) */}
+              {/* Overlay: bottom sheet en hover → FULL overlay al clic */}
               <div
                 className={[
+                  // base
                   'absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-[1px] border-t border-black/10',
+                  // animación de entrada tipo "desde abajo"
                   'translate-y-full opacity-0',
                   'group-hover:translate-y-0 group-hover:opacity-100',
-                  'transition-transform duration-300 ease-out',
-                  showOverlay ? '!translate-y-0 !opacity-100' : '',
+                  'transition-[transform,opacity] duration-300 ease-out',
+                  // estado expandido: cubrir toda la foto
+                  isExpanded ? 'inset-0 !translate-y-0 !opacity-100 overflow-auto' : '',
                 ].join(' ')}
               >
-                <div className="p-5">
-                  {/* ÚNICA LÍNEA DE ENCABEZADO (formato kicker) */}
+                <div className="p-5 sm:p-6">
+                  {/* Título tipo kicker (se mantiene el mismo formato) */}
                   <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                     {c.title}
                   </div>
@@ -327,16 +287,31 @@ function CardsGrid({
                   {/* Resumen */}
                   <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{c.summary}</p>
 
+                  {/* Detalle: SOLO visible cuando está expandido (dentro de la misma card) */}
+                  <div
+                    className={[
+                      'overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
+                      isExpanded ? 'max-h-[560px] opacity-100 mt-3' : 'max-h-0 opacity-0',
+                    ].join(' ')}
+                  >
+                    <ul className="space-y-1.5 text-[13px] text-black/80 leading-relaxed">
+                      {c.details.map((it) => (
+                        <li key={it} className="pl-3 relative">
+                          <span className="absolute left-0 top-[9px] h-[5px] w-[5px] bg-[#0A2E57]" />
+                          {it}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* CTA: Ver más → Cerrar (toggle) */}
                   <div className="mt-4">
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpen(i);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); toggle(); }}
                       className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
                     >
-                      Ver más
+                      {isExpanded ? 'Cerrar' : 'Ver más'}
                     </button>
                   </div>
                 </div>
@@ -349,103 +324,9 @@ function CardsGrid({
   );
 }
 
-/* ====== MODAL ====== */
-function ServiceModal({
-  title,
-  summary,
-  items,
-  onClose,
-}: {
-  title: string;
-  summary: string;
-  items: string[];
-  onClose: () => void;
-}) {
-  const backdropRef = useRef<HTMLDivElement>(null);
-  const firstBtnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null;
-    firstBtnRef.current?.focus();
-
-    const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-      const focusables = backdropRef.current?.querySelectorAll<HTMLElement>(
-        'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
-      );
-      if (!focusables || focusables.length === 0) return;
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-    };
-    document.addEventListener('keydown', handler);
-    return () => {
-      document.removeEventListener('keydown', handler);
-      prev?.focus();
-    };
-  }, []);
-
-  return (
-    <div
-      ref={backdropRef}
-      className="fixed inset-0 z-[80] bg-black/50"
-      onClick={(e) => {
-        if (e.target === backdropRef.current) onClose();
-      }}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="w-full max-w-[720px] bg-white border border-black/10 shadow-xl transition duration-200">
-          <div className="flex items-start justify-between p-6 border-b border-black/10">
-            <div>
-              <h4 className="text-[16px] text-black/90">{title}</h4>
-              <p className="mt-1 text-[13px] text-black/70">{summary}</p>
-            </div>
-            <button
-              ref={firstBtnRef}
-              onClick={onClose}
-              aria-label="Cerrar modal"
-              className="p-2 border border-black/20 hover:bg-slate-50 transition"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="p-6">
-            <ul className="space-y-1.5 text-[13px] text-black/80 leading-relaxed">
-              {items.map((it) => (
-                <li key={it} className="pl-3 relative">
-                  <span className="absolute left-0 top-[9px] h-[5px] w-[5px] bg-[#0A2E57]" />
-                  {it}
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ====================== TIPOS Y DATOS ====================== */
 type ServiceCard = {
-  kicker: string; // ya no se muestra en la card, pero lo mantenemos por si se usa luego
+  kicker: string;
   title: string;
   summary: string;
   details: string[];
