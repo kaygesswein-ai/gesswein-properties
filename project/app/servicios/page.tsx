@@ -525,7 +525,7 @@ const ACTIVO_CARDS: ServiceCard[] = [
       'Supervisión de implementación y detalles finales',
       'Home staging para potenciar venta o arriendo',
     ],
-    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Interiores.jpeg',
+    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/IMG_5373.jpeg',
   },
 ];
 
