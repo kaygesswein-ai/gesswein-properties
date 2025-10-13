@@ -111,7 +111,7 @@ const TEAM_PRINCIPAL: Member[] = [
 
 // Alianzas / colaboradores (puedes editar/añadir)
 const ALLIES = [
-  { name: 'Irene Puelma', area: 'Corredores de Propiedades', photo: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Irene%20Puelma.png', blurb: 'Canje de Propiedades.' },
+  { name: 'Irene Puelma Propiedades', area: 'Co-Brokerage Alliance', photo: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Irene%20Puelma.png', blurb: 'Una red de colaboración estratégica que amplía el alcance de Gesswein Properties, conectándonos con otras corredoras de excelencia para ofrecer a nuestros clientes un portafolio más amplio y curado, y así encontrar el match perfecto entre personas y propiedades.' },
   { name: 'Estudio DF', area: 'Diseño Interior', photo: '/allies/ally-2.jpg', blurb: 'Interiorismo y styling de espacios.' },
   { name: 'ProStudio', area: 'Render & 3D', photo: '/allies/ally-3.jpg', blurb: 'Visualización arquitectónica y renders fotorrealistas.' },
   { name: 'Legal Partners', area: 'Legal', photo: '/allies/ally-4.jpg', blurb: 'Apoyo contractual y regulatorio.' },
