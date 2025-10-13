@@ -111,7 +111,7 @@ const TEAM_PRINCIPAL: Member[] = [
 
 // Alianzas / colaboradores (puedes editar/añadir)
 const ALLIES = [
-  { name: 'Irene Puelma', area: 'Arquitectura', photo: '/allies/irene.jpg', blurb: 'Colaboración en proyectos residenciales de alto estándar.' },
+  { name: 'Irene Puelma', area: 'Corredores de Propiedades', photo: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Irene%20Puelma.png', blurb: 'Canje de Propiedades.' },
   { name: 'Estudio DF', area: 'Diseño Interior', photo: '/allies/ally-2.jpg', blurb: 'Interiorismo y styling de espacios.' },
   { name: 'ProStudio', area: 'Render & 3D', photo: '/allies/ally-3.jpg', blurb: 'Visualización arquitectónica y renders fotorrealistas.' },
   { name: 'Legal Partners', area: 'Legal', photo: '/allies/ally-4.jpg', blurb: 'Apoyo contractual y regulatorio.' },
