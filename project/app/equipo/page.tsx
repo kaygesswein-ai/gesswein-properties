@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -195,8 +194,8 @@ export default function EquipoPage() {
 
             <div className="mt-12 grid md:grid-cols-2 gap-6">
               <article className="border border-black/10 bg-white p-6 shadow-sm">
-                {/* subtítulo institucional (mismo tamaño, color corporativo y espaciado) */}
-                <h3 className="text-[15px] tracking-wide uppercase text-[#0A2E57] mb-2">
+                {/* MISIÓN: mismo tamaño/color, ahora con tracking institucional */}
+                <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-2">
                   Misión
                 </h3>
                 <p className="text-[13px] text-black/70 leading-relaxed">
@@ -207,7 +206,8 @@ export default function EquipoPage() {
               </article>
 
               <article className="border border-black/10 bg-white p-6 shadow-sm">
-                <h3 className="text-[15px] tracking-wide uppercase text-[#0A2E57] mb-2">
+                {/* VISIÓN: mismo tamaño/color, ahora con tracking institucional */}
+                <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-2">
                   Visión
                 </h3>
                 <p className="text-[13px] text-black/70 leading-relaxed">
@@ -220,10 +220,10 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* ================= BLOQUE 2: NUESTRA CULTURA ================= */}
+      {/* ================= BLOQUE 2: NUESTRA CULTURA (título y bajada a la izquierda) ================= */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="pl-2 sm:pl-4 mb-10">
             <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
               NUESTRA CULTURA
             </h3>
@@ -251,13 +251,14 @@ export default function EquipoPage() {
       {/* ================= BLOQUE 3: EQUIPO (ZIG-ZAG) ================= */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          {/* Título + bajada alineados a la izquierda y con el texto “complementaria” */}
+          <div className="pl-2 sm:pl-4 mb-10">
             <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
               EQUIPO
             </h3>
-            <p className="text-[14px] text-black/70 mt-3 max-w-3xl mx-auto">
-              En Gesswein Properties combinamos criterio arquitectónico, respaldo legal y mirada financiera
-              para que cada decisión inmobiliaria sea segura, rentable y estética.
+            <p className="text-[14px] text-black/70 mt-3 max-w-3xl">
+              En Gesswein Properties, cada integrante aporta una mirada complementaria: arquitectura, derecho,
+              finanzas y comunicación se integran para elevar cada proyecto a su máxima expresión.
             </p>
           </div>
 
@@ -266,15 +267,11 @@ export default function EquipoPage() {
               <TeamRow key={m.name} m={m} />
             ))}
           </div>
-
-          <p className="text-[14px] text-black/70 mt-12 leading-relaxed text-center max-w-4xl mx-auto">
-            En Gesswein Properties, cada integrante aporta una mirada complementaria: arquitectura, derecho,
-            finanzas y comunicación se integran para elevar cada proyecto a su máxima expresión.
-          </p>
+          {/* (Se eliminó el párrafo de cierre que iba después del bloque del equipo) */}
         </div>
       </section>
 
-      {/* ================= BLOQUE 4: ALIANZAS & COLABORADORES ================= */}
+      {/* ================= BLOQUE 4: ALIANZAS & COLABORADORES (cards estilo Servicios) ================= */}
       <section className="py-16 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="pl-2 sm:pl-4 mb-10">
@@ -286,31 +283,44 @@ export default function EquipoPage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          {/* Grid y proporciones idénticas a las cards de Servicios */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 xl:gap-8">
             {ALLIES.map((a) => (
               <article
                 key={a.name}
-                className="border border-black/10 bg-white p-5 shadow-sm transition will-change-transform"
+                className="group relative overflow-hidden border border-slate-200 bg-white shadow-sm select-none transition transform hover:-translate-y-[4px] hover:shadow-md"
+                style={{ transitionDuration: '600ms', transitionTimingFunction: 'ease-out' }}
               >
-                <div className="w-full aspect-square bg-slate-100 border border-black/10 mb-4 overflow-hidden">
+                {/* Imagen 4:3 */}
+                <div className="relative aspect-[4/3]">
                   <Image
                     src={a.photo}
                     alt={a.name}
-                    width={600}
-                    height={600}
-                    className="w-full h-full object-cover"
+                    width={1200}
+                    height={900}
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
                 </div>
-                <h4 className="text-[15px] text-black/90">{a.name}</h4>
-                <div className="text-[12px] text-[#0A2E57]">{a.area}</div>
-                <p className="text-[13px] text-black/70 mt-2 leading-relaxed">{a.blurb}</p>
+
+                {/* Overlay desde abajo, sin botón */}
+                <div
+                  className="absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-[1px] border-t border-black/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-transform duration-300 ease-out"
+                >
+                  <div className="p-5">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                      {a.area}
+                    </div>
+                    <h4 className="mt-1 text-[15px] text-black/90 tracking-wide">{a.name}</h4>
+                    <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{a.blurb}</p>
+                  </div>
+                </div>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ================= CTA FINAL ================= */}
+      {/* ================= CTA FINAL (botones con estilo de Servicios) ================= */}
       <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
@@ -323,7 +333,7 @@ export default function EquipoPage() {
           <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="mailto:contacto@gessweinproperties.cl?subject=Quiero%20trabajar%20con%20ustedes"
-              className="inline-flex items-center justify-center px-5 py-3 border border-black/20"
+              className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
             >
               Enviar correo
             </a>
@@ -331,7 +341,7 @@ export default function EquipoPage() {
               href="https://wa.me/56912345678?text=Hola%2C%20quiero%20sumarme%20al%20equipo%20de%20Gesswein%20Properties"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center px-5 py-3 border border-black/20"
+              className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
             >
               WhatsApp
             </a>
@@ -408,28 +418,4 @@ function TeamRow({ m }: { m: Member }) {
             </a>
           )}
           {m.linkedin && (
-            <a href={m.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-3 py-2 border border-black/20 text-[13px]">
-              <Linkedin className="h-4 w-4" /> LinkedIn
-            </a>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start border border-black/10 bg-white p-8 shadow-sm">
-      {m.align === 'left' ? (
-        <>
-          {photoBlock}
-          {textBlock}
-        </>
-      ) : (
-        <>
-          {textBlock}
-          {photoBlock}
-        </>
-      )}
-    </div>
-  );
-}
+            <a href={m.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center gap-
