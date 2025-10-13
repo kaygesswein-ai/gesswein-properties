@@ -22,9 +22,9 @@ const HERO_IMG =
 // Fotos (reemplaza por rutas reales al tenerlas)
 const PHOTOS = {
   carolina: '/team/carolina-san-martin.png',
-  alberto: '/team/alberto-gesswein.jpg',
-  jan: '/team/jan-gesswein.jpg',
-  kay: '/team/kay-gesswein.jpg',
+  alberto: '/team/alberto-gesswein.png',
+  jan: '/team/jan-gesswein.png',
+  kay: '/team/kay-gesswein.png',
 };
 
 // Bloque: Equipo principal (zig-zag)
