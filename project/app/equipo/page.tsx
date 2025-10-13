@@ -46,12 +46,12 @@ const TEAM_PRINCIPAL: Member[] = [
     name: 'Carolina San Martín',
     roleLine: 'Managing Partner · Arquitecta',
     bio: [
-      'Arquitecta con más de 15 años de experiencia liderando proyectos residenciales de alto estándar.',
+      'Arquitecta con más de 40 años de experiencia liderando proyectos de alto estándar.',
       'Especialista en normativas municipales, sustentabilidad y gestión integral de diseño.',
       'Dirige el desarrollo arquitectónico de Gesswein Properties, asegurando que cada propiedad combine belleza, funcionalidad y valorización a largo plazo.',
     ],
     education: 'Arquitecta, Pontificia Universidad Católica de Chile.',
-    specialties: ['Arquitectura residencial', 'Sustentabilidad', 'Gestión de proyectos'],
+    specialties: ['Arquitectura residencial', 'Normativas municipales', 'Gestión de proyectos'],
     email: 'carolina@gessweinproperties.cl',
     phone: '+56 9 9331 8039',
     linkedin:
@@ -61,14 +61,14 @@ const TEAM_PRINCIPAL: Member[] = [
   },
   {
     name: 'Alberto Gesswein',
-    roleLine: 'Managing Partner · Productor Ejecutivo',
+    roleLine: 'Partner · Productor Ejecutivo · Periodista',
     bio: [
-      'Periodista con más de 20 años de trayectoria en dirección y comunicación estratégica.',
+      'Periodista con más de 40 años de trayectoria en producción ejecutiva, dirección de proyectos y comunicación estratégica.',
       'Encabeza la visión institucional de Gesswein Properties, integrando excelencia técnica y un enfoque humano en cada negocio.',
       'Su experiencia en liderazgo y negociación otorga solidez y coherencia a la firma.',
     ],
     education: 'Periodista, Pontificia Universidad Católica de Chile.',
-    specialties: ['Corretaje inmobiliario', 'Comunicación estratégica', 'Negociación'],
+    specialties: ['Gestión de proyectos', 'Comunicación estratégica', 'Negociación'],
     email: 'alberto@gesswein.tv',
     phone: '+56 9 9887 1751',
     linkedin: 'https://www.linkedin.com/in/alberto-gesswein-4a8246101/',
@@ -77,7 +77,7 @@ const TEAM_PRINCIPAL: Member[] = [
   },
   {
     name: 'Jan Gesswein',
-    roleLine: 'Socio Legal · Abogado',
+    roleLine: 'Partner · Abogado',
     bio: [
       'Abogado especializado en derecho inmobiliario y regulaciones urbanas.',
       'Supervisa todos los aspectos legales de las operaciones, asegurando procesos transparentes, contratos sólidos y cumplimiento normativo.',
@@ -93,7 +93,7 @@ const TEAM_PRINCIPAL: Member[] = [
   },
   {
     name: 'Kay Gesswein',
-    roleLine: 'Socio de Finanzas y Marketing · Ingeniero Comercial',
+    roleLine: 'Partner · Ingeniero Comercial',
     bio: [
       'Ingeniero Comercial con Magíster en Finanzas.',
       'Experto en marketing digital y producción visual inmobiliaria.',
