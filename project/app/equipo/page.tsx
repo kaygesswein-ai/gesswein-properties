@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   Users,
@@ -32,16 +32,16 @@ const PHOTOS = {
 type Member = {
   id: string;
   name: string;
-  roleLine: string;
-  bioShort: string;          // resumen visible
-  bioDetail: string[];       // detalle en panel
+  roleLine: string;      // bajo el nombre (formato corporativo)
+  bioShort: string;      // resumen visible
+  bioDetail: string[];   // descripción adicional en el panel
   education: string;
   specialties: string;
   email?: string;
   phone?: string;
   linkedin?: string;
   photo?: string;
-  align: 'left' | 'right';   // foto a la izquierda o derecha
+  align: 'left' | 'right'; // foto a la izquierda/derecha en desktop
 };
 
 const TEAM_PRINCIPAL: Member[] = [
@@ -116,7 +116,7 @@ const TEAM_PRINCIPAL: Member[] = [
   },
 ];
 
-// Alianzas / colaboradores (con overlay tipo “Servicios”)
+// Alianzas / colaboradores (cards estilo “Servicios”)
 const ALLIES = [
   {
     name: 'Irene Puelma Propiedades',
@@ -126,71 +126,52 @@ const ALLIES = [
     blurb:
       'Red estratégica que amplía el alcance de Gesswein Properties con corredoras de excelencia y un portafolio curado.',
   },
-  {
-    name: 'Estudio DF',
-    area: 'Diseño Interior',
-    photo: '/allies/ally-2.jpg',
-    blurb: 'Interiorismo y styling de espacios.',
-  },
-  {
-    name: 'ProStudio',
-    area: 'Render & 3D',
-    photo: '/allies/ally-3.jpg',
-    blurb: 'Visualización arquitectónica y renders fotorrealistas.',
-  },
-  {
-    name: 'Legal Partners',
-    area: 'Legal',
-    photo: '/allies/ally-4.jpg',
-    blurb: 'Apoyo contractual y regulatorio.',
-  },
-  {
-    name: 'BrokerLab',
-    area: 'Finanzas',
-    photo: '/allies/ally-5.jpg',
-    blurb: 'Hipotecas y estructuración de financiamiento.',
-  },
-  {
-    name: 'Foto360',
-    area: 'Producción Visual',
-    photo: '/allies/ally-6.jpg',
-    blurb: 'Foto, video y tour 360°.',
-  },
+  { name: 'Estudio DF', area: 'Diseño Interior', photo: '/allies/ally-2.jpg', blurb: 'Interiorismo y styling de espacios.' },
+  { name: 'ProStudio', area: 'Render & 3D', photo: '/allies/ally-3.jpg', blurb: 'Visualización arquitectónica y renders fotorrealistas.' },
+  { name: 'Legal Partners', area: 'Legal', photo: '/allies/ally-4.jpg', blurb: 'Apoyo contractual y regulatorio.' },
+  { name: 'BrokerLab', area: 'Finanzas', photo: '/allies/ally-5.jpg', blurb: 'Hipotecas y estructuración de financiamiento.' },
+  { name: 'Foto360', area: 'Producción Visual', photo: '/allies/ally-6.jpg', blurb: 'Foto, video y tour 360°.' },
 ];
 
 /* =========================
    CULTURA
    ========================= */
 const CULTURE = [
-  {
-    icon: Award,
-    title: 'Excelencia',
-    text:
-      'Buscamos la perfección en cada detalle, desde la asesoría inicial hasta la entrega final.',
-  },
-  {
-    icon: Users,
-    title: 'Transparencia',
-    text:
-      'Comunicación directa, procesos claros y decisiones fundadas en información verificable.',
-  },
-  {
-    icon: Briefcase,
-    title: 'Innovación',
-    text:
-      'Metodologías y herramientas digitales para mejorar cada experiencia.',
-  },
-  {
-    icon: Palette,
-    title: 'Criterio & Estilo',
-    text:
-      'Visión arquitectónica, rigor financiero y sensibilidad estética en cada proyecto.',
-  },
+  { icon: Award,    title: 'Excelencia',        text: 'Buscamos la perfección en cada detalle, desde la asesoría inicial hasta la entrega final.' },
+  { icon: Users,    title: 'Transparencia',     text: 'Comunicación directa, procesos claros y decisiones fundadas en información verificable.' },
+  { icon: Briefcase,title: 'Innovación',        text: 'Metodologías y herramientas digitales para mejorar cada experiencia.' },
+  { icon: Palette,  title: 'Criterio & Estilo', text: 'Visión arquitectónica, rigor financiero y sensibilidad estética en cada proyecto.' },
 ];
 
 export default function EquipoPage() {
+  // Estado de panel abierto (una a la vez)
   const [openId, setOpenId] = useState<string | null>(null);
   const toggle = (id: string) => setOpenId((curr) => (curr === id ? null : id));
+
+  // Scroll-reveal para las cards del equipo (fade-in + slide-up)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState<boolean[]>(Array(TEAM_PRINCIPAL.length).fill(false));
+
+  useEffect(() => {
+    const nodes = containerRef.current?.querySelectorAll('[data-team-card]') ?? [];
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            const idx = Number((e.target as HTMLElement).dataset.index);
+            setVisible((prev) => {
+              const next = [...prev];
+              next[idx] = true;
+              return next;
+            });
+          }
+        });
+      },
+      { threshold: 0.18, rootMargin: '0px 0px -10% 0px' }
+    );
+    nodes.forEach((n) => io.observe(n));
+    return () => io.disconnect();
+  }, []);
 
   return (
     <main className="bg-white">
@@ -231,7 +212,6 @@ export default function EquipoPage() {
 
           <div className="mt-12 grid md:grid-cols-2 gap-6">
             <article className="border border-black/10 bg-white p-6 shadow-sm">
-              {/* subtítulo institucional con tracking de títulos */}
               <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-2">
                 Misión
               </h3>
@@ -283,7 +263,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* ================= BLOQUE 3: EQUIPO — CARDS BIPARTITAS ================= */}
+      {/* ================= BLOQUE 3: EQUIPO — CARDS BIPARTITAS (revisión final) ================= */}
       <section id="equipo" className="py-16">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium text-left">
@@ -295,90 +275,151 @@ export default function EquipoPage() {
             finanzas y comunicación se integran para elevar cada proyecto a su máxima expresión.
           </p>
 
-          <div className="mt-12 flex flex-col gap-10">
-            {TEAM_PRINCIPAL.map((m) => (
-              <article key={m.id} className="border border-black/10 rounded-2xl p-5 bg-white shadow-sm">
-                <div className="grid gap-8 md:grid-cols-2 items-stretch">
-                  {/* FOTO (bordes rectos, sin zoom, sin overlay) */}
-                  <div className={`${m.align === 'right' ? 'order-2 md:order-2' : ''} overflow-hidden`}>
-                    {m.photo ? (
-                      <Image
-                        src={m.photo}
-                        alt={m.name}
-                        width={1200}
-                        height={900}
-                        className="w-full h-full object-cover rounded-none"
-                      />
-                    ) : (
-                      <div className="w-full aspect-[4/3] bg-slate-100 border border-black/10 flex items-center justify-center">
-                        <Users className="h-12 w-12 text-slate-400" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* PANEL BIO (anclado, sin flotar) */}
-                  <div className={`${m.align === 'right' ? 'order-1 md:order-1' : ''} flex flex-col`}>
-                    <header className="pb-4 mb-4 border-b border-black/10">
-                      <h3 className="text-[20px] font-medium text-black/90">{m.name}</h3>
-                      <p className="uppercase text-[13px] tracking-[.2em] text-[#0A2E57]">{m.roleLine}</p>
-                    </header>
-
-                    {/* Resumen corto siempre visible */}
-                    <p className="text-[14px] text-black/70 leading-relaxed">
-                      {m.bioShort}
-                    </p>
-
-                    {/* Toggle detalle */}
-                    <button
-                      className="mt-4 self-start underline underline-offset-4 text-[13px]"
-                      aria-expanded={openId === m.id}
-                      aria-controls={`bio-${m.id}`}
-                      onClick={() => toggle(m.id)}
-                    >
-                      {openId === m.id ? 'Cerrar' : 'Ver perfil'}
-                    </button>
-
-                    {/* Detalle extendido: dentro de la card */}
+          <div ref={containerRef} className="mt-12 flex flex-col gap-10">
+            {TEAM_PRINCIPAL.map((m, idx) => {
+              const cardVisible = visible[idx];
+              return (
+                <article
+                  key={m.id}
+                  data-team-card
+                  data-index={idx}
+                  className={[
+                    'border border-black/10 bg-white shadow-sm p-5',
+                    'transition duration-300 ease-out',
+                    'opacity-0 translate-y-3',
+                    cardVisible ? 'opacity-100 translate-y-0' : '',
+                  ].join(' ')}
+                  style={{ borderRadius: 0 }}
+                >
+                  <div className="grid gap-8 md:grid-cols-2 items-stretch">
+                    {/* FOTO: mobile siempre arriba (order-1). En desktop, zig-zag usando md:order-* */}
                     <div
-                      id={`bio-${m.id}`}
-                      hidden={openId !== m.id}
-                      className="mt-4 grid gap-4 md:grid-cols-2 bg-white p-4 rounded-xl border border-black/10"
+                      className={[
+                        'overflow-hidden',
+                        m.align === 'right' ? 'md:order-2' : 'md:order-1',
+                      ].join(' ')}
                     >
-                      <div>
-                        {m.bioDetail.map((p, idx) => (
-                          <p key={idx} className="mb-3 text-[13px] text-black/70 leading-relaxed">
+                      {m.photo ? (
+                        <Image
+                          src={m.photo}
+                          alt={m.name}
+                          width={1200}
+                          height={900}
+                          className="w-full h-full object-cover"
+                          style={{ borderRadius: 0 }}
+                        />
+                      ) : (
+                        <div className="w-full aspect-[4/3] bg-slate-100 border border-black/10 flex items-center justify-center">
+                          <Users className="h-12 w-12 text-slate-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* COLUMNA TEXTO: mobile order-2; en desktop alterna */}
+                    <div
+                      className={[
+                        'flex flex-col self-stretch',
+                        m.align === 'right' ? 'md:order-1' : 'md:order-2',
+                      ].join(' ')}
+                    >
+                      <header className="pb-4 mb-4 border-b border-black/10">
+                        <h3 className="text-[20px] font-medium text-black/90">{m.name}</h3>
+                        <p className="uppercase text-[13px] tracking-[.2em] text-[#0A2E57]">{m.roleLine}</p>
+                      </header>
+
+                      {/* Resumen corto visible */}
+                      <p className="text-[14px] text-black/70 leading-relaxed">
+                        {m.bioShort}
+                      </p>
+
+                      {/* Botón Ver perfil */}
+                      <button
+                        className="mt-4 self-start text-[12px] uppercase tracking-[.25em] border border-black/25 px-4 py-2 hover:bg-[#0A2E57] hover:text-white transition"
+                        aria-expanded={openId === m.id}
+                        aria-controls={`bio-${m.id}`}
+                        onClick={() => toggle(m.id)}
+                      >
+                        {openId === m.id ? 'Cerrar' : 'Ver perfil'}
+                      </button>
+
+                      {/* Panel extendido (una sola columna) */}
+                      <div
+                        id={`bio-${m.id}`}
+                        aria-labelledby={m.id}
+                        className={[
+                          'overflow-hidden transition-all duration-300 ease-out',
+                          openId === m.id ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0',
+                          'border border-black/10 bg-white p-4',
+                        ].join(' ')}
+                        style={{ borderRadius: 0 }}
+                      >
+                        {/* Descripción adicional */}
+                        {m.bioDetail.map((p, i) => (
+                          <p key={i} className="mb-3 text-[13px] text-black/70 leading-relaxed">
                             {p}
                           </p>
                         ))}
-                        <p className="text-xs font-semibold text-slate-500">Educación</p>
-                        <p className="text-[13px]">{m.education}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500">Especialidades</p>
-                        <p className="text-[13px]">{m.specialties}</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
+
+                        {/* EDUCACIÓN */}
+                        <div className="mt-2">
+                          <div className="flex items-center gap-2">
+                            <Award className="h-4 w-4 text-[#0A2E57]" />
+                            <span className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                              Educación
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[13px] text-black/80">{m.education}</p>
+                        </div>
+
+                        {/* ESPECIALIDADES */}
+                        <div className="mt-4">
+                          <div className="flex items-center gap-2">
+                            <Briefcase className="h-4 w-4 text-[#0A2E57]" />
+                            <span className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                              Especialidades
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[13px] text-black/80">{m.specialties}</p>
+                        </div>
+
+                        {/* CONTACTO (solo valores, linkeados) */}
+                        <div className="mt-4 space-y-1">
                           {m.email && (
-                            <a href={`mailto:${m.email}`} className="btn-outline-sm">
-                              <Mail className="h-4 w-4" /> Email
+                            <a
+                              href={`mailto:${m.email}`}
+                              aria-label={`Enviar correo a ${m.name}`}
+                              className="block text-[13px] text-[#0A2E57] underline underline-offset-2"
+                            >
+                              {m.email}
                             </a>
                           )}
                           {m.phone && (
-                            <a href={`tel:${m.phone.replace(/\s+/g, '')}`} className="btn-outline-sm">
-                              <Phone className="h-4 w-4" /> {m.phone}
+                            <a
+                              href={`tel:${m.phone.replace(/\s+/g, '')}`}
+                              aria-label={`Llamar a ${m.name}`}
+                              className="block text-[13px] text-[#0A2E57] underline underline-offset-2"
+                            >
+                              {m.phone}
                             </a>
                           )}
                           {m.linkedin && (
-                            <a href={m.linkedin} target="_blank" rel="noopener" className="btn-outline-sm">
-                              <Linkedin className="h-4 w-4" /> LinkedIn
+                            <a
+                              href={m.linkedin}
+                              target="_blank"
+                              rel="noopener"
+                              aria-label={`Abrir LinkedIn de ${m.name}`}
+                              className="block text-[13px] text-[#0A2E57] underline underline-offset-2"
+                            >
+                              {m.linkedin.replace(/^https?:\/\//, '')}
                             </a>
                           )}
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -398,6 +439,7 @@ export default function EquipoPage() {
               <article
                 key={a.name}
                 className="group relative overflow-hidden border border-slate-200 bg-white shadow-sm select-none transition transform hover:-translate-y-[4px] hover:shadow-md"
+                style={{ borderRadius: 0 }}
               >
                 <div className="relative aspect-[4/3]">
                   <Image
@@ -450,10 +492,4 @@ export default function EquipoPage() {
       </section>
     </main>
   );
-}
-
-/* ================= UTILS: estilos de botón pequeño (coincide con Servicios) ================= */
-declare module 'react' {
-  // solo para que TS no se queje por className composition en strings
-  // (no hace nada en runtime)
 }
