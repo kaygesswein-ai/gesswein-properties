@@ -41,7 +41,7 @@ type Member = {
   bioDetail: string[];   // descripción adicional en el panel
   education: string;
   specialties: string;
-  email?: string;        // NO se muestra (por requerimiento), lo dejamos por si a futuro se usa
+  email?: string;        // no se muestra por ahora
   phone?: string;
   linkedin?: string;
   photo?: string;
@@ -130,6 +130,11 @@ const ALLIES = [
     blurb:
       'Red estratégica que amplía el alcance de Gesswein Properties con corredoras de excelencia y un portafolio curado.',
   },
+  { name: 'Estudio DF', area: 'Diseño Interior', photo: '/allies/ally-2.jpg', blurb: 'Interiorismo y styling de espacios.' },
+  { name: 'ProStudio', area: 'Render & 3D', photo: '/allies/ally-3.jpg', blurb: 'Visualización arquitectónica y renders fotorrealistas.' },
+  { name: 'Legal Partners', area: 'Legal', photo: '/allies/ally-4.jpg', blurb: 'Apoyo contractual y regulatorio.' },
+  { name: 'BrokerLab', area: 'Finanzas', photo: '/allies/ally-5.jpg', blurb: 'Hipotecas y estructuración de financiamiento.' },
+  { name: 'Foto360', area: 'Producción Visual', photo: '/allies/ally-6.jpg', blurb: 'Foto, video y tour 360°.' },
 ];
 
 /* =========================
@@ -196,7 +201,7 @@ export default function EquipoPage() {
       </section>
 
       {/* ================= NUEVA SECCIÓN: NUESTRA HISTORIA ================= */}
-      <section className="py-24 bg-white">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-8 md:grid-cols-2 items-stretch">
             {/* Texto izquierda en desktop; en mobile va debajo de la foto */}
@@ -223,9 +228,13 @@ export default function EquipoPage() {
               </div>
             </div>
 
-            {/* Foto derecha en desktop; en mobile va arriba */}
+            {/* Foto derecha en desktop; en mobile va arriba
+                h-[260px] en mobile; en desktop ocupa el ALTO del texto gracias a items-stretch + h-full */}
             <div className="md:order-2 order-1">
-              <div className="w-full aspect-[4/3] overflow-hidden border border-black/10" style={{ borderRadius: 0 }}>
+              <div
+                className="w-full h-[260px] md:h-full overflow-hidden border border-black/10"
+                style={{ borderRadius: 0 }}
+              >
                 <img
                   src={HISTORIA_IMG}
                   alt="Gesswein Properties — Nuestra Historia"
@@ -503,7 +512,7 @@ export default function EquipoPage() {
             Súmate para ayudarnos a captar propiedades y crecer junto a la comunidad Gesswein Properties.
           </p>
 
-          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="mailto:contacto@gessweinproperties.cl?subject=Quiero%20trabajar%20con%20ustedes"
               className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
