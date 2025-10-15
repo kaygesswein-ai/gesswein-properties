@@ -324,7 +324,7 @@ export default function EquipoPage() {
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-12">
             Nuestra Cultura
           </h3>
-        <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3">
             {CULTURE.map((c) => (
               <article
                 key={c.title}
@@ -343,7 +343,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — GRIS (Mosaico de 4 diamantes) */}
+      {/* 4) EQUIPO — GRIS (Mosaico de rombos con recomposición tipo sprite) */}
       <section id="equipo" className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6 team-mosaic">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
@@ -351,189 +351,11 @@ export default function EquipoPage() {
           </h2>
           <p className="mt-3 max-w-3xl text-[14px] text-black/70 leading-relaxed">
             En Gesswein Properties integramos arquitectura, derecho, finanzas y comunicación
-            estratégica para ofrecer una asesoría integral y humana. Cada integrante aporta una
-            mirada experta que convierte la complejidad inmobiliaria en un proceso claro, medible y
-            elegante.
+            estratégica para ofrecer una asesoría integral y humana.
           </p>
 
-          {/* MOSAICO */}
-          <div
-            className={`mosaic ${openId ? 'is-composed' : ''}`}
-            data-active={openId ?? ''}
-            style={
-              openId
-                ? ({
-                    // sprite activo (rostro completo)
-                    ['--sprite' as any]: `url('${TEAM_PRINCIPAL.find(
-                      (m) => m.id === openId
-                    )?.photo ?? ''}')`,
-                  } as React.CSSProperties)
-                : undefined
-            }
-          >
-            {(['carolina', 'alberto', 'jan', 'kay'] as const).map((id, i) => {
-              const m = TEAM_PRINCIPAL.find((x) => x.id === id)!;
-              // ÍCONO por persona (puedes reemplazar las rutas por tus SVG reales)
-              const iconUrl =
-                id === 'carolina'
-                  ? "/icons/arquitectura.svg"
-                  : id === 'alberto'
-                  ? "/icons/comunicacion.svg"
-                  : id === 'jan'
-                  ? "/icons/legal.svg"
-                  : "/icons/finanzas.svg";
-
-              const tileClass = ['tile', `t${i + 1}`].join(' ');
-              return (
-                <button
-                  key={id}
-                  className={tileClass}
-                  data-person={id}
-                  aria-controls="profile"
-                  aria-expanded={openId === id}
-                  aria-label={`Ver perfil de ${m.name}`}
-                  onClick={() => setOpenId((curr) => (curr === id ? null : id))}
-                  style={
-                    {
-                      ['--icon' as any]: `url('${iconUrl}')`,
-                    } as React.CSSProperties
-                  }
-                >
-                  {/* Fallback visual si no hay SVGs: muestra inicial */}
-                  <span className="-rotate-45 sr-only">{m.name}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* PANEL PERFIL */}
-          <div
-            id="profile"
-            className="profile-panel"
-            hidden={!openId}
-            role="region"
-            aria-live="polite"
-          >
-            {openId && (
-              <ProfileCard
-                m={TEAM_PRINCIPAL.find((p) => p.id === openId)!}
-                onClose={() => setOpenId(null)}
-              />
-            )}
-          </div>
+          <Mosaic />
         </div>
-
-        {/* Estilos del mosaico (aislados al bloque) */}
-        <style jsx>{`
-          .team-mosaic {
-            --size: 180px;
-          }
-          .mosaic {
-            position: relative;
-            width: calc(var(--size) * 3);
-            height: calc(var(--size) * 3);
-            margin: 40px auto 0;
-            display: grid;
-            place-items: center;
-            grid-template-areas:
-              ".  t1  ."
-              "t4 tC  t2"
-              ".  t3  .";
-            transition: opacity 0.2s ease;
-          }
-          .tile {
-            width: var(--size);
-            height: var(--size);
-            transform: rotate(45deg);
-            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-            overflow: hidden;
-            border: 1px solid #e6e6e6;
-            background: #fff;
-            transition: transform 0.6s ease, filter 0.3s ease, opacity 0.3s ease,
-              background-position 0.6s ease, background-size 0.6s ease, background-image 0.2s ease;
-            will-change: transform, opacity, background-position, background-size;
-            background-repeat: no-repeat;
-            position: relative;
-          }
-          .t1 {
-            grid-area: t1;
-          }
-          .t2 {
-            grid-area: t2;
-          }
-          .t3 {
-            grid-area: t3;
-          }
-          .t4 {
-            grid-area: t4;
-          }
-
-          /* ---- Estado inicial: íconos ---- */
-          .mosaic:not(.is-composed) .tile {
-            background-image: var(--icon);
-            background-size: 50% 50%;
-            background-position: center;
-            filter: grayscale(0.08);
-          }
-          @media (hover: hover) {
-            .mosaic:not(.is-composed) .tile:hover {
-              filter: brightness(1.06);
-            }
-          }
-
-          /* ---- Estado compuesto: sprite de rostro en 4 cuartos ---- */
-          .mosaic.is-composed .tile {
-            background-image: var(--sprite);
-            background-size: 200% 200%;
-            filter: none;
-          }
-          .mosaic.is-composed .t1 {
-            background-position: 0% 0%;
-          }
-          .mosaic.is-composed .t2 {
-            background-position: 100% 0%;
-          }
-          .mosaic.is-composed .t3 {
-            background-position: 0% 100%;
-          }
-          .mosaic.is-composed .t4 {
-            background-position: 100% 100%;
-          }
-
-          /* Otras piezas se atenúan cuando hay activo */
-          .mosaic.is-composed .tile[aria-expanded='false'] {
-            opacity: 0.4;
-          }
-
-          /* Responsive */
-          @media (max-width: 768px) {
-            .team-mosaic {
-              --size: 120px;
-            }
-            .mosaic {
-              width: calc(var(--size) * 2.6);
-              height: calc(var(--size) * 2.6);
-            }
-          }
-          @media (max-width: 480px) {
-            .team-mosaic {
-              --size: 96px;
-            }
-            .mosaic {
-              width: calc(var(--size) * 2.3);
-              height: calc(var(--size) * 2.3);
-            }
-          }
-
-          /* Panel perfil */
-          .profile-panel {
-            margin: 28px auto 0;
-            max-width: 980px;
-            padding: 24px;
-            border: 1px solid #e6e6e6;
-            transition: opacity 0.3s ease, max-height 0.4s ease;
-          }
-        `}</style>
       </section>
 
       {/* 5) ALIANZAS & COLABORADORES — BLANCO (CON OVERLAY HOVER) */}
@@ -613,6 +435,263 @@ export default function EquipoPage() {
 }
 
 /* ============ SUBCOMPONENTES ============ */
+
+/** Mosaic de rombos:
+ *  - 9 tiles en disposición romboidal (1-2-3-2-1)
+ *  - Estado inicial: íconos monocromos
+ *  - Al activar persona: sprite compuesto (background de 300% x 300%)
+ *  - Transición escalonada (salida -> reacomodo leve -> entrada)
+ */
+function Mosaic() {
+  const [active, setActive] = useState<string>(''); // '', 'carolina'|...
+  const [phase, setPhase] = useState<'idle' | 'leaving' | 'composed'>('idle');
+  const prefersReduced =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Íconos (coloca tus SVG reales en /icons)
+  const ICONS = [
+    '/icons/arquitectura.svg',
+    '/icons/legal.svg',
+    '/icons/finanzas.svg',
+    '/icons/comunicacion.svg',
+  ];
+
+  // Indices (9 rombos)
+  const IDX = Array.from({ length: 9 }, (_, i) => i);
+
+  // Geometría base
+  const TILE = 120; // px base (se ajusta con media queries del estilo)
+  const GAP = 10;
+  const step = (TILE + GAP) / 1.4;
+
+  // Mapa rombo 1-2-3-2-1 (coordenadas absolutas)
+  const initialMap: Record<number, { left: number; top: number }> = {};
+  const rows = [1, 2, 3, 2, 1];
+  let idx = 0;
+  const baseX = (3 * step) / 2; // centra aprox.
+  const baseY = 0;
+  rows.forEach((count, r) => {
+    const rowWidth = (count - 1) * step;
+    for (let c = 0; c < count; c++) {
+      initialMap[idx] = {
+        left: baseX - rowWidth / 2 + c * step,
+        top: baseY + r * step,
+      };
+      idx++;
+    }
+  });
+
+  // ComposeMap: rombo “tenso” (ligera contracción para dar sensación de re-armado)
+  const composeMap: Record<number, { left: number; top: number; posX: number; posY: number }> =
+    {};
+  idx = 0;
+  rows.forEach((count, r) => {
+    const rowWidth = (count - 1) * step * 0.92; // 8% más compacto
+    for (let c = 0; c < count; c++) {
+      // posX/posY para sprite 3x3 (0,50,100) — filas de 2 usan 25/75; fila de 1 usa 50
+      const posY = [0, 25, 50, 75, 100][r];
+      let posX = 50;
+      if (count === 3) posX = [0, 50, 100][c];
+      if (count === 2) posX = [25, 75][c];
+      if (count === 1) posX = 50;
+
+      composeMap[idx] = {
+        left: baseX - rowWidth / 2 + c * step * 0.92,
+        top: baseY + r * step * 0.92 + step * 0.15, // leve ajuste vertical
+        posX,
+        posY,
+      };
+      idx++;
+    }
+  });
+
+  // Manejo de click en persona
+  const selectPerson = (id: string) => {
+    if (active === id) {
+      // Cerrar → volver a íconos
+      setPhase('leaving');
+      setTimeout(() => {
+        setActive('');
+        setPhase('idle');
+      }, prefersReduced ? 0 : 350);
+      return;
+    }
+    // Fase salida
+    setPhase('leaving');
+    setActive(id);
+    // Fase compuesta
+    setTimeout(() => {
+      setPhase('composed');
+    }, prefersReduced ? 0 : 220);
+  };
+
+  // Fallback: al tocar cualquier rombo, activar la persona actual (o Carolina si ninguna)
+  const handleTileClick = () => {
+    if (!active) selectPerson('carolina');
+  };
+
+  const spriteUrl =
+    active ? `url('${TEAM_PRINCIPAL.find((m) => m.id === active)?.photo ?? ''}')` : undefined;
+
+  return (
+    <div className="mt-8">
+      {/* Navegación de personas */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {TEAM_PRINCIPAL.map((m) => (
+          <button
+            key={m.id}
+            onClick={() => selectPerson(m.id)}
+            className={`px-3 py-2 border text-[12px] uppercase tracking-[.2em] ${
+              active === m.id ? 'bg-[#0A2E57] text-white border-[#0A2E57]' : 'border-black/25'
+            }`}
+          >
+            {m.name.split(' ')[0]}
+          </button>
+        ))}
+        {active && (
+          <button
+            onClick={() => selectPerson(active)}
+            className="px-3 py-2 border border-black/25 text-[12px] uppercase tracking-[.2em]"
+          >
+            Cerrar
+          </button>
+        )}
+      </div>
+
+      {/* MOSAICO */}
+      <div
+        className={[
+          'mosaic',
+          phase === 'composed' ? 'is-composed' : '',
+          phase === 'leaving' ? 'is-transitioning' : '',
+        ].join(' ')}
+        style={
+          phase === 'composed'
+            ? ({ ['--sprite' as any]: spriteUrl, ['--tile' as any]: `${TILE}px` } as React.CSSProperties)
+            : ({ ['--tile' as any]: `${TILE}px` } as React.CSSProperties)
+        }
+        data-active={active}
+        aria-live="polite"
+      >
+        {IDX.map((i) => {
+          const ico = ICONS[i % ICONS.length];
+          const pos = phase === 'composed' ? composeMap[i] : initialMap[i];
+          const delayIn = prefersReduced ? 0 : i * 45;
+          const delayOut = prefersReduced ? 0 : (IDX.length - i) * 18;
+
+          return (
+            <button
+              key={i}
+              className="tile"
+              aria-expanded={!!active}
+              aria-controls="profile"
+              onClick={handleTileClick}
+              style={
+                {
+                  left: pos.left,
+                  top: pos.top,
+                  ['--icon' as any]: `url('${ico}')`,
+                  // Cuando compone: sprite 300% y posición particular de cada tile
+                  backgroundSize: phase === 'composed' ? '300% 300%' : '50% 50%',
+                  backgroundPosition:
+                    phase === 'composed' ? `${pos.posX}% ${pos.posY}%` : 'center',
+                  transitionDelay:
+                    phase === 'composed'
+                      ? `${delayIn}ms`
+                      : phase === 'leaving'
+                      ? `${delayOut}ms`
+                      : '0ms',
+                } as React.CSSProperties
+              }
+            >
+              <span className="sr-only">tile {i}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* PANEL PERFIL */}
+      <div id="profile" className="profile-panel" hidden={!active} role="region">
+        {active && (
+          <ProfileCard
+            m={TEAM_PRINCIPAL.find((p) => p.id === active)!}
+            onClose={() => selectPerson(active)}
+          />
+        )}
+      </div>
+
+      {/* Estilos aislados al bloque */}
+      <style jsx>{`
+        .team-mosaic {
+          --gap: 10px;
+        }
+        .mosaic {
+          position: relative;
+          width: calc(5 * (var(--tile) + var(--gap)) / 1.4);
+          height: calc(4 * (var(--tile) + var(--gap)) / 1.4 + var(--tile));
+          margin: 40px auto;
+        }
+        .tile {
+          position: absolute;
+          width: var(--tile);
+          height: var(--tile);
+          transform: rotate(45deg);
+          clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+          overflow: hidden;
+          border: 1px solid #e8e8e8;
+          background-repeat: no-repeat;
+          background-image: var(--icon);
+          background-size: 50% 50%;
+          background-position: center;
+          transition: transform 600ms cubic-bezier(.22,.61,.36,1),
+            opacity 300ms ease, filter 300ms ease,
+            background-size 600ms ease, background-position 600ms ease,
+            background-image 200ms ease;
+          will-change: transform, background-position, background-size, opacity;
+          opacity: 1;
+        }
+        @media (hover: hover) {
+          .tile:hover {
+            filter: brightness(1.06);
+          }
+        }
+        .mosaic.is-transitioning .tile {
+          opacity: 0.15;
+          border-color: transparent;
+        }
+        .mosaic.is-composed .tile {
+          opacity: 1;
+          border-color: transparent;
+          background-image: var(--sprite);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .mosaic {
+            width: calc(4 * (var(--tile) + var(--gap)) / 1.4);
+            margin-top: 28px;
+          }
+        }
+        @media (max-width: 480px) {
+          .mosaic {
+            width: calc(3.4 * (var(--tile) + var(--gap)) / 1.4);
+          }
+        }
+
+        /* Panel */
+        .profile-panel {
+          margin: 28px auto 0;
+          max-width: 980px;
+          padding: 24px;
+          border: 1px solid #e8e8e8;
+          transition: opacity 0.3s ease, max-height 0.4s ease;
+        }
+      `}</style>
+    </div>
+  );
+}
 
 function ProfileCard({ m, onClose }: { m: Member; onClose: () => void }) {
   return (
