@@ -248,7 +248,7 @@ export default function EquipoPage() {
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
             Propuesta de Valor
           </h2>
-        <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl">
+          <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl">
             En Gesswein Properties nos definimos por un enfoque boutique, que combina excelencia
             técnica, comunicación cercana y una estética moderna aplicada a cada proyecto
             inmobiliario. Nuestro compromiso es ofrecer un servicio profesional, transparente y con
@@ -305,18 +305,18 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — GRIS (Ogilvy-like con “salto a la izquierda”) */}
-      <section id="equipo" className="py-16 bg-[#f8f9fb]">
+      {/* 4) EQUIPO — (OGILVY: “salto a la izquierda” + panel que cubre 3 columnas) */}
+      <section id="equipo" className="py-20 bg-[#F8F9FA]">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
             Equipo
           </h2>
-          <p className="mt-3 max-w-3xl text-[14px] text-black/70 leading-relaxed">
+          <p className="mt-3 max-w-3xl text-[14px] text-[#0E2C4A] leading-relaxed">
             En Gesswein Properties integramos arquitectura, derecho, finanzas y comunicación
             estratégica para que cada decisión inmobiliaria sea segura, rentable y estética.
           </p>
 
-          <TeamLeftJump />
+          <TeamOgilvy />
         </div>
       </section>
 
@@ -397,220 +397,270 @@ export default function EquipoPage() {
 }
 
 /* =========================
-   SUBCOMPONENTE: EQUIPO (Ogilvy-like “salto a la izquierda”)
+   SUBCOMPONENTE: EQUIPO estilo OGILVY
+   - Hover: overlay azul con nombre/rol/1 línea
+   - Click: “salta” a la izquierda (FLIP lite) y panel cubre columnas 2–4
+   - Mobile: panel debajo en acordeón
    ========================= */
 
-function TeamLeftJump() {
-  const [activeId, setActiveId] = useState<Member['id'] | null>(null);
+function TeamOgilvy() {
+  const [active, setActive] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [dx, setDx] = useState(0); // desplazamiento del card activo hacia la izquierda
+  const [panelLeft, setPanelLeft] = useState(0); // inicio del panel (px) para cubrir 3 columnas
 
-  // Cerrar con ESC
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setActiveId(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  const open = (id: Member['id']) =>
-    setActiveId((curr) => (curr === id ? null : id));
-
-  const active = TEAM_PRINCIPAL.find((m) => m.id === activeId) || null;
-
-  // 1 línea del resumen para overlay
+  // 1 línea para overlay
   const oneLiner = (s: string) => {
     const first = s.split('. ')[0] || s;
     return first.length > 110 ? first.slice(0, 110) + '…' : first;
   };
 
+  // ESC cierra
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActive(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Calcular FLIP y posición del panel
+  const recalc = (idx: number | null) => {
+    const container = containerRef.current;
+    const cards = cardRefs.current;
+    if (!container || cards.length < 2) return;
+
+    if (idx === null) {
+      setDx(0);
+      setPanelLeft(0);
+      return;
+    }
+
+    const first = cards[0]?.getBoundingClientRect();
+    const target = cards[idx]?.getBoundingClientRect();
+    const cont = container.getBoundingClientRect();
+    const second = cards[1]?.getBoundingClientRect();
+
+    if (first && target) {
+      setDx(-(target.left - first.left)); // mover el activo hasta el borde del primero
+    }
+    if (second) {
+      setPanelLeft(second.left - cont.left); // panel arranca donde comienza la columna 2
+    }
+  };
+
+  useEffect(() => {
+    recalc(active);
+    const onResize = () => recalc(active);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [active]);
+
   return (
     <div className="relative mt-10">
-      {/* GRID de retratos */}
+      {/* FILA DE 4 CARDS (desktop) */}
       <div
         ref={containerRef}
-        className={[
-          'relative grid gap-6',
-          // 4 columnas en desktop; en mobile 1
-          'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-        ].join(' ')}
+        className="relative hidden md:flex gap-6 overflow-hidden"
+        aria-label="Equipo Gesswein"
       >
-        {TEAM_PRINCIPAL.map((m) => {
-          const isActive = activeId === m.id;
-          return (
-            <button
-              key={m.id}
-              onClick={() => open(m.id)}
-              aria-expanded={isActive}
-              className={[
-                'group relative cursor-pointer overflow-hidden aspect-[4/5] border border-black/10 bg-white',
-                'focus:outline-none focus:ring-2 focus:ring-[#0A2E57]',
-                // Cuando hay activa, mantiene su lugar; el panel cubrirá las otras (no interfiere)
-              ].join(' ')}
-              style={{ borderRadius: 0 }}
+        {TEAM_PRINCIPAL.map((m, i) => (
+          <div
+            key={m.id}
+            ref={(el) => (cardRefs.current[i] = el)}
+            className="relative group w-1/4 cursor-pointer select-none"
+            onClick={() => setActive(active === i ? null : i)}
+            aria-expanded={active === i}
+          >
+            {/* Card con foto (aspect 4/5, sin redondeo) */}
+            <div
+              className="relative w-full overflow-hidden border border-black/10"
+              style={{
+                borderRadius: 0,
+                transform: active === i ? `translateX(${dx}px)` : 'translateX(0px)',
+                transition: 'transform 420ms ease',
+              }}
             >
-              <Image
-                src={m.photo || '/team/placeholder.jpg'}
-                alt={m.name}
-                fill
-                className="object-cover"
-                loading="lazy"
-                sizes="(max-width:768px) 100vw, 25vw"
-                priority={false}
-              />
-              {/* Overlay hover (solo desktop) */}
-              <div className="hidden lg:block absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out" />
-              <div className="hidden lg:flex absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out items-end p-5 text-white">
-                <div>
-                  <h3 className="text-[16px] font-medium">{m.name}</h3>
-                  <p className="uppercase text-[12px] tracking-[.2em] text-[#BFD1E5]">
+              <div className="relative w-full aspect-[4/5]">
+                <Image
+                  src={m.photo || '/team/placeholder.jpg'}
+                  alt={m.name}
+                  fill
+                  className="object-cover"
+                  sizes="25vw"
+                  priority={false}
+                />
+              </div>
+
+              {/* Overlay hover (desktop) */}
+              <div className="hidden lg:block absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out" />
+              <div className="hidden lg:flex absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out items-end p-6">
+                <div className="text-white">
+                  <h3 className="text-lg font-semibold">{m.name}</h3>
+                  <p className="text-[#BFD1E5] text-sm uppercase tracking-[.18em]">
                     {m.roleLine}
                   </p>
-                  <p className="mt-2 text-[13px] leading-snug">
+                  <p className="text-white/90 text-xs mt-1 max-w-[85%]">
                     {oneLiner(m.bioShort)}
                   </p>
                 </div>
               </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* PANEL de detalle (desktop: overlay a la derecha; mobile: debajo de la activa) */}
-      {/* Desktop / Tablet >= md: panel absoluto que cubre columnas 2–4 */}
-      <div
-        className={[
-          'hidden md:block',
-          'pointer-events-none', // bloquea clicks por defecto
-          active ? 'pointer-events-auto' : '',
-        ].join(' ')}
-      >
-        <div
-          onClick={() => setActiveId(null)}
-          className={[
-            'absolute top-0 right-0 h-full md:w-[62%]',
-            active ? 'opacity-100' : 'opacity-0',
-            'transition-opacity duration-200 ease-in-out',
-          ].join(' ')}
-        >
-          {/* superficie del panel (clic para cerrar) */}
-          <div
-            className="h-full w-full bg-[#F7F8FA] shadow-xl border-l border-black/10"
-            style={{ borderRadius: 0 }}
-            // si quieres que solo el fondo cierre, descomenta:
-            // onClick={() => setActiveId(null)}
-          >
-            {/* contenido; detener propagación para no cerrar si interactúas dentro */}
-            <div
-              className="h-full overflow-y-auto p-10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {active ? (
-                <>
-                  <h3
-                    className="text-[18px] text-[#0E2C4A] font-medium"
-                    id="panel-title"
-                  >
-                    {active.name}
-                  </h3>
-                  <p className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57] mt-1">
-                    {active.roleLine}
-                  </p>
-
-                  <div className="mt-4 text-[14px] text-black/70 leading-relaxed">
-                    <p className="mb-3">{active.bioShort}</p>
-                    {active.bioDetail.map((p, i) => (
-                      <p key={i} className="mb-3">
-                        {p}
-                      </p>
-                    ))}
-                  </div>
-
-                  <div className="mt-5">
-                    <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                      Educación
-                    </div>
-                    <div className="text-[13px] text-black/80 mt-1">
-                      {active.education}
-                    </div>
-                  </div>
-
-                  <div className="mt-5">
-                    <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                      Especialidades
-                    </div>
-                    <ul className="mt-1 text-[13px] text-black/80 list-disc pl-5">
-                      {active.specialties.split('·').map((s, i) => (
-                        <li key={i}>{s.trim()}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="mt-5 flex flex-col gap-2 text-[13px]">
-                    {active.email && (
-                      <a
-                        href={`mailto:${active.email}`}
-                        className="underline underline-offset-2"
-                        aria-label={`Enviar correo a ${active.name}`}
-                      >
-                        {active.email}
-                      </a>
-                    )}
-                    {active.phone && (
-                      <a
-                        href={`tel:${active.phone.replace(/\s+/g, '')}`}
-                        className="underline underline-offset-2"
-                        aria-label={`Llamar a ${active.name}`}
-                      >
-                        {active.phone}
-                      </a>
-                    )}
-                    {active.linkedin && (
-                      <a
-                        href={active.linkedin}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline underline-offset-2"
-                        aria-label={`Abrir LinkedIn de ${active.name}`}
-                      >
-                        {active.linkedin.replace(/^https?:\/\//, '')}
-                      </a>
-                    )}
-                  </div>
-                </>
-              ) : null}
             </div>
           </div>
-        </div>
+        ))}
+
+        {/* PANEL LATERAL que cubre columnas 2–4 (gris claro) */}
+        {active !== null && (
+          <div
+            className="absolute top-0 h-full bg-[#EAEAEA] shadow-[0_4px_10px_rgba(0,0,0,0.05)] border-l border-black/10 transition-transform duration-500 ease-in-out"
+            style={{
+              left: panelLeft,
+              width: `calc(100% - ${panelLeft}px)`,
+              transform: 'translateX(0)',
+            }}
+            onClick={() => setActive(null)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="h-full w-full flex"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Foto completa dentro del panel (1/3) */}
+              <div className="w-1/3 min-w-[220px] border-r border-black/10">
+                <div className="relative w-full h-full min-h-[420px]">
+                  <Image
+                    src={TEAM_PRINCIPAL[active].photo || '/team/placeholder.jpg'}
+                    alt={TEAM_PRINCIPAL[active].name}
+                    fill
+                    className="object-cover"
+                    sizes="33vw"
+                  />
+                </div>
+              </div>
+
+              {/* Texto (2/3) */}
+              <div className="flex-1 p-10 text-[#0E2C4A] overflow-y-auto">
+                <h3 className="text-2xl font-semibold">
+                  {TEAM_PRINCIPAL[active].name}
+                </h3>
+                <p className="text-[#0A2E57] uppercase tracking-[.2em] text-sm mt-1">
+                  {TEAM_PRINCIPAL[active].roleLine}
+                </p>
+
+                <div className="mt-6 text-[14px] leading-relaxed">
+                  <p className="mb-3">{TEAM_PRINCIPAL[active].bioShort}</p>
+                  {TEAM_PRINCIPAL[active].bioDetail.map((p, i) => (
+                    <p key={i} className="mb-3">
+                      {p}
+                    </p>
+                  ))}
+                </div>
+
+                <div className="mt-6">
+                  <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                    Educación
+                  </div>
+                  <div className="text-[13px] text-black/80 mt-1">
+                    {TEAM_PRINCIPAL[active].education}
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                    Especialidades
+                  </div>
+                  <ul className="mt-1 text-[13px] text-black/80 list-disc pl-5">
+                    {TEAM_PRINCIPAL[active].specialties.split('·').map((s, i) => (
+                      <li key={i}>{s.trim()}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-6 flex flex-col gap-2 text-[13px]">
+                  {TEAM_PRINCIPAL[active].email && (
+                    <a
+                      href={`mailto:${TEAM_PRINCIPAL[active].email}`}
+                      className="underline underline-offset-2"
+                      aria-label={`Enviar correo a ${TEAM_PRINCIPAL[active].name}`}
+                    >
+                      {TEAM_PRINCIPAL[active].email}
+                    </a>
+                  )}
+                  {TEAM_PRINCIPAL[active].phone && (
+                    <a
+                      href={`tel:${TEAM_PRINCIPAL[active].phone.replace(/\s+/g, '')}`}
+                      className="underline underline-offset-2"
+                      aria-label={`Llamar a ${TEAM_PRINCIPAL[active].name}`}
+                    >
+                      {TEAM_PRINCIPAL[active].phone}
+                    </a>
+                  )}
+                  {TEAM_PRINCIPAL[active].linkedin && (
+                    <a
+                      href={TEAM_PRINCIPAL[active].linkedin}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline underline-offset-2"
+                      aria-label={`Abrir LinkedIn de ${TEAM_PRINCIPAL[active].name}`}
+                    >
+                      {TEAM_PRINCIPAL[active].linkedin.replace(/^https?:\/\//, '')}
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Mobile: panel debajo de la tarjeta activa (acordeón) */}
-      <div className="md:hidden mt-4">
-        {TEAM_PRINCIPAL.map((m) => {
-          const isActive = activeId === m.id;
+      {/* MOBILE (≤ md): 1 columna, panel debajo (acordeón) */}
+      <div className="md:hidden mt-8">
+        {TEAM_PRINCIPAL.map((m, i) => {
+          const [open, setOpen] = useState(false); // por-card (para aislar cada acordeón)
+          // Nota: si prefieres un único abierto, pasa el control al estado superior.
           return (
-            <div key={m.id} className="mb-4">
-              {/* encabezado “fantasma”: solo mostramos panel cuando coincide */}
-              {isActive && (
-                <div
-                  className={[
-                    'overflow-hidden transition-all duration-300 ease-in-out',
-                    isActive ? 'max-h-[4000px] opacity-100' : 'max-h-0 opacity-0',
-                    'bg-[#F7F8FA] border border-black/10 p-6',
-                  ].join(' ')}
-                  style={{ borderRadius: 0 }}
-                >
-                  <h3 className="text-[16px] text-[#0E2C4A] font-medium">
+            <div key={m.id} className="mb-6">
+              <button
+                aria-expanded={open}
+                onClick={() => setOpen(!open)}
+                className="block w-full relative overflow-hidden border border-black/10"
+                style={{ borderRadius: 0 }}
+              >
+                <div className="relative w-full aspect-[4/5]">
+                  <Image
+                    src={m.photo || '/team/placeholder.jpg'}
+                    alt={m.name}
+                    fill
+                    className="object-cover"
+                    sizes="100vw"
+                    loading="lazy"
+                  />
+                </div>
+
+                {/* Overlay hover no aplica en touch; lo omitimos */}
+              </button>
+
+              {/* Panel acordeón */}
+              <div
+                className={[
+                  'overflow-hidden transition-all duration-300 ease-in-out',
+                  open ? 'max-h-[4000px] opacity-100' : 'max-h-0 opacity-0',
+                ].join(' ')}
+              >
+                <div className="bg-[#EAEAEA] border border-black/10 p-6" style={{ borderRadius: 0 }}>
+                  <h3 className="text-[18px] font-semibold text-[#0E2C4A]">
                     {m.name}
                   </h3>
-                  <p className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                  <p className="text-[#0A2E57] uppercase tracking-[.2em] text-sm mt-1">
                     {m.roleLine}
                   </p>
 
-                  <div className="mt-3 text-[14px] text-black/70 leading-relaxed">
+                  <div className="mt-4 text-[14px] text-black/80 leading-relaxed">
                     <p className="mb-3">{m.bioShort}</p>
-                    {m.bioDetail.map((p, i) => (
-                      <p key={i} className="mb-3">
+                    {m.bioDetail.map((p, idx) => (
+                      <p key={idx} className="mb-3">
                         {p}
                       </p>
                     ))}
@@ -620,9 +670,7 @@ function TeamLeftJump() {
                     <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
                       Educación
                     </div>
-                    <div className="text-[13px] text-black/80 mt-1">
-                      {m.education}
-                    </div>
+                    <div className="text-[13px] text-black/80 mt-1">{m.education}</div>
                   </div>
 
                   <div className="mt-4">
@@ -630,8 +678,8 @@ function TeamLeftJump() {
                       Especialidades
                     </div>
                     <ul className="mt-1 text-[13px] text-black/80 list-disc pl-5">
-                      {m.specialties.split('·').map((s, i) => (
-                        <li key={i}>{s.trim()}</li>
+                      {m.specialties.split('·').map((s, idx) => (
+                        <li key={idx}>{s.trim()}</li>
                       ))}
                     </ul>
                   </div>
@@ -668,7 +716,7 @@ function TeamLeftJump() {
                     )}
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
