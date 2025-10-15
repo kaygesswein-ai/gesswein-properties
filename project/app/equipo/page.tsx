@@ -156,7 +156,6 @@ const CULTURE = [
    ========================= */
 
 export default function EquipoPage() {
-  // (Se mantiene cualquier estado/efecto que ya tenías arriba; no lo usamos en EQUIPO nuevo)
   return (
     <main className="bg-white">
       {/* HERO */}
@@ -305,7 +304,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — (OGILVY: “salto a la izquierda” + panel que cubre 3 columnas) */}
+      {/* 4) EQUIPO — (OGILVY) */}
       <section id="equipo" className="py-20 bg-[#F8F9FA]">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
@@ -326,7 +325,7 @@ export default function EquipoPage() {
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-4">
             Alianzas & Colaboradores
           </h3>
-          <p className="text-[14px] text-black/70 mb-10">
+        <p className="text-[14px] text-black/70 mb-10">
             Profesionales y estudios con los que trabajamos para elevar el estándar de cada
             proyecto.
           </p>
@@ -346,7 +345,6 @@ export default function EquipoPage() {
                     height={900}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
-                  {/* Overlay inferior (igual a Servicios, sin botón) */}
                   <div className="absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-[1px] border-t border-black/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-transform duration-300 ease-out p-5">
                     <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                       {a.area}
@@ -398,25 +396,20 @@ export default function EquipoPage() {
 
 /* =========================
    SUBCOMPONENTE: EQUIPO estilo OGILVY
-   - Hover: overlay azul con nombre/rol/1 línea
-   - Click: “salta” a la izquierda (FLIP lite) y panel cubre columnas 2–4
-   - Mobile: panel debajo en acordeón
    ========================= */
 
 function TeamOgilvy() {
   const [active, setActive] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const [dx, setDx] = useState(0); // desplazamiento del card activo hacia la izquierda
-  const [panelLeft, setPanelLeft] = useState(0); // inicio del panel (px) para cubrir 3 columnas
+  const [dx, setDx] = useState(0);
+  const [panelLeft, setPanelLeft] = useState(0);
 
-  // 1 línea para overlay
   const oneLiner = (s: string) => {
     const first = s.split('. ')[0] || s;
     return first.length > 110 ? first.slice(0, 110) + '…' : first;
   };
 
-  // ESC cierra
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setActive(null);
@@ -425,7 +418,6 @@ function TeamOgilvy() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Calcular FLIP y posición del panel
   const recalc = (idx: number | null) => {
     const container = containerRef.current;
     const cards = cardRefs.current;
@@ -443,10 +435,10 @@ function TeamOgilvy() {
     const second = cards[1]?.getBoundingClientRect();
 
     if (first && target) {
-      setDx(-(target.left - first.left)); // mover el activo hasta el borde del primero
+      setDx(-(target.left - first.left));
     }
     if (second) {
-      setPanelLeft(second.left - cont.left); // panel arranca donde comienza la columna 2
+      setPanelLeft(second.left - cont.left);
     }
   };
 
@@ -459,7 +451,7 @@ function TeamOgilvy() {
 
   return (
     <div className="relative mt-10">
-      {/* FILA DE 4 CARDS (desktop) */}
+      {/* DESKTOP */}
       <div
         ref={containerRef}
         className="relative hidden md:flex gap-6 overflow-hidden"
@@ -468,12 +460,12 @@ function TeamOgilvy() {
         {TEAM_PRINCIPAL.map((m, i) => (
           <div
             key={m.id}
-            ref={(el) => (cardRefs.current[i] = el)}
+            /* 🔧 FIX: el ref ahora NO retorna valor (void) */
+            ref={(el) => { cardRefs.current[i] = el; }}
             className="relative group w-1/4 cursor-pointer select-none"
             onClick={() => setActive(active === i ? null : i)}
             aria-expanded={active === i}
           >
-            {/* Card con foto (aspect 4/5, sin redondeo) */}
             <div
               className="relative w-full overflow-hidden border border-black/10"
               style={{
@@ -493,7 +485,6 @@ function TeamOgilvy() {
                 />
               </div>
 
-              {/* Overlay hover (desktop) */}
               <div className="hidden lg:block absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out" />
               <div className="hidden lg:flex absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out items-end p-6">
                 <div className="text-white">
@@ -510,7 +501,6 @@ function TeamOgilvy() {
           </div>
         ))}
 
-        {/* PANEL LATERAL que cubre columnas 2–4 (gris claro) */}
         {active !== null && (
           <div
             className="absolute top-0 h-full bg-[#EAEAEA] shadow-[0_4px_10px_rgba(0,0,0,0.05)] border-l border-black/10 transition-transform duration-500 ease-in-out"
@@ -527,7 +517,6 @@ function TeamOgilvy() {
               className="h-full w-full flex"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Foto completa dentro del panel (1/3) */}
               <div className="w-1/3 min-w-[220px] border-r border-black/10">
                 <div className="relative w-full h-full min-h-[420px]">
                   <Image
@@ -540,7 +529,6 @@ function TeamOgilvy() {
                 </div>
               </div>
 
-              {/* Texto (2/3) */}
               <div className="flex-1 p-10 text-[#0E2C4A] overflow-y-auto">
                 <h3 className="text-2xl font-semibold">
                   {TEAM_PRINCIPAL[active].name}
@@ -615,11 +603,10 @@ function TeamOgilvy() {
         )}
       </div>
 
-      {/* MOBILE (≤ md): 1 columna, panel debajo (acordeón) */}
+      {/* MOBILE */}
       <div className="md:hidden mt-8">
-        {TEAM_PRINCIPAL.map((m, i) => {
-          const [open, setOpen] = useState(false); // por-card (para aislar cada acordeón)
-          // Nota: si prefieres un único abierto, pasa el control al estado superior.
+        {TEAM_PRINCIPAL.map((m) => {
+          const [open, setOpen] = useState(false);
           return (
             <div key={m.id} className="mb-6">
               <button
@@ -638,11 +625,8 @@ function TeamOgilvy() {
                     loading="lazy"
                   />
                 </div>
-
-                {/* Overlay hover no aplica en touch; lo omitimos */}
               </button>
 
-              {/* Panel acordeón */}
               <div
                 className={[
                   'overflow-hidden transition-all duration-300 ease-in-out',
