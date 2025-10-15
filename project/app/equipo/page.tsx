@@ -159,7 +159,8 @@ export default function EquipoPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const toggle = (id: string) => setOpenId((curr) => (curr === id ? null : id));
 
-  // Reveal en scroll (cards del equipo)
+  // Reveal en scroll (cards del equipo) — ya no se usa en el nuevo bloque,
+  // pero lo mantenemos para no tocar el resto de la página.
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<boolean[]>(
     Array(TEAM_PRINCIPAL.length).fill(false)
@@ -184,6 +185,15 @@ export default function EquipoPage() {
     );
     nodes.forEach((n) => io.observe(n));
     return () => io.disconnect();
+  }, []);
+
+  // Cerrar con ESC el panel
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenId(null);
+    };
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
   }, []);
 
   return (
@@ -315,7 +325,7 @@ export default function EquipoPage() {
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-12">
             Nuestra Cultura
           </h3>
-          <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-3">
             {CULTURE.map((c) => (
               <article
                 key={c.title}
@@ -334,132 +344,83 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — GRIS */}
+      {/* 4) EQUIPO — GRIS (Mosaico de diamantes interactivo) */}
       <section id="equipo" className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium text-left">
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
             Equipo
           </h2>
-          <p className="mt-3 max-w-3xl text-left text-[14px] text-black/70 leading-relaxed">
-            En Gesswein Properties combinamos criterio arquitectónico, respaldo legal y mirada
-            financiera para que cada decisión inmobiliaria sea segura, rentable y estética. Cada
-            integrante aporta una mirada complementaria: arquitectura, derecho, finanzas y
-            comunicación se integran para elevar cada proyecto a su máxima expresión.
+          <p className="mt-3 max-w-3xl text-[14px] text-black/70 leading-relaxed">
+            En Gesswein Properties reunimos arquitectura, derecho, finanzas y comunicación
+            estratégica para ofrecer una asesoría integral y humana. Cada integrante aporta una
+            mirada experta que convierte la complejidad inmobiliaria en un proceso claro, medible
+            y elegante.
           </p>
 
-          <div ref={containerRef} className="mt-12 flex flex-col gap-10">
-            {TEAM_PRINCIPAL.map((m, idx) => {
-              const visibleClass = visible[idx]
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-3';
-              return (
-                <article
-                  key={m.id}
-                  data-team-card
-                  data-index={idx}
-                  className={`border border-black/10 bg-white shadow-sm p-5 transition duration-300 ease-out ${visibleClass}`}
-                  style={{ borderRadius: 0 }}
-                >
-                  <div className="grid gap-8 md:grid-cols-2 items-stretch">
-                    {/* FOTO */}
-                    <div className={m.align === 'right' ? 'md:order-2' : 'md:order-1'}>
-                      <div className="w-full h-full overflow-hidden border border-black/10">
-                        {m.photo ? (
-                          <Image
-                            src={m.photo}
-                            alt={m.name}
-                            width={1200}
-                            height={900}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full aspect-[4/3] bg-slate-100 flex items-center justify-center">
-                            <Users className="h-12 w-12 text-slate-400" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
+          {/* MOSAICO */}
+          <div
+            className={[
+              'mx-auto mt-10',
+              'w-[300px] sm:w-[340px] md:w-[420px] lg:w-[480px]',
+            ].join(' ')}
+          >
+            {/* El truco: rotamos el contenedor 45° para que las celdas 2x2 se vean como diamantes */}
+            <div
+              className={[
+                'grid grid-cols-2 gap-2 md:gap-3',
+                'rotate-45',
+                openId ? 'opacity-100' : 'opacity-100',
+                'transition-opacity duration-300',
+              ].join(' ')}
+              role="group"
+              aria-label="Mosaico del equipo"
+            >
+              {['carolina', 'alberto', 'jan', 'kay'].map((id, idx) => {
+                const m = TEAM_PRINCIPAL.find((mm) => mm.id === id)!;
+                const dim =
+                  'aspect-square w-full overflow-hidden will-change-transform';
+                const faded = openId && openId !== id ? 'opacity-40' : 'opacity-100';
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    className={`${dim} ${faded} transition-opacity duration-200 focus:outline-none`}
+                    aria-controls="profile-panel"
+                    aria-expanded={openId === id}
+                    aria-label={`Ver perfil de ${m.name}`}
+                    onClick={() => toggle(id)}
+                  >
+                    {/* Contenido interno girado -45° para que la foto no quede rotada */}
+                    <div
+                      className="-rotate-45 w-full h-full bg-center bg-cover"
+                      style={{
+                        backgroundImage: `url(${m.photo ?? ''})`,
+                        filter: openId === id ? 'brightness(1)' : 'brightness(1)',
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-                    {/* TEXTO + PANEL */}
-                    <div className={m.align === 'right' ? 'md:order-1' : 'md:order-2'}>
-                      <header className="pb-4 mb-4 border-b border-black/10">
-                        <h3 className="text-[20px] font-medium text-black/90">{m.name}</h3>
-                        <p className="uppercase text-[13px] tracking-[.2em] text-[#0A2E57]">
-                          {m.roleLine}
-                        </p>
-                      </header>
-
-                      <p className="text-[14px] text-black/70 leading-relaxed">{m.bioShort}</p>
-
-                      <button
-                        className="mt-4 self-start text-[12px] uppercase tracking-[.25em] border border-black/25 px-4 py-2 hover:bg-[#0A2E57] hover:text-white transition"
-                        aria-expanded={openId === m.id}
-                        aria-controls={`bio-${m.id}`}
-                        onClick={() => toggle(m.id)}
-                      >
-                        {openId === m.id ? 'Cerrar' : 'Ver perfil'}
-                      </button>
-
-                      {/* Panel colapsable */}
-                      <div
-                        id={`bio-${m.id}`}
-                        aria-labelledby={m.id}
-                        className={`overflow-hidden transition-all duration-300 ease-out ${
-                          openId === m.id ? 'max-h-[2000px] mt-4 opacity-100' : 'max-h-0 opacity-0'
-                        }`}
-                      >
-                        <div className="border border-black/10 bg-white p-5" style={{ borderRadius: 0 }}>
-                          {m.bioDetail.map((p, i) => (
-                            <p key={i} className="text-[14px] text-black/70 leading-relaxed mb-3">
-                              {p}
-                            </p>
-                          ))}
-
-                          <div className="mt-3">
-                            <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                              Educación
-                            </div>
-                            <div className="text-[13px] text-black/80 mt-1">{m.education}</div>
-                          </div>
-
-                          <div className="mt-4">
-                            <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                              Especialidades
-                            </div>
-                            <div className="text-[13px] text-black/80 mt-1">{m.specialties}</div>
-                          </div>
-
-                          <div className="mt-4 flex flex-col gap-1 text-[13px]">
-                            {m.phone && (
-                              <a
-                                href={`tel:${m.phone.replace(/\s+/g, '')}`}
-                                aria-label={`Llamar a ${m.name}`}
-                                className="inline-flex items-center gap-2 text-black/80 hover:underline"
-                              >
-                                <Phone className="h-4 w-4 text-black/50" />
-                                {m.phone}
-                              </a>
-                            )}
-                            {m.linkedin && (
-                              <a
-                                href={m.linkedin}
-                                target="_blank"
-                                rel="noreferrer"
-                                aria-label={`Abrir LinkedIn de ${m.name}`}
-                                className="inline-flex items-center gap-2 text-black/80 hover:underline"
-                              >
-                                <Linkedin className="h-4 w-4 text-black/50" />
-                                {m.linkedin.replace(/^https?:\/\//, '')}
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+          {/* PANEL DE PERFIL */}
+          <div
+            id="profile-panel"
+            role="region"
+            aria-live="polite"
+            className={[
+              'transition-all duration-400 ease-out',
+              openId ? 'max-h-[2000px] opacity-100 mt-8' : 'max-h-0 opacity-0',
+              'overflow-hidden',
+            ].join(' ')}
+          >
+            {openId && (
+              <ProfileCard
+                m={TEAM_PRINCIPAL.find((p) => p.id === openId)!}
+                onClose={() => setOpenId(null)}
+              />
+            )}
           </div>
         </div>
       </section>
@@ -537,5 +498,85 @@ export default function EquipoPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+/* ============ SUBCOMPONENTES ============ */
+
+function ProfileCard({ m, onClose }: { m: Member; onClose: () => void }) {
+  return (
+    <div className="border border-black/10 bg-white p-6" style={{ borderRadius: 0 }}>
+      <header className="pb-4 mb-4 border-b border-black/10">
+        <h3 className="text-[20px] font-medium text-black/90">{m.name}</h3>
+        <p className="uppercase text-[13px] tracking-[.2em] text-[#0A2E57]">{m.roleLine}</p>
+      </header>
+
+      {/* Descripción (bioShort + detalle) */}
+      <div className="text-[14px] text-black/70 leading-relaxed">
+        <p className="mb-3">{m.bioShort}</p>
+        {m.bioDetail.map((p, i) => (
+          <p key={i} className="mb-3">
+            {p}
+          </p>
+        ))}
+      </div>
+
+      {/* Educación / Especialidades */}
+      <div className="mt-3">
+        <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">Educación</div>
+        <div className="text-[13px] text-black/80 mt-1">{m.education}</div>
+      </div>
+
+      <div className="mt-4">
+        <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">Especialidades</div>
+        <div className="text-[13px] text-black/80 mt-1">{m.specialties}</div>
+      </div>
+
+      {/* Contacto */}
+      <div className="mt-4 flex flex-col gap-1 text-[13px]">
+        {m.email && (
+          <a
+            href={`mailto:${m.email}`}
+            aria-label={`Enviar correo a ${m.name}`}
+            className="inline-flex items-center gap-2 text-black/80 hover:underline"
+          >
+            <Mail className="h-4 w-4 text-black/50" />
+            {m.email}
+          </a>
+        )}
+        {m.phone && (
+          <a
+            href={`tel:${m.phone.replace(/\s+/g, '')}`}
+            aria-label={`Llamar a ${m.name}`}
+            className="inline-flex items-center gap-2 text-black/80 hover:underline"
+          >
+            <Phone className="h-4 w-4 text-black/50" />
+            {m.phone}
+          </a>
+        )}
+        {m.linkedin && (
+          <a
+            href={m.linkedin}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Abrir LinkedIn de ${m.name}`}
+            className="inline-flex items-center gap-2 text-black/80 hover:underline"
+          >
+            <Linkedin className="h-4 w-4 text-black/50" />
+            {m.linkedin.replace(/^https?:\/\//, '')}
+          </a>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-[12px] uppercase tracking-[.25em] border border-black/25 px-4 py-2 hover:bg-[#0A2E57] hover:text-white transition"
+        >
+          Cerrar perfil
+        </button>
+      </div>
+    </div>
   );
 }
