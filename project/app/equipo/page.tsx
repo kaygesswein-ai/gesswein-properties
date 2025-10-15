@@ -23,7 +23,7 @@ const HERO_IMG =
 const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
 
-// Fotos equipo (sprites de rostro)
+// Fotos equipo
 const PHOTOS = {
   carolina: '/team/carolina-san-martin.png',
   alberto: '/team/alberto-gesswein.png',
@@ -42,7 +42,7 @@ type Member = {
   email?: string;
   phone?: string;
   linkedin?: string;
-  photo?: string; // usado como sprite del rostro
+  photo?: string;
   align: 'left' | 'right';
 };
 
@@ -159,7 +159,7 @@ export default function EquipoPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const toggle = (id: string) => setOpenId((curr) => (curr === id ? null : id));
 
-  // Reveal en scroll (cards del equipo) — (no se usa en el nuevo mosaico, se conserva por compat)
+  // Reveal en scroll (cards del equipo) — (no se usa en el nuevo grid, se conserva por compat)
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<boolean[]>(
     Array(TEAM_PRINCIPAL.length).fill(false)
@@ -334,18 +334,18 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — GRIS (Mosaico de diamantes: representativo → retrato con sprite) */}
+      {/* 4) EQUIPO — GRIS (ESTILO OGILVY: GRID + BUSCADOR/FILTROS + DRAWER) */}
       <section id="equipo" className="py-16 bg-[#f8f9fb]">
-        <div className="max-w-7xl mx-auto px-6 team-mosaic">
+        <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
             Equipo
           </h2>
           <p className="mt-3 max-w-3xl text-[14px] text-black/70 leading-relaxed">
             En Gesswein Properties integramos arquitectura, derecho, finanzas y comunicación
-            estratégica para ofrecer una asesoría integral y humana.
+            estratégica para que cada decisión inmobiliaria sea segura, rentable y estética.
           </p>
 
-          <TeamDiamondMosaic />
+          <TeamOgilvyGrid />
         </div>
       </section>
 
@@ -425,385 +425,325 @@ export default function EquipoPage() {
   );
 }
 
-/* ============ SUBCOMPONENTE — EQUIPO (Mosaico de diamantes) ============ */
+/* =========================
+   SUBCOMPONENTE: EQUIPO (Ogilvy Grid)
+   ========================= */
 
-function TeamDiamondMosaic() {
-  // Estado
-  const [active, setActive] = useState<null | Member['id']>(null);
-  const [phase, setPhase] = useState<'idle' | 'leaving' | 'compose'>('idle'); // 3 fases
-  const prefersReduced =
-    typeof window !== 'undefined' &&
-    window.matchMedia &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+type FilterKey = 'todos' | 'arquitectura' | 'legal' | 'finanzas' | 'marketing';
 
-  // Imagen representativa por socio (estado inicial, NO caras)
-  const REP_IMAGES: Record<Member['id'], string> = {
-    carolina: "/icons/arquitectura-rep.webp", // planos/arquitectura
-    alberto: "/icons/comunicacion-rep.webp",  // cámara/llaves/foto
-    jan: "/icons/legal-rep.webp",             // contrato/bolígrafo
-    kay: "/icons/finanzas-rep.webp",          // calculadora/tabla
-  };
+const MEMBER_TAGS: Record<Member['id'], FilterKey[]> = {
+  carolina: ['arquitectura'],
+  alberto: ['marketing'],
+  jan: ['legal'],
+  kay: ['finanzas', 'marketing'],
+};
 
-  // Sprite (rostro) por socio (puedes cambiar a AVIF/WebP definitivos)
-  const SPRITES: Record<Member['id'], string> = {
-    carolina: PHOTOS.carolina,
-    alberto: PHOTOS.alberto,
-    jan: PHOTOS.jan,
-    kay: PHOTOS.kay,
-  };
+function TeamOgilvyGrid() {
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<FilterKey>('todos');
+  const [order, setOrder] = useState<'az' | 'rol' | 'none'>('az');
+  const [open, setOpen] = useState<Member | null>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
-  // Geometría base
-  const TILE = 120; // --tile (coincide con CSS)
-  const GAP = 12;
-  const STEP = (TILE + GAP) / 1.4;
-
-  // 1) Estado inicial: 4 diamantes representativos en cruz/rombo
-  // posiciones relativas (left/top) dentro del contenedor .mosaic
-  const repPos = [
-    { id: 'carolina' as const, left: 0, top: 0 },                                // rep-1 (arriba/izq)
-    { id: 'alberto' as const, left: TILE * 1.3, top: TILE * 0.6 },              // rep-2 (centro)
-    { id: 'jan' as const, left: TILE * 2.6, top: 0 },                            // rep-3 (arriba/der)
-    { id: 'kay' as const, left: TILE * 1.3, top: TILE * 1.8 },                   // rep-4 (abajo centro)
-  ];
-
-  // 2) COMPOSE: 9 rombos (grilla 1-2-3-2-1) → map de coords + background-position 3x3 (0,50,100 / 0,25,50,75,100)
-  type PosCompose = { left: number; top: number; posX: number; posY: number };
-
-  const composeMap9: PosCompose[] = (() => {
-    const rows = [1, 2, 3, 2, 1];
-    const res: PosCompose[] = [];
-    let idx = 0;
-    const baseX = TILE * 1.3; // centra aprox en el contenedor
-    const baseY = 0;
-
-    rows.forEach((count, r) => {
-      const rowWidth = (count - 1) * STEP * 0.94;
-      for (let c = 0; c < count; c++) {
-        const posY = [0, 25, 50, 75, 100][r];
-        let posX = 50;
-        if (count === 3) posX = [0, 50, 100][c];
-        if (count === 2) posX = [25, 75][c];
-        if (count === 1) posX = 50;
-
-        res[idx++] = {
-          left: baseX - rowWidth / 2 + c * STEP * 0.94,
-          top: baseY + r * STEP * 0.94 + STEP * 0.12,
-          posX,
-          posY,
-        };
-      }
-    });
-    return res; // length 9
-  })();
-
-  // Manejo de apertura/cierre (3 fases)
-  const openFor = (id: Member['id']) => {
-    if (active === id) {
-      // cerrar
-      setPhase('leaving');
-      setTimeout(() => {
-        setActive(null);
-        setPhase('idle');
-      }, prefersReduced ? 0 : 350);
-      return;
-    }
-    // abrir
-    setPhase('leaving'); // salida de representativos
-    setTimeout(() => {
-      setActive(id);
-      setPhase('compose'); // mostrar retrato recomponiéndose
-    }, prefersReduced ? 0 : 220);
-  };
-
-  // Accesibilidad: cerrar con ESC
+  // Accesibilidad: cerrar con Esc y manejar foco
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && active) {
-        openFor(active); // reutiliza para cerrar
-      }
+      if (e.key === 'Escape' && open) setOpen(null);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [active]);
+  }, [open]);
 
-  // Render
-  const activeMember = active ? TEAM_PRINCIPAL.find((m) => m.id === active)! : null;
+  useEffect(() => {
+    if (open && closeRef.current) {
+      closeRef.current.focus();
+    }
+  }, [open]);
+
+  const normalized = (s: string) =>
+    s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+
+  const filtered = TEAM_PRINCIPAL.filter((m) => {
+    const text =
+      normalized(m.name) +
+      ' ' +
+      normalized(m.roleLine) +
+      ' ' +
+      normalized(m.specialties) +
+      ' ' +
+      normalized(m.bioShort);
+    const qok = normalized(query).trim() === '' || text.includes(normalized(query).trim());
+    const fok =
+      filter === 'todos' ? true : MEMBER_TAGS[m.id]?.includes(filter) ?? false;
+    return qok && fok;
+  }).sort((a, b) => {
+    if (order === 'az') return a.name.localeCompare(b.name, 'es');
+    if (order === 'rol') return a.roleLine.localeCompare(b.roleLine, 'es');
+    return 0;
+  });
 
   return (
-    <div className="team-mosaic-root">
-      <div
-        className={[
-          'mosaic',
-          phase === 'leaving' ? 'is-transitioning' : '',
-          active ? 'is-composed' : '',
-        ].join(' ')}
-        data-active={active ?? ''}
-        aria-live="polite"
-      >
-        {/* 4 DIAMANTES REPRESENTATIVOS (estado inicial) */}
-        {repPos.map((p, i) => (
-          <button
-            key={p.id}
-            className={`rep-diamond rep-${i + 1} diamond`}
-            style={{
-              left: p.left,
-              top: p.top,
-              backgroundImage: `url('${REP_IMAGES[p.id] ?? '/icons/placeholder-rep.webp'}')`,
-            }}
-            aria-controls="profile-panel"
-            aria-expanded={active === p.id}
-            aria-label={`Ver perfil de ${p.id}`}
-            onClick={() => openFor(p.id)}
+    <div className="mt-8">
+      {/* Controles */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex-1">
+          <label className="block text-[12px] uppercase tracking-[.2em] text-[#0A2E57] mb-2">
+            Buscar
+          </label>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por nombre, rol o especialidad"
+            className="w-full border border-black/20 px-4 py-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0A2E57] placeholder-black/40"
+            aria-label="Buscar por nombre, rol o especialidad"
           />
-        ))}
-
-        {/* Capa de composición (rombos del retrato) */}
-        <div
-          className="compose-layer"
-          aria-hidden={!active}
-          style={
-            active
-              ? ({ ['--sprite' as any]: `url('${SPRITES[active]}')` } as React.CSSProperties)
-              : undefined
-          }
-        >
-          {/* Si hay activo, creamos 9 tiles con posiciones + background-position */}
-          {active &&
-            composeMap9.map((t, i) => {
-              const delay = prefersReduced ? 0 : i * 60; // entrada escalonada
-              return (
-                <div
-                  key={i}
-                  className="tile diamond"
-                  style={{
-                    left: t.left,
-                    top: t.top,
-                    opacity: phase === 'compose' ? 1 : 0,
-                    transitionDelay: `${phase === 'compose' ? delay : 0}ms`,
-                    // sprite 3x3
-                    backgroundImage: `var(--sprite)`,
-                    backgroundSize: '300% 300%',
-                    backgroundPosition: `${t.posX}% ${t.posY}%`,
-                    borderColor: '#fff', // líneas blancas finas entre piezas
-                    borderWidth: '1px',
-                  }}
-                />
-              );
-            })}
         </div>
 
-        {/* Botón Cerrar en forma de diamante (solo en modo retrato) */}
-        <button
-          className="close-diamond diamond"
-          hidden={!active}
-          aria-label="Cerrar perfil"
-          onClick={() => active && openFor(active)}
-        >
-          <span>✕ CERRAR</span>
-        </button>
+        <div className="flex-1 md:flex md:flex-col">
+          <span className="block text-[12px] uppercase tracking-[.2em] text-[#0A2E57] mb-2">
+            Filtros
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {(['todos', 'arquitectura', 'legal', 'finanzas', 'marketing'] as FilterKey[]).map(
+              (key) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  aria-pressed={filter === key}
+                  className={[
+                    'px-4 py-2 border text-[12px] uppercase tracking-[.2em] transition',
+                    filter === key
+                      ? 'border-[#0A2E57] text-white bg-[#0A2E57]'
+                      : 'border-black/25 hover:bg-[#0A2E57] hover:text-white',
+                  ].join(' ')}
+                >
+                  {key === 'todos'
+                    ? 'Todos'
+                    : key === 'arquitectura'
+                    ? 'Arquitectura'
+                    : key === 'legal'
+                    ? 'Legal'
+                    : key === 'finanzas'
+                    ? 'Finanzas'
+                    : 'Marketing & Comunicación'}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+
+        <div className="w-full md:w-[220px]">
+          <label className="block text-[12px] uppercase tracking-[.2em] text-[#0A2E57] mb-2">
+            Ordenar
+          </label>
+          <select
+            value={order}
+            onChange={(e) => setOrder(e.target.value as any)}
+            className="w-full border border-black/20 px-4 py-3 text-[14px] bg-white focus:outline-none focus:ring-2 focus:ring-[#0A2E57]"
+            aria-label="Ordenar resultados"
+          >
+            <option value="az">A–Z</option>
+            <option value="rol">Rol</option>
+            <option value="none">Sin orden</option>
+          </select>
+        </div>
       </div>
 
-      {/* Panel de perfil (debajo del mosaico) */}
-      <div
-        id="profile-panel"
-        className="profile-panel"
-        hidden={!activeMember}
-        role="region"
-        aria-labelledby={activeMember?.id}
-      >
-        {activeMember && (
-          <ProfileCard m={activeMember} onClose={() => openFor(activeMember.id)} />
-        )}
-      </div>
+      {/* Grid de tarjetas */}
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filtered.map((m) => (
+          <article
+            key={m.id}
+            className="group border border-black/10 bg-white shadow-sm transition will-change-transform"
+            style={{ borderRadius: 0 }}
+          >
+            <div className="relative w-full aspect-[3/4] overflow-hidden border-b border-black/10">
+              <Image
+                src={m.photo || '/team/placeholder.jpg'}
+                alt={m.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 33vw"
+                priority={false}
+              />
+              {/* Overlay hover desktop */}
+              <div className="hidden md:block absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
+              <button
+                className="hidden md:inline-flex absolute bottom-4 left-4 px-4 py-2 border border-white/70 text-white text-[12px] uppercase tracking-[.25em] hover:bg-white hover:text-[#0A2E57] transition"
+                onClick={() => setOpen(m)}
+                aria-haspopup="dialog"
+                aria-controls="profile-drawer"
+              >
+                Ver perfil
+              </button>
+            </div>
 
-      {/* Estilos AÍSLADOS a este bloque */}
-      <style jsx>{`
-        .team-mosaic-root {
-          --tile: 120px;
-          --gap: 12px;
-          --line: 1px;
-        }
-        @media (max-width: 900px) {
-          .team-mosaic-root { --tile: 100px; }
-        }
-        @media (max-width: 600px) {
-          .team-mosaic-root { --tile: 86px; }
-        }
+            <div className="p-5">
+              <h3 className="text-[16px] text-black/90">{m.name}</h3>
+              <p className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57] mt-1">
+                {m.roleLine}
+              </p>
 
-        .mosaic {
-          position: relative;
-          width: 100%;
-          max-width: 560px;
-          min-height: 420px;
-          margin: 40px auto 0;
-        }
+              {/* chips de especialidades */}
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {m.specialties.split('·').map((s, i) => (
+                  <li
+                    key={i}
+                    className="px-2 py-1 border border-black/15 text-[12px] text-black/70"
+                  >
+                    {s.trim()}
+                  </li>
+                ))}
+              </ul>
 
-        /* Forma base del rombo (diamante real) */
-        .diamond {
-          width: var(--tile);
-          height: var(--tile);
-          transform: rotate(45deg);
-          clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-          overflow: hidden;
-          border: 1px solid #e8e8e8;
-          background-repeat: no-repeat;
-          background-position: center;
-          background-size: cover;
-          transition:
-            transform 600ms cubic-bezier(.22,.61,.36,1),
-            opacity   300ms ease,
-            filter    300ms ease,
-            background-position 600ms ease,
-            background-size 600ms ease;
-          will-change: transform, opacity, background-position, background-size;
-        }
-
-        /* Estado inicial: 4 representativos */
-        .rep-diamond {
-          position: absolute;
-          cursor: pointer;
-        }
-        @media (hover: hover) {
-          .rep-diamond:hover { filter: brightness(1.06); }
-        }
-
-        /* Capa de composición */
-        .compose-layer {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-        }
-        .compose-layer .tile {
-          position: absolute;
-          pointer-events: none;
-          border: var(--line) solid #fff;
-          opacity: 0;
-        }
-
-        /* Fase de transición (salida de representativos) */
-        .mosaic.is-transitioning .rep-diamond {
-          opacity: 0.15;
-          transition: opacity 200ms ease;
-        }
-
-        /* Modo compuesto (retrato) */
-        .mosaic.is-composed .rep-diamond {
-          display: none; /* escondemos los 4 reps mientras está compuesto */
-        }
-
-        /* Botón Cerrar (diamante amarillo) */
-        .close-diamond {
-          position: absolute;
-          left: -12px;
-          top: -12px;
-          width: calc(var(--tile) * 0.9);
-          height: calc(var(--tile) * 0.9);
-          background: #F0C200;
-          color: #0A2E57;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2;
-        }
-        .close-diamond span {
-          transform: rotate(-45deg);
-          font-weight: 600;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-        }
-        .mosaic:not(.is-composed) .close-diamond {
-          display: none;
-        }
-
-        /* Panel de perfil */
-        .profile-panel[hidden] { display: none; }
-        .profile-panel {
-          margin: 28px auto 0;
-          max-width: 980px;
-          padding: 24px;
-          border: 1px solid #e6e6e6;
-          background: #fff;
-          transition: opacity .3s ease, max-height .4s ease;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-/* ================= COMPONENTE PERFIL ================= */
-
-function ProfileCard({ m, onClose }: { m: Member; onClose: () => void }) {
-  return (
-    <div className="border border-black/10 bg-white p-6" style={{ borderRadius: 0 }}>
-      <header className="pb-4 mb-4 border-b border-black/10">
-        <h3 id={m.id} className="text-[20px] font-medium text-black/90">{m.name}</h3>
-        <p className="uppercase text-[13px] tracking-[.2em] text-[#0A2E57]">{m.roleLine}</p>
-      </header>
-
-      <div className="text-[14px] text-black/70 leading-relaxed">
-        <p className="mb-3">{m.bioShort}</p>
-        {m.bioDetail.map((p, i) => (
-          <p key={i} className="mb-3">
-            {p}
-          </p>
+              {/* CTA mobile */}
+              <button
+                className="mt-4 w-full md:hidden px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+                onClick={() => setOpen(m)}
+                aria-haspopup="dialog"
+                aria-controls="profile-drawer"
+              >
+                Ver perfil
+              </button>
+            </div>
+          </article>
         ))}
       </div>
 
-      <div className="mt-3">
-        <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">Educación</div>
-        <div className="text-[13px] text-black/80 mt-1">{m.education}</div>
-      </div>
-
-      <div className="mt-4">
-        <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">Especialidades</div>
-        <div className="text-[13px] text-black/80 mt-1">{m.specialties}</div>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-1 text-[13px]">
-        {m.email && (
-          <a
-            href={`mailto:${m.email}`}
-            aria-label={`Enviar correo a ${m.name}`}
-            className="inline-flex items-center gap-2 text-black/80 hover:underline"
-          >
-            <Mail className="h-4 w-4 text-black/50" />
-            {m.email}
-          </a>
-        )}
-        {m.phone && (
-          <a
-            href={`tel:${m.phone.replace(/\s+/g, '')}`}
-            aria-label={`Llamar a ${m.name}`}
-            className="inline-flex items-center gap-2 text-black/80 hover:underline"
-          >
-            <Phone className="h-4 w-4 text-black/50" />
-            {m.phone}
-          </a>
-        )}
-        {m.linkedin && (
-          <a
-            href={m.linkedin}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`Abrir LinkedIn de ${m.name}`}
-            className="inline-flex items-center gap-2 text-black/80 hover:underline"
-          >
-            <Linkedin className="h-4 w-4 text-black/50" />
-            {m.linkedin.replace(/^https?:\/\//, '')}
-          </a>
-        )}
-      </div>
-
-      <div className="mt-6">
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-[12px] uppercase tracking-[.25em] border border-black/25 px-4 py-2 hover:bg-[#0A2E57] hover:text-white transition"
+      {/* Drawer / Modal */}
+      <div
+        id="profile-drawer"
+        role="dialog"
+        aria-modal="true"
+        className={[
+          'fixed inset-0 z-50',
+          open ? 'pointer-events-auto' : 'pointer-events-none',
+        ].join(' ')}
+        aria-hidden={!open}
+      >
+        {/* overlay */}
+        <div
+          className={[
+            'absolute inset-0 bg-black/30 transition-opacity',
+            open ? 'opacity-100' : 'opacity-0',
+          ].join(' ')}
+          onClick={() => setOpen(null)}
+        />
+        {/* panel */}
+        <div
+          className={[
+            'absolute right-0 top-0 h-full w-full md:w-[520px] bg-white border-l border-black/10 shadow-xl',
+            'transition-transform duration-300 will-change-transform',
+            open ? 'translate-x-0' : 'translate-x-full',
+          ].join(' ')}
         >
-          Cerrar perfil
-        </button>
+          {open && (
+            <div className="flex flex-col h-full">
+              {/* header */}
+              <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
+                <h3 className="text-[16px] text-black/90">{open.name}</h3>
+                <button
+                  ref={closeRef}
+                  onClick={() => setOpen(null)}
+                  className="px-3 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+                >
+                  Cerrar
+                </button>
+              </div>
+
+              {/* body */}
+              <div className="overflow-y-auto p-5">
+                <div className="w-full aspect-[4/5] relative border border-black/10 mb-4">
+                  <Image
+                    src={open.photo || '/team/placeholder.jpg'}
+                    alt={open.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 520px"
+                    priority={false}
+                  />
+                </div>
+
+                <p className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                  {open.roleLine}
+                </p>
+
+                <div className="mt-3 text-[14px] text-black/70 leading-relaxed">
+                  <p className="mb-3">{open.bioShort}</p>
+                  {open.bioDetail.map((p, i) => (
+                    <p key={i} className="mb-3">
+                      {p}
+                    </p>
+                  ))}
+                </div>
+
+                <div className="mt-4">
+                  <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                    Educación
+                  </div>
+                  <div className="text-[13px] text-black/80 mt-1">{open.education}</div>
+                </div>
+
+                <div className="mt-4">
+                  <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                    Especialidades
+                  </div>
+                  <ul className="mt-1 text-[13px] text-black/80 list-disc pl-5">
+                    {open.specialties.split('·').map((s, i) => (
+                      <li key={i}>{s.trim()}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-1 text-[13px]">
+                  {open.email && (
+                    <a
+                      href={`mailto:${open.email}`}
+                      aria-label={`Enviar correo a ${open.name}`}
+                      className="inline-flex items-center gap-2 text-black/80 hover:underline"
+                    >
+                      <Mail className="h-4 w-4 text-black/50" />
+                      {open.email}
+                    </a>
+                  )}
+                  {open.phone && (
+                    <a
+                      href={`tel:${open.phone.replace(/\s+/g, '')}`}
+                      aria-label={`Llamar a ${open.name}`}
+                      className="inline-flex items-center gap-2 text-black/80 hover:underline"
+                    >
+                      <Phone className="h-4 w-4 text-black/50" />
+                      {open.phone}
+                    </a>
+                  )}
+                  {open.linkedin && (
+                    <a
+                      href={open.linkedin}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Abrir LinkedIn de ${open.name}`}
+                      className="inline-flex items-center gap-2 text-black/80 hover:underline"
+                    >
+                      <Linkedin className="h-4 w-4 text-black/50" />
+                      {open.linkedin.replace(/^https?:\/\//, '')}
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* footer */}
+              <div className="border-t border-black/10 px-5 py-4">
+                <button
+                  onClick={() => setOpen(null)}
+                  className="w-full px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
