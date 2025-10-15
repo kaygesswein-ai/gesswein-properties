@@ -159,8 +159,7 @@ export default function EquipoPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const toggle = (id: string) => setOpenId((curr) => (curr === id ? null : id));
 
-  // Reveal en scroll (cards del equipo) — ya no se usa en el nuevo bloque,
-  // pero lo mantenemos para no tocar el resto de la página.
+  // Reveal en scroll (cards del equipo) — se mantiene para no tocar
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<boolean[]>(
     Array(TEAM_PRINCIPAL.length).fill(false)
@@ -187,7 +186,7 @@ export default function EquipoPage() {
     return () => io.disconnect();
   }, []);
 
-  // Cerrar con ESC el panel
+  // Esc cierra el perfil del mosaico
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpenId(null);
@@ -344,76 +343,76 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — GRIS (Mosaico de diamantes interactivo) */}
+      {/* 4) EQUIPO — GRIS (Mosaico de 4 diamantes) */}
       <section id="equipo" className="py-16 bg-[#f8f9fb]">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-6 team-mosaic">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
             Equipo
           </h2>
           <p className="mt-3 max-w-3xl text-[14px] text-black/70 leading-relaxed">
-            En Gesswein Properties reunimos arquitectura, derecho, finanzas y comunicación
+            En Gesswein Properties integramos arquitectura, derecho, finanzas y comunicación
             estratégica para ofrecer una asesoría integral y humana. Cada integrante aporta una
-            mirada experta que convierte la complejidad inmobiliaria en un proceso claro, medible
-            y elegante.
+            mirada experta que convierte la complejidad inmobiliaria en un proceso claro, medible y
+            elegante.
           </p>
 
           {/* MOSAICO */}
           <div
-            className={[
-              'mx-auto mt-10',
-              'w-[300px] sm:w-[340px] md:w-[420px] lg:w-[480px]',
-            ].join(' ')}
+            className={`mosaic ${openId ? 'is-composed' : ''}`}
+            data-active={openId ?? ''}
+            style={
+              openId
+                ? ({
+                    // sprite activo (rostro completo)
+                    ['--sprite' as any]: `url('${TEAM_PRINCIPAL.find(
+                      (m) => m.id === openId
+                    )?.photo ?? ''}')`,
+                  } as React.CSSProperties)
+                : undefined
+            }
           >
-            {/* El truco: rotamos el contenedor 45° para que las celdas 2x2 se vean como diamantes */}
-            <div
-              className={[
-                'grid grid-cols-2 gap-2 md:gap-3',
-                'rotate-45',
-                openId ? 'opacity-100' : 'opacity-100',
-                'transition-opacity duration-300',
-              ].join(' ')}
-              role="group"
-              aria-label="Mosaico del equipo"
-            >
-              {['carolina', 'alberto', 'jan', 'kay'].map((id, idx) => {
-                const m = TEAM_PRINCIPAL.find((mm) => mm.id === id)!;
-                const dim =
-                  'aspect-square w-full overflow-hidden will-change-transform';
-                const faded = openId && openId !== id ? 'opacity-40' : 'opacity-100';
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    className={`${dim} ${faded} transition-opacity duration-200 focus:outline-none`}
-                    aria-controls="profile-panel"
-                    aria-expanded={openId === id}
-                    aria-label={`Ver perfil de ${m.name}`}
-                    onClick={() => toggle(id)}
-                  >
-                    {/* Contenido interno girado -45° para que la foto no quede rotada */}
-                    <div
-                      className="-rotate-45 w-full h-full bg-center bg-cover"
-                      style={{
-                        backgroundImage: `url(${m.photo ?? ''})`,
-                        filter: openId === id ? 'brightness(1)' : 'brightness(1)',
-                      }}
-                    />
-                  </button>
-                );
-              })}
-            </div>
+            {(['carolina', 'alberto', 'jan', 'kay'] as const).map((id, i) => {
+              const m = TEAM_PRINCIPAL.find((x) => x.id === id)!;
+              // ÍCONO por persona (puedes reemplazar las rutas por tus SVG reales)
+              const iconUrl =
+                id === 'carolina'
+                  ? "/icons/arquitectura.svg"
+                  : id === 'alberto'
+                  ? "/icons/comunicacion.svg"
+                  : id === 'jan'
+                  ? "/icons/legal.svg"
+                  : "/icons/finanzas.svg";
+
+              const tileClass = ['tile', `t${i + 1}`].join(' ');
+              return (
+                <button
+                  key={id}
+                  className={tileClass}
+                  data-person={id}
+                  aria-controls="profile"
+                  aria-expanded={openId === id}
+                  aria-label={`Ver perfil de ${m.name}`}
+                  onClick={() => setOpenId((curr) => (curr === id ? null : id))}
+                  style={
+                    {
+                      ['--icon' as any]: `url('${iconUrl}')`,
+                    } as React.CSSProperties
+                  }
+                >
+                  {/* Fallback visual si no hay SVGs: muestra inicial */}
+                  <span className="-rotate-45 sr-only">{m.name}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* PANEL DE PERFIL */}
+          {/* PANEL PERFIL */}
           <div
-            id="profile-panel"
+            id="profile"
+            className="profile-panel"
+            hidden={!openId}
             role="region"
             aria-live="polite"
-            className={[
-              'transition-all duration-400 ease-out',
-              openId ? 'max-h-[2000px] opacity-100 mt-8' : 'max-h-0 opacity-0',
-              'overflow-hidden',
-            ].join(' ')}
           >
             {openId && (
               <ProfileCard
@@ -423,6 +422,118 @@ export default function EquipoPage() {
             )}
           </div>
         </div>
+
+        {/* Estilos del mosaico (aislados al bloque) */}
+        <style jsx>{`
+          .team-mosaic {
+            --size: 180px;
+          }
+          .mosaic {
+            position: relative;
+            width: calc(var(--size) * 3);
+            height: calc(var(--size) * 3);
+            margin: 40px auto 0;
+            display: grid;
+            place-items: center;
+            grid-template-areas:
+              ".  t1  ."
+              "t4 tC  t2"
+              ".  t3  .";
+            transition: opacity 0.2s ease;
+          }
+          .tile {
+            width: var(--size);
+            height: var(--size);
+            transform: rotate(45deg);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            overflow: hidden;
+            border: 1px solid #e6e6e6;
+            background: #fff;
+            transition: transform 0.6s ease, filter 0.3s ease, opacity 0.3s ease,
+              background-position 0.6s ease, background-size 0.6s ease, background-image 0.2s ease;
+            will-change: transform, opacity, background-position, background-size;
+            background-repeat: no-repeat;
+            position: relative;
+          }
+          .t1 {
+            grid-area: t1;
+          }
+          .t2 {
+            grid-area: t2;
+          }
+          .t3 {
+            grid-area: t3;
+          }
+          .t4 {
+            grid-area: t4;
+          }
+
+          /* ---- Estado inicial: íconos ---- */
+          .mosaic:not(.is-composed) .tile {
+            background-image: var(--icon);
+            background-size: 50% 50%;
+            background-position: center;
+            filter: grayscale(0.08);
+          }
+          @media (hover: hover) {
+            .mosaic:not(.is-composed) .tile:hover {
+              filter: brightness(1.06);
+            }
+          }
+
+          /* ---- Estado compuesto: sprite de rostro en 4 cuartos ---- */
+          .mosaic.is-composed .tile {
+            background-image: var(--sprite);
+            background-size: 200% 200%;
+            filter: none;
+          }
+          .mosaic.is-composed .t1 {
+            background-position: 0% 0%;
+          }
+          .mosaic.is-composed .t2 {
+            background-position: 100% 0%;
+          }
+          .mosaic.is-composed .t3 {
+            background-position: 0% 100%;
+          }
+          .mosaic.is-composed .t4 {
+            background-position: 100% 100%;
+          }
+
+          /* Otras piezas se atenúan cuando hay activo */
+          .mosaic.is-composed .tile[aria-expanded='false'] {
+            opacity: 0.4;
+          }
+
+          /* Responsive */
+          @media (max-width: 768px) {
+            .team-mosaic {
+              --size: 120px;
+            }
+            .mosaic {
+              width: calc(var(--size) * 2.6);
+              height: calc(var(--size) * 2.6);
+            }
+          }
+          @media (max-width: 480px) {
+            .team-mosaic {
+              --size: 96px;
+            }
+            .mosaic {
+              width: calc(var(--size) * 2.3);
+              height: calc(var(--size) * 2.3);
+            }
+          }
+
+          /* Panel perfil */
+          .profile-panel {
+            margin: 28px auto 0;
+            max-width: 980px;
+            padding: 24px;
+            border: 1px solid #e6e6e6;
+            transition: opacity 0.3s ease, max-height 0.4s ease;
+          }
+        `}</style>
       </section>
 
       {/* 5) ALIANZAS & COLABORADORES — BLANCO (CON OVERLAY HOVER) */}
@@ -511,7 +622,6 @@ function ProfileCard({ m, onClose }: { m: Member; onClose: () => void }) {
         <p className="uppercase text-[13px] tracking-[.2em] text-[#0A2E57]">{m.roleLine}</p>
       </header>
 
-      {/* Descripción (bioShort + detalle) */}
       <div className="text-[14px] text-black/70 leading-relaxed">
         <p className="mb-3">{m.bioShort}</p>
         {m.bioDetail.map((p, i) => (
@@ -521,7 +631,6 @@ function ProfileCard({ m, onClose }: { m: Member; onClose: () => void }) {
         ))}
       </div>
 
-      {/* Educación / Especialidades */}
       <div className="mt-3">
         <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">Educación</div>
         <div className="text-[13px] text-black/80 mt-1">{m.education}</div>
@@ -532,7 +641,6 @@ function ProfileCard({ m, onClose }: { m: Member; onClose: () => void }) {
         <div className="text-[13px] text-black/80 mt-1">{m.specialties}</div>
       </div>
 
-      {/* Contacto */}
       <div className="mt-4 flex flex-col gap-1 text-[13px]">
         {m.email && (
           <a
