@@ -126,11 +126,6 @@ const ALLIES = [
     photo:
       'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Irene%20Puelma.png',
   },
-  { name: 'Estudio DF', area: 'Diseño Interior', photo: '/allies/ally-2.jpg' },
-  { name: 'ProStudio', area: 'Render & 3D', photo: '/allies/ally-3.jpg' },
-  { name: 'Legal Partners', area: 'Legal', photo: '/allies/ally-4.jpg' },
-  { name: 'BrokerLab', area: 'Finanzas', photo: '/allies/ally-5.jpg' },
-  { name: 'Foto360', area: 'Producción Visual', photo: '/allies/ally-6.jpg' },
 ];
 
 // Cultura (3 pilares)
