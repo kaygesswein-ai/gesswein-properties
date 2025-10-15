@@ -434,7 +434,10 @@ export default function EquipoPage() {
   );
 }
 
-/* ============ SUBCOMPONENTES ============ */
+/* ============ SUBCOMPONENTES (EQUIPO) ============ */
+
+type PosBase = { left: number; top: number };
+type PosCompose = PosBase & { posX: number; posY: number };
 
 /** Mosaic de rombos:
  *  - 9 tiles en disposición romboidal (1-2-3-2-1)
@@ -462,12 +465,12 @@ function Mosaic() {
   const IDX = Array.from({ length: 9 }, (_, i) => i);
 
   // Geometría base
-  const TILE = 120; // px base (se ajusta con media queries del estilo)
+  const TILE = 120; // px base
   const GAP = 10;
   const step = (TILE + GAP) / 1.4;
 
   // Mapa rombo 1-2-3-2-1 (coordenadas absolutas)
-  const initialMap: Record<number, { left: number; top: number }> = {};
+  const initialMap: Record<number, PosBase> = {};
   const rows = [1, 2, 3, 2, 1];
   let idx = 0;
   const baseX = (3 * step) / 2; // centra aprox.
@@ -484,8 +487,7 @@ function Mosaic() {
   });
 
   // ComposeMap: rombo “tenso” (ligera contracción para dar sensación de re-armado)
-  const composeMap: Record<number, { left: number; top: number; posX: number; posY: number }> =
-    {};
+  const composeMap: Record<number, PosCompose> = {};
   idx = 0;
   rows.forEach((count, r) => {
     const rowWidth = (count - 1) * step * 0.92; // 8% más compacto
@@ -507,7 +509,7 @@ function Mosaic() {
     }
   });
 
-  // Manejo de click en persona
+  // Manejo de selección
   const selectPerson = (id: string) => {
     if (active === id) {
       // Cerrar → volver a íconos
@@ -518,16 +520,15 @@ function Mosaic() {
       }, prefersReduced ? 0 : 350);
       return;
     }
-    // Fase salida
+    // Fase salida → compuesta
     setPhase('leaving');
     setActive(id);
-    // Fase compuesta
     setTimeout(() => {
       setPhase('composed');
     }, prefersReduced ? 0 : 220);
   };
 
-  // Fallback: al tocar cualquier rombo, activar la persona actual (o Carolina si ninguna)
+  // Fallback: al tocar cualquier rombo sin persona activa, abrir Carolina
   const handleTileClick = () => {
     if (!active) selectPerson('carolina');
   };
@@ -577,38 +578,56 @@ function Mosaic() {
       >
         {IDX.map((i) => {
           const ico = ICONS[i % ICONS.length];
-          const pos = phase === 'composed' ? composeMap[i] : initialMap[i];
           const delayIn = prefersReduced ? 0 : i * 45;
           const delayOut = prefersReduced ? 0 : (IDX.length - i) * 18;
 
-          return (
-            <button
-              key={i}
-              className="tile"
-              aria-expanded={!!active}
-              aria-controls="profile"
-              onClick={handleTileClick}
-              style={
-                {
-                  left: pos.left,
-                  top: pos.top,
-                  ['--icon' as any]: `url('${ico}')`,
-                  // Cuando compone: sprite 300% y posición particular de cada tile
-                  backgroundSize: phase === 'composed' ? '300% 300%' : '50% 50%',
-                  backgroundPosition:
-                    phase === 'composed' ? `${pos.posX}% ${pos.posY}%` : 'center',
-                  transitionDelay:
-                    phase === 'composed'
-                      ? `${delayIn}ms`
-                      : phase === 'leaving'
-                      ? `${delayOut}ms`
-                      : '0ms',
-                } as React.CSSProperties
-              }
-            >
-              <span className="sr-only">tile {i}</span>
-            </button>
-          );
+          if (phase === 'composed') {
+            const p = composeMap[i]; // tiene posX/posY
+            return (
+              <button
+                key={i}
+                className="tile"
+                aria-expanded={!!active}
+                aria-controls="profile"
+                onClick={handleTileClick}
+                style={
+                  {
+                    left: p.left,
+                    top: p.top,
+                    ['--icon' as any]: `url('${ico}')`,
+                    backgroundSize: '300% 300%',
+                    backgroundPosition: `${p.posX}% ${p.posY}%`,
+                    transitionDelay: `${delayIn}ms`,
+                  } as React.CSSProperties
+                }
+              >
+                <span className="sr-only">tile {i}</span>
+              </button>
+            );
+          } else {
+            const p = initialMap[i]; // solo left/top
+            return (
+              <button
+                key={i}
+                className="tile"
+                aria-expanded={!!active}
+                aria-controls="profile"
+                onClick={handleTileClick}
+                style={
+                  {
+                    left: p.left,
+                    top: p.top,
+                    ['--icon' as any]: `url('${ico}')`,
+                    backgroundSize: '50% 50%',
+                    backgroundPosition: 'center',
+                    transitionDelay: phase === 'leaving' ? `${delayOut}ms` : '0ms',
+                  } as React.CSSProperties
+                }
+              >
+                <span className="sr-only">tile {i}</span>
+              </button>
+            );
+          }
         })}
       </div>
 
