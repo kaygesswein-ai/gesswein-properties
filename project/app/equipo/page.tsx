@@ -23,7 +23,7 @@ const HERO_IMG =
 const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
 
-// Fotos equipo
+// Fotos equipo (sprites de rostro)
 const PHOTOS = {
   carolina: '/team/carolina-san-martin.png',
   alberto: '/team/alberto-gesswein.png',
@@ -32,7 +32,7 @@ const PHOTOS = {
 };
 
 type Member = {
-  id: string;
+  id: 'carolina' | 'alberto' | 'jan' | 'kay';
   name: string;
   roleLine: string;
   bioShort: string;
@@ -42,7 +42,7 @@ type Member = {
   email?: string;
   phone?: string;
   linkedin?: string;
-  photo?: string;
+  photo?: string; // usado como sprite del rostro
   align: 'left' | 'right';
 };
 
@@ -159,7 +159,7 @@ export default function EquipoPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const toggle = (id: string) => setOpenId((curr) => (curr === id ? null : id));
 
-  // Reveal en scroll (cards del equipo) — se mantiene para no tocar
+  // Reveal en scroll (cards del equipo) — (no se usa en el nuevo mosaico, se conserva por compat)
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<boolean[]>(
     Array(TEAM_PRINCIPAL.length).fill(false)
@@ -184,15 +184,6 @@ export default function EquipoPage() {
     );
     nodes.forEach((n) => io.observe(n));
     return () => io.disconnect();
-  }, []);
-
-  // Esc cierra el perfil del mosaico
-  useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpenId(null);
-    };
-    window.addEventListener('keydown', onEsc);
-    return () => window.removeEventListener('keydown', onEsc);
   }, []);
 
   return (
@@ -343,7 +334,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — GRIS (Mosaico de rombos con recomposición tipo sprite) */}
+      {/* 4) EQUIPO — GRIS (Mosaico de diamantes: representativo → retrato con sprite) */}
       <section id="equipo" className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6 team-mosaic">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
@@ -354,7 +345,7 @@ export default function EquipoPage() {
             estratégica para ofrecer una asesoría integral y humana.
           </p>
 
-          <Mosaic />
+          <TeamDiamondMosaic />
         </div>
       </section>
 
@@ -434,226 +425,221 @@ export default function EquipoPage() {
   );
 }
 
-/* ============ SUBCOMPONENTES (EQUIPO) ============ */
+/* ============ SUBCOMPONENTE — EQUIPO (Mosaico de diamantes) ============ */
 
-type PosBase = { left: number; top: number };
-type PosCompose = PosBase & { posX: number; posY: number };
-
-/** Mosaic de rombos:
- *  - 9 tiles en disposición romboidal (1-2-3-2-1)
- *  - Estado inicial: íconos monocromos
- *  - Al activar persona: sprite compuesto (background de 300% x 300%)
- *  - Transición escalonada (salida -> reacomodo leve -> entrada)
- */
-function Mosaic() {
-  const [active, setActive] = useState<string>(''); // '', 'carolina'|...
-  const [phase, setPhase] = useState<'idle' | 'leaving' | 'composed'>('idle');
+function TeamDiamondMosaic() {
+  // Estado
+  const [active, setActive] = useState<null | Member['id']>(null);
+  const [phase, setPhase] = useState<'idle' | 'leaving' | 'compose'>('idle'); // 3 fases
   const prefersReduced =
     typeof window !== 'undefined' &&
     window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Íconos (coloca tus SVG reales en /icons)
-  const ICONS = [
-    '/icons/arquitectura.svg',
-    '/icons/legal.svg',
-    '/icons/finanzas.svg',
-    '/icons/comunicacion.svg',
-  ];
+  // Imagen representativa por socio (estado inicial, NO caras)
+  const REP_IMAGES: Record<Member['id'], string> = {
+    carolina: "/icons/arquitectura-rep.webp", // planos/arquitectura
+    alberto: "/icons/comunicacion-rep.webp",  // cámara/llaves/foto
+    jan: "/icons/legal-rep.webp",             // contrato/bolígrafo
+    kay: "/icons/finanzas-rep.webp",          // calculadora/tabla
+  };
 
-  // Indices (9 rombos)
-  const IDX = Array.from({ length: 9 }, (_, i) => i);
+  // Sprite (rostro) por socio (puedes cambiar a AVIF/WebP definitivos)
+  const SPRITES: Record<Member['id'], string> = {
+    carolina: PHOTOS.carolina,
+    alberto: PHOTOS.alberto,
+    jan: PHOTOS.jan,
+    kay: PHOTOS.kay,
+  };
 
   // Geometría base
-  const TILE = 120; // px base
-  const GAP = 10;
-  const step = (TILE + GAP) / 1.4;
+  const TILE = 120; // --tile (coincide con CSS)
+  const GAP = 12;
+  const STEP = (TILE + GAP) / 1.4;
 
-  // Mapa rombo 1-2-3-2-1 (coordenadas absolutas)
-  const initialMap: Record<number, PosBase> = {};
-  const rows = [1, 2, 3, 2, 1];
-  let idx = 0;
-  const baseX = (3 * step) / 2; // centra aprox.
-  const baseY = 0;
-  rows.forEach((count, r) => {
-    const rowWidth = (count - 1) * step;
-    for (let c = 0; c < count; c++) {
-      initialMap[idx] = {
-        left: baseX - rowWidth / 2 + c * step,
-        top: baseY + r * step,
-      };
-      idx++;
-    }
-  });
+  // 1) Estado inicial: 4 diamantes representativos en cruz/rombo
+  // posiciones relativas (left/top) dentro del contenedor .mosaic
+  const repPos = [
+    { id: 'carolina' as const, left: 0, top: 0 },                                // rep-1 (arriba/izq)
+    { id: 'alberto' as const, left: TILE * 1.3, top: TILE * 0.6 },              // rep-2 (centro)
+    { id: 'jan' as const, left: TILE * 2.6, top: 0 },                            // rep-3 (arriba/der)
+    { id: 'kay' as const, left: TILE * 1.3, top: TILE * 1.8 },                   // rep-4 (abajo centro)
+  ];
 
-  // ComposeMap: rombo “tenso” (ligera contracción para dar sensación de re-armado)
-  const composeMap: Record<number, PosCompose> = {};
-  idx = 0;
-  rows.forEach((count, r) => {
-    const rowWidth = (count - 1) * step * 0.92; // 8% más compacto
-    for (let c = 0; c < count; c++) {
-      // posX/posY para sprite 3x3 (0,50,100) — filas de 2 usan 25/75; fila de 1 usa 50
-      const posY = [0, 25, 50, 75, 100][r];
-      let posX = 50;
-      if (count === 3) posX = [0, 50, 100][c];
-      if (count === 2) posX = [25, 75][c];
-      if (count === 1) posX = 50;
+  // 2) COMPOSE: 9 rombos (grilla 1-2-3-2-1) → map de coords + background-position 3x3 (0,50,100 / 0,25,50,75,100)
+  type PosCompose = { left: number; top: number; posX: number; posY: number };
 
-      composeMap[idx] = {
-        left: baseX - rowWidth / 2 + c * step * 0.92,
-        top: baseY + r * step * 0.92 + step * 0.15, // leve ajuste vertical
-        posX,
-        posY,
-      };
-      idx++;
-    }
-  });
+  const composeMap9: PosCompose[] = (() => {
+    const rows = [1, 2, 3, 2, 1];
+    const res: PosCompose[] = [];
+    let idx = 0;
+    const baseX = TILE * 1.3; // centra aprox en el contenedor
+    const baseY = 0;
 
-  // Manejo de selección
-  const selectPerson = (id: string) => {
+    rows.forEach((count, r) => {
+      const rowWidth = (count - 1) * STEP * 0.94;
+      for (let c = 0; c < count; c++) {
+        const posY = [0, 25, 50, 75, 100][r];
+        let posX = 50;
+        if (count === 3) posX = [0, 50, 100][c];
+        if (count === 2) posX = [25, 75][c];
+        if (count === 1) posX = 50;
+
+        res[idx++] = {
+          left: baseX - rowWidth / 2 + c * STEP * 0.94,
+          top: baseY + r * STEP * 0.94 + STEP * 0.12,
+          posX,
+          posY,
+        };
+      }
+    });
+    return res; // length 9
+  })();
+
+  // Manejo de apertura/cierre (3 fases)
+  const openFor = (id: Member['id']) => {
     if (active === id) {
-      // Cerrar → volver a íconos
+      // cerrar
       setPhase('leaving');
       setTimeout(() => {
-        setActive('');
+        setActive(null);
         setPhase('idle');
       }, prefersReduced ? 0 : 350);
       return;
     }
-    // Fase salida → compuesta
-    setPhase('leaving');
-    setActive(id);
+    // abrir
+    setPhase('leaving'); // salida de representativos
     setTimeout(() => {
-      setPhase('composed');
+      setActive(id);
+      setPhase('compose'); // mostrar retrato recomponiéndose
     }, prefersReduced ? 0 : 220);
   };
 
-  // Fallback: al tocar cualquier rombo sin persona activa, abrir Carolina
-  const handleTileClick = () => {
-    if (!active) selectPerson('carolina');
-  };
+  // Accesibilidad: cerrar con ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && active) {
+        openFor(active); // reutiliza para cerrar
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [active]);
 
-  const spriteUrl =
-    active ? `url('${TEAM_PRINCIPAL.find((m) => m.id === active)?.photo ?? ''}')` : undefined;
+  // Render
+  const activeMember = active ? TEAM_PRINCIPAL.find((m) => m.id === active)! : null;
 
   return (
-    <div className="mt-8">
-      {/* Navegación de personas */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {TEAM_PRINCIPAL.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => selectPerson(m.id)}
-            className={`px-3 py-2 border text-[12px] uppercase tracking-[.2em] ${
-              active === m.id ? 'bg-[#0A2E57] text-white border-[#0A2E57]' : 'border-black/25'
-            }`}
-          >
-            {m.name.split(' ')[0]}
-          </button>
-        ))}
-        {active && (
-          <button
-            onClick={() => selectPerson(active)}
-            className="px-3 py-2 border border-black/25 text-[12px] uppercase tracking-[.2em]"
-          >
-            Cerrar
-          </button>
-        )}
-      </div>
-
-      {/* MOSAICO */}
+    <div className="team-mosaic-root">
       <div
         className={[
           'mosaic',
-          phase === 'composed' ? 'is-composed' : '',
           phase === 'leaving' ? 'is-transitioning' : '',
+          active ? 'is-composed' : '',
         ].join(' ')}
-        style={
-          phase === 'composed'
-            ? ({ ['--sprite' as any]: spriteUrl, ['--tile' as any]: `${TILE}px` } as React.CSSProperties)
-            : ({ ['--tile' as any]: `${TILE}px` } as React.CSSProperties)
-        }
-        data-active={active}
+        data-active={active ?? ''}
         aria-live="polite"
       >
-        {IDX.map((i) => {
-          const ico = ICONS[i % ICONS.length];
-          const delayIn = prefersReduced ? 0 : i * 45;
-          const delayOut = prefersReduced ? 0 : (IDX.length - i) * 18;
+        {/* 4 DIAMANTES REPRESENTATIVOS (estado inicial) */}
+        {repPos.map((p, i) => (
+          <button
+            key={p.id}
+            className={`rep-diamond rep-${i + 1} diamond`}
+            style={{
+              left: p.left,
+              top: p.top,
+              backgroundImage: `url('${REP_IMAGES[p.id] ?? '/icons/placeholder-rep.webp'}')`,
+            }}
+            aria-controls="profile-panel"
+            aria-expanded={active === p.id}
+            aria-label={`Ver perfil de ${p.id}`}
+            onClick={() => openFor(p.id)}
+          />
+        ))}
 
-          if (phase === 'composed') {
-            const p = composeMap[i]; // tiene posX/posY
-            return (
-              <button
-                key={i}
-                className="tile"
-                aria-expanded={!!active}
-                aria-controls="profile"
-                onClick={handleTileClick}
-                style={
-                  {
-                    left: p.left,
-                    top: p.top,
-                    ['--icon' as any]: `url('${ico}')`,
-                    backgroundSize: '300% 300%',
-                    backgroundPosition: `${p.posX}% ${p.posY}%`,
-                    transitionDelay: `${delayIn}ms`,
-                  } as React.CSSProperties
-                }
-              >
-                <span className="sr-only">tile {i}</span>
-              </button>
-            );
-          } else {
-            const p = initialMap[i]; // solo left/top
-            return (
-              <button
-                key={i}
-                className="tile"
-                aria-expanded={!!active}
-                aria-controls="profile"
-                onClick={handleTileClick}
-                style={
-                  {
-                    left: p.left,
-                    top: p.top,
-                    ['--icon' as any]: `url('${ico}')`,
-                    backgroundSize: '50% 50%',
-                    backgroundPosition: 'center',
-                    transitionDelay: phase === 'leaving' ? `${delayOut}ms` : '0ms',
-                  } as React.CSSProperties
-                }
-              >
-                <span className="sr-only">tile {i}</span>
-              </button>
-            );
+        {/* Capa de composición (rombos del retrato) */}
+        <div
+          className="compose-layer"
+          aria-hidden={!active}
+          style={
+            active
+              ? ({ ['--sprite' as any]: `url('${SPRITES[active]}')` } as React.CSSProperties)
+              : undefined
           }
-        })}
+        >
+          {/* Si hay activo, creamos 9 tiles con posiciones + background-position */}
+          {active &&
+            composeMap9.map((t, i) => {
+              const delay = prefersReduced ? 0 : i * 60; // entrada escalonada
+              return (
+                <div
+                  key={i}
+                  className="tile diamond"
+                  style={{
+                    left: t.left,
+                    top: t.top,
+                    opacity: phase === 'compose' ? 1 : 0,
+                    transitionDelay: `${phase === 'compose' ? delay : 0}ms`,
+                    // sprite 3x3
+                    backgroundImage: `var(--sprite)`,
+                    backgroundSize: '300% 300%',
+                    backgroundPosition: `${t.posX}% ${t.posY}%`,
+                    borderColor: '#fff', // líneas blancas finas entre piezas
+                    borderWidth: '1px',
+                  }}
+                />
+              );
+            })}
+        </div>
+
+        {/* Botón Cerrar en forma de diamante (solo en modo retrato) */}
+        <button
+          className="close-diamond diamond"
+          hidden={!active}
+          aria-label="Cerrar perfil"
+          onClick={() => active && openFor(active)}
+        >
+          <span>✕ CERRAR</span>
+        </button>
       </div>
 
-      {/* PANEL PERFIL */}
-      <div id="profile" className="profile-panel" hidden={!active} role="region">
-        {active && (
-          <ProfileCard
-            m={TEAM_PRINCIPAL.find((p) => p.id === active)!}
-            onClose={() => selectPerson(active)}
-          />
+      {/* Panel de perfil (debajo del mosaico) */}
+      <div
+        id="profile-panel"
+        className="profile-panel"
+        hidden={!activeMember}
+        role="region"
+        aria-labelledby={activeMember?.id}
+      >
+        {activeMember && (
+          <ProfileCard m={activeMember} onClose={() => openFor(activeMember.id)} />
         )}
       </div>
 
-      {/* Estilos aislados al bloque */}
+      {/* Estilos AÍSLADOS a este bloque */}
       <style jsx>{`
-        .team-mosaic {
-          --gap: 10px;
+        .team-mosaic-root {
+          --tile: 120px;
+          --gap: 12px;
+          --line: 1px;
         }
+        @media (max-width: 900px) {
+          .team-mosaic-root { --tile: 100px; }
+        }
+        @media (max-width: 600px) {
+          .team-mosaic-root { --tile: 86px; }
+        }
+
         .mosaic {
           position: relative;
-          width: calc(5 * (var(--tile) + var(--gap)) / 1.4);
-          height: calc(4 * (var(--tile) + var(--gap)) / 1.4 + var(--tile));
-          margin: 40px auto;
+          width: 100%;
+          max-width: 560px;
+          min-height: 420px;
+          margin: 40px auto 0;
         }
-        .tile {
-          position: absolute;
+
+        /* Forma base del rombo (diamante real) */
+        .diamond {
           width: var(--tile);
           height: var(--tile);
           transform: rotate(45deg);
@@ -661,62 +647,98 @@ function Mosaic() {
           overflow: hidden;
           border: 1px solid #e8e8e8;
           background-repeat: no-repeat;
-          background-image: var(--icon);
-          background-size: 50% 50%;
           background-position: center;
-          transition: transform 600ms cubic-bezier(.22,.61,.36,1),
-            opacity 300ms ease, filter 300ms ease,
-            background-size 600ms ease, background-position 600ms ease,
-            background-image 200ms ease;
-          will-change: transform, background-position, background-size, opacity;
-          opacity: 1;
+          background-size: cover;
+          transition:
+            transform 600ms cubic-bezier(.22,.61,.36,1),
+            opacity   300ms ease,
+            filter    300ms ease,
+            background-position 600ms ease,
+            background-size 600ms ease;
+          will-change: transform, opacity, background-position, background-size;
+        }
+
+        /* Estado inicial: 4 representativos */
+        .rep-diamond {
+          position: absolute;
+          cursor: pointer;
         }
         @media (hover: hover) {
-          .tile:hover {
-            filter: brightness(1.06);
-          }
+          .rep-diamond:hover { filter: brightness(1.06); }
         }
-        .mosaic.is-transitioning .tile {
+
+        /* Capa de composición */
+        .compose-layer {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+        .compose-layer .tile {
+          position: absolute;
+          pointer-events: none;
+          border: var(--line) solid #fff;
+          opacity: 0;
+        }
+
+        /* Fase de transición (salida de representativos) */
+        .mosaic.is-transitioning .rep-diamond {
           opacity: 0.15;
-          border-color: transparent;
-        }
-        .mosaic.is-composed .tile {
-          opacity: 1;
-          border-color: transparent;
-          background-image: var(--sprite);
+          transition: opacity 200ms ease;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-          .mosaic {
-            width: calc(4 * (var(--tile) + var(--gap)) / 1.4);
-            margin-top: 28px;
-          }
-        }
-        @media (max-width: 480px) {
-          .mosaic {
-            width: calc(3.4 * (var(--tile) + var(--gap)) / 1.4);
-          }
+        /* Modo compuesto (retrato) */
+        .mosaic.is-composed .rep-diamond {
+          display: none; /* escondemos los 4 reps mientras está compuesto */
         }
 
-        /* Panel */
+        /* Botón Cerrar (diamante amarillo) */
+        .close-diamond {
+          position: absolute;
+          left: -12px;
+          top: -12px;
+          width: calc(var(--tile) * 0.9);
+          height: calc(var(--tile) * 0.9);
+          background: #F0C200;
+          color: #0A2E57;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2;
+        }
+        .close-diamond span {
+          transform: rotate(-45deg);
+          font-weight: 600;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+        .mosaic:not(.is-composed) .close-diamond {
+          display: none;
+        }
+
+        /* Panel de perfil */
+        .profile-panel[hidden] { display: none; }
         .profile-panel {
           margin: 28px auto 0;
           max-width: 980px;
           padding: 24px;
-          border: 1px solid #e8e8e8;
-          transition: opacity 0.3s ease, max-height 0.4s ease;
+          border: 1px solid #e6e6e6;
+          background: #fff;
+          transition: opacity .3s ease, max-height .4s ease;
         }
       `}</style>
     </div>
   );
 }
 
+/* ================= COMPONENTE PERFIL ================= */
+
 function ProfileCard({ m, onClose }: { m: Member; onClose: () => void }) {
   return (
     <div className="border border-black/10 bg-white p-6" style={{ borderRadius: 0 }}>
       <header className="pb-4 mb-4 border-b border-black/10">
-        <h3 className="text-[20px] font-medium text-black/90">{m.name}</h3>
+        <h3 id={m.id} className="text-[20px] font-medium text-black/90">{m.name}</h3>
         <p className="uppercase text-[13px] tracking-[.2em] text-[#0A2E57]">{m.roleLine}</p>
       </header>
 
