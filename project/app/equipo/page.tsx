@@ -118,13 +118,15 @@ const TEAM_PRINCIPAL: Member[] = [
   },
 ];
 
-// Alianzas
+// Alianzas (con blurb para overlay estilo “Servicios”)
 const ALLIES = [
   {
     name: 'Irene Puelma Propiedades',
     area: 'Co-Brokerage Alliance',
     photo:
       'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Irene%20Puelma.png',
+    blurb:
+      'Red estratégica que amplía el alcance de Gesswein Properties con corredoras de excelencia y un portafolio curado.',
   },
 ];
 
@@ -157,7 +159,7 @@ export default function EquipoPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const toggle = (id: string) => setOpenId((curr) => (curr === id ? null : id));
 
-  // Reveal en scroll (como Servicios)
+  // Reveal en scroll (cards del equipo)
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<boolean[]>(
     Array(TEAM_PRINCIPAL.length).fill(false)
@@ -255,7 +257,7 @@ export default function EquipoPage() {
               </div>
             </div>
 
-            {/* Imagen: misma altura visual del grid */}
+            {/* Imagen */}
             <div className="md:order-2 order-1">
               <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
                 <img
@@ -359,7 +361,7 @@ export default function EquipoPage() {
                   style={{ borderRadius: 0 }}
                 >
                   <div className="grid gap-8 md:grid-cols-2 items-stretch">
-                    {/* FOTO: en mobile siempre arriba */}
+                    {/* FOTO */}
                     <div className={m.align === 'right' ? 'md:order-2' : 'md:order-1'}>
                       <div className="w-full h-full overflow-hidden border border-black/10">
                         {m.photo ? (
@@ -398,7 +400,7 @@ export default function EquipoPage() {
                         {openId === m.id ? 'Cerrar' : 'Ver perfil'}
                       </button>
 
-                      {/* Panel colapsable: 1 columna, sin bordes redondos */}
+                      {/* Panel colapsable */}
                       <div
                         id={`bio-${m.id}`}
                         aria-labelledby={m.id}
@@ -407,14 +409,12 @@ export default function EquipoPage() {
                         }`}
                       >
                         <div className="border border-black/10 bg-white p-5" style={{ borderRadius: 0 }}>
-                          {/* Descripción adicional */}
                           {m.bioDetail.map((p, i) => (
                             <p key={i} className="text-[14px] text-black/70 leading-relaxed mb-3">
                               {p}
                             </p>
                           ))}
 
-                          {/* EDUCACIÓN */}
                           <div className="mt-3">
                             <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
                               Educación
@@ -422,7 +422,6 @@ export default function EquipoPage() {
                             <div className="text-[13px] text-black/80 mt-1">{m.education}</div>
                           </div>
 
-                          {/* ESPECIALIDADES */}
                           <div className="mt-4">
                             <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
                               Especialidades
@@ -430,18 +429,7 @@ export default function EquipoPage() {
                             <div className="text-[13px] text-black/80 mt-1">{m.specialties}</div>
                           </div>
 
-                          {/* CONTACTO — solo valores linkeados */}
                           <div className="mt-4 flex flex-col gap-1 text-[13px]">
-                            {m.email && (
-                              <a
-                                href={`mailto:${m.email}`}
-                                aria-label={`Enviar correo a ${m.name}`}
-                                className="inline-flex items-center gap-2 text-black/80 hover:underline"
-                              >
-                                <Mail className="h-4 w-4 text-black/50" />
-                                {m.email}
-                              </a>
-                            )}
                             {m.phone && (
                               <a
                                 href={`tel:${m.phone.replace(/\s+/g, '')}`}
@@ -476,36 +464,42 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 5) ALIANZAS & COLABORADORES — BLANCO */}
+      {/* 5) ALIANZAS & COLABORADORES — BLANCO (CON OVERLAY HOVER) */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
+          <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-4">
             Alianzas & Colaboradores
           </h3>
-          <p className="text-[14px] text-black/70 mt-3">
+          <p className="text-[14px] text-black/70 mb-10">
             Profesionales y estudios con los que trabajamos para elevar el estándar de cada
             proyecto.
           </p>
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 xl:gap-8">
             {ALLIES.map((a) => (
               <article
                 key={a.name}
-                className="border border-black/10 bg-white p-5 shadow-sm"
+                className="group relative overflow-hidden border border-slate-200 bg-white shadow-sm select-none transition transform hover:-translate-y-[4px] hover:shadow-md"
                 style={{ borderRadius: 0 }}
               >
-                <div className="w-full aspect-square border border-black/10 overflow-hidden mb-4">
+                <div className="relative aspect-[4/3]">
                   <Image
                     src={a.photo}
                     alt={a.name}
-                    width={800}
-                    height={800}
-                    className="w-full h-full object-cover"
+                    width={1200}
+                    height={900}
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
-                </div>
-                <h4 className="text-[15px] text-black/90">{a.name}</h4>
-                <div className="text-[12px] text-[#0A2E57] uppercase tracking-[.18em]">
-                  {a.area}
+                  {/* Overlay inferior (igual a Servicios, sin botón) */}
+                  <div className="absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-[1px] border-t border-black/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-transform duration-300 ease-out p-5">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                      {a.area}
+                    </div>
+                    <h4 className="mt-1 text-[15px] text-black/90">{a.name}</h4>
+                    {'blurb' in a && a.blurb ? (
+                      <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{a.blurb}</p>
+                    ) : null}
+                  </div>
                 </div>
               </article>
             ))}
