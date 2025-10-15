@@ -156,36 +156,7 @@ const CULTURE = [
    ========================= */
 
 export default function EquipoPage() {
-  const [openId, setOpenId] = useState<string | null>(null);
-  const toggle = (id: string) => setOpenId((curr) => (curr === id ? null : id));
-
-  // Reveal en scroll (cards del equipo) — (no se usa en el nuevo grid, se conserva por compat)
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState<boolean[]>(
-    Array(TEAM_PRINCIPAL.length).fill(false)
-  );
-
-  useEffect(() => {
-    const nodes = containerRef.current?.querySelectorAll('[data-team-card]') ?? [];
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            const idx = Number((e.target as HTMLElement).dataset.index);
-            setVisible((prev) => {
-              const next = [...prev];
-              next[idx] = true;
-              return next;
-            });
-          }
-        });
-      },
-      { threshold: 0.18, rootMargin: '0px 0px -10% 0px' }
-    );
-    nodes.forEach((n) => io.observe(n));
-    return () => io.disconnect();
-  }, []);
-
+  // (Se mantiene cualquier estado/efecto que ya tenías arriba; no lo usamos en EQUIPO nuevo)
   return (
     <main className="bg-white">
       {/* HERO */}
@@ -277,7 +248,7 @@ export default function EquipoPage() {
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
             Propuesta de Valor
           </h2>
-          <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl">
+        <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl">
             En Gesswein Properties nos definimos por un enfoque boutique, que combina excelencia
             técnica, comunicación cercana y una estética moderna aplicada a cada proyecto
             inmobiliario. Nuestro compromiso es ofrecer un servicio profesional, transparente y con
@@ -334,7 +305,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — GRIS (ESTILO OGILVY: GRID + BUSCADOR/FILTROS + DRAWER) */}
+      {/* 4) EQUIPO — GRIS (Ogilvy-like con “salto a la izquierda”) */}
       <section id="equipo" className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
@@ -345,7 +316,7 @@ export default function EquipoPage() {
             estratégica para que cada decisión inmobiliaria sea segura, rentable y estética.
           </p>
 
-          <TeamOgilvyGrid />
+          <TeamLeftJump />
         </div>
       </section>
 
@@ -426,324 +397,281 @@ export default function EquipoPage() {
 }
 
 /* =========================
-   SUBCOMPONENTE: EQUIPO (Ogilvy Grid)
+   SUBCOMPONENTE: EQUIPO (Ogilvy-like “salto a la izquierda”)
    ========================= */
 
-type FilterKey = 'todos' | 'arquitectura' | 'legal' | 'finanzas' | 'marketing';
+function TeamLeftJump() {
+  const [activeId, setActiveId] = useState<Member['id'] | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-const MEMBER_TAGS: Record<Member['id'], FilterKey[]> = {
-  carolina: ['arquitectura'],
-  alberto: ['marketing'],
-  jan: ['legal'],
-  kay: ['finanzas', 'marketing'],
-};
-
-function TeamOgilvyGrid() {
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<FilterKey>('todos');
-  const [order, setOrder] = useState<'az' | 'rol' | 'none'>('az');
-  const [open, setOpen] = useState<Member | null>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  // Accesibilidad: cerrar con Esc y manejar foco
+  // Cerrar con ESC
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open) setOpen(null);
+      if (e.key === 'Escape') setActiveId(null);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, []);
 
-  useEffect(() => {
-    if (open && closeRef.current) {
-      closeRef.current.focus();
-    }
-  }, [open]);
+  const open = (id: Member['id']) =>
+    setActiveId((curr) => (curr === id ? null : id));
 
-  const normalized = (s: string) =>
-    s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  const active = TEAM_PRINCIPAL.find((m) => m.id === activeId) || null;
 
-  const filtered = TEAM_PRINCIPAL.filter((m) => {
-    const text =
-      normalized(m.name) +
-      ' ' +
-      normalized(m.roleLine) +
-      ' ' +
-      normalized(m.specialties) +
-      ' ' +
-      normalized(m.bioShort);
-    const qok = normalized(query).trim() === '' || text.includes(normalized(query).trim());
-    const fok =
-      filter === 'todos' ? true : MEMBER_TAGS[m.id]?.includes(filter) ?? false;
-    return qok && fok;
-  }).sort((a, b) => {
-    if (order === 'az') return a.name.localeCompare(b.name, 'es');
-    if (order === 'rol') return a.roleLine.localeCompare(b.roleLine, 'es');
-    return 0;
-  });
+  // 1 línea del resumen para overlay
+  const oneLiner = (s: string) => {
+    const first = s.split('. ')[0] || s;
+    return first.length > 110 ? first.slice(0, 110) + '…' : first;
+  };
 
   return (
-    <div className="mt-8">
-      {/* Controles */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div className="flex-1">
-          <label className="block text-[12px] uppercase tracking-[.2em] text-[#0A2E57] mb-2">
-            Buscar
-          </label>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por nombre, rol o especialidad"
-            className="w-full border border-black/20 px-4 py-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0A2E57] placeholder-black/40"
-            aria-label="Buscar por nombre, rol o especialidad"
-          />
-        </div>
-
-        <div className="flex-1 md:flex md:flex-col">
-          <span className="block text-[12px] uppercase tracking-[.2em] text-[#0A2E57] mb-2">
-            Filtros
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {(['todos', 'arquitectura', 'legal', 'finanzas', 'marketing'] as FilterKey[]).map(
-              (key) => (
-                <button
-                  key={key}
-                  onClick={() => setFilter(key)}
-                  aria-pressed={filter === key}
-                  className={[
-                    'px-4 py-2 border text-[12px] uppercase tracking-[.2em] transition',
-                    filter === key
-                      ? 'border-[#0A2E57] text-white bg-[#0A2E57]'
-                      : 'border-black/25 hover:bg-[#0A2E57] hover:text-white',
-                  ].join(' ')}
-                >
-                  {key === 'todos'
-                    ? 'Todos'
-                    : key === 'arquitectura'
-                    ? 'Arquitectura'
-                    : key === 'legal'
-                    ? 'Legal'
-                    : key === 'finanzas'
-                    ? 'Finanzas'
-                    : 'Marketing & Comunicación'}
-                </button>
-              )
-            )}
-          </div>
-        </div>
-
-        <div className="w-full md:w-[220px]">
-          <label className="block text-[12px] uppercase tracking-[.2em] text-[#0A2E57] mb-2">
-            Ordenar
-          </label>
-          <select
-            value={order}
-            onChange={(e) => setOrder(e.target.value as any)}
-            className="w-full border border-black/20 px-4 py-3 text-[14px] bg-white focus:outline-none focus:ring-2 focus:ring-[#0A2E57]"
-            aria-label="Ordenar resultados"
-          >
-            <option value="az">A–Z</option>
-            <option value="rol">Rol</option>
-            <option value="none">Sin orden</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Grid de tarjetas */}
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filtered.map((m) => (
-          <article
-            key={m.id}
-            className="group border border-black/10 bg-white shadow-sm transition will-change-transform"
-            style={{ borderRadius: 0 }}
-          >
-            <div className="relative w-full aspect-[3/4] overflow-hidden border-b border-black/10">
+    <div className="relative mt-10">
+      {/* GRID de retratos */}
+      <div
+        ref={containerRef}
+        className={[
+          'relative grid gap-6',
+          // 4 columnas en desktop; en mobile 1
+          'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+        ].join(' ')}
+      >
+        {TEAM_PRINCIPAL.map((m) => {
+          const isActive = activeId === m.id;
+          return (
+            <button
+              key={m.id}
+              onClick={() => open(m.id)}
+              aria-expanded={isActive}
+              className={[
+                'group relative cursor-pointer overflow-hidden aspect-[4/5] border border-black/10 bg-white',
+                'focus:outline-none focus:ring-2 focus:ring-[#0A2E57]',
+                // Cuando hay activa, mantiene su lugar; el panel cubrirá las otras (no interfiere)
+              ].join(' ')}
+              style={{ borderRadius: 0 }}
+            >
               <Image
                 src={m.photo || '/team/placeholder.jpg'}
                 alt={m.name}
                 fill
                 className="object-cover"
-                sizes="(max-width: 768px) 100vw, 33vw"
+                loading="lazy"
+                sizes="(max-width:768px) 100vw, 25vw"
                 priority={false}
               />
-              {/* Overlay hover desktop */}
-              <div className="hidden md:block absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
-              <button
-                className="hidden md:inline-flex absolute bottom-4 left-4 px-4 py-2 border border-white/70 text-white text-[12px] uppercase tracking-[.25em] hover:bg-white hover:text-[#0A2E57] transition"
-                onClick={() => setOpen(m)}
-                aria-haspopup="dialog"
-                aria-controls="profile-drawer"
-              >
-                Ver perfil
-              </button>
-            </div>
-
-            <div className="p-5">
-              <h3 className="text-[16px] text-black/90">{m.name}</h3>
-              <p className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57] mt-1">
-                {m.roleLine}
-              </p>
-
-              {/* chips de especialidades */}
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {m.specialties.split('·').map((s, i) => (
-                  <li
-                    key={i}
-                    className="px-2 py-1 border border-black/15 text-[12px] text-black/70"
-                  >
-                    {s.trim()}
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA mobile */}
-              <button
-                className="mt-4 w-full md:hidden px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
-                onClick={() => setOpen(m)}
-                aria-haspopup="dialog"
-                aria-controls="profile-drawer"
-              >
-                Ver perfil
-              </button>
-            </div>
-          </article>
-        ))}
+              {/* Overlay hover (solo desktop) */}
+              <div className="hidden lg:block absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out" />
+              <div className="hidden lg:flex absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out items-end p-5 text-white">
+                <div>
+                  <h3 className="text-[16px] font-medium">{m.name}</h3>
+                  <p className="uppercase text-[12px] tracking-[.2em] text-[#BFD1E5]">
+                    {m.roleLine}
+                  </p>
+                  <p className="mt-2 text-[13px] leading-snug">
+                    {oneLiner(m.bioShort)}
+                  </p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Drawer / Modal */}
+      {/* PANEL de detalle (desktop: overlay a la derecha; mobile: debajo de la activa) */}
+      {/* Desktop / Tablet >= md: panel absoluto que cubre columnas 2–4 */}
       <div
-        id="profile-drawer"
-        role="dialog"
-        aria-modal="true"
         className={[
-          'fixed inset-0 z-50',
-          open ? 'pointer-events-auto' : 'pointer-events-none',
+          'hidden md:block',
+          'pointer-events-none', // bloquea clicks por defecto
+          active ? 'pointer-events-auto' : '',
         ].join(' ')}
-        aria-hidden={!open}
       >
-        {/* overlay */}
         <div
+          onClick={() => setActiveId(null)}
           className={[
-            'absolute inset-0 bg-black/30 transition-opacity',
-            open ? 'opacity-100' : 'opacity-0',
-          ].join(' ')}
-          onClick={() => setOpen(null)}
-        />
-        {/* panel */}
-        <div
-          className={[
-            'absolute right-0 top-0 h-full w-full md:w-[520px] bg-white border-l border-black/10 shadow-xl',
-            'transition-transform duration-300 will-change-transform',
-            open ? 'translate-x-0' : 'translate-x-full',
+            'absolute top-0 right-0 h-full md:w-[62%]',
+            active ? 'opacity-100' : 'opacity-0',
+            'transition-opacity duration-200 ease-in-out',
           ].join(' ')}
         >
-          {open && (
-            <div className="flex flex-col h-full">
-              {/* header */}
-              <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
-                <h3 className="text-[16px] text-black/90">{open.name}</h3>
-                <button
-                  ref={closeRef}
-                  onClick={() => setOpen(null)}
-                  className="px-3 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
-                >
-                  Cerrar
-                </button>
-              </div>
+          {/* superficie del panel (clic para cerrar) */}
+          <div
+            className="h-full w-full bg-[#F7F8FA] shadow-xl border-l border-black/10"
+            style={{ borderRadius: 0 }}
+            // si quieres que solo el fondo cierre, descomenta:
+            // onClick={() => setActiveId(null)}
+          >
+            {/* contenido; detener propagación para no cerrar si interactúas dentro */}
+            <div
+              className="h-full overflow-y-auto p-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {active ? (
+                <>
+                  <h3
+                    className="text-[18px] text-[#0E2C4A] font-medium"
+                    id="panel-title"
+                  >
+                    {active.name}
+                  </h3>
+                  <p className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57] mt-1">
+                    {active.roleLine}
+                  </p>
 
-              {/* body */}
-              <div className="overflow-y-auto p-5">
-                <div className="w-full aspect-[4/5] relative border border-black/10 mb-4">
-                  <Image
-                    src={open.photo || '/team/placeholder.jpg'}
-                    alt={open.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 520px"
-                    priority={false}
-                  />
-                </div>
-
-                <p className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                  {open.roleLine}
-                </p>
-
-                <div className="mt-3 text-[14px] text-black/70 leading-relaxed">
-                  <p className="mb-3">{open.bioShort}</p>
-                  {open.bioDetail.map((p, i) => (
-                    <p key={i} className="mb-3">
-                      {p}
-                    </p>
-                  ))}
-                </div>
-
-                <div className="mt-4">
-                  <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                    Educación
-                  </div>
-                  <div className="text-[13px] text-black/80 mt-1">{open.education}</div>
-                </div>
-
-                <div className="mt-4">
-                  <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                    Especialidades
-                  </div>
-                  <ul className="mt-1 text-[13px] text-black/80 list-disc pl-5">
-                    {open.specialties.split('·').map((s, i) => (
-                      <li key={i}>{s.trim()}</li>
+                  <div className="mt-4 text-[14px] text-black/70 leading-relaxed">
+                    <p className="mb-3">{active.bioShort}</p>
+                    {active.bioDetail.map((p, i) => (
+                      <p key={i} className="mb-3">
+                        {p}
+                      </p>
                     ))}
-                  </ul>
-                </div>
+                  </div>
 
-                <div className="mt-4 flex flex-col gap-1 text-[13px]">
-                  {open.email && (
-                    <a
-                      href={`mailto:${open.email}`}
-                      aria-label={`Enviar correo a ${open.name}`}
-                      className="inline-flex items-center gap-2 text-black/80 hover:underline"
-                    >
-                      <Mail className="h-4 w-4 text-black/50" />
-                      {open.email}
-                    </a>
-                  )}
-                  {open.phone && (
-                    <a
-                      href={`tel:${open.phone.replace(/\s+/g, '')}`}
-                      aria-label={`Llamar a ${open.name}`}
-                      className="inline-flex items-center gap-2 text-black/80 hover:underline"
-                    >
-                      <Phone className="h-4 w-4 text-black/50" />
-                      {open.phone}
-                    </a>
-                  )}
-                  {open.linkedin && (
-                    <a
-                      href={open.linkedin}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`Abrir LinkedIn de ${open.name}`}
-                      className="inline-flex items-center gap-2 text-black/80 hover:underline"
-                    >
-                      <Linkedin className="h-4 w-4 text-black/50" />
-                      {open.linkedin.replace(/^https?:\/\//, '')}
-                    </a>
-                  )}
-                </div>
-              </div>
+                  <div className="mt-5">
+                    <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                      Educación
+                    </div>
+                    <div className="text-[13px] text-black/80 mt-1">
+                      {active.education}
+                    </div>
+                  </div>
 
-              {/* footer */}
-              <div className="border-t border-black/10 px-5 py-4">
-                <button
-                  onClick={() => setOpen(null)}
-                  className="w-full px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
-                >
-                  Cerrar
-                </button>
-              </div>
+                  <div className="mt-5">
+                    <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                      Especialidades
+                    </div>
+                    <ul className="mt-1 text-[13px] text-black/80 list-disc pl-5">
+                      {active.specialties.split('·').map((s, i) => (
+                        <li key={i}>{s.trim()}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mt-5 flex flex-col gap-2 text-[13px]">
+                    {active.email && (
+                      <a
+                        href={`mailto:${active.email}`}
+                        className="underline underline-offset-2"
+                        aria-label={`Enviar correo a ${active.name}`}
+                      >
+                        {active.email}
+                      </a>
+                    )}
+                    {active.phone && (
+                      <a
+                        href={`tel:${active.phone.replace(/\s+/g, '')}`}
+                        className="underline underline-offset-2"
+                        aria-label={`Llamar a ${active.name}`}
+                      >
+                        {active.phone}
+                      </a>
+                    )}
+                    {active.linkedin && (
+                      <a
+                        href={active.linkedin}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline underline-offset-2"
+                        aria-label={`Abrir LinkedIn de ${active.name}`}
+                      >
+                        {active.linkedin.replace(/^https?:\/\//, '')}
+                      </a>
+                    )}
+                  </div>
+                </>
+              ) : null}
             </div>
-          )}
+          </div>
         </div>
+      </div>
+
+      {/* Mobile: panel debajo de la tarjeta activa (acordeón) */}
+      <div className="md:hidden mt-4">
+        {TEAM_PRINCIPAL.map((m) => {
+          const isActive = activeId === m.id;
+          return (
+            <div key={m.id} className="mb-4">
+              {/* encabezado “fantasma”: solo mostramos panel cuando coincide */}
+              {isActive && (
+                <div
+                  className={[
+                    'overflow-hidden transition-all duration-300 ease-in-out',
+                    isActive ? 'max-h-[4000px] opacity-100' : 'max-h-0 opacity-0',
+                    'bg-[#F7F8FA] border border-black/10 p-6',
+                  ].join(' ')}
+                  style={{ borderRadius: 0 }}
+                >
+                  <h3 className="text-[16px] text-[#0E2C4A] font-medium">
+                    {m.name}
+                  </h3>
+                  <p className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                    {m.roleLine}
+                  </p>
+
+                  <div className="mt-3 text-[14px] text-black/70 leading-relaxed">
+                    <p className="mb-3">{m.bioShort}</p>
+                    {m.bioDetail.map((p, i) => (
+                      <p key={i} className="mb-3">
+                        {p}
+                      </p>
+                    ))}
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                      Educación
+                    </div>
+                    <div className="text-[13px] text-black/80 mt-1">
+                      {m.education}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
+                      Especialidades
+                    </div>
+                    <ul className="mt-1 text-[13px] text-black/80 list-disc pl-5">
+                      {m.specialties.split('·').map((s, i) => (
+                        <li key={i}>{s.trim()}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-2 text-[13px]">
+                    {m.email && (
+                      <a
+                        href={`mailto:${m.email}`}
+                        className="underline underline-offset-2"
+                        aria-label={`Enviar correo a ${m.name}`}
+                      >
+                        {m.email}
+                      </a>
+                    )}
+                    {m.phone && (
+                      <a
+                        href={`tel:${m.phone.replace(/\s+/g, '')}`}
+                        className="underline underline-offset-2"
+                        aria-label={`Llamar a ${m.name}`}
+                      >
+                        {m.phone}
+                      </a>
+                    )}
+                    {m.linkedin && (
+                      <a
+                        href={m.linkedin}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline underline-offset-2"
+                        aria-label={`Abrir LinkedIn de ${m.name}`}
+                      >
+                        {m.linkedin.replace(/^https?:\/\//, '')}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
