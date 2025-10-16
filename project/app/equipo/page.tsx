@@ -288,7 +288,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 5) ALIANZAS — BLANCO (CON OVERLAY HOVER) */}
+      {/* 5) ALIANZAS — BLANCO */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-4">
@@ -313,7 +313,6 @@ export default function EquipoPage() {
                     height={900}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
-                  {/* Overlay inferior (igual a Servicios, sin botón) */}
                   <div className="absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-[1px] border-t border-black/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-transform duration-300 ease-out p-5">
                     <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                       {a.area}
@@ -369,12 +368,16 @@ export default function EquipoPage() {
 
 function TeamOgilvy() {
   const team = TEAM_PRINCIPAL;
-  const [active, setActive] = useState<number | null>(null); // índice activo (desktop y mobile)
+  const [active, setActive] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const floaterRef = useRef<HTMLDivElement | null>(null);
   const activeIdxRef = useRef<number | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
   const [panelDims, setPanelDims] = useState<{ left: number; width: number; height: number }>({
     left: 0,
     width: 0,
@@ -390,7 +393,7 @@ function TeamOgilvy() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Recalcular dimensiones del panel cuando se abre o al redimensionar
+  // Recalcular dimensiones del panel cuando abre o cambia tamaño
   useEffect(() => {
     function computePanel() {
       if (!gridRef.current) return;
@@ -400,7 +403,7 @@ function TeamOgilvy() {
       const gap = 24; // gap-6
       const first = cards[0].getBoundingClientRect();
       const gridRect = grid.getBoundingClientRect();
-      const left = first.width + gap; // desde después de la col 1
+      const left = first.width + gap;
       const width = gridRect.width - left;
       const height = first.height;
       setPanelDims({ left, width, height });
@@ -410,51 +413,75 @@ function TeamOgilvy() {
     return () => window.removeEventListener('resize', computePanel);
   }, [active]);
 
-  // Cierra todo (desktop)
+  // Cierre con animación inversa (desktop)
   function closePanel() {
     const i = activeIdxRef.current;
     const floater = floaterRef.current;
-    if (i == null) {
-      setActive(null);
-      return;
-    }
-    // MOBILE: no hay floater
+    setIsTransitioning(true);
+
+    // MOBILE: acordeón
     if (window.matchMedia('(max-width: 767px)').matches) {
       setActive(null);
       activeIdxRef.current = null;
+      setIsTransitioning(false);
       return;
     }
-    const srcCard = cardRefs.current[i];
+
+    const srcCard = (i != null) ? cardRefs.current[i] : null;
+    const dstCard = cardRefs.current[0];
     const grid = gridRef.current;
+
+    // Fade-out del panel mientras vuelve la foto
+    if (panelRef.current) {
+      panelRef.current.style.transition = 'opacity 320ms ease';
+      panelRef.current.style.opacity = '0';
+    }
+
     if (!floater || !srcCard || !grid) {
+      // fallback
+      if (dstCard) dstCard.style.visibility = 'visible';
       setActive(null);
       activeIdxRef.current = null;
+      floaterRef.current = null;
+      setIsTransitioning(false);
       return;
     }
+
     const gridRect = grid.getBoundingClientRect();
+    const floaterRect = floater.getBoundingClientRect();
     const srcRect = srcCard.getBoundingClientRect();
-    const backX = srcRect.left - gridRect.left - (floater.getBoundingClientRect().left - gridRect.left);
-    floater.style.transition = 'transform 380ms cubic-bezier(.22,.61,.36,1)';
-    floater.style.transform = `translate(${backX}px, 0)`;
+
+    const currentX = floaterRect.left - gridRect.left;
+    const targetX = srcRect.left - gridRect.left;
+    const dx = targetX - currentX;
+
+    floater.style.transition = 'transform 420ms cubic-bezier(.22,.61,.36,1)';
+    floater.style.transform = `translate(${dx}px, 0)`;
+
     setTimeout(() => {
       try {
         srcCard.style.visibility = 'visible';
+        if (dstCard) dstCard.style.visibility = 'visible';
       } catch {}
       floater.remove();
       floaterRef.current = null;
       setActive(null);
       activeIdxRef.current = null;
-    }, 380);
+      setIsTransitioning(false);
+      if (panelRef.current) {
+        panelRef.current.style.opacity = '1';
+      }
+    }, 430);
   }
 
-  // Abrir (animación FLIP en desktop; acordeón en mobile)
+  // Abrir (FLIP desktop / acordeón mobile)
   function openMember(i: number) {
     if (active === i) {
       closePanel();
       return;
     }
 
-    // MOBILE: simple acordeón debajo de la tarjeta
+    // MOBILE: acordeón sencillo
     if (window.matchMedia('(max-width: 767px)').matches) {
       setActive(i);
       activeIdxRef.current = i;
@@ -470,7 +497,9 @@ function TeamOgilvy() {
       return;
     }
 
-    // Preparar clon flotante (foto activa) con mismas dimensiones de src
+    setIsTransitioning(true);
+
+    // Clon flotante con mismo tamaño/posición que la tarjeta origen
     const gridRect = grid.getBoundingClientRect();
     const srcRect = src.getBoundingClientRect();
     const dstRect = dst.getBoundingClientRect();
@@ -489,34 +518,48 @@ function TeamOgilvy() {
     );
     clone.addEventListener('click', closePanel);
 
-    // Mostrar clon y ocultar la tarjeta origen y la de destino (para evitar ver Carolina debajo)
+    // Insertar clon y ocultar tarjetas que podrían verse debajo (origen y destino)
     grid.appendChild(clone);
     src.style.visibility = 'hidden';
     dst.style.visibility = 'hidden';
     floaterRef.current = clone;
     activeIdxRef.current = i;
 
-    // Animar clon hacia la posición de la primera columna (sobreponiéndose a Carolina)
+    // Atenuar el resto durante la transición (menos “pasar por encima”)
+    Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el, idx) => {
+      if (idx !== i && idx !== 0) {
+        el.style.transition = 'opacity 220ms ease';
+        el.style.opacity = '0.35';
+      }
+    });
+
+    // Animar clon hacia la primera columna
     const dx = dstRect.left - srcRect.left;
     requestAnimationFrame(() => {
       clone.style.transition = 'transform 450ms cubic-bezier(.22,.61,.36,1)';
       clone.style.transform = `translate(${dx}px, 0)`;
     });
 
-    // Al finalizar, fijar activo y mantener el clon (la foto activa queda a la izquierda)
+    // Al finalizar, fijar activo
     setTimeout(() => {
       setActive(i);
+      setIsTransitioning(false);
+      // Restaurar opacidad del resto (panel cubrirá columnas 2–4)
+      Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el, idx) => {
+        if (idx !== i && idx !== 0) {
+          el.style.opacity = '1';
+        }
+      });
     }, 460);
   }
 
-  // Cierre por clic en cualquier parte del panel
   function onPanelClick() {
     closePanel();
   }
 
   return (
     <div ref={containerRef} className="relative mt-10">
-      {/* GRID de 4 columnas (desktop) / 1 columna (mobile) */}
+      {/* GRID de 4 col (desktop) / 1 col (mobile) */}
       <div
         ref={gridRef}
         className="relative grid grid-cols-1 md:grid-cols-4 gap-6"
@@ -528,7 +571,9 @@ function TeamOgilvy() {
               cardRefs.current[i] = el;
             }}
             data-team-card
-            className="relative group cursor-pointer select-none"
+            className={`relative group cursor-pointer select-none transition-opacity ${
+              isTransitioning && activeIdxRef.current !== i ? 'md:opacity-90' : ''
+            }`}
             onClick={() => openMember(i)}
             aria-expanded={active === i}
           >
@@ -550,13 +595,14 @@ function TeamOgilvy() {
               className="hidden md:flex absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex-col justify-end p-6 pointer-events-none"
             >
               <h3 className="text-white text-lg font-semibold">{m.name}</h3>
+              {/* ROL SIN NEGRITA */}
               <p className="text-[#BFD1E5] text-sm tracking-[.12em]">
                 {m.roleLine}
               </p>
               <p className="text-white/85 text-xs mt-1 line-clamp-2">{m.bioShort}</p>
             </div>
 
-            {/* Panel ACORDEÓN en mobile (debajo de la tarjeta activa) */}
+            {/* Panel ACORDEÓN en mobile */}
             <div
               className={`md:hidden overflow-hidden transition-all duration-300 ${
                 active === i ? 'max-h-[800px] opacity-100 mt-3' : 'max-h-0 opacity-0'
@@ -564,6 +610,7 @@ function TeamOgilvy() {
             >
               <div className="w-full bg-[#EAEAEA] p-5 border border-black/10">
                 <h4 className="text-xl font-semibold text-[#0E2C4A]">{m.name}</h4>
+                {/* ROL SIN NEGRITA */}
                 <p className="text-[#0A2E57] text-sm tracking-[.14em] uppercase mt-1">
                   {m.roleLine}
                 </p>
@@ -619,10 +666,10 @@ function TeamOgilvy() {
           </div>
         ))}
 
-        {/* PANEL LATERAL (DESKTOP) — cubre columnas 2–4.
-            No contiene imagen; sólo texto. Clic en cualquier parte cierra. */}
+        {/* PANEL LATERAL (DESKTOP) — sólo texto */}
         {active !== null && (
           <div
+            ref={panelRef}
             className="hidden md:block absolute top-0 bg-[#EAEAEA] border border-black/10 shadow-[0_4px_10px_rgba(0,0,0,0.06)] overflow-hidden"
             style={{
               left: `${panelDims.left}px`,
@@ -631,7 +678,7 @@ function TeamOgilvy() {
               transition: 'transform 450ms cubic-bezier(.22,.61,.36,1), opacity 300ms ease',
               transform: 'translateX(0)',
               opacity: 1,
-              zIndex: 40, // queda debajo del clon (50) y encima de las otras tarjetas
+              zIndex: 40,
             }}
             onClick={onPanelClick}
             role="dialog"
@@ -639,6 +686,7 @@ function TeamOgilvy() {
           >
             <div className="h-full w-full p-10 text-[#0E2C4A] flex flex-col">
               <h3 className="text-3xl font-semibold">{team[active].name}</h3>
+              {/* ROL SIN NEGRITA */}
               <p className="text-[#0A2E57] mt-2 tracking-[.18em] uppercase">
                 {team[active].roleLine}
               </p>
