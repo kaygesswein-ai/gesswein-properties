@@ -2,28 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import {
-  Users,
-  Award,
-  Briefcase,
-  Mail,
-  Phone,
-  Linkedin,
-} from 'lucide-react';
+import { Users, Award, Briefcase } from 'lucide-react';
 
 /* =========================
-   DATA
+   DATOS
    ========================= */
 
-// Portada
 const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Gemini_Generated_Image_1c3kp91c3kp91c3k.png';
 
-// Foto “Nuestra Historia”
 const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
 
-// Fotos equipo
 const PHOTOS = {
   carolina: '/team/carolina-san-martin.png',
   alberto: '/team/alberto-gesswein.png',
@@ -43,7 +33,6 @@ type Member = {
   phone?: string;
   linkedin?: string;
   photo?: string;
-  align: 'left' | 'right';
 };
 
 const TEAM_PRINCIPAL: Member[] = [
@@ -52,44 +41,44 @@ const TEAM_PRINCIPAL: Member[] = [
     name: 'Carolina San Martín',
     roleLine: 'Managing Partner · Arquitecta',
     bioShort:
-      'Arquitecta con más de 15 años de experiencia en proyectos residenciales de alto estándar. Especialista en normativas municipales, sustentabilidad y gestión integral de diseño.',
+      'Arquitecta con más de 15 años de experiencia en proyectos residenciales de alto estándar.',
     bioDetail: [
       'Dirige el desarrollo arquitectónico de Gesswein Properties, asegurando que cada propiedad combine belleza, funcionalidad y valorización a largo plazo.',
     ],
     education: 'Arquitecta, Pontificia Universidad Católica de Chile.',
-    specialties: 'Arquitectura residencial · Sustentabilidad · Gestión de proyectos.',
+    specialties:
+      'Arquitectura residencial · Sustentabilidad · Gestión de proyectos.',
     email: 'carolina@gessweinproperties.cl',
     phone: '+56 9 9331 8039',
     linkedin:
       'https://www.linkedin.com/in/carolina-san-martin-fern%C3%A1ndez-83207044/',
     photo: PHOTOS.carolina,
-    align: 'left',
   },
   {
     id: 'alberto',
     name: 'Alberto Gesswein',
     roleLine: 'Managing Partner · Productor Ejecutivo',
     bioShort:
-      'Periodista con más de 20 años en dirección y comunicación estratégica. Liderazgo, gestión y negociación.',
+      'Periodista con más de 20 años en dirección y comunicación estratégica.',
     bioDetail: [
       'Encabeza la visión institucional de Gesswein Properties con enfoque humano y excelencia técnica.',
     ],
     education: 'Periodista, Pontificia Universidad Católica de Chile.',
-    specialties: 'Corretaje inmobiliario · Comunicación estratégica · Negociación.',
+    specialties:
+      'Corretaje inmobiliario · Comunicación estratégica · Negociación.',
     email: 'alberto@gesswein.tv',
     phone: '+56 9 9887 1751',
     linkedin: 'https://www.linkedin.com/in/alberto-gesswein-4a8246101/',
     photo: PHOTOS.alberto,
-    align: 'right',
   },
   {
     id: 'jan',
     name: 'Jan Gesswein',
     roleLine: 'Socio Legal · Abogado',
     bioShort:
-      'Abogado especializado en derecho inmobiliario y regulaciones urbanas. Contratos sólidos y procesos transparentes.',
+      'Abogado especializado en derecho inmobiliario y regulaciones urbanas.',
     bioDetail: [
-      'Supervisa aspectos legales: procesos transparentes, contratos sólidos y cumplimiento normativo. Su mirada jurídica garantiza seguridad y confianza en cada transacción.',
+      'Supervisa aspectos legales: contratos sólidos, cumplimiento normativo y procesos transparentes.',
     ],
     education: 'Abogado, Universidad del Desarrollo.',
     specialties: 'Derecho inmobiliario · Contratos · Due Diligence Legal.',
@@ -97,16 +86,15 @@ const TEAM_PRINCIPAL: Member[] = [
     phone: '+56 9 9909 9502',
     linkedin: '#',
     photo: PHOTOS.jan,
-    align: 'left',
   },
   {
     id: 'kay',
     name: 'Kay Gesswein',
-    roleLine: 'Socio de Finanzas y Marketing · Ingeniero Comercial',
+    roleLine: 'Socio Finanzas y Marketing · Ingeniero Comercial',
     bioShort:
-      'Ingeniero Comercial con Magíster en Finanzas. Experto en marketing digital y producción visual inmobiliaria.',
+      'Ingeniero Comercial con Magíster en Finanzas. Experto en marketing y producción visual inmobiliaria.',
     bioDetail: [
-      'Lidera la estrategia digital y el posicionamiento de Gesswein Properties, integrando análisis financiero con comunicación visual de alto impacto.',
+      'Lidera estrategia digital y posicionamiento, integrando análisis financiero con comunicación visual.',
     ],
     education: 'Ingeniero Comercial, Universidad Adolfo Ibáñez.',
     specialties: 'Finanzas · Marketing Digital · Fotografía inmobiliaria.',
@@ -114,11 +102,9 @@ const TEAM_PRINCIPAL: Member[] = [
     phone: '+56 9 9334 5413',
     linkedin: 'https://www.linkedin.com/in/kay-gesswein-san-martin/',
     photo: PHOTOS.kay,
-    align: 'right',
   },
 ];
 
-// Alianzas (con blurb para overlay estilo “Servicios”)
 const ALLIES = [
   {
     name: 'Irene Puelma Propiedades',
@@ -130,7 +116,6 @@ const ALLIES = [
   },
 ];
 
-// Cultura (3 pilares)
 const CULTURE = [
   {
     icon: Award,
@@ -156,62 +141,6 @@ const CULTURE = [
    ========================= */
 
 export default function EquipoPage() {
-  const [openId, setOpenId] = useState<string | null>(null);
-  const toggle = (id: string) => setOpenId((curr) => (curr === id ? null : id));
-
-  // Reveal en scroll (cards del equipo de la versión anterior, ya no aplica aquí)
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState<boolean[]>(
-    Array(TEAM_PRINCIPAL.length).fill(false)
-  );
-
-  useEffect(() => {
-    const nodes = containerRef.current?.querySelectorAll('[data-team-card]') ?? [];
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            const idx = Number((e.target as HTMLElement).dataset.index);
-            setVisible((prev) => {
-              const next = [...prev];
-              next[idx] = true;
-              return next;
-            });
-          }
-        });
-      },
-      { threshold: 0.18, rootMargin: '0px 0px -10% 0px' }
-    );
-    nodes.forEach((n) => io.observe(n));
-    return () => io.disconnect();
-  }, []);
-
-  // ====== Estado para el bloque OGILVY de EQUIPO ======
-  const [active, setActive] = useState<number | null>(null);
-  const railRef = useRef<HTMLDivElement>(null);
-  const [railH, setRailH] = useState<number>(0);
-
-  // medimos alto del carrusel para posicionar panel absoluto
-  useEffect(() => {
-    const update = () => {
-      if (!railRef.current) return;
-      const firstCard = railRef.current.querySelector<HTMLDivElement>('[data-card]');
-      if (firstCard) setRailH(firstCard.getBoundingClientRect().height);
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-
-  // cerrar con Esc
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setActive(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
   return (
     <main className="bg-white">
       {/* HERO */}
@@ -229,8 +158,8 @@ export default function EquipoPage() {
               NUESTRO EQUIPO
             </h1>
             <p className="text-white/85 mt-2 text-[14px] md:text-[15px] leading-relaxed">
-              Profesionales expertos unidos por la pasión de ayudarte a encontrar la propiedad
-              perfecta.
+              Profesionales expertos unidos por la pasión de ayudarte a encontrar
+              la propiedad perfecta.
             </p>
           </div>
         </div>
@@ -259,26 +188,11 @@ export default function EquipoPage() {
                   trascendentes como la compra o venta de su hogar.
                 </p>
                 <p>
-                  Mientras existen múltiples servicios de excelencia dirigidos a empresas o
-                  instituciones, las personas —que enfrentan decisiones patrimoniales y
-                  emocionales de igual relevancia— rara vez cuentan con un acompañamiento a esa
-                  altura. La mayoría de las corredoras opera de manera fragmentada, sin una visión
-                  técnica ni una comprensión profunda del diseño, la normativa o el impacto
-                  financiero detrás de cada propiedad.
-                </p>
-                <p>
                   Frente a esa realidad, surge Gesswein Properties, conformada por cuatro socios
                   provenientes de áreas complementarias —arquitectura, derecho inmobiliario,
                   finanzas y comunicación estratégica— con un propósito común: entregar a las
                   personas el mismo nivel de rigor, análisis y excelencia que tradicionalmente ha
                   estado reservado al mundo corporativo.
-                </p>
-                <p>
-                  Nuestra labor es integrar todos los elementos que inciden en una decisión
-                  inmobiliaria —estética, funcional, legal y económica— para ofrecer un proceso
-                  seguro, transparente y estéticamente coherente. Porque una propiedad no es solo
-                  un activo; es un espacio de vida, y cada decisión en torno a él merece la
-                  precisión y el cuidado de un equipo verdaderamente profesional.
                 </p>
               </div>
             </div>
@@ -317,8 +231,7 @@ export default function EquipoPage() {
               </h3>
               <p className="text-[13px] text-black/70 leading-relaxed">
                 Brindar asesoría inmobiliaria integral, basada en confianza, precisión técnica y
-                diseño, conectando a nuestros clientes con oportunidades únicas de inversión y
-                hogar.
+                diseño.
               </p>
             </article>
 
@@ -360,186 +273,22 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* ============ 4) EQUIPO — ESTILO OGILVY (ARREGLADO) ============ */}
-      <section id="equipo" className="py-20 bg-[#F8F9FA]">
+      {/* 4) EQUIPO — OGILVY */}
+      <section id="equipo" className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
-            EQUIPO
+            Equipo
           </h2>
           <p className="mt-3 max-w-3xl text-[#0E2C4A] text-[14px] leading-relaxed">
             En Gesswein Properties integramos arquitectura, derecho, finanzas y comunicación
             estratégica para que cada decisión inmobiliaria sea segura, rentable y estética.
           </p>
 
-          {/* Rail / fila */}
-          <div
-            ref={railRef}
-            className="relative mt-10 flex gap-6 overflow-visible"
-            style={{ height: railH ? railH : undefined }}
-          >
-            {/* Tarjetas */}
-            {TEAM_PRINCIPAL.map((m, i) => {
-              const isActive = active === i;
-              const isFirstHidden = active !== null && i === 0 && active !== 0; // oculta la 1ª cuando otro es activo
-              return (
-                <div
-                  key={m.id}
-                  data-card
-                  className={[
-                    'relative group cursor-pointer select-none',
-                    'w-1/4',
-                    isActive ? 'z-30' : 'z-10',
-                    isFirstHidden ? 'opacity-0' : '',
-                    // al activar, esa tarjeta se posiciona absoluta arriba-izquierda
-                    isActive ? 'md:absolute md:top-0 md:left-0 md:w-1/4 md:h-full' : '',
-                  ].join(' ')}
-                  onClick={() => setActive(isActive ? null : i)}
-                  aria-expanded={isActive}
-                  role="button"
-                >
-                  <div className="relative w-full aspect-[4/5] overflow-hidden border border-black/10">
-                    <Image
-                      src={m.photo ?? '/placeholder.png'}
-                      alt={m.name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 25vw"
-                      priority={i < 2}
-                    />
-                    {/* Overlay hover */}
-                    <div className="absolute inset-0 bg-[#0A2E57]/90 opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex flex-col justify-end p-6">
-                      <h3 className="text-white text-lg font-semibold">{m.name}</h3>
-                      <p className="text-[#BFD1E5] text-sm tracking-[.12em] uppercase">
-                        {m.roleLine}
-                      </p>
-                      <p className="text-white/85 text-xs mt-1 line-clamp-2">{m.bioShort}</p>
-                    </div>
-                  </div>
-
-                  {/* Panel MOBILE (debajo de la activa) */}
-                  {isActive && (
-                    <div
-                      className="md:hidden w-full mt-4 bg-[#EAEAEA] p-5 text-[#0E2C4A]"
-                      onClick={() => setActive(null)}
-                    >
-                      <h3 className="text-xl font-semibold">{m.name}</h3>
-                      <p className="text-[#0A2E57] tracking-[.16em] uppercase text-sm mb-4">
-                        {m.roleLine}
-                      </p>
-                      <p className="mb-4">{m.bioShort}</p>
-                      {m.bioDetail.map((p, k) => (
-                        <p key={k} className="mb-3">
-                          {p}
-                        </p>
-                      ))}
-                      <div className="mt-4">
-                        <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                          Educación
-                        </div>
-                        <div className="text-[13px]">{m.education}</div>
-                      </div>
-                      <div className="mt-4">
-                        <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                          Especialidades
-                        </div>
-                        <div className="text-[13px]">{m.specialties}</div>
-                      </div>
-                      <div className="mt-4 flex flex-col gap-1 text-[13px]">
-                        {m.email && (
-                          <a href={`mailto:${m.email}`} className="underline">
-                            {m.email}
-                          </a>
-                        )}
-                        {m.phone && (
-                          <a href={`tel:${m.phone.replace(/\s+/g, '')}`} className="underline">
-                            {m.phone}
-                          </a>
-                        )}
-                        {m.linkedin && (
-                          <a href={m.linkedin} target="_blank" rel="noreferrer" className="underline">
-                            {m.linkedin.replace(/^https?:\/\//, '')}
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Panel DESKTOP/tabla: solo texto; la foto activa YA ES la de la izquierda */}
-            {active !== null && (
-              <div
-                className="hidden md:flex absolute top-0 right-0 h-full w-[75%] bg-[#EAEAEA] shadow-[0_4px_10px_rgba(0,0,0,0.05)] transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateX(0)` }}
-                // CLIC EN CUALQUIER PARTE CIERRA
-                onClick={() => setActive(null)}
-                role="dialog"
-                aria-modal="true"
-              >
-                <div className="p-10 pr-12 overflow-y-auto text-[#0E2C4A] w-full">
-                  <h3 className="text-3xl font-semibold mb-2">{TEAM_PRINCIPAL[active].name}</h3>
-                  <p className="text-[#0A2E57] tracking-[.18em] uppercase font-medium mb-6">
-                    {TEAM_PRINCIPAL[active].roleLine}
-                  </p>
-
-                  <p className="leading-relaxed mb-6">{TEAM_PRINCIPAL[active].bioShort}</p>
-                  {TEAM_PRINCIPAL[active].bioDetail.map((p, i) => (
-                    <p key={i} className="leading-relaxed mb-6">
-                      {p}
-                    </p>
-                  ))}
-
-                  <div className="mt-2">
-                    <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                      Educación
-                    </div>
-                    <div className="text-[14px] mt-1">{TEAM_PRINCIPAL[active].education}</div>
-                  </div>
-
-                  <div className="mt-6">
-                    <div className="uppercase text-[12px] tracking-[.2em] text-[#0A2E57]">
-                      Especialidades
-                    </div>
-                    <div className="text-[14px] mt-1">{TEAM_PRINCIPAL[active].specialties}</div>
-                  </div>
-
-                  <div className="mt-6 flex flex-col gap-1 text-[14px]">
-                    {TEAM_PRINCIPAL[active].email && (
-                      <a
-                        href={`mailto:${TEAM_PRINCIPAL[active].email}`}
-                        className="underline"
-                      >
-                        {TEAM_PRINCIPAL[active].email}
-                      </a>
-                    )}
-                    {TEAM_PRINCIPAL[active].phone && (
-                      <a
-                        href={`tel:${TEAM_PRINCIPAL[active].phone.replace(/\s+/g, '')}`}
-                        className="underline"
-                      >
-                        {TEAM_PRINCIPAL[active].phone}
-                      </a>
-                    )}
-                    {TEAM_PRINCIPAL[active].linkedin && (
-                      <a
-                        href={TEAM_PRINCIPAL[active].linkedin}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline"
-                      >
-                        {TEAM_PRINCIPAL[active].linkedin.replace(/^https?:\/\//, '')}
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <TeamOgilvy />
         </div>
       </section>
 
-      {/* 5) ALIANZAS & COLABORADORES — BLANCO (CON OVERLAY HOVER) */}
+      {/* 5) ALIANZAS — BLANCO (CON OVERLAY HOVER) */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-4">
@@ -555,7 +304,6 @@ export default function EquipoPage() {
               <article
                 key={a.name}
                 className="group relative overflow-hidden border border-slate-200 bg-white shadow-sm select-none transition transform hover:-translate-y-[4px] hover:shadow-md"
-                style={{ borderRadius: 0 }}
               >
                 <div className="relative aspect-[4/3]">
                   <Image
@@ -612,5 +360,345 @@ export default function EquipoPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+/* ===========================================================
+   EQUIPO — ESTILO OGILVY (FLIP DESKTOP + ACORDEÓN MOBILE)
+   =========================================================== */
+
+function TeamOgilvy() {
+  const team = TEAM_PRINCIPAL;
+  const [active, setActive] = useState<number | null>(null); // índice activo (desktop y mobile)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const floaterRef = useRef<HTMLDivElement | null>(null);
+  const activeIdxRef = useRef<number | null>(null);
+  const [panelDims, setPanelDims] = useState<{ left: number; width: number; height: number }>({
+    left: 0,
+    width: 0,
+    height: 0,
+  });
+
+  // Cerrar con ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closePanel();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Recalcular dimensiones del panel cuando se abre o al redimensionar
+  useEffect(() => {
+    function computePanel() {
+      if (!gridRef.current) return;
+      const grid = gridRef.current;
+      const cards = grid.querySelectorAll<HTMLElement>('[data-team-card]');
+      if (!cards.length) return;
+      const gap = 24; // gap-6
+      const first = cards[0].getBoundingClientRect();
+      const gridRect = grid.getBoundingClientRect();
+      const left = first.width + gap; // desde después de la col 1
+      const width = gridRect.width - left;
+      const height = first.height;
+      setPanelDims({ left, width, height });
+    }
+    computePanel();
+    window.addEventListener('resize', computePanel);
+    return () => window.removeEventListener('resize', computePanel);
+  }, [active]);
+
+  // Cierra todo (desktop)
+  function closePanel() {
+    const i = activeIdxRef.current;
+    const floater = floaterRef.current;
+    if (i == null) {
+      setActive(null);
+      return;
+    }
+    // MOBILE: no hay floater
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      setActive(null);
+      activeIdxRef.current = null;
+      return;
+    }
+    const srcCard = cardRefs.current[i];
+    const grid = gridRef.current;
+    if (!floater || !srcCard || !grid) {
+      setActive(null);
+      activeIdxRef.current = null;
+      return;
+    }
+    const gridRect = grid.getBoundingClientRect();
+    const srcRect = srcCard.getBoundingClientRect();
+    const backX = srcRect.left - gridRect.left - (floater.getBoundingClientRect().left - gridRect.left);
+    floater.style.transition = 'transform 380ms cubic-bezier(.22,.61,.36,1)';
+    floater.style.transform = `translate(${backX}px, 0)`;
+    setTimeout(() => {
+      try {
+        srcCard.style.visibility = 'visible';
+      } catch {}
+      floater.remove();
+      floaterRef.current = null;
+      setActive(null);
+      activeIdxRef.current = null;
+    }, 380);
+  }
+
+  // Abrir (animación FLIP en desktop; acordeón en mobile)
+  function openMember(i: number) {
+    if (active === i) {
+      closePanel();
+      return;
+    }
+
+    // MOBILE: simple acordeón debajo de la tarjeta
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      setActive(i);
+      activeIdxRef.current = i;
+      return;
+    }
+
+    const grid = gridRef.current;
+    const src = cardRefs.current[i];
+    const dst = cardRefs.current[0];
+    if (!grid || !src || !dst) {
+      setActive(i);
+      activeIdxRef.current = i;
+      return;
+    }
+
+    // Preparar clon flotante (foto activa) con mismas dimensiones de src
+    const gridRect = grid.getBoundingClientRect();
+    const srcRect = src.getBoundingClientRect();
+    const dstRect = dst.getBoundingClientRect();
+
+    const clone = src.cloneNode(true) as HTMLDivElement;
+    clone.style.position = 'absolute';
+    clone.style.left = `${srcRect.left - gridRect.left}px`;
+    clone.style.top = `${srcRect.top - gridRect.top}px`;
+    clone.style.width = `${srcRect.width}px`;
+    clone.style.height = `${srcRect.height}px`;
+    clone.style.zIndex = '50';
+    clone.style.cursor = 'pointer';
+    (clone.querySelector('[data-overlay]') as HTMLDivElement | null)?.style.setProperty(
+      'opacity',
+      '0'
+    );
+    clone.addEventListener('click', closePanel);
+
+    // Mostrar clon y ocultar la tarjeta origen y la de destino (para evitar ver Carolina debajo)
+    grid.appendChild(clone);
+    src.style.visibility = 'hidden';
+    dst.style.visibility = 'hidden';
+    floaterRef.current = clone;
+    activeIdxRef.current = i;
+
+    // Animar clon hacia la posición de la primera columna (sobreponiéndose a Carolina)
+    const dx = dstRect.left - srcRect.left;
+    requestAnimationFrame(() => {
+      clone.style.transition = 'transform 450ms cubic-bezier(.22,.61,.36,1)';
+      clone.style.transform = `translate(${dx}px, 0)`;
+    });
+
+    // Al finalizar, fijar activo y mantener el clon (la foto activa queda a la izquierda)
+    setTimeout(() => {
+      setActive(i);
+    }, 460);
+  }
+
+  // Cierre por clic en cualquier parte del panel
+  function onPanelClick() {
+    closePanel();
+  }
+
+  return (
+    <div ref={containerRef} className="relative mt-10">
+      {/* GRID de 4 columnas (desktop) / 1 columna (mobile) */}
+      <div
+        ref={gridRef}
+        className="relative grid grid-cols-1 md:grid-cols-4 gap-6"
+      >
+        {TEAM_PRINCIPAL.map((m, i) => (
+          <div
+            key={m.id}
+            ref={(el) => {
+              cardRefs.current[i] = el;
+            }}
+            data-team-card
+            className="relative group cursor-pointer select-none"
+            onClick={() => openMember(i)}
+            aria-expanded={active === i}
+          >
+            {/* Foto */}
+            <div className="border border-black/10">
+              <Image
+                src={m.photo || ''}
+                alt={m.name}
+                width={1200}
+                height={1500}
+                className="w-full h-full object-cover aspect-[4/5]"
+                priority={i < 2}
+              />
+            </div>
+
+            {/* Overlay hover (desktop) */}
+            <div
+              data-overlay
+              className="hidden md:flex absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex-col justify-end p-6 pointer-events-none"
+            >
+              <h3 className="text-white text-lg font-semibold">{m.name}</h3>
+              <p className="text-[#BFD1E5] text-sm tracking-[.12em]">
+                {m.roleLine}
+              </p>
+              <p className="text-white/85 text-xs mt-1 line-clamp-2">{m.bioShort}</p>
+            </div>
+
+            {/* Panel ACORDEÓN en mobile (debajo de la tarjeta activa) */}
+            <div
+              className={`md:hidden overflow-hidden transition-all duration-300 ${
+                active === i ? 'max-h-[800px] opacity-100 mt-3' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="w-full bg-[#EAEAEA] p-5 border border-black/10">
+                <h4 className="text-xl font-semibold text-[#0E2C4A]">{m.name}</h4>
+                <p className="text-[#0A2E57] text-sm tracking-[.14em] uppercase mt-1">
+                  {m.roleLine}
+                </p>
+                <p className="mt-4 text-[14px] text-[#0E2C4A]">{m.bioDetail[0]}</p>
+
+                <div className="mt-5 grid gap-3 text-[13px] text-[#0E2C4A]">
+                  <div>
+                    <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
+                      Educación
+                    </div>
+                    <div>{m.education}</div>
+                  </div>
+                  <div>
+                    <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
+                      Especialidades
+                    </div>
+                    <div>{m.specialties}</div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {m.email && (
+                      <a
+                        className="underline"
+                        href={`mailto:${m.email}`}
+                        aria-label={`Enviar correo a ${m.name}`}
+                      >
+                        {m.email}
+                      </a>
+                    )}
+                    {m.phone && (
+                      <a
+                        className="underline"
+                        href={`tel:${m.phone.replace(/\s+/g, '')}`}
+                        aria-label={`Llamar a ${m.name}`}
+                      >
+                        {m.phone}
+                      </a>
+                    )}
+                    {m.linkedin && (
+                      <a
+                        className="underline"
+                        href={m.linkedin}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Abrir LinkedIn de ${m.name}`}
+                      >
+                        {m.linkedin.replace(/^https?:\/\//, '')}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* PANEL LATERAL (DESKTOP) — cubre columnas 2–4.
+            No contiene imagen; sólo texto. Clic en cualquier parte cierra. */}
+        {active !== null && (
+          <div
+            className="hidden md:block absolute top-0 bg-[#EAEAEA] border border-black/10 shadow-[0_4px_10px_rgba(0,0,0,0.06)] overflow-hidden"
+            style={{
+              left: `${panelDims.left}px`,
+              width: `${panelDims.width}px`,
+              height: `${panelDims.height}px`,
+              transition: 'transform 450ms cubic-bezier(.22,.61,.36,1), opacity 300ms ease',
+              transform: 'translateX(0)',
+              opacity: 1,
+              zIndex: 40, // queda debajo del clon (50) y encima de las otras tarjetas
+            }}
+            onClick={onPanelClick}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="h-full w-full p-10 text-[#0E2C4A] flex flex-col">
+              <h3 className="text-3xl font-semibold">{team[active].name}</h3>
+              <p className="text-[#0A2E57] mt-2 tracking-[.18em] uppercase">
+                {team[active].roleLine}
+              </p>
+
+              <p className="mt-6 text-[15px] leading-relaxed">
+                {team[active].bioDetail[0]}
+              </p>
+
+              <div className="mt-8 grid grid-cols-2 gap-8 text-[14px]">
+                <div>
+                  <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
+                    Educación
+                  </div>
+                  <div className="mt-1">{team[active].education}</div>
+                </div>
+                <div>
+                  <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
+                    Especialidades
+                  </div>
+                  <div className="mt-1">{team[active].specialties}</div>
+                </div>
+              </div>
+
+              <div className="mt-auto pt-6 text-[14px]">
+                <div className="flex flex-col gap-1">
+                  {team[active].email && (
+                    <a
+                      className="underline"
+                      href={`mailto:${team[active].email}`}
+                      aria-label={`Enviar correo a ${team[active].name}`}
+                    >
+                      {team[active].email}
+                    </a>
+                  )}
+                  {team[active].phone && (
+                    <a
+                      className="underline"
+                      href={`tel:${team[active].phone.replace(/\s+/g, '')}`}
+                      aria-label={`Llamar a ${team[active].name}`}
+                    >
+                      {team[active].phone}
+                    </a>
+                  )}
+                  {team[active].linkedin && (
+                    <a
+                      className="underline"
+                      href={team[active].linkedin}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Abrir LinkedIn de ${team[active].name}`}
+                    >
+                      {team[active].linkedin.replace(/^https?:\/\//, '')}
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
