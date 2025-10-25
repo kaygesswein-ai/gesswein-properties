@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -379,13 +378,15 @@ function TeamOgilvy() {
   const activeIdxRef = useRef<number | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
+  const DURATION = 450; // ms
+
   const [panelDims, setPanelDims] = useState<{ left: number; width: number; height: number }>({
     left: 0,
     width: 0,
     height: 0,
   });
 
-  // Cerrar con ESC
+  // ESC para cerrar
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closePanel();
@@ -394,19 +395,21 @@ function TeamOgilvy() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Recalcular dimensiones del panel cuando abre o cambia tamaño
+  // Calcular posición/tamaño del panel: pegado al borde derecho del primer card
   useEffect(() => {
     function computePanel() {
       if (!gridRef.current) return;
       const grid = gridRef.current;
-      const cards = grid.querySelectorAll<HTMLElement>('[data-team-card]');
-      if (!cards.length) return;
-      const gap = 24; // gap-6
-      const first = cards[0].getBoundingClientRect();
+      const first = grid.querySelector<HTMLElement>('[data-team-card]');
+      if (!first) return;
+
       const gridRect = grid.getBoundingClientRect();
-      const left = first.width + gap;
-      const width = gridRect.width - left;
-      const height = first.height;
+      const firstRect = first.getBoundingClientRect();
+
+      const left = Math.round(firstRect.right - gridRect.left); // SIN hueco
+      const width = Math.max(0, Math.round(gridRect.width - (firstRect.right - gridRect.left)));
+      const height = Math.round(firstRect.height);
+
       setPanelDims({ left, width, height });
     }
     computePanel();
@@ -414,13 +417,13 @@ function TeamOgilvy() {
     return () => window.removeEventListener('resize', computePanel);
   }, [active]);
 
-  // Cierre con animación inversa (desktop)
+  // Cerrar (desktop con FLIP inverso / mobile acordeón)
   function closePanel() {
     const i = activeIdxRef.current;
     const floater = floaterRef.current;
     setIsTransitioning(true);
 
-    // MOBILE: acordeón
+    // Mobile: acordeón
     if (window.matchMedia('(max-width: 767px)').matches) {
       setActive(null);
       activeIdxRef.current = null;
@@ -428,26 +431,23 @@ function TeamOgilvy() {
       return;
     }
 
-    const srcCard = (i != null) ? cardRefs.current[i] : null;
-    const dstCard = cardRefs.current[0];
+    const srcCard = i != null ? cardRefs.current[i] : null;
     const grid = gridRef.current;
 
-    // Fade-out del panel mientras vuelve la foto
+    // 1) Panel fade-out primero
     if (panelRef.current) {
-      panelRef.current.style.transition = 'opacity 320ms ease';
+      panelRef.current.style.transition = 'opacity 220ms ease';
       panelRef.current.style.opacity = '0';
+      panelRef.current.style.pointerEvents = 'none';
     }
 
     if (!floater || !srcCard || !grid) {
       // fallback
-      if (dstCard) dstCard.style.visibility = 'visible';
-      setActive(null);
-      activeIdxRef.current = null;
-      floaterRef.current = null;
-      setIsTransitioning(false);
+      restoreAfterClose();
       return;
     }
 
+    // 2) FLIP inverso hacia su card original (misma duración que abrir)
     const gridRect = grid.getBoundingClientRect();
     const floaterRect = floater.getBoundingClientRect();
     const srcRect = srcCard.getBoundingClientRect();
@@ -456,23 +456,46 @@ function TeamOgilvy() {
     const targetX = srcRect.left - gridRect.left;
     const dx = targetX - currentX;
 
-    floater.style.transition = 'transform 420ms cubic-bezier(.22,.61,.36,1)';
-    floater.style.transform = `translate(${dx}px, 0)`;
+    // aseguramos un solo transition
+    floater.style.willChange = 'transform';
+    requestAnimationFrame(() => {
+      floater.style.transition = `transform ${DURATION}ms cubic-bezier(.22,.61,.36,1)`;
+      floater.style.transform = `translate(${dx}px, 0)`;
+    });
 
-    setTimeout(() => {
-      try {
-        srcCard.style.visibility = 'visible';
-        if (dstCard) dstCard.style.visibility = 'visible';
-      } catch {}
-      floater.remove();
-      floaterRef.current = null;
-      setActive(null);
-      activeIdxRef.current = null;
-      setIsTransitioning(false);
-      if (panelRef.current) {
-        panelRef.current.style.opacity = '1';
+    // 3) Al terminar, limpiar y restaurar
+    window.setTimeout(() => {
+      restoreAfterClose();
+    }, DURATION + 10);
+  }
+
+  function restoreAfterClose() {
+    try {
+      const grid = gridRef.current;
+      const dstCard = cardRefs.current[0];
+      if (dstCard) dstCard.style.visibility = 'visible';
+      if (activeIdxRef.current != null) {
+        const src = cardRefs.current[activeIdxRef.current];
+        if (src) src.style.visibility = 'visible';
       }
-    }, 430);
+      // restaurar opacidades
+      if (grid) {
+        Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el) => {
+          el.style.opacity = '1';
+        });
+      }
+      if (floaterRef.current) {
+        floaterRef.current.remove();
+        floaterRef.current = null;
+      }
+    } catch {}
+    setActive(null);
+    activeIdxRef.current = null;
+    setIsTransitioning(false);
+    if (panelRef.current) {
+      panelRef.current.style.opacity = '1';
+      panelRef.current.style.pointerEvents = 'auto';
+    }
   }
 
   // Abrir (FLIP desktop / acordeón mobile)
@@ -482,7 +505,7 @@ function TeamOgilvy() {
       return;
     }
 
-    // MOBILE: acordeón sencillo
+    // Mobile: acordeón
     if (window.matchMedia('(max-width: 767px)').matches) {
       setActive(i);
       activeIdxRef.current = i;
@@ -500,7 +523,7 @@ function TeamOgilvy() {
 
     setIsTransitioning(true);
 
-    // Clon flotante con mismo tamaño/posición que la tarjeta origen
+    // Clon flotante desde la posición de origen
     const gridRect = grid.getBoundingClientRect();
     const srcRect = src.getBoundingClientRect();
     const dstRect = dst.getBoundingClientRect();
@@ -513,45 +536,41 @@ function TeamOgilvy() {
     clone.style.height = `${srcRect.height}px`;
     clone.style.zIndex = '50';
     clone.style.cursor = 'pointer';
-    (clone.querySelector('[data-overlay]') as HTMLDivElement | null)?.style.setProperty(
-      'opacity',
-      '0'
-    );
+    // ocultamos overlay del clon
+    (clone.querySelector('[data-overlay]') as HTMLDivElement | null)?.style.setProperty('opacity', '0');
     clone.addEventListener('click', closePanel);
 
-    // Insertar clon y ocultar tarjetas que podrían verse debajo (origen y destino)
     grid.appendChild(clone);
+    // ocultamos origen y destino para que no se vean debajo
     src.style.visibility = 'hidden';
     dst.style.visibility = 'hidden';
     floaterRef.current = clone;
     activeIdxRef.current = i;
 
-    // Atenuar el resto durante la transición (menos “pasar por encima”)
+    // Atenuar el resto durante la transición
     Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el, idx) => {
       if (idx !== i && idx !== 0) {
-        el.style.transition = 'opacity 220ms ease';
+        el.style.transition = 'opacity 200ms ease';
         el.style.opacity = '0.35';
       }
     });
 
-    // Animar clon hacia la primera columna
+    // Animación hacia la primera columna
     const dx = dstRect.left - srcRect.left;
+    clone.style.willChange = 'transform';
     requestAnimationFrame(() => {
-      clone.style.transition = 'transform 450ms cubic-bezier(.22,.61,.36,1)';
+      clone.style.transition = `transform ${DURATION}ms cubic-bezier(.22,.61,.36,1)`;
       clone.style.transform = `translate(${dx}px, 0)`;
     });
 
-    // Al finalizar, fijar activo
-    setTimeout(() => {
+    // Al finalizar: fijar activo y restaurar opacidades (panel cubrirá col 2–4)
+    window.setTimeout(() => {
       setActive(i);
       setIsTransitioning(false);
-      // Restaurar opacidad del resto (panel cubrirá columnas 2–4)
       Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el, idx) => {
-        if (idx !== i && idx !== 0) {
-          el.style.opacity = '1';
-        }
+        if (idx !== i && idx !== 0) el.style.opacity = '1';
       });
-    }, 460);
+    }, DURATION + 10);
   }
 
   function onPanelClick() {
@@ -561,20 +580,13 @@ function TeamOgilvy() {
   return (
     <div ref={containerRef} className="relative mt-10">
       {/* GRID de 4 col (desktop) / 1 col (mobile) */}
-      <div
-        ref={gridRef}
-        className="relative grid grid-cols-1 md:grid-cols-4 gap-6"
-      >
+      <div ref={gridRef} className="relative grid grid-cols-1 md:grid-cols-4 gap-6">
         {TEAM_PRINCIPAL.map((m, i) => (
           <div
             key={m.id}
-            ref={(el) => {
-              cardRefs.current[i] = el;
-            }}
+            ref={(el) => { cardRefs.current[i] = el; }}
             data-team-card
-            className={`relative group cursor-pointer select-none transition-opacity ${
-              isTransitioning && activeIdxRef.current !== i ? 'md:opacity-90' : ''
-            }`}
+            className={`relative group cursor-pointer select-none transition-opacity`}
             onClick={() => openMember(i)}
             aria-expanded={active === i}
           >
@@ -596,10 +608,7 @@ function TeamOgilvy() {
               className="hidden md:flex absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex-col justify-end p-6 pointer-events-none"
             >
               <h3 className="text-white text-lg font-semibold">{m.name}</h3>
-              {/* ROL SIN NEGRITA */}
-              <p className="text-[#BFD1E5] text-sm tracking-[.12em]">
-                {m.roleLine}
-              </p>
+              <p className="text-[#BFD1E5] text-sm tracking-[.12em]">{m.roleLine}</p>
               <p className="text-white/85 text-xs mt-1 line-clamp-2">{m.bioShort}</p>
             </div>
 
@@ -611,7 +620,6 @@ function TeamOgilvy() {
             >
               <div className="w-full bg-[#EAEAEA] p-5 border border-black/10">
                 <h4 className="text-xl font-semibold text-[#0E2C4A]">{m.name}</h4>
-                {/* ROL SIN NEGRITA */}
                 <p className="text-[#0A2E57] text-sm tracking-[.14em] uppercase mt-1">
                   {m.roleLine}
                 </p>
@@ -632,31 +640,17 @@ function TeamOgilvy() {
                   </div>
                   <div className="flex flex-col gap-1">
                     {m.email && (
-                      <a
-                        className="underline"
-                        href={`mailto:${m.email}`}
-                        aria-label={`Enviar correo a ${m.name}`}
-                      >
+                      <a className="underline" href={`mailto:${m.email}`} aria-label={`Enviar correo a ${m.name}`}>
                         {m.email}
                       </a>
                     )}
                     {m.phone && (
-                      <a
-                        className="underline"
-                        href={`tel:${m.phone.replace(/\s+/g, '')}`}
-                        aria-label={`Llamar a ${m.name}`}
-                      >
+                      <a className="underline" href={`tel:${m.phone.replace(/\s+/g, '')}`} aria-label={`Llamar a ${m.name}`}>
                         {m.phone}
                       </a>
                     )}
                     {m.linkedin && (
-                      <a
-                        className="underline"
-                        href={m.linkedin}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`Abrir LinkedIn de ${m.name}`}
-                      >
+                      <a className="underline" href={m.linkedin} target="_blank" rel="noreferrer" aria-label={`Abrir LinkedIn de ${m.name}`}>
                         {m.linkedin.replace(/^https?:\/\//, '')}
                       </a>
                     )}
@@ -667,7 +661,7 @@ function TeamOgilvy() {
           </div>
         ))}
 
-        {/* PANEL LATERAL (DESKTOP) — sólo texto */}
+        {/* PANEL LATERAL (DESKTOP) — solo texto */}
         {active !== null && (
           <div
             ref={panelRef}
@@ -676,7 +670,7 @@ function TeamOgilvy() {
               left: `${panelDims.left}px`,
               width: `${panelDims.width}px`,
               height: `${panelDims.height}px`,
-              transition: 'transform 450ms cubic-bezier(.22,.61,.36,1), opacity 300ms ease',
+              transition: 'transform 450ms cubic-bezier(.22,.61,.36,1), opacity 220ms ease',
               transform: 'translateX(0)',
               opacity: 1,
               zIndex: 40,
@@ -687,26 +681,17 @@ function TeamOgilvy() {
           >
             <div className="h-full w-full p-10 text-[#0E2C4A] flex flex-col">
               <h3 className="text-3xl font-semibold">{team[active].name}</h3>
-              {/* ROL SIN NEGRITA */}
-              <p className="text-[#0A2E57] mt-2 tracking-[.18em] uppercase">
-                {team[active].roleLine}
-              </p>
+              <p className="text-[#0A2E57] mt-2 tracking-[.18em] uppercase">{team[active].roleLine}</p>
 
-              <p className="mt-6 text-[15px] leading-relaxed">
-                {team[active].bioDetail[0]}
-              </p>
+              <p className="mt-6 text-[15px] leading-relaxed">{team[active].bioDetail[0]}</p>
 
               <div className="mt-8 grid grid-cols-2 gap-8 text-[14px]">
                 <div>
-                  <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
-                    Educación
-                  </div>
+                  <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">Educación</div>
                   <div className="mt-1">{team[active].education}</div>
                 </div>
                 <div>
-                  <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
-                    Especialidades
-                  </div>
+                  <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">Especialidades</div>
                   <div className="mt-1">{team[active].specialties}</div>
                 </div>
               </div>
@@ -714,31 +699,17 @@ function TeamOgilvy() {
               <div className="mt-auto pt-6 text-[14px]">
                 <div className="flex flex-col gap-1">
                   {team[active].email && (
-                    <a
-                      className="underline"
-                      href={`mailto:${team[active].email}`}
-                      aria-label={`Enviar correo a ${team[active].name}`}
-                    >
+                    <a className="underline" href={`mailto:${team[active].email}`} aria-label={`Enviar correo a ${team[active].name}`}>
                       {team[active].email}
                     </a>
                   )}
                   {team[active].phone && (
-                    <a
-                      className="underline"
-                      href={`tel:${team[active].phone.replace(/\s+/g, '')}`}
-                      aria-label={`Llamar a ${team[active].name}`}
-                    >
+                    <a className="underline" href={`tel:${team[active].phone.replace(/\s+/g, '')}`} aria-label={`Llamar a ${team[active].name}`}>
                       {team[active].phone}
                     </a>
                   )}
                   {team[active].linkedin && (
-                    <a
-                      className="underline"
-                      href={team[active].linkedin}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`Abrir LinkedIn de ${team[active].name}`}
-                    >
+                    <a className="underline" href={team[active].linkedin} target="_blank" rel="noreferrer" aria-label={`Abrir LinkedIn de ${team[active].name}`}>
                       {team[active].linkedin.replace(/^https?:\/\//, '')}
                     </a>
                   )}
