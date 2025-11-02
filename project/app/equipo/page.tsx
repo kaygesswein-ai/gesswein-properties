@@ -294,7 +294,7 @@ export default function EquipoPage() {
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-4">
             Alianzas & Colaboradores
           </h3>
-        <p className="text-[14px] text-black/70 mb-10">
+          <p className="text-[14px] text-black/70 mb-10">
             Profesionales y estudios con los que trabajamos para elevar el estándar de cada
             proyecto.
           </p>
@@ -368,6 +368,8 @@ export default function EquipoPage() {
 
 function TeamOgilvy() {
   const team = TEAM_PRINCIPAL;
+
+  // Estado y refs
   const [active, setActive] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -378,15 +380,18 @@ function TeamOgilvy() {
   const activeIdxRef = useRef<number | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  const DURATION = 450; // ms
+  // Animación (MISMA a la ida y a la vuelta)
+  const DURATION = 450;
+  const EASING = 'cubic-bezier(.22,.61,.36,1)';
 
+  // Dimensiones del panel (alineado a la derecha de la 1ª tarjeta)
   const [panelDims, setPanelDims] = useState<{ left: number; width: number; height: number }>({
     left: 0,
     width: 0,
     height: 0,
   });
 
-  // ESC para cerrar
+  // Cerrar con ESC
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closePanel();
@@ -395,7 +400,7 @@ function TeamOgilvy() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Calcular posición/tamaño del panel: pegado al borde derecho del primer card
+  // Recalcular panel cuando abre / resize
   useEffect(() => {
     function computePanel() {
       if (!gridRef.current) return;
@@ -406,7 +411,7 @@ function TeamOgilvy() {
       const gridRect = grid.getBoundingClientRect();
       const firstRect = first.getBoundingClientRect();
 
-      const left = Math.round(firstRect.right - gridRect.left); // SIN hueco
+      const left = Math.round(firstRect.right - gridRect.left);
       const width = Math.max(0, Math.round(gridRect.width - (firstRect.right - gridRect.left)));
       const height = Math.round(firstRect.height);
 
@@ -417,38 +422,46 @@ function TeamOgilvy() {
     return () => window.removeEventListener('resize', computePanel);
   }, [active]);
 
-  // Cerrar (desktop con FLIP inverso / mobile acordeón)
+  // Bloquear/permitir interacción del grid durante transición
+  function setGridInteractivity(blocked: boolean) {
+    const grid = gridRef.current;
+    if (!grid) return;
+    grid.style.pointerEvents = blocked ? 'none' : 'auto';
+  }
+
+  // ----- CERRAR (fade del panel → regreso del clon al card ORIGEN con MISMA velocidad) -----
   function closePanel() {
-    if (isTransitioning) return; // evita dobles cierres
+    if (isTransitioning) return;
     const i = activeIdxRef.current;
     const floater = floaterRef.current;
     setIsTransitioning(true);
+    setGridInteractivity(true);
 
     // Mobile: acordeón
     if (window.matchMedia('(max-width: 767px)').matches) {
       setActive(null);
       activeIdxRef.current = null;
       setIsTransitioning(false);
+      setGridInteractivity(false);
       return;
     }
 
     const srcCard = i != null ? cardRefs.current[i] : null;
     const grid = gridRef.current;
 
-    // 1) Panel fade-out primero
+    // 1) Desaparece el panel primero
     if (panelRef.current) {
-      panelRef.current.style.transition = 'opacity 220ms ease';
+      panelRef.current.style.transition = `opacity 220ms ease`;
       panelRef.current.style.opacity = '0';
       panelRef.current.style.pointerEvents = 'none';
     }
 
     if (!floater || !srcCard || !grid) {
-      // fallback
       restoreAfterClose();
       return;
     }
 
-    // 2) FLIP inverso hacia su card original (misma duración que abrir)
+    // 2) FLIP inverso (misma DURATION/EASING)
     const gridRect = grid.getBoundingClientRect();
     const floaterRect = floater.getBoundingClientRect();
     const srcRect = srcCard.getBoundingClientRect();
@@ -459,11 +472,10 @@ function TeamOgilvy() {
 
     floater.style.willChange = 'transform';
     requestAnimationFrame(() => {
-      floater.style.transition = `transform ${DURATION}ms cubic-bezier(.22,.61,.36,1)`;
+      floater.style.transition = `transform ${DURATION}ms ${EASING}`;
       floater.style.transform = `translate(${dx}px, 0)`;
     });
 
-    // 3) Al terminar, limpiar y restaurar
     window.setTimeout(() => {
       restoreAfterClose();
     }, DURATION + 12);
@@ -472,13 +484,12 @@ function TeamOgilvy() {
   function restoreAfterClose() {
     try {
       const grid = gridRef.current;
-      const dstCard = cardRefs.current[0];
-      if (dstCard) dstCard.style.visibility = 'visible';
+      const firstCard = cardRefs.current[0];
+      if (firstCard) firstCard.style.visibility = 'visible';
       if (activeIdxRef.current != null) {
-        const src = cardRefs.current[activeIdxRef.current];
-        if (src) src.style.visibility = 'visible';
+        const origin = cardRefs.current[activeIdxRef.current];
+        if (origin) origin.style.visibility = 'visible';
       }
-      // restaurar opacidades
       if (grid) {
         Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el) => {
           el.style.opacity = '1';
@@ -492,21 +503,24 @@ function TeamOgilvy() {
     setActive(null);
     activeIdxRef.current = null;
     setIsTransitioning(false);
+    setGridInteractivity(false);
     if (panelRef.current) {
       panelRef.current.style.opacity = '1';
       panelRef.current.style.pointerEvents = 'auto';
     }
   }
 
-  // Abrir (FLIP desktop / acordeón mobile)
+  // ----- ABRIR (clon desde card ORIGEN → primera columna con MISMA velocidad) -----
   function openMember(i: number) {
-    if (isTransitioning) return; // bloquea mientras anima
+    if (isTransitioning) return;
+
+    // Toggle: si toco el mismo, cierro
     if (active === i) {
       closePanel();
       return;
     }
 
-    // Mobile: acordeón
+    // Mobile: acordeón básico
     if (window.matchMedia('(max-width: 767px)').matches) {
       setActive(i);
       activeIdxRef.current = i;
@@ -523,12 +537,13 @@ function TeamOgilvy() {
     }
 
     setIsTransitioning(true);
+    setGridInteractivity(true);
 
-    // Clon flotante desde la posición de origen
     const gridRect = grid.getBoundingClientRect();
     const srcRect = src.getBoundingClientRect();
     const dstRect = dst.getBoundingClientRect();
 
+    // Clon flotante
     const clone = src.cloneNode(true) as HTMLDivElement;
     clone.style.position = 'absolute';
     clone.style.left = `${srcRect.left - gridRect.left}px`;
@@ -537,18 +552,17 @@ function TeamOgilvy() {
     clone.style.height = `${srcRect.height}px`;
     clone.style.zIndex = '50';
     clone.style.cursor = 'pointer';
-    // ocultamos overlay del clon
     (clone.querySelector('[data-overlay]') as HTMLDivElement | null)?.style.setProperty('opacity', '0');
     clone.addEventListener('click', closePanel);
 
     grid.appendChild(clone);
-    // ocultamos origen y destino para que no se vean debajo
     src.style.visibility = 'hidden';
     dst.style.visibility = 'hidden';
+
     floaterRef.current = clone;
     activeIdxRef.current = i;
 
-    // Atenuar el resto durante la transición
+    // Atenuar los demás mientras viaja
     Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el, idx) => {
       if (idx !== i && idx !== 0) {
         el.style.transition = 'opacity 200ms ease';
@@ -556,18 +570,19 @@ function TeamOgilvy() {
       }
     });
 
-    // Animación hacia la primera columna
+    // Viaje hacia la primera columna (MISMA DURATION/EASING)
     const dx = dstRect.left - srcRect.left;
     clone.style.willChange = 'transform';
     requestAnimationFrame(() => {
-      clone.style.transition = `transform ${DURATION}ms cubic-bezier(.22,.61,.36,1)`;
+      clone.style.transition = `transform ${DURATION}ms ${EASING}`;
       clone.style.transform = `translate(${dx}px, 0)`;
     });
 
-    // Al finalizar: fijar activo y restaurar opacidades (panel cubrirá col 2–4)
     window.setTimeout(() => {
       setActive(i);
       setIsTransitioning(false);
+      setGridInteractivity(false);
+      // restaurar opacidades (el panel cubre cols 2–4)
       Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el, idx) => {
         if (idx !== i && idx !== 0) el.style.opacity = '1';
       });
@@ -580,14 +595,14 @@ function TeamOgilvy() {
 
   return (
     <div ref={containerRef} className="relative mt-10">
-      {/* GRID de 4 col (desktop) / 1 col (mobile) */}
+      {/* GRID */}
       <div ref={gridRef} className="relative grid grid-cols-1 md:grid-cols-4 gap-6">
         {TEAM_PRINCIPAL.map((m, i) => (
           <div
             key={m.id}
             ref={(el) => { cardRefs.current[i] = el; }}
             data-team-card
-            className={`relative group cursor-pointer select-none transition-opacity`}
+            className="relative group cursor-pointer select-none transition-opacity"
             onClick={() => openMember(i)}
             aria-expanded={active === i}
           >
@@ -603,17 +618,19 @@ function TeamOgilvy() {
               />
             </div>
 
-            {/* Overlay hover (desktop) — ROLE EN MAYÚSCULAS */}
+            {/* Overlay (DESKTOP) — ROLE EN MAYÚSCULAS */}
             <div
               data-overlay
               className="hidden md:flex absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex-col justify-end p-6 pointer-events-none"
             >
               <h3 className="text-white text-lg font-semibold">{m.name}</h3>
-              <p className="text-[#BFD1E5] text-sm tracking-[.12em] uppercase">{m.roleLine}</p>
+              <p className="text-[#BFD1E5] text-sm tracking-[.12em] uppercase">
+                {m.roleLine}
+              </p>
               <p className="text-white/85 text-xs mt-1 line-clamp-2">{m.bioShort}</p>
             </div>
 
-            {/* Panel ACORDEÓN en mobile */}
+            {/* Panel ACORDEÓN (MOBILE) */}
             <div
               className={`md:hidden overflow-hidden transition-all duration-300 ${
                 active === i ? 'max-h-[800px] opacity-100 mt-3' : 'max-h-0 opacity-0'
@@ -662,7 +679,7 @@ function TeamOgilvy() {
           </div>
         ))}
 
-        {/* PANEL LATERAL (DESKTOP) — solo texto */}
+        {/* PANEL LATERAL (DESKTOP) */}
         {active !== null && (
           <div
             ref={panelRef}
@@ -671,7 +688,7 @@ function TeamOgilvy() {
               left: `${panelDims.left}px`,
               width: `${panelDims.width}px`,
               height: `${panelDims.height}px`,
-              transition: 'transform 450ms cubic-bezier(.22,.61,.36,1), opacity 220ms ease',
+              transition: `transform ${DURATION}ms ${EASING}, opacity 220ms ease`,
               transform: 'translateX(0)',
               opacity: 1,
               zIndex: 40,
@@ -682,7 +699,9 @@ function TeamOgilvy() {
           >
             <div className="h-full w-full p-10 text-[#0E2C4A] flex flex-col">
               <h3 className="text-3xl font-semibold">{team[active].name}</h3>
-              <p className="text-[#0A2E57] mt-2 tracking-[.18em] uppercase">{team[active].roleLine}</p>
+              <p className="text-[#0A2E57] mt-2 tracking-[.18em] uppercase">
+                {team[active].roleLine}
+              </p>
 
               <p className="mt-6 text-[15px] leading-relaxed">{team[active].bioDetail[0]}</p>
 
