@@ -380,7 +380,11 @@ function TeamOgilvy() {
   const activeIdxRef = useRef<number | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // Animación (MISMA a la ida y a la vuelta)
+  // === NUEVO: posiciones fijas para ida/vuelta idénticas ===
+  const initialXRef = useRef<number[]>([]); // X inicial de cada card (relativo al grid)
+  const firstXRef = useRef<number>(0);      // X inicial de la primera columna
+
+  // Animación
   const DURATION = 450;
   const EASING = 'cubic-bezier(.22,.61,.36,1)';
 
@@ -400,26 +404,45 @@ function TeamOgilvy() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Recalcular panel cuando abre / resize
+  // === NUEVO: calcular layout fijo (X inicial de cada card y de la primera) ===
   useEffect(() => {
-    function computePanel() {
-      if (!gridRef.current) return;
+    function computeLayout() {
       const grid = gridRef.current;
-      const first = grid.querySelector<HTMLElement>('[data-team-card]');
-      if (!first) return;
-
+      if (!grid) return;
       const gridRect = grid.getBoundingClientRect();
-      const firstRect = first.getBoundingClientRect();
+      const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]'));
 
+      if (!cards.length) return;
+
+      // X inicial de la primera columna (card 0)
+      const firstRect = cards[0].getBoundingClientRect();
+      firstXRef.current = Math.round(firstRect.left - gridRect.left);
+
+      // X inicial de cada card (para que SIEMPRE vuelva al mismo punto)
+      initialXRef.current = cards.map((el) => {
+        const r = el.getBoundingClientRect();
+        return Math.round(r.left - gridRect.left);
+      });
+
+      // Dimensiones del panel (pegado al borde derecho del card 0)
       const left = Math.round(firstRect.right - gridRect.left);
       const width = Math.max(0, Math.round(gridRect.width - (firstRect.right - gridRect.left)));
       const height = Math.round(firstRect.height);
-
       setPanelDims({ left, width, height });
     }
-    computePanel();
-    window.addEventListener('resize', computePanel);
-    return () => window.removeEventListener('resize', computePanel);
+
+    // calcular al montar y cuando cambia 'active' (por si altura de card varía)
+    computeLayout();
+
+    // observar cambios de tamaño del grid
+    const ro = new ResizeObserver(() => computeLayout());
+    if (gridRef.current) ro.observe(gridRef.current);
+    window.addEventListener('resize', computeLayout);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', computeLayout);
+    };
   }, [active]);
 
   // Bloquear/permitir interacción del grid durante transición
@@ -429,7 +452,7 @@ function TeamOgilvy() {
     grid.style.pointerEvents = blocked ? 'none' : 'auto';
   }
 
-  // ----- CERRAR (fade del panel → regreso del clon al card ORIGEN con MISMA velocidad) -----
+  // ----- CERRAR (fade del panel → floater vuelve a transform:0 con MISMA velocidad) -----
   function closePanel() {
     if (isTransitioning) return;
     const i = activeIdxRef.current;
@@ -446,9 +469,6 @@ function TeamOgilvy() {
       return;
     }
 
-    const srcCard = i != null ? cardRefs.current[i] : null;
-    const grid = gridRef.current;
-
     // 1) Desaparece el panel primero
     if (panelRef.current) {
       panelRef.current.style.transition = `opacity 220ms ease`;
@@ -456,24 +476,17 @@ function TeamOgilvy() {
       panelRef.current.style.pointerEvents = 'none';
     }
 
-    if (!floater || !srcCard || !grid) {
+    const grid = gridRef.current;
+    if (!grid || floater == null || i == null) {
       restoreAfterClose();
       return;
     }
 
-    // 2) FLIP inverso (misma DURATION/EASING)
-    const gridRect = grid.getBoundingClientRect();
-    const floaterRect = floater.getBoundingClientRect();
-    const srcRect = srcCard.getBoundingClientRect();
-
-    const currentX = floaterRect.left - gridRect.left;
-    const targetX = srcRect.left - gridRect.left;
-    const dx = targetX - currentX;
-
+    // 2) Volver EXACTAMENTE a la X inicial: transform: 0 (misma DURATION/EASING que la ida)
     floater.style.willChange = 'transform';
     requestAnimationFrame(() => {
       floater.style.transition = `transform ${DURATION}ms ${EASING}`;
-      floater.style.transform = `translate(${dx}px, 0)`;
+      floater.style.transform = `translateX(0px)`;
     });
 
     window.setTimeout(() => {
@@ -510,7 +523,7 @@ function TeamOgilvy() {
     }
   }
 
-  // ----- ABRIR (clon desde card ORIGEN → primera columna con MISMA velocidad) -----
+  // ----- ABRIR (clon desde X inicial → X de la primera columna con MISMA velocidad) -----
   function openMember(i: number) {
     if (isTransitioning) return;
 
@@ -539,23 +552,26 @@ function TeamOgilvy() {
     setIsTransitioning(true);
     setGridInteractivity(true);
 
+    // Construimos el clon en SU posición inicial fija
     const gridRect = grid.getBoundingClientRect();
     const srcRect = src.getBoundingClientRect();
-    const dstRect = dst.getBoundingClientRect();
+    const w = Math.round(srcRect.width);
+    const h = Math.round(srcRect.height);
 
-    // Clon flotante
     const clone = src.cloneNode(true) as HTMLDivElement;
     clone.style.position = 'absolute';
-    clone.style.left = `${srcRect.left - gridRect.left}px`;
-    clone.style.top = `${srcRect.top - gridRect.top}px`;
-    clone.style.width = `${srcRect.width}px`;
-    clone.style.height = `${srcRect.height}px`;
+    clone.style.left = `${initialXRef.current[i]}px`;
+    clone.style.top = `${Math.round(srcRect.top - gridRect.top)}px`;
+    clone.style.width = `${w}px`;
+    clone.style.height = `${h}px`;
     clone.style.zIndex = '50';
     clone.style.cursor = 'pointer';
     (clone.querySelector('[data-overlay]') as HTMLDivElement | null)?.style.setProperty('opacity', '0');
     clone.addEventListener('click', closePanel);
 
     grid.appendChild(clone);
+
+    // Ocultamos origen y destino para evitar solapes
     src.style.visibility = 'hidden';
     dst.style.visibility = 'hidden';
 
@@ -570,12 +586,12 @@ function TeamOgilvy() {
       }
     });
 
-    // Viaje hacia la primera columna (MISMA DURATION/EASING)
-    const dx = dstRect.left - srcRect.left;
+    // Distancia EXACTA: desde initialX[i] hasta firstX (misma DURATION/EASING)
+    const dx = firstXRef.current - initialXRef.current[i];
     clone.style.willChange = 'transform';
     requestAnimationFrame(() => {
       clone.style.transition = `transform ${DURATION}ms ${EASING}`;
-      clone.style.transform = `translate(${dx}px, 0)`;
+      clone.style.transform = `translateX(${dx}px)`;
     });
 
     window.setTimeout(() => {
@@ -597,7 +613,7 @@ function TeamOgilvy() {
     <div ref={containerRef} className="relative mt-10">
       {/* GRID */}
       <div ref={gridRef} className="relative grid grid-cols-1 md:grid-cols-4 gap-6">
-        {TEAM_PRINCIPAL.map((m, i) => (
+        {team.map((m, i) => (
           <div
             key={m.id}
             ref={(el) => { cardRefs.current[i] = el; }}
@@ -618,7 +634,7 @@ function TeamOgilvy() {
               />
             </div>
 
-            {/* Overlay (DESKTOP) — ROLE EN MAYÚSCULAS */}
+            {/* Overlay (DESKTOP) — ROL EN MAYÚSCULAS */}
             <div
               data-overlay
               className="hidden md:flex absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex-col justify-end p-6 pointer-events-none"
