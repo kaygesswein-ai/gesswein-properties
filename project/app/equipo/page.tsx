@@ -294,7 +294,7 @@ export default function EquipoPage() {
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-4">
             Alianzas & Colaboradores
           </h3>
-          <p className="text-[14px] text-black/70 mb-10">
+        <p className="text-[14px] text-black/70 mb-10">
             Profesionales y estudios con los que trabajamos para elevar el estándar de cada
             proyecto.
           </p>
@@ -419,6 +419,7 @@ function TeamOgilvy() {
 
   // Cerrar (desktop con FLIP inverso / mobile acordeón)
   function closePanel() {
+    if (isTransitioning) return; // evita dobles cierres
     const i = activeIdxRef.current;
     const floater = floaterRef.current;
     setIsTransitioning(true);
@@ -456,7 +457,6 @@ function TeamOgilvy() {
     const targetX = srcRect.left - gridRect.left;
     const dx = targetX - currentX;
 
-    // aseguramos un solo transition
     floater.style.willChange = 'transform';
     requestAnimationFrame(() => {
       floater.style.transition = `transform ${DURATION}ms cubic-bezier(.22,.61,.36,1)`;
@@ -466,7 +466,7 @@ function TeamOgilvy() {
     // 3) Al terminar, limpiar y restaurar
     window.setTimeout(() => {
       restoreAfterClose();
-    }, DURATION + 10);
+    }, DURATION + 12);
   }
 
   function restoreAfterClose() {
@@ -500,6 +500,7 @@ function TeamOgilvy() {
 
   // Abrir (FLIP desktop / acordeón mobile)
   function openMember(i: number) {
+    if (isTransitioning) return; // bloquea mientras anima
     if (active === i) {
       closePanel();
       return;
@@ -570,7 +571,7 @@ function TeamOgilvy() {
       Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el, idx) => {
         if (idx !== i && idx !== 0) el.style.opacity = '1';
       });
-    }, DURATION + 10);
+    }, DURATION + 12);
   }
 
   function onPanelClick() {
@@ -602,13 +603,13 @@ function TeamOgilvy() {
               />
             </div>
 
-            {/* Overlay hover (desktop) */}
+            {/* Overlay hover (desktop) — ROLE EN MAYÚSCULAS */}
             <div
               data-overlay
               className="hidden md:flex absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex-col justify-end p-6 pointer-events-none"
             >
               <h3 className="text-white text-lg font-semibold">{m.name}</h3>
-              <p className="text-[#BFD1E5] text-sm tracking-[.12em]">{m.roleLine}</p>
+              <p className="text-[#BFD1E5] text-sm tracking-[.12em] uppercase">{m.roleLine}</p>
               <p className="text-white/85 text-xs mt-1 line-clamp-2">{m.bioShort}</p>
             </div>
 
