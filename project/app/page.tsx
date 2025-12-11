@@ -10,7 +10,6 @@ import {
   ShowerHead,
   Ruler,
   Gift,
-  Users2,
   Car,
   Square,
 } from 'lucide-react';
@@ -325,7 +324,7 @@ export default function HomePage(){
                     {icon:<Square     className="h-5 w-5 text-[#6C819B]"/>, v:fmtInt(active?.superficie_terreno_m2)},
                   ].map((t,idx)=>(
                     <div key={idx}
-                         className={`${idx<4?'border-r border-slate-200':''}
+                         className={`${idx<4?'border-r border-slate-200 ':''}
                                       flex flex-col items-center justify-center gap-1
                                       py-2 md:py-[10px]`}>
                       {t.icon}
