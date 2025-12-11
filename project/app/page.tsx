@@ -388,54 +388,6 @@ export default function HomePage(){
         </div>
       </section>
 
-      {/* ================= EQUIPO ================= */}
-      <section id="equipo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="flex items-center gap-3">
-          <Users2 className="h-6 w-6 text-[#0A2E57]" />
-          <h2 className="text-2xl md:text-3xl uppercase tracking-[0.25em]">EQUIPO</h2>
-        </div>
-
-        <p className="mt-3 max-w-4xl text-slate-700">
-          En Gesswein Properties nos diferenciamos por un servicio cercano y de alto estándar:
-          cada día combinamos criterio arquitectónico, respaldo legal y mirada financiera
-          para que cada decisión inmobiliaria sea segura y rentable.
-        </p>
-
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { nombre:'Carolina San Martín', cargo:'Managing Partner', profesion:'Arquitecta', foto:'/team/carolina-san-martin.png' },
-            { nombre:'Alberto Gesswein',     cargo:'Partner',           profesion:'Periodista · Productor Ejecutivo', foto:'/team/alberto-gesswein.png' },
-            { nombre:'Jan Gesswein',         cargo:'Partner',           profesion:'Abogado', foto:'/team/jan-gesswein.png' },
-            { nombre:'Kay Gesswein',         cargo:'Partner',           profesion:'Ingeniero comercial · Magíster en finanzas', foto:'/team/kay-gesswein.png' },
-          ].map(m=>(
-            <article key={m.nombre}
-                     className="group relative rounded-2xl overflow-hidden border border-slate-200
-                                bg-white shadow-sm hover:shadow-lg transition"
-                     tabIndex={0}>
-              <div className="aspect-[3/4] w-full bg-slate-100">
-                <img src={m.foto} alt={m.nombre}
-                     className="h-full w-full object-cover"
-                     onError={e=>{(e.currentTarget as HTMLImageElement).style.display='none';}}/>
-              </div>
-
-              <div className="pointer-events-none absolute inset-0 bg-[#0A2E57]/0
-                              group-hover:bg-[#0A2E57]/90 group-active:bg-[#0A2E57]/90
-                              focus-within:bg-[#0A2E57]/90 transition duration-300" />
-
-              <div className="absolute inset-0 flex items/end opacity-0
-                              group-hover:opacity-100 group-active:opacity-100
-                              focus-within:opacity-100 transition duration-300">
-                <div className="w-full p-4 text-white">
-                  <h3 className="text-lg leading-snug">{m.nombre}</h3>
-                  <p className="text-sm mt-1">{m.cargo}</p>
-                  <p className="mt-1 text-xs text-white/90">{m.profesion}</p>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
       {/* ================= REFERIDOS ================= */}
       <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
