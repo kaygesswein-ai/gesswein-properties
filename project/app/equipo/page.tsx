@@ -80,7 +80,7 @@ const TEAM_PRINCIPAL: Member[] = [
     bioDetail: [
       'Supervisa aspectos legales: contratos sólidos, cumplimiento normativo y procesos transparentes.',
     ],
-    education: 'Abogado, Universidad del Desarrollo.',
+    education: 'Derecho, Universidad del Desarrollo.',
     specialties: 'Derecho inmobiliario · Contratos · Due Diligence Legal.',
     email: 'jangesswein@gmail.com',
     phone: '+56 9 9909 9502',
