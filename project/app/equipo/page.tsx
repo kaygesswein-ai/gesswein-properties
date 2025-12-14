@@ -59,9 +59,9 @@ const TEAM_PRINCIPAL: Member[] = [
     name: 'Alberto Gesswein',
     roleLine: 'Socio Fundador · Marketing & Comunicaciones',
     bioShort:
-      'Periodista con más de 20 años en dirección y comunicación estratégica.',
+      'Periodista con más de 25 años en dirección, gestión y comunicación estratégica.',
     bioDetail: [
-      'Encabeza la visión institucional de Gesswein Properties con enfoque humano y excelencia técnica.',
+      'Lidera la estrategia comunicacional y marketing de la empresa con enfoque humano y excelencia técnica.',
     ],
     education: 'Periodista, Pontificia Universidad Católica de Chile.',
     specialties:
