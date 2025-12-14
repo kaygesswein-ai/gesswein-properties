@@ -39,7 +39,7 @@ const TEAM_PRINCIPAL: Member[] = [
   {
     id: 'carolina',
     name: 'Carolina San Martín',
-    roleLine: 'Managing Partner · Arquitecta',
+    roleLine: 'Socia Fundadora · Área de Arquitectura & Corretaje',
     bioShort:
       'Arquitecta con más de 15 años de experiencia en proyectos residenciales de alto estándar.',
     bioDetail: [
@@ -57,7 +57,7 @@ const TEAM_PRINCIPAL: Member[] = [
   {
     id: 'alberto',
     name: 'Alberto Gesswein',
-    roleLine: 'Managing Partner · Productor Ejecutivo',
+    roleLine: 'Socio Fundador · Área de Comunicaciones',
     bioShort:
       'Periodista con más de 20 años en dirección y comunicación estratégica.',
     bioDetail: [
@@ -74,7 +74,7 @@ const TEAM_PRINCIPAL: Member[] = [
   {
     id: 'jan',
     name: 'Jan Gesswein',
-    roleLine: 'Socio Legal · Abogado',
+    roleLine: 'Socio Fundador · Área Legal',
     bioShort:
       'Abogado especializado en derecho inmobiliario y regulaciones urbanas.',
     bioDetail: [
@@ -90,7 +90,7 @@ const TEAM_PRINCIPAL: Member[] = [
   {
     id: 'kay',
     name: 'Kay Gesswein',
-    roleLine: 'Socio Finanzas y Marketing · Ingeniero Comercial',
+    roleLine: 'Socio Fundador · Área de Finanzas',
     bioShort:
       'Ingeniero Comercial con Magíster en Finanzas. Experto en marketing y producción visual inmobiliaria.',
     bioDetail: [
