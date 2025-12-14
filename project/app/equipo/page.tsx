@@ -57,7 +57,7 @@ const TEAM_PRINCIPAL: Member[] = [
   {
     id: 'alberto',
     name: 'Alberto Gesswein',
-    roleLine: 'Socio Fundador · Marketing y Comunicaciones',
+    roleLine: 'Socio Fundador · Marketing & Comunicaciones',
     bioShort:
       'Periodista con más de 20 años en dirección y comunicación estratégica.',
     bioDetail: [
@@ -90,7 +90,7 @@ const TEAM_PRINCIPAL: Member[] = [
   {
     id: 'kay',
     name: 'Kay Gesswein',
-    roleLine: 'Socio Fundador · Comercial y Finanzas',
+    roleLine: 'Socio Fundador · Comercial & Finanzas',
     bioShort:
       'Ingeniero Comercial con Magíster en Finanzas. Experto en marketing y producción visual inmobiliaria.',
     bioDetail: [
