@@ -14,6 +14,25 @@ import {
   X,
 } from 'lucide-react'
 
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Nota: ícono simple tipo “note” estilo outline, consistente con Lucide */}
+      <path d="M14 3v10.2a4.8 4.8 0 1 1-4-4.73" />
+      <path d="M14 6c1.1 2.6 3.3 4.2 6 4.5" />
+    </svg>
+  )
+}
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
@@ -39,6 +58,9 @@ export default function Navbar() {
     ? 'bg-[#0A2E57]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,.06)]'
     : 'bg-transparent'
   const linkBase = 'text-white/90 hover:text-white transition-colors select-none'
+
+  // ✅ Placeholder: cambia esto cuando tengas la cuenta real
+  const TIKTOK_HREF = '#'
 
   return (
     <>
@@ -96,6 +118,11 @@ export default function Navbar() {
 
                 <Link href="https://instagram.com" aria-label="Instagram" className={linkBase}>
                   <Instagram className="h-[18px] w-[18px]" />
+                </Link>
+
+                {/* ✅ TikTok (NUEVO) — entre Instagram y Facebook */}
+                <Link href={TIKTOK_HREF} aria-label="TikTok" className={linkBase}>
+                  <TikTokIcon className="h-[18px] w-[18px]" />
                 </Link>
 
                 <Link href="https://facebook.com" aria-label="Facebook" className={linkBase}>
