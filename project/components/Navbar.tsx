@@ -66,10 +66,10 @@ export default function Navbar() {
 
                 <span className="mx-2 text-white/60">|</span>
 
-                {/* OPORTUNIDADES EXCLUSIVAS — destacado */}
+                {/* OPORTUNIDADES EXCLUSIVAS — destacado SOLO rectángulo (opción 1) */}
                 <Link
                   href="/oportunidades-exclusivas"
-                  className="relative uppercase text-[11px] tracking-[.30em]
+                  className="uppercase text-[11px] tracking-[.30em]
                              px-3 py-1
                              border border-white/40
                              bg-white/10
@@ -78,9 +78,6 @@ export default function Navbar() {
                              transition-colors"
                 >
                   Oportunidades exclusivas
-                  <span className="absolute -top-2 -right-2 border border-white/70 px-1.5 py-[1px] text-[8px] tracking-wider">
-                    NUEVO
-                  </span>
                 </Link>
 
                 <span className="mx-2 text-white/60">|</span>
@@ -129,8 +126,17 @@ export default function Navbar() {
                   <Instagram className="h-[18px] w-[18px]" />
                 </Link>
 
+                {/* TikTok (ya estaba bien) */}
                 <Link href="#" aria-label="TikTok" className={linkBase}>
-                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-[18px] w-[18px]"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M14 3v10.2a4.8 4.8 0 1 1-4-4.73" />
                     <path d="M14 6c1.1 2.6 3.3 4.2 6 4.5" />
                   </svg>
@@ -150,7 +156,7 @@ export default function Navbar() {
                 type="button"
                 aria-label="Abrir menú"
                 aria-expanded={open}
-                onClick={() => setOpen(v => !v)}
+                onClick={() => setOpen((v) => !v)}
                 className="md:hidden ml-1 text-white/90 hover:text-white p-2 -mr-1"
               >
                 {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -168,12 +174,48 @@ export default function Navbar() {
           ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
         <nav className="flex flex-col py-3">
-          <Link href="/" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Inicio</Link>
-          <Link href="/oportunidades-exclusivas" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Oportunidades exclusivas</Link>
-          <Link href="/propiedades" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Propiedades</Link>
-          <Link href="/servicios" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Servicios</Link>
-          <Link href="/equipo" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Equipo</Link>
-          <Link href="/contacto" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Contacto</Link>
+          <Link
+            href="/"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Inicio
+          </Link>
+          <Link
+            href="/oportunidades-exclusivas"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Oportunidades exclusivas
+          </Link>
+          <Link
+            href="/propiedades"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Propiedades
+          </Link>
+          <Link
+            href="/servicios"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Servicios
+          </Link>
+          <Link
+            href="/equipo"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Equipo
+          </Link>
+          <Link
+            href="/contacto"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Contacto
+          </Link>
         </nav>
       </div>
     </>
