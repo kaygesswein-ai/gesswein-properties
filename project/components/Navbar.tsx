@@ -14,25 +14,6 @@ import {
   X,
 } from 'lucide-react'
 
-function TikTokIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {/* Nota: ícono simple tipo “note” estilo outline, consistente con Lucide */}
-      <path d="M14 3v10.2a4.8 4.8 0 1 1-4-4.73" />
-      <path d="M14 6c1.1 2.6 3.3 4.2 6 4.5" />
-    </svg>
-  )
-}
-
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
@@ -44,7 +25,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Si el usuario agranda a desktop, cierra el menú móvil
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 768) setOpen(false)
@@ -58,9 +38,6 @@ export default function Navbar() {
     ? 'bg-[#0A2E57]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,.06)]'
     : 'bg-transparent'
   const linkBase = 'text-white/90 hover:text-white transition-colors select-none'
-
-  // ✅ Placeholder: cambia esto cuando tengas la cuenta real
-  const TIKTOK_HREF = '#'
 
   return (
     <>
@@ -79,32 +56,64 @@ export default function Navbar() {
               />
             </Link>
 
-            {/* Menú + redes a la derecha */}
+            {/* Menú + redes */}
             <div className="ml-auto flex items-center gap-3 md:gap-4">
               {/* MENÚ Desktop */}
               <nav className="hidden md:flex items-center text-white">
-                <Link href="/" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Inicio</Link>
+                <Link href="/" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Inicio
+                </Link>
+
                 <span className="mx-2 text-white/60">|</span>
-                <Link href="/propiedades" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Propiedades</Link>
+
+                {/* OPORTUNIDADES EXCLUSIVAS — destacado */}
+                <Link
+                  href="/oportunidades-exclusivas"
+                  className="relative uppercase text-[11px] tracking-[.30em]
+                             px-3 py-1
+                             border border-white/40
+                             bg-white/10
+                             text-white
+                             hover:bg-white/20
+                             transition-colors"
+                >
+                  Oportunidades exclusivas
+                  <span className="absolute -top-2 -right-2 border border-white/70 px-1.5 py-[1px] text-[8px] tracking-wider">
+                    NUEVO
+                  </span>
+                </Link>
+
                 <span className="mx-2 text-white/60">|</span>
-                <Link href="/servicios" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Servicios</Link>
+
+                <Link href="/propiedades" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Propiedades
+                </Link>
+
                 <span className="mx-2 text-white/60">|</span>
-                <Link href="/equipo" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Equipo</Link>
+
+                <Link href="/servicios" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Servicios
+                </Link>
+
                 <span className="mx-2 text-white/60">|</span>
-                <Link href="/contacto" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>Contacto</Link>
+
+                <Link href="/equipo" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Equipo
+                </Link>
+
+                <span className="mx-2 text-white/60">|</span>
+
+                <Link href="/contacto" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Contacto
+                </Link>
               </nav>
 
               {/* Redes */}
               <div className="flex items-center gap-3 text-white">
-                {/* WhatsApp — igual que footer, con un leve ajuste vertical */}
-                <Link
-                  href="https://wa.me/56900000000"
-                  aria-label="WhatsApp"
-                  className={linkBase}
-                >
+                <Link href="https://wa.me/56900000000" aria-label="WhatsApp" className={linkBase}>
                   <span className="relative inline-flex h-[18px] w-[18px] items-center justify-center translate-y-[1px]">
-                    <MessageCircle className="absolute h-full w-full stroke-[1.6] [vector-effect:non-scaling-stroke]" />
-                    <Phone className="absolute h-[11px] w-[11px] md:h-[12px] md:w-[12px] stroke-[1.8] [vector-effect:non-scaling-stroke]" />
+                    <MessageCircle className="absolute h-full w-full stroke-[1.6]" />
+                    <Phone className="absolute h-[11px] w-[11px] stroke-[1.8]" />
                   </span>
                 </Link>
 
@@ -120,9 +129,11 @@ export default function Navbar() {
                   <Instagram className="h-[18px] w-[18px]" />
                 </Link>
 
-                {/* ✅ TikTok (NUEVO) — entre Instagram y Facebook */}
-                <Link href={TIKTOK_HREF} aria-label="TikTok" className={linkBase}>
-                  <TikTokIcon className="h-[18px] w-[18px]" />
+                <Link href="#" aria-label="TikTok" className={linkBase}>
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <path d="M14 3v10.2a4.8 4.8 0 1 1-4-4.73" />
+                    <path d="M14 6c1.1 2.6 3.3 4.2 6 4.5" />
+                  </svg>
                 </Link>
 
                 <Link href="https://facebook.com" aria-label="Facebook" className={linkBase}>
@@ -134,13 +145,12 @@ export default function Navbar() {
                 </Link>
               </div>
 
-              {/* Botón hamburguesa – móvil */}
+              {/* Hamburguesa */}
               <button
                 type="button"
                 aria-label="Abrir menú"
                 aria-expanded={open}
-                aria-controls="mobile-menu"
-                onClick={() => setOpen((v) => !v)}
+                onClick={() => setOpen(v => !v)}
                 className="md:hidden ml-1 text-white/90 hover:text-white p-2 -mr-1"
               >
                 {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -150,21 +160,20 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Panel móvil */}
+      {/* Menú móvil */}
       <div
-        id="mobile-menu"
-        data-no-transition
         className={`md:hidden fixed inset-x-0 top-16 z-40
-                    bg-white/80 backdrop-blur-sm border-t border-black/10
-                    transition-all duration-200
-                    ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          bg-white/80 backdrop-blur-sm border-t border-black/10
+          transition-all duration-200
+          ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
         <nav className="flex flex-col py-3">
-          <Link href="/" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Inicio</Link>
-          <Link href="/propiedades" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Propiedades</Link>
-          <Link href="/servicios" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Servicios</Link>
-          <Link href="/equipo" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Equipo</Link>
-          <Link href="/contacto" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Contacto</Link>
+          <Link href="/" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Inicio</Link>
+          <Link href="/oportunidades-exclusivas" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Oportunidades exclusivas</Link>
+          <Link href="/propiedades" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Propiedades</Link>
+          <Link href="/servicios" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Servicios</Link>
+          <Link href="/equipo" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Equipo</Link>
+          <Link href="/contacto" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Contacto</Link>
         </nav>
       </div>
     </>
