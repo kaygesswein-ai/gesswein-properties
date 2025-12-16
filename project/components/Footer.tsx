@@ -1,4 +1,3 @@
-// project/components/ui/Footer.tsx
 "use client";
 
 import Link from "next/link";
@@ -13,8 +12,29 @@ const NAV = [
   { href: "/contacto", label: "CONTACTO" },
 ];
 
-// Íconos en el mismo orden del navbar: WhatsApp, Mail, Teléfono, Instagram, Facebook, LinkedIn
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M14 3v10.2a4.8 4.8 0 1 1-4-4.73" />
+      <path d="M14 6c1.1 2.6 3.3 4.2 6 4.5" />
+    </svg>
+  );
+}
+
+// Íconos en el mismo orden del navbar: WhatsApp, Mail, Teléfono, Instagram, TikTok, Facebook, LinkedIn
 function SocialIcons() {
+  // ✅ Placeholder: cambia esto cuando tengas la cuenta real
+  const TIKTOK_HREF = "#";
+
   return (
     <div className="mt-2 flex items-center justify-center gap-6 md:gap-8 text-white">
       {/* WhatsApp con teléfono dentro */}
@@ -37,6 +57,11 @@ function SocialIcons() {
 
       <Link aria-label="Instagram" href="#" className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7">
         <Instagram className="h-full w-full stroke-[1.6]" />
+      </Link>
+
+      {/* ✅ TikTok (NUEVO) — entre Instagram y Facebook */}
+      <Link aria-label="TikTok" href={TIKTOK_HREF} className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7">
+        <TikTokIcon className="h-full w-full" />
       </Link>
 
       <Link aria-label="Facebook" href="#" className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7">
