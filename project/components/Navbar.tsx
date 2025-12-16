@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Menu,
   X,
+  TikTok,
 } from 'lucide-react'
 
 export default function Navbar() {
@@ -25,7 +26,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Si el usuario agranda a desktop, cierra el menú móvil
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 768) setOpen(false)
@@ -57,7 +57,7 @@ export default function Navbar() {
               />
             </Link>
 
-            {/* Menú + redes a la derecha */}
+            {/* Menú + redes */}
             <div className="ml-auto flex items-center gap-3 md:gap-4">
               {/* MENÚ Desktop */}
               <nav className="hidden md:flex items-center text-white">
@@ -74,40 +74,41 @@ export default function Navbar() {
 
               {/* Redes */}
               <div className="flex items-center gap-3 text-white">
-                {/* WhatsApp — igual que footer, con un leve ajuste vertical */}
-                <Link
-                  href="https://wa.me/56900000000"
-                  aria-label="WhatsApp"
-                  className={linkBase}
-                >
+                {/* WhatsApp */}
+                <Link href="#" aria-label="WhatsApp" className={linkBase}>
                   <span className="relative inline-flex h-[18px] w-[18px] items-center justify-center translate-y-[1px]">
                     <MessageCircle className="absolute h-full w-full stroke-[1.6] [vector-effect:non-scaling-stroke]" />
                     <Phone className="absolute h-[11px] w-[11px] md:h-[12px] md:w-[12px] stroke-[1.8] [vector-effect:non-scaling-stroke]" />
                   </span>
                 </Link>
 
-                <Link href="mailto:hola@gessweinproperties.cl" aria-label="Email" className={linkBase}>
+                <Link href="#" aria-label="Email" className={linkBase}>
                   <Mail className="h-[18px] w-[18px]" />
                 </Link>
 
-                <Link href="tel:+56900000000" aria-label="Teléfono" className={linkBase}>
+                <Link href="#" aria-label="Teléfono" className={linkBase}>
                   <Phone className="h-[18px] w-[18px]" />
                 </Link>
 
-                <Link href="https://instagram.com" aria-label="Instagram" className={linkBase}>
+                <Link href="#" aria-label="Instagram" className={linkBase}>
                   <Instagram className="h-[18px] w-[18px]" />
                 </Link>
 
-                <Link href="https://facebook.com" aria-label="Facebook" className={linkBase}>
+                {/* ✅ TikTok (NUEVO) */}
+                <Link href="#" aria-label="TikTok" className={linkBase}>
+                  <TikTok className="h-[18px] w-[18px]" />
+                </Link>
+
+                <Link href="#" aria-label="Facebook" className={linkBase}>
                   <Facebook className="h-[18px] w-[18px]" />
                 </Link>
 
-                <Link href="https://linkedin.com" aria-label="LinkedIn" className={linkBase}>
+                <Link href="#" aria-label="LinkedIn" className={linkBase}>
                   <Linkedin className="h-[18px] w-[18px]" />
                 </Link>
               </div>
 
-              {/* Botón hamburguesa – móvil */}
+              {/* Hamburguesa móvil */}
               <button
                 type="button"
                 aria-label="Abrir menú"
@@ -128,16 +129,16 @@ export default function Navbar() {
         id="mobile-menu"
         data-no-transition
         className={`md:hidden fixed inset-x-0 top-16 z-40
-                    bg-white/80 backdrop-blur-sm border-t border-black/10
-                    transition-all duration-200
-                    ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          bg-white/80 backdrop-blur-sm border-t border-black/10
+          transition-all duration-200
+          ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
         <nav className="flex flex-col py-3">
-          <Link href="/" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Inicio</Link>
-          <Link href="/propiedades" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Propiedades</Link>
-          <Link href="/servicios" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Servicios</Link>
-          <Link href="/equipo" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Equipo</Link>
-          <Link href="/contacto" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black hover:opacity-80" onClick={() => setOpen(false)}>Contacto</Link>
+          <Link href="/" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Inicio</Link>
+          <Link href="/propiedades" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Propiedades</Link>
+          <Link href="/servicios" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Servicios</Link>
+          <Link href="/equipo" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Equipo</Link>
+          <Link href="/contacto" className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black" onClick={() => setOpen(false)}>Contacto</Link>
         </nav>
       </div>
     </>
