@@ -74,12 +74,24 @@ const capWords = (s?: string | null) =>
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-/* ✅ PRIORIDAD de portada (FIX: primero FIJA, luego normal) */
+/* ✅ sanitiza URLs (evita "null"/"undefined" que dejan el hero gris) */
+function cleanSrc(s?: string | null) {
+  if (!s) return null;
+  const t = String(s).trim();
+  if (!t) return null;
+  const bad = ['null', 'undefined', 'about:blank', 'NaN'];
+  if (bad.includes(t.toLowerCase())) return null;
+  // opcional: rechazar "url(" ... ya viene envuelto
+  if (t.toLowerCase().startsWith('url(')) return null;
+  return t;
+}
+
+/* ✅ PRIORIDAD de portada + fallback robusto */
 function getHeroImage(p?: Partial<Property>) {
   if (!p) return HERO_FALLBACK;
   const anyP: any = p;
 
-  const cand: (string | undefined | null)[] = [
+  const candRaw: (string | undefined | null)[] = [
     // ✅ override primero
     p.portada_fija_url,
     p.portada_url,
@@ -93,8 +105,11 @@ function getHeroImage(p?: Partial<Property>) {
     p.imagenes?.[0],
   ];
 
-  const src = cand.find((s) => typeof s === 'string' && s.trim().length > 4);
-  return (src as string) || HERO_FALLBACK;
+  const cand = candRaw.map(cleanSrc).filter(Boolean) as string[];
+  const src = cand.find((x) => x.length > 4);
+
+  // ✅ si por cualquier razón la URL viene rara, cae a fallback
+  return src || HERO_FALLBACK;
 }
 
 /* ------------------------------------------------------------------ */
@@ -149,6 +164,7 @@ const COMUNAS_UI: Record<string, string[]> = {
     'Limache',
     'Olmué',
   ],
+  // Puedes ir agregando más regiones/comunas cuando quieras
 };
 
 const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
@@ -194,7 +210,6 @@ export default function HomePage() {
 
   /* ---------- HIDRATAR portadas por id si no vinieron en el listado ---------- */
   useEffect(() => {
-    // ✅ Solo hidrata si faltan AMBAS portadas en el item del listado
     const need = destacadas
       .filter((p) => !(p.portada_url || p.portada_fija_url))
       .map((p) => p.id)
@@ -212,11 +227,10 @@ export default function HomePage() {
           const portada_url = d?.portada_url || null;
           const portada_fija_url = d?.portada_fija_url || null;
 
-          // ✅ Si API no trae nada útil, NO guardes (evita pisar y glitches)
-          if (!portada_url && !portada_fija_url) continue;
+          // ✅ no guardes valores basura
+          if (!cleanSrc(portada_url) && !cleanSrc(portada_fija_url)) continue;
 
           if (cancel) return;
-
           setDetailById((prev) => ({ ...prev, [id]: { portada_url, portada_fija_url } }));
         } catch {
           /* ignore */
@@ -248,6 +262,7 @@ export default function HomePage() {
       const n = destacadas.length;
       return ((p + dir) % n + n) % n;
     });
+    // reset del temporizador al navegar manual
     startAutoplay();
   };
 
@@ -286,18 +301,19 @@ export default function HomePage() {
 
   /* ---------- hero data ---------- */
   const active = destacadas[i];
-
-  // ✅ Enriquecimiento seguro: NO pises lo que ya existe en active con nulls/undefined
   const d = active ? (detailById[active.id] || {}) : {};
+
+  // ✅ Enriquecimiento seguro: no pises con basura
   const enrichedActive = active
     ? {
         ...active,
-        portada_fija_url: (d.portada_fija_url ?? active.portada_fija_url) ?? null,
-        portada_url: (d.portada_url ?? active.portada_url) ?? null,
+        portada_fija_url: cleanSrc(d.portada_fija_url) ?? cleanSrc(active.portada_fija_url) ?? null,
+        portada_url: cleanSrc(d.portada_url) ?? cleanSrc(active.portada_url) ?? null,
       }
     : undefined;
 
   const bg = useMemo(() => getHeroImage(enrichedActive), [enrichedActive]);
+  const safeBg = useMemo(() => cleanSrc(bg) || HERO_FALLBACK, [bg]);
 
   const lineaSecundaria = [
     capWords(active?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -366,7 +382,10 @@ export default function HomePage() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
+        <div
+          className="absolute inset-0 -z-10 bg-center bg-cover"
+          style={{ backgroundImage: `url(${encodeURI(safeBg)})` }}
+        />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
@@ -523,6 +542,7 @@ export default function HomePage() {
             {/* ---------- preferencias ---------- */}
             <h3 className="mt-8 text-sm md:text-base uppercase tracking-[0.25em]">PREFERENCIAS DEL REFERIDO</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
+              {/* servicio */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <SmartSelect
@@ -533,6 +553,7 @@ export default function HomePage() {
                   className="w-full"
                 />
               </div>
+              {/* tipo propiedad */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <SmartSelect
@@ -543,6 +564,7 @@ export default function HomePage() {
                   className="w-full"
                 />
               </div>
+              {/* región → TU LISTA LITERAL */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
@@ -556,6 +578,7 @@ export default function HomePage() {
                   className="w-full"
                 />
               </div>
+              {/* comuna (habilitada solo si hay región) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
@@ -567,6 +590,7 @@ export default function HomePage() {
                   className="w-full"
                 />
               </div>
+              {/* presupuesto */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
                 <input
@@ -583,6 +607,7 @@ export default function HomePage() {
                   placeholder="0"
                 />
               </div>
+              {/* comentarios */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
                 <textarea
@@ -593,6 +618,7 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* botón enviar */}
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
