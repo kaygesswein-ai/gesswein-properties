@@ -74,25 +74,13 @@ const capWords = (s?: string | null) =>
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-/* ✅ Limpia strings basura tipo "null" / "undefined" */
-function cleanSrc(s?: string | null) {
-  if (!s) return null;
-  const t = String(s).trim();
-  if (!t) return null;
-  const bad = ['null', 'undefined', 'about:blank', 'nan'];
-  if (bad.includes(t.toLowerCase())) return null;
-  if (t.toLowerCase().startsWith('url(')) return null;
-  return t;
-}
-
-/* ✅ PRIORIDAD de portada (portada_fija_url manda) */
+/* ✅ PRIORIDAD de portada */
 function getHeroImage(p?: Partial<Property>) {
   if (!p) return HERO_FALLBACK;
   const anyP: any = p;
-
   const cand: (string | undefined | null)[] = [
-    p.portada_fija_url, // ✅ override primero
     p.portada_url,
+    p.portada_fija_url,
     p.coverImage,
     anyP.imagen,
     anyP.image,
@@ -100,8 +88,7 @@ function getHeroImage(p?: Partial<Property>) {
     p.images?.[0],
     p.imagenes?.[0],
   ];
-
-  const src = cand.map(cleanSrc).find(Boolean);
+  const src = cand.find((s) => typeof s === 'string' && s.trim().length > 4);
   return (src as string) || HERO_FALLBACK;
 }
 
@@ -204,7 +191,7 @@ export default function HomePage() {
   /* ---------- HIDRATAR portadas por id si no vinieron en el listado ---------- */
   useEffect(() => {
     const need = destacadas
-      .filter((p) => !(cleanSrc(p.portada_url) || cleanSrc(p.portada_fija_url)))
+      .filter((p) => !(p.portada_url || p.portada_fija_url))
       .map((p) => p.id)
       .filter((id) => !detailById[id]);
 
@@ -217,10 +204,8 @@ export default function HomePage() {
           const r = await fetch(`/api/propiedades/${encodeURIComponent(id)}`, { cache: 'no-store' });
           const j = await r.json().catch(() => null);
           const d = j?.data || j || {};
-
-          const portada_url = cleanSrc(d?.portada_url) || null;
-          const portada_fija_url = cleanSrc(d?.portada_fija_url) || null;
-
+          const portada_url = d?.portada_url || null;
+          const portada_fija_url = d?.portada_fija_url || null;
           if (cancel) return;
           setDetailById((prev) => ({ ...prev, [id]: { portada_url, portada_fija_url } }));
         } catch {
@@ -294,9 +279,7 @@ export default function HomePage() {
   const active = destacadas[i];
   // mezcla el detalle hidratado si existe
   const enrichedActive = active ? { ...active, ...(detailById[active.id] || {}) } : undefined;
-
-  const bgRaw = useMemo(() => getHeroImage(enrichedActive), [enrichedActive]);
-  const bg = useMemo(() => encodeURI(bgRaw), [bgRaw]);
+  const bg = useMemo(() => getHeroImage(enrichedActive), [enrichedActive]);
 
   const lineaSecundaria = [
     capWords(active?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -622,4 +605,3 @@ export default function HomePage() {
     </main>
   );
 }
-
