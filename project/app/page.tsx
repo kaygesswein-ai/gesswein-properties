@@ -74,29 +74,25 @@ const capWords = (s?: string | null) =>
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-/* ✅ sanitiza URLs (evita "null"/"undefined" que dejan el hero gris) */
+/* ✅ Limpia strings basura tipo "null" / "undefined" */
 function cleanSrc(s?: string | null) {
   if (!s) return null;
   const t = String(s).trim();
   if (!t) return null;
-  const bad = ['null', 'undefined', 'about:blank', 'NaN'];
+  const bad = ['null', 'undefined', 'about:blank', 'nan'];
   if (bad.includes(t.toLowerCase())) return null;
-  // opcional: rechazar "url(" ... ya viene envuelto
   if (t.toLowerCase().startsWith('url(')) return null;
   return t;
 }
 
-/* ✅ PRIORIDAD de portada + fallback robusto */
+/* ✅ PRIORIDAD de portada (portada_fija_url manda) */
 function getHeroImage(p?: Partial<Property>) {
   if (!p) return HERO_FALLBACK;
   const anyP: any = p;
 
-  const candRaw: (string | undefined | null)[] = [
-    // ✅ override primero
-    p.portada_fija_url,
+  const cand: (string | undefined | null)[] = [
+    p.portada_fija_url, // ✅ override primero
     p.portada_url,
-
-    // legacy / compat
     p.coverImage,
     anyP.imagen,
     anyP.image,
@@ -105,11 +101,8 @@ function getHeroImage(p?: Partial<Property>) {
     p.imagenes?.[0],
   ];
 
-  const cand = candRaw.map(cleanSrc).filter(Boolean) as string[];
-  const src = cand.find((x) => x.length > 4);
-
-  // ✅ si por cualquier razón la URL viene rara, cae a fallback
-  return src || HERO_FALLBACK;
+  const src = cand.map(cleanSrc).find(Boolean);
+  return (src as string) || HERO_FALLBACK;
 }
 
 /* ------------------------------------------------------------------ */
@@ -211,7 +204,7 @@ export default function HomePage() {
   /* ---------- HIDRATAR portadas por id si no vinieron en el listado ---------- */
   useEffect(() => {
     const need = destacadas
-      .filter((p) => !(p.portada_url || p.portada_fija_url))
+      .filter((p) => !(cleanSrc(p.portada_url) || cleanSrc(p.portada_fija_url)))
       .map((p) => p.id)
       .filter((id) => !detailById[id]);
 
@@ -224,11 +217,9 @@ export default function HomePage() {
           const r = await fetch(`/api/propiedades/${encodeURIComponent(id)}`, { cache: 'no-store' });
           const j = await r.json().catch(() => null);
           const d = j?.data || j || {};
-          const portada_url = d?.portada_url || null;
-          const portada_fija_url = d?.portada_fija_url || null;
 
-          // ✅ no guardes valores basura
-          if (!cleanSrc(portada_url) && !cleanSrc(portada_fija_url)) continue;
+          const portada_url = cleanSrc(d?.portada_url) || null;
+          const portada_fija_url = cleanSrc(d?.portada_fija_url) || null;
 
           if (cancel) return;
           setDetailById((prev) => ({ ...prev, [id]: { portada_url, portada_fija_url } }));
@@ -301,19 +292,11 @@ export default function HomePage() {
 
   /* ---------- hero data ---------- */
   const active = destacadas[i];
-  const d = active ? (detailById[active.id] || {}) : {};
+  // mezcla el detalle hidratado si existe
+  const enrichedActive = active ? { ...active, ...(detailById[active.id] || {}) } : undefined;
 
-  // ✅ Enriquecimiento seguro: no pises con basura
-  const enrichedActive = active
-    ? {
-        ...active,
-        portada_fija_url: cleanSrc(d.portada_fija_url) ?? cleanSrc(active.portada_fija_url) ?? null,
-        portada_url: cleanSrc(d.portada_url) ?? cleanSrc(active.portada_url) ?? null,
-      }
-    : undefined;
-
-  const bg = useMemo(() => getHeroImage(enrichedActive), [enrichedActive]);
-  const safeBg = useMemo(() => cleanSrc(bg) || HERO_FALLBACK, [bg]);
+  const bgRaw = useMemo(() => getHeroImage(enrichedActive), [enrichedActive]);
+  const bg = useMemo(() => encodeURI(bgRaw), [bgRaw]);
 
   const lineaSecundaria = [
     capWords(active?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -382,10 +365,7 @@ export default function HomePage() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div
-          className="absolute inset-0 -z-10 bg-center bg-cover"
-          style={{ backgroundImage: `url(${encodeURI(safeBg)})` }}
-        />
+        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
@@ -470,6 +450,7 @@ export default function HomePage() {
       </section>
 
       {/* ================= REFERIDOS ================= */}
+      {/* ✅ Igualamos espacio arriba y abajo: pt-16 pb-16 */}
       <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16">
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           {/* encabezado */}
@@ -641,3 +622,4 @@ export default function HomePage() {
     </main>
   );
 }
+
