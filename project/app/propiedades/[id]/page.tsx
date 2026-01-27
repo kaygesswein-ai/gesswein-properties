@@ -37,6 +37,8 @@ type Property = {
   barrio?: string | null;
 
   portada_url?: string | null;
+  portada_fija_url?: string | null;
+  coverImage?: string | null;
   map_lat?: number | null;
   map_lng?: number | null;
   map_zoom?: number | null;
@@ -184,13 +186,15 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
   const heroUrl = useMemo(() => {
     if (prop?.portada_url && String(prop.portada_url).trim().length) return prop.portada_url!;
+    if (prop?.portada_fija_url && String(prop.portada_fija_url).trim().length) return prop.portada_fija_url!;
+    if (prop?.coverImage && String(prop.coverImage).trim().length) return prop.coverImage!;
     const portada = fotos.find(f => (f.categoria ?? f.tag ?? '').toLowerCase()==='portada')?.url;
     if (portada) return portada;
     const fromProp = (prop?.imagenes ?? []).find(u => (u ?? '').trim().length);
     if (fromProp) return fromProp!;
     const first = fotos.find(f => f.url)?.url;
     return first || HERO_FALLBACK;
-  }, [prop?.portada_url, prop?.imagenes, fotos]);
+  }, [prop?.portada_url, prop?.portada_fija_url, prop?.coverImage, prop?.imagenes, fotos]);
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
