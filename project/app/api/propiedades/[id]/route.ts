@@ -38,6 +38,7 @@ type RawProp = {
   portada_url: string | null;
   portada_fija_url: string | null;
   portada_preferencia: string | null;
+  coverImage?: string | null;
 
   map_lat: number | null;
   map_lng: number | null;
@@ -147,7 +148,13 @@ export async function GET(
       barrio: data.barrio,
 
       // portada (la página ya prioriza portada_url, luego fotos 'portada', etc.)
-      portada_url: data.portada_url ?? data.portada_fija_url ?? null,
+      portada_url: data.portada_url ?? null,
+      portada_fija_url: data.portada_fija_url ?? null,
+      coverImage:
+        data.portada_url ??
+        data.portada_fija_url ??
+        data.imagenes?.find((url) => typeof url === 'string' && url.trim().length) ??
+        null,
 
       // mapa
       map_lat: typeof data.map_lat === 'number' ? data.map_lat : null,
@@ -170,4 +177,3 @@ export async function GET(
     );
   }
 }
-
