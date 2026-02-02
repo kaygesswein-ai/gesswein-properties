@@ -233,7 +233,10 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     <main className="bg-white">
       {/* HERO */}
       <section className="relative w-full overflow-hidden isolate">
-        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage:`url(${heroUrl})` }} />
+        <div
+          className="absolute inset-0 -z-10 bg-center bg-cover"
+          style={{ backgroundImage: `url("${heroUrl}")` }}
+        />
         <div className="absolute inset-0 -z-10 bg-black/35" />
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
