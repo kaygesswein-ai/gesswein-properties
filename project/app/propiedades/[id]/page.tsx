@@ -57,17 +57,20 @@ const HERO_FALLBACK =
 const wordsCap = (s?: string | null) =>
   (s ?? '').toLowerCase().split(' ').map(w => (w ? w[0].toUpperCase() + w.slice(1) : '')).join(' ').trim();
 
+/* ✅ CAMBIO #2: UF igual que Home (usa /api/uf) */
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const r  = await fetch('https://mindicador.cl/api/uf', { cache: 'no-store' });
-        const j  = await r.json().catch(() => null);
-        const vv = Number(j?.serie?.[0]?.valor);
-        if (alive && Number.isFinite(vv)) setUf(vv);
-      } catch {}
+        const r = await fetch('/api/uf', { cache: 'no-store' });
+        const j = await r.json().catch(() => ({} as any));
+        const value = typeof j?.uf === 'number' ? j.uf : null;
+        if (alive) setUf(value);
+      } catch {
+        if (alive) setUf(null);
+      }
     })();
     return () => { alive = false; };
   }, []);
@@ -160,6 +163,31 @@ function addCacheBuster(url: string) {
   return `${url}${sep}cb=${Date.now()}`;
 }
 
+/* ✅ CAMBIO #1: getHeroImage clonado de Home (prioridad idéntica) */
+function getHeroImage(p?: Partial<Property> | null, fotos?: FotoRow[]) {
+  if (!p) return HERO_FALLBACK;
+  const anyP: any = p;
+
+  const cand: (string | undefined | null)[] = [
+    p.portada_url,
+    p.portada_fija_url,
+    p.coverImage,
+    anyP.imagen,
+    anyP.image,
+    anyP.foto,
+    anyP.images?.[0],
+    p.imagenes?.[0],
+    fotos?.find(f => (f?.categoria ?? f?.tag ?? '').toString().toLowerCase() === 'portada')?.url,
+    fotos?.find(f => f?.url)?.url,
+  ];
+
+  const src = cand.find((s) => typeof s === 'string' && s.trim().length > 4);
+  const out = (src as string) || HERO_FALLBACK;
+
+  // solo devolvemos URLs http(s); si no, fallback
+  return /^https?:\/\//i.test(out) ? out : HERO_FALLBACK;
+}
+
 /* ---------------- Página ---------------- */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
@@ -191,34 +219,36 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  // candidatos en orden (como antes)
+  /* ✅ CAMBIO #1 aplicado: candidatos salen de la misma lógica que Home */
   const heroCandidates = useMemo(() => {
-    const items = [
-      prop?.portada_url,
-      prop?.portada_fija_url,
-      prop?.coverImage,
-      fotos.find(f => (f.categoria ?? f.tag ?? '').toLowerCase()==='portada')?.url,
-      (prop?.imagenes ?? []).find(u => (u ?? '').trim().length),
-      fotos.find(f => f.url)?.url,
-      HERO_FALLBACK,
-    ];
+    const first = getHeroImage(prop, fotos);
 
-    const normalized = items
-      .map((url) => (typeof url === 'string' ? url.trim() : ''))
-      .filter(Boolean)
-      .map((url) => {
-        try {
-          return encodeURI(url);
-        } catch {
-          return url;
-        }
-      })
-      .filter((url) => /^https?:\/\//i.test(url));
+    // mantenemos tu fallback por onError (probamos alternativas si algo falla)
+    const extras: string[] = [];
+    const push = (u?: string | null) => {
+      if (typeof u === 'string' && u.trim() && /^https?:\/\//i.test(u.trim())) extras.push(u.trim());
+    };
 
-    return normalized.length ? normalized : [HERO_FALLBACK];
-  }, [prop?.portada_url, prop?.portada_fija_url, prop?.coverImage, prop?.imagenes, fotos]);
+    // armamos lista, pero sin duplicar el first
+    push(prop?.portada_url);
+    push(prop?.portada_fija_url);
+    push(prop?.coverImage);
+    push((prop as any)?.imagen);
+    push((prop as any)?.image);
+    push((prop as any)?.foto);
+    push((prop as any)?.images?.[0]);
+    push((prop?.imagenes ?? [])?.find(u => (u ?? '').trim().length) || null);
+    push(fotos.find(f => (f.categoria ?? f.tag ?? '').toString().toLowerCase() === 'portada')?.url || null);
+    push(fotos.find(f => f.url)?.url || null);
 
-  // 👇 NUEVO: fallback controlado con onError (sin preloader)
+    const all = [first, ...extras].filter(Boolean);
+    // dedupe manteniendo orden
+    const seen = new Set<string>();
+    const uniq = all.filter((u) => (seen.has(u) ? false : (seen.add(u), true)));
+    return uniq.length ? uniq : [HERO_FALLBACK];
+  }, [prop, fotos]);
+
+  // 👇 fallback controlado con onError (sin preloader)
   const [heroIndex, setHeroIndex] = useState(0);
   useEffect(() => {
     // cuando cambia la propiedad/candidatos, partimos desde el primero
