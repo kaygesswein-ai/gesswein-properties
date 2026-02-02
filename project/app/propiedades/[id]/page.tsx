@@ -184,27 +184,67 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  const heroUrl = useMemo(() => {
-    if (prop?.portada_url && String(prop.portada_url).trim().length) return prop.portada_url!;
-    if (prop?.portada_fija_url && String(prop.portada_fija_url).trim().length) return prop.portada_fija_url!;
-    if (prop?.coverImage && String(prop.coverImage).trim().length) return prop.coverImage!;
-    const portada = fotos.find(f => (f.categoria ?? f.tag ?? '').toLowerCase()==='portada')?.url;
-    if (portada) return portada;
-    const fromProp = (prop?.imagenes ?? []).find(u => (u ?? '').trim().length);
-    if (fromProp) return fromProp!;
-    const first = fotos.find(f => f.url)?.url;
-    return first || HERO_FALLBACK;
+  const heroCandidates = useMemo(() => {
+    const items = [
+      prop?.portada_url,
+      prop?.portada_fija_url,
+      prop?.coverImage,
+      fotos.find(f => (f.categoria ?? f.tag ?? '').toLowerCase()==='portada')?.url,
+      (prop?.imagenes ?? []).find(u => (u ?? '').trim().length),
+      fotos.find(f => f.url)?.url,
+      HERO_FALLBACK,
+    ];
+
+    const normalized = items
+      .map((url) => (typeof url === 'string' ? url.trim() : ''))
+      .filter(Boolean)
+      .map((url) => {
+        try {
+          return encodeURI(url);
+        } catch {
+          return url;
+        }
+      })
+      .filter((url) => /^https?:\/\//i.test(url));
+
+    return normalized.length ? normalized : [HERO_FALLBACK];
   }, [prop?.portada_url, prop?.portada_fija_url, prop?.coverImage, prop?.imagenes, fotos]);
 
-  const heroUrlSafe = useMemo(() => {
-    const raw = heroUrl?.trim();
-    if (!raw) return raw;
-    try {
-      return encodeURI(raw);
-    } catch {
-      return raw;
-    }
-  }, [heroUrl]);
+  const [heroUrlSafe, setHeroUrlSafe] = useState<string>(HERO_FALLBACK);
+
+  useEffect(() => {
+    let cancelled = false;
+    let activeImage: HTMLImageElement | null = null;
+
+    const tryLoad = (index: number) => {
+      if (cancelled) return;
+      if (index >= heroCandidates.length) {
+        setHeroUrlSafe(HERO_FALLBACK);
+        return;
+      }
+
+      const candidate = heroCandidates[index];
+      const img = new Image();
+      activeImage = img;
+      img.onload = () => {
+        if (!cancelled) setHeroUrlSafe(candidate);
+      };
+      img.onerror = () => {
+        if (!cancelled) tryLoad(index + 1);
+      };
+      img.src = candidate;
+    };
+
+    tryLoad(0);
+
+    return () => {
+      cancelled = true;
+      if (activeImage) {
+        activeImage.onload = null;
+        activeImage.onerror = null;
+      }
+    };
+  }, [heroCandidates]);
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
