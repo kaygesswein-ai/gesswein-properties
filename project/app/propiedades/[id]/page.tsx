@@ -153,6 +153,13 @@ function Lightbox(props: {
   );
 }
 
+/* ---------------- helpers hero ---------------- */
+function addCacheBuster(url: string) {
+  // evita caché agresivo sin romper URLs con query ya existente
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}cb=${Date.now()}`;
+}
+
 /* ---------------- Página ---------------- */
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [prop, setProp] = useState<Property | null>(null);
@@ -184,6 +191,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
+  // candidatos en orden (como antes)
   const heroCandidates = useMemo(() => {
     const items = [
       prop?.portada_url,
@@ -195,50 +203,29 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       HERO_FALLBACK,
     ];
 
-    // ✅ FIX: NO usar encodeURI (rompe URLs que ya vienen con %20 desde Supabase)
     const normalized = items
       .map((url) => (typeof url === 'string' ? url.trim() : ''))
       .filter(Boolean)
+      .map((url) => {
+        try {
+          return encodeURI(url);
+        } catch {
+          return url;
+        }
+      })
       .filter((url) => /^https?:\/\//i.test(url));
 
     return normalized.length ? normalized : [HERO_FALLBACK];
   }, [prop?.portada_url, prop?.portada_fija_url, prop?.coverImage, prop?.imagenes, fotos]);
 
-  const [heroUrlSafe, setHeroUrlSafe] = useState<string>(HERO_FALLBACK);
-
+  // 👇 NUEVO: fallback controlado con onError (sin preloader)
+  const [heroIndex, setHeroIndex] = useState(0);
   useEffect(() => {
-    let cancelled = false;
-    let activeImage: HTMLImageElement | null = null;
-
-    const tryLoad = (index: number) => {
-      if (cancelled) return;
-      if (index >= heroCandidates.length) {
-        setHeroUrlSafe(HERO_FALLBACK);
-        return;
-      }
-
-      const candidate = heroCandidates[index];
-      const img = new Image();
-      activeImage = img;
-      img.onload = () => {
-        if (!cancelled) setHeroUrlSafe(candidate);
-      };
-      img.onerror = () => {
-        if (!cancelled) tryLoad(index + 1);
-      };
-      img.src = candidate;
-    };
-
-    tryLoad(0);
-
-    return () => {
-      cancelled = true;
-      if (activeImage) {
-        activeImage.onload = null;
-        activeImage.onerror = null;
-      }
-    };
+    // cuando cambia la propiedad/candidatos, partimos desde el primero
+    setHeroIndex(0);
   }, [heroCandidates]);
+
+  const heroUrlSafe = heroCandidates[Math.min(heroIndex, heroCandidates.length - 1)] || HERO_FALLBACK;
 
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -278,11 +265,14 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       {/* HERO */}
       <section className="relative w-full overflow-hidden isolate">
         <img
-          src={heroUrlSafe}
+          key={heroUrlSafe} // fuerza re-render cuando cambia
+          src={addCacheBuster(heroUrlSafe)}
           alt=""
-          referrerPolicy="no-referrer"
-          crossOrigin="anonymous"
           className="absolute inset-0 -z-10 h-full w-full object-cover"
+          onError={() => {
+            // si falla, probamos el siguiente candidato
+            setHeroIndex((i) => Math.min(i + 1, heroCandidates.length - 1));
+          }}
         />
         <div className="absolute inset-0 -z-10 bg-black/35" />
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
