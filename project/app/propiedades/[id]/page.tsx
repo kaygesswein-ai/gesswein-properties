@@ -196,6 +196,16 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return first || HERO_FALLBACK;
   }, [prop?.portada_url, prop?.portada_fija_url, prop?.coverImage, prop?.imagenes, fotos]);
 
+  const heroUrlSafe = useMemo(() => {
+    const raw = heroUrl?.trim();
+    if (!raw) return raw;
+    try {
+      return encodeURI(raw);
+    } catch {
+      return raw;
+    }
+  }, [heroUrl]);
+
   const linea = [
     wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
     wordsCap(prop?.tipo),
@@ -235,7 +245,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       <section className="relative w-full overflow-hidden isolate">
         <div
           className="absolute inset-0 -z-10 bg-center bg-cover"
-          style={{ backgroundImage: `url("${heroUrl}")` }}
+          style={{ backgroundImage: `url("${heroUrlSafe}")` }}
         />
         <div className="absolute inset-0 -z-10 bg-black/35" />
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
