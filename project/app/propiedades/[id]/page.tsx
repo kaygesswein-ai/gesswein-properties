@@ -195,16 +195,10 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       HERO_FALLBACK,
     ];
 
+    // ✅ FIX: NO usar encodeURI (rompe URLs que ya vienen con %20 desde Supabase)
     const normalized = items
       .map((url) => (typeof url === 'string' ? url.trim() : ''))
       .filter(Boolean)
-      .map((url) => {
-        try {
-          return encodeURI(url);
-        } catch {
-          return url;
-        }
-      })
       .filter((url) => /^https?:\/\//i.test(url));
 
     return normalized.length ? normalized : [HERO_FALLBACK];
