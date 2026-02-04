@@ -43,7 +43,7 @@ const BTN_GRAY_BORDER = '#e2e8f0';
 
 /* HERO exacto */
 const HERO_IMG =
-  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/IMG_2884.jpeg';
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Propiedades%20-%20OPTIMIZADA.jpeg';
 
 /* Fallback card */
 const CARD_FALLBACK =
