@@ -348,190 +348,50 @@ export default function HomePage() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* ✅ Fondo: en móvil portrait lo “subimos” un poco; en landscape lo centramos */}
-        <div
-          className="
-            absolute inset-0 -z-10 bg-cover
-            bg-[position:50%_22%]
-            [@media(max-width:768px)_and_(orientation:landscape)]:bg-center
-            md:bg-center
-          "
-          style={{ backgroundImage: `url(${bg})` }}
-        />
+        {/* ✅ Media layers: desktop = cover normal / móvil portrait = contain arriba + blur detrás */}
+        <div className="hero-media absolute inset-0 -z-10">
+          <div className="hero-bg" style={{ backgroundImage: `url(${bg})` }} />
+          <div className="hero-fg" style={{ backgroundImage: `url(${bg})` }} />
+          <div className="hero-overlay" />
+        </div>
 
-        {/* ✅ Overlay: más “premium” en móvil (gradiente suave), desktop igual que antes */}
-        <div
-          className="
-            absolute inset-0 -z-10
-            md:bg-black/35
-            bg-gradient-to-t from-black/55 via-black/25 to-black/10
-            [@media(max-width:768px)_and_(orientation:landscape)]:from-black/45
-            [@media(max-width:768px)_and_(orientation:landscape)]:via-black/20
-            [@media(max-width:768px)_and_(orientation:landscape)]:to-black/10
-          "
-        />
-
-        <div
-          className="
-            relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
-            min-h-[100svh] flex items-end
-            pb-16 md:pb-20
-
-            /* ✅ SOLO móvil horizontal: bajamos el bloque y lo hacemos más compacto */
-            [@media(max-width:768px)_and_(orientation:landscape)]:pb-6
-          "
-        >
+        <div className="hero-container relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            <div
-              className="
-                bg-white/70 backdrop-blur-sm shadow-xl
-                p-4 md:p-5 w-full md:max-w-[480px]
-
-                /* ✅ SOLO móvil: ancho elegante (no “panel gigante”) */
-                max-w-[92vw] sm:max-w-[420px]
-
-                /* ✅ SOLO móvil horizontal: aún más compacto */
-                [@media(max-width:768px)_and_(orientation:landscape)]:max-w-[360px]
-                [@media(max-width:768px)_and_(orientation:landscape)]:p-3
-              "
-            >
-              <h1
-                className="
-                  text-[1.25rem] sm:text-[1.4rem] md:text-2xl text-gray-900
-
-                  /* ✅ SOLO móvil horizontal: baja tipografía para no “comerse” la foto */
-                  [@media(max-width:768px)_and_(orientation:landscape)]:text-[1.05rem]
-                "
-              >
+            <div className="hero-card bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
+              <h1 className="hero-title text-[1.4rem] md:text-2xl text-gray-900">
                 {active?.titulo ?? 'Propiedad destacada'}
               </h1>
 
-              <p
-                className="
-                  mt-1 text-sm text-gray-600
-
-                  [@media(max-width:768px)_and_(orientation:landscape)]:text-[0.8rem]
-                  [@media(max-width:768px)_and_(orientation:landscape)]:mt-0.5
-                "
-              >
-                {lineaSecundaria || '—'}
-              </p>
+              <p className="hero-sub mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
               {/* ---------- Tiles ---------- */}
-              <div
-                className="
-                  mt-4
-                  [@media(max-width:768px)_and_(orientation:landscape)]:mt-3
-                "
-              >
-                <div
-                  className="
-                    grid grid-cols-5 border border-slate-200 bg-white/70
-                    [@media(max-width:768px)_and_(orientation:landscape)]:border-slate-200/80
-                  "
-                >
+              <div className="mt-4 hero-tiles">
+                <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
-                    {
-                      icon: (
-                        <Bed
-                          className="
-                            h-5 w-5 text-[#6C819B]
-                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
-                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
-                          "
-                        />
-                      ),
-                      v: active?.dormitorios,
-                    },
-                    {
-                      icon: (
-                        <ShowerHead
-                          className="
-                            h-5 w-5 text-[#6C819B]
-                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
-                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
-                          "
-                        />
-                      ),
-                      v: active?.banos,
-                    },
-                    {
-                      icon: (
-                        <Car
-                          className="
-                            h-5 w-5 text-[#6C819B]
-                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
-                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
-                          "
-                        />
-                      ),
-                      v: active?.estacionamientos,
-                    },
-                    {
-                      icon: (
-                        <Ruler
-                          className="
-                            h-5 w-5 text-[#6C819B]
-                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
-                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
-                          "
-                        />
-                      ),
-                      v: fmtInt(active?.superficie_util_m2),
-                    },
-                    {
-                      icon: (
-                        <Square
-                          className="
-                            h-5 w-5 text-[#6C819B]
-                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
-                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
-                          "
-                        />
-                      ),
-                      v: fmtInt(active?.superficie_terreno_m2),
-                    },
+                    { icon: <Bed className="h-5 w-5 text-[#6C819B]" />, v: active?.dormitorios },
+                    { icon: <ShowerHead className="h-5 w-5 text-[#6C819B]" />, v: active?.banos },
+                    { icon: <Car className="h-5 w-5 text-[#6C819B]" />, v: active?.estacionamientos },
+                    { icon: <Ruler className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_util_m2) },
+                    { icon: <Square className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_terreno_m2) },
                   ].map((t, idx) => (
                     <div
                       key={idx}
-                      className={`
-                        ${idx < 4 ? 'border-r border-slate-200 ' : ''}
-                        flex flex-col items-center justify-center gap-1
-                        py-2 md:py-[10px]
-
-                        [@media(max-width:768px)_and_(orientation:landscape)]:py-1.5
-                        [@media(max-width:768px)_and_(orientation:landscape)]:gap-0.5
-                      `}
+                      className={`${idx < 4 ? 'border-r border-slate-200 ' : ''} flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]`}
                     >
                       {t.icon}
-                      <span
-                        className="
-                          text-sm text-slate-800 leading-none
-                          [@media(max-width:768px)_and_(orientation:landscape)]:text-[0.78rem]
-                        "
-                      >
-                        {(t as any).v ?? dash}
-                      </span>
+                      <span className="text-sm text-slate-800 leading-none">{(t as any).v ?? dash}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* ---------- Botón + precio ---------- */}
-              <div
-                className="
-                  mt-4 flex items-end gap-3
-                  [@media(max-width:768px)_and_(orientation:landscape)]:mt-3
-                "
-              >
+              <div className="mt-4 flex items-end gap-3">
                 {active?.id && (
                   <Link
                     ref={verMasRef}
                     href={`/propiedades/${active.id}`}
-                    className="
-                      inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white
-                      [@media(max-width:768px)_and_(orientation:landscape)]:text-[0.78rem]
-                    "
+                    className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
                     style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
                   >
                     Ver más
@@ -539,21 +399,11 @@ export default function HomePage() {
                 )}
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
-                  <div
-                    className="
-                      text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none
-                      [@media(max-width:768px)_and_(orientation:landscape)]:text-[1.02rem]
-                    "
-                  >
+                  <div className="hero-price text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
                     {precioUfHero ? fmtUF(precioUfHero) : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
                   </div>
                   {precioClpHero > 0 && (
-                    <div
-                      className="
-                        text-sm md:text-base text-slate-600 mt-[2px]
-                        [@media(max-width:768px)_and_(orientation:landscape)]:text-[0.78rem]
-                      "
-                    >
+                    <div className="hero-price2 text-sm md:text-base text-slate-600 mt-[2px]">
                       {fmtCLP(precioClpHero)}
                     </div>
                   )}
@@ -761,6 +611,126 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ✅ CSS GLOBAL SOLO PARA EL HERO (móvil portrait + landscape) */}
+      <style jsx global>{`
+        /* Base */
+        .hero-media {
+          pointer-events: none;
+        }
+        .hero-bg,
+        .hero-fg {
+          position: absolute;
+          inset: 0;
+          background-repeat: no-repeat;
+        }
+
+        /* Desktop default: cover normal */
+        .hero-bg {
+          background-size: cover;
+          background-position: center;
+          filter: none;
+          transform: none;
+        }
+        .hero-fg {
+          display: none;
+        }
+
+        .hero-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.35);
+        }
+
+        /* ✅ MOBILE PORTRAIT:
+           - fondo cover BLUR
+           - encima imagen CONTAIN, anclada arriba
+           - card abajo */
+        @media (max-width: 768px) and (orientation: portrait) {
+          .hero-bg {
+            background-size: cover;
+            background-position: 50% 18%;
+            filter: blur(18px);
+            transform: scale(1.12);
+          }
+
+          .hero-fg {
+            display: block;
+            background-size: contain;
+            background-position: 50% 0%;
+            transform: translateY(-6%);
+          }
+
+          .hero-overlay {
+            background: linear-gradient(
+              to top,
+              rgba(0, 0, 0, 0.55),
+              rgba(0, 0, 0, 0.22),
+              rgba(0, 0, 0, 0.1)
+            );
+          }
+        }
+
+        /* ✅ MOBILE LANDSCAPE: panel más chico y elegante */
+        @media (max-width: 768px) and (orientation: landscape) {
+          .hero-container {
+            padding-bottom: 18px !important;
+          }
+
+          .hero-card {
+            max-width: 360px !important;
+            padding: 12px !important;
+          }
+
+          .hero-title {
+            font-size: 1.05rem !important;
+            line-height: 1.2 !important;
+          }
+
+          .hero-sub {
+            margin-top: 4px !important;
+            font-size: 0.8rem !important;
+          }
+
+          .hero-tiles .grid > div {
+            padding-top: 6px !important;
+            padding-bottom: 6px !important;
+            gap: 4px !important;
+          }
+
+          .hero-tiles svg {
+            width: 16px !important;
+            height: 16px !important;
+          }
+
+          .hero-tiles span {
+            font-size: 0.78rem !important;
+          }
+
+          .hero-price {
+            font-size: 1.02rem !important;
+          }
+
+          .hero-price2 {
+            font-size: 0.78rem !important;
+          }
+
+          /* Landscape: cover normal, sin contain + blur */
+          .hero-bg {
+            filter: none !important;
+            transform: none !important;
+            background-position: center !important;
+            background-size: cover !important;
+          }
+          .hero-fg {
+            display: none !important;
+          }
+
+          .hero-overlay {
+            background: rgba(0, 0, 0, 0.32) !important;
+          }
+        }
+      `}</style>
     </main>
   );
 }
