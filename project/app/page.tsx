@@ -348,24 +348,17 @@ export default function HomePage() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* ✅ Media layers: desktop = cover normal / móvil portrait = contain arriba + blur detrás */}
-        <div className="hero-media absolute inset-0 -z-10">
-          <div className="hero-bg" style={{ backgroundImage: `url(${bg})` }} />
-          <div className="hero-fg" style={{ backgroundImage: `url(${bg})` }} />
-          <div className="hero-overlay" />
-        </div>
+        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
+        <div className="absolute inset-0 -z-10 bg-black/35" />
 
-        <div className="hero-container relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            <div className="hero-card bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
-              <h1 className="hero-title text-[1.4rem] md:text-2xl text-gray-900">
-                {active?.titulo ?? 'Propiedad destacada'}
-              </h1>
-
-              <p className="hero-sub mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
+              <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{active?.titulo ?? 'Propiedad destacada'}</h1>
+              <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
               {/* ---------- Tiles ---------- */}
-              <div className="mt-4 hero-tiles">
+              <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
                     { icon: <Bed className="h-5 w-5 text-[#6C819B]" />, v: active?.dormitorios },
@@ -399,13 +392,11 @@ export default function HomePage() {
                 )}
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
-                  <div className="hero-price text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
+                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
                     {precioUfHero ? fmtUF(precioUfHero) : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
                   </div>
                   {precioClpHero > 0 && (
-                    <div className="hero-price2 text-sm md:text-base text-slate-600 mt-[2px]">
-                      {fmtCLP(precioClpHero)}
-                    </div>
+                    <div className="text-sm md:text-base text-slate-600 mt-[2px]">{fmtCLP(precioClpHero)}</div>
                   )}
                 </div>
               </div>
@@ -611,126 +602,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* ✅ CSS GLOBAL SOLO PARA EL HERO (móvil portrait + landscape) */}
-      <style jsx global>{`
-        /* Base */
-        .hero-media {
-          pointer-events: none;
-        }
-        .hero-bg,
-        .hero-fg {
-          position: absolute;
-          inset: 0;
-          background-repeat: no-repeat;
-        }
-
-        /* Desktop default: cover normal */
-        .hero-bg {
-          background-size: cover;
-          background-position: center;
-          filter: none;
-          transform: none;
-        }
-        .hero-fg {
-          display: none;
-        }
-
-        .hero-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.35);
-        }
-
-        /* ✅ MOBILE PORTRAIT:
-           - fondo cover BLUR
-           - encima imagen CONTAIN, anclada arriba
-           - card abajo */
-        @media (max-width: 768px) and (orientation: portrait) {
-          .hero-bg {
-            background-size: cover;
-            background-position: 50% 18%;
-            filter: blur(18px);
-            transform: scale(1.12);
-          }
-
-          .hero-fg {
-            display: block;
-            background-size: contain;
-            background-position: 50% 0%;
-            transform: translateY(-6%);
-          }
-
-          .hero-overlay {
-            background: linear-gradient(
-              to top,
-              rgba(0, 0, 0, 0.55),
-              rgba(0, 0, 0, 0.22),
-              rgba(0, 0, 0, 0.1)
-            );
-          }
-        }
-
-        /* ✅ MOBILE LANDSCAPE: panel más chico y elegante */
-        @media (max-width: 768px) and (orientation: landscape) {
-          .hero-container {
-            padding-bottom: 18px !important;
-          }
-
-          .hero-card {
-            max-width: 360px !important;
-            padding: 12px !important;
-          }
-
-          .hero-title {
-            font-size: 1.05rem !important;
-            line-height: 1.2 !important;
-          }
-
-          .hero-sub {
-            margin-top: 4px !important;
-            font-size: 0.8rem !important;
-          }
-
-          .hero-tiles .grid > div {
-            padding-top: 6px !important;
-            padding-bottom: 6px !important;
-            gap: 4px !important;
-          }
-
-          .hero-tiles svg {
-            width: 16px !important;
-            height: 16px !important;
-          }
-
-          .hero-tiles span {
-            font-size: 0.78rem !important;
-          }
-
-          .hero-price {
-            font-size: 1.02rem !important;
-          }
-
-          .hero-price2 {
-            font-size: 0.78rem !important;
-          }
-
-          /* Landscape: cover normal, sin contain + blur */
-          .hero-bg {
-            filter: none !important;
-            transform: none !important;
-            background-position: center !important;
-            background-size: cover !important;
-          }
-          .hero-fg {
-            display: none !important;
-          }
-
-          .hero-overlay {
-            background: rgba(0, 0, 0, 0.32) !important;
-          }
-        }
-      `}</style>
     </main>
   );
 }
