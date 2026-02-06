@@ -343,18 +343,12 @@ export default function HomePage() {
     <main className="bg-white">
       {/* ================= HERO ================= */}
       <section
-        id="gp-hero"
         className="relative w-full overflow-hidden isolate"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* ✅ Opción 2: “Blur backdrop” SOLO móvil (mismo patrón que apps top) */}
-        <div
-          className="hero-bg absolute inset-0 -z-10 bg-center bg-cover"
-          style={{ backgroundImage: `url(${bg})` }}
-        />
-        {/* overlay base igual que antes */}
+        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
@@ -388,8 +382,8 @@ export default function HomePage() {
               <div className="mt-4 flex items-end gap-3">
                 {active?.id && (
                   <Link
-                    href={`/propiedades/${active.id}`}
                     ref={verMasRef}
+                    href={`/propiedades/${active.id}`}
                     className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
                     style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
                   >
@@ -436,46 +430,10 @@ export default function HomePage() {
             </div>
           )}
         </div>
-
-        {/* ✅ SOLO CSS MÓVIL: blur + gradiente + leve “lift” para tapar cortes feos, y landscape sane */}
-        <style jsx global>{`
-          /* Desktop queda igual */
-          #gp-hero .hero-bg {
-            background-position: center center;
-          }
-
-          /* Mobile: blur backdrop “de app” (no agrega img extra, no cambia layout) */
-          @media (max-width: 768px) {
-            #gp-hero .hero-bg {
-              filter: blur(18px);
-              transform: scale(1.10); /* evita bordes al hacer blur */
-              background-position: center center;
-            }
-
-            /* Un gradiente sutil arriba/abajo para que el blur se sienta “premium” */
-            #gp-hero::before {
-              content: '';
-              position: absolute;
-              inset: 0;
-              z-index: -9;
-              pointer-events: none;
-              background:
-                radial-gradient(1200px 600px at 50% 20%, rgba(255, 255, 255, 0.06), transparent 60%),
-                linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.28));
-            }
-          }
-
-          /* Mobile landscape: mantenemos elegancia bajando altura efectiva (evita “aplastado”) */
-          @media (max-width: 768px) and (orientation: landscape) {
-            #gp-hero > div.relative.max-w-7xl {
-              min-height: 72svh !important;
-              padding-bottom: 18px !important;
-            }
-          }
-        `}</style>
       </section>
 
       {/* ================= REFERIDOS ================= */}
+      {/* ✅ Igualamos espacio arriba y abajo: pt-16 pb-16 */}
       <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16">
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           {/* encabezado */}
