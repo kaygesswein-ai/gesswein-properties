@@ -349,23 +349,13 @@ export default function HomePage() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* ✅ Opción 3: fondo blur + imagen contenida SOLO en móvil (elegante, sin recortes raros) */}
+        {/* ✅ Opción 2: “Blur backdrop” SOLO móvil (mismo patrón que apps top) */}
         <div
           className="hero-bg absolute inset-0 -z-10 bg-center bg-cover"
           style={{ backgroundImage: `url(${bg})` }}
         />
+        {/* overlay base igual que antes */}
         <div className="absolute inset-0 -z-10 bg-black/35" />
-
-        {/* Imagen “contenida” solo móvil (md:hidden). Desktop queda EXACTAMENTE igual que antes. */}
-        <div className="hero-mobile-frame absolute inset-0 -z-10 md:hidden">
-          <img
-            src={bg}
-            alt=""
-            aria-hidden="true"
-            className="hero-mobile-img"
-            draggable={false}
-          />
-        </div>
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
@@ -447,45 +437,36 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* ✅ SOLO CSS PARA MÓVIL: “contain + blur cover detrás”, y landscape controlado */}
+        {/* ✅ SOLO CSS MÓVIL: blur + gradiente + leve “lift” para tapar cortes feos, y landscape sane */}
         <style jsx global>{`
-          /* Desktop / general: queda tal cual */
+          /* Desktop queda igual */
           #gp-hero .hero-bg {
             background-position: center center;
           }
 
-          /* Mobile: convertimos el fondo en “blurred fill” y ponemos la imagen contenida encima */
+          /* Mobile: blur backdrop “de app” (no agrega img extra, no cambia layout) */
           @media (max-width: 768px) {
             #gp-hero .hero-bg {
-              filter: blur(14px);
-              transform: scale(1.06);
+              filter: blur(18px);
+              transform: scale(1.10); /* evita bordes al hacer blur */
               background-position: center center;
             }
-            #gp-hero .hero-mobile-frame {
-              display: block;
-            }
-            #gp-hero .hero-mobile-img {
-              width: 100%;
-              height: 100%;
-              object-fit: contain;
-              object-position: center center;
-              /* un toque de “elegancia”: suaviza bordes del contenido en pantallas chicas */
-              filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.18));
+
+            /* Un gradiente sutil arriba/abajo para que el blur se sienta “premium” */
+            #gp-hero::before {
+              content: '';
+              position: absolute;
+              inset: 0;
+              z-index: -9;
+              pointer-events: none;
+              background:
+                radial-gradient(1200px 600px at 50% 20%, rgba(255, 255, 255, 0.06), transparent 60%),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.28));
             }
           }
 
-          /* Mobile portrait: mantenemos full-screen pero con aire para que no “apriete” */
-          @media (max-width: 768px) and (orientation: portrait) {
-            #gp-hero {
-              min-height: 100svh;
-            }
-          }
-
-          /* Mobile landscape: evitamos el “se ve pésimo” bajando altura y manteniendo contain */
+          /* Mobile landscape: mantenemos elegancia bajando altura efectiva (evita “aplastado”) */
           @media (max-width: 768px) and (orientation: landscape) {
-            #gp-hero .hero-mobile-img {
-              object-fit: contain;
-            }
             #gp-hero > div.relative.max-w-7xl {
               min-height: 72svh !important;
               padding-bottom: 18px !important;
