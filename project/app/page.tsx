@@ -348,43 +348,190 @@ export default function HomePage() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
-        <div className="absolute inset-0 -z-10 bg-black/35" />
+        {/* ✅ Fondo: en móvil portrait lo “subimos” un poco; en landscape lo centramos */}
+        <div
+          className="
+            absolute inset-0 -z-10 bg-cover
+            bg-[position:50%_22%]
+            [@media(max-width:768px)_and_(orientation:landscape)]:bg-center
+            md:bg-center
+          "
+          style={{ backgroundImage: `url(${bg})` }}
+        />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
+        {/* ✅ Overlay: más “premium” en móvil (gradiente suave), desktop igual que antes */}
+        <div
+          className="
+            absolute inset-0 -z-10
+            md:bg-black/35
+            bg-gradient-to-t from-black/55 via-black/25 to-black/10
+            [@media(max-width:768px)_and_(orientation:landscape)]:from-black/45
+            [@media(max-width:768px)_and_(orientation:landscape)]:via-black/20
+            [@media(max-width:768px)_and_(orientation:landscape)]:to-black/10
+          "
+        />
+
+        <div
+          className="
+            relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16
+            min-h-[100svh] flex items-end
+            pb-16 md:pb-20
+
+            /* ✅ SOLO móvil horizontal: bajamos el bloque y lo hacemos más compacto */
+            [@media(max-width:768px)_and_(orientation:landscape)]:pb-6
+          "
+        >
           <div className="w-full">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
-              <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{active?.titulo ?? 'Propiedad destacada'}</h1>
-              <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
+            <div
+              className="
+                bg-white/70 backdrop-blur-sm shadow-xl
+                p-4 md:p-5 w-full md:max-w-[480px]
+
+                /* ✅ SOLO móvil: ancho elegante (no “panel gigante”) */
+                max-w-[92vw] sm:max-w-[420px]
+
+                /* ✅ SOLO móvil horizontal: aún más compacto */
+                [@media(max-width:768px)_and_(orientation:landscape)]:max-w-[360px]
+                [@media(max-width:768px)_and_(orientation:landscape)]:p-3
+              "
+            >
+              <h1
+                className="
+                  text-[1.25rem] sm:text-[1.4rem] md:text-2xl text-gray-900
+
+                  /* ✅ SOLO móvil horizontal: baja tipografía para no “comerse” la foto */
+                  [@media(max-width:768px)_and_(orientation:landscape)]:text-[1.05rem]
+                "
+              >
+                {active?.titulo ?? 'Propiedad destacada'}
+              </h1>
+
+              <p
+                className="
+                  mt-1 text-sm text-gray-600
+
+                  [@media(max-width:768px)_and_(orientation:landscape)]:text-[0.8rem]
+                  [@media(max-width:768px)_and_(orientation:landscape)]:mt-0.5
+                "
+              >
+                {lineaSecundaria || '—'}
+              </p>
 
               {/* ---------- Tiles ---------- */}
-              <div className="mt-4">
-                <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
+              <div
+                className="
+                  mt-4
+                  [@media(max-width:768px)_and_(orientation:landscape)]:mt-3
+                "
+              >
+                <div
+                  className="
+                    grid grid-cols-5 border border-slate-200 bg-white/70
+                    [@media(max-width:768px)_and_(orientation:landscape)]:border-slate-200/80
+                  "
+                >
                   {[
-                    { icon: <Bed className="h-5 w-5 text-[#6C819B]" />, v: active?.dormitorios },
-                    { icon: <ShowerHead className="h-5 w-5 text-[#6C819B]" />, v: active?.banos },
-                    { icon: <Car className="h-5 w-5 text-[#6C819B]" />, v: active?.estacionamientos },
-                    { icon: <Ruler className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_util_m2) },
-                    { icon: <Square className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_terreno_m2) },
+                    {
+                      icon: (
+                        <Bed
+                          className="
+                            h-5 w-5 text-[#6C819B]
+                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
+                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
+                          "
+                        />
+                      ),
+                      v: active?.dormitorios,
+                    },
+                    {
+                      icon: (
+                        <ShowerHead
+                          className="
+                            h-5 w-5 text-[#6C819B]
+                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
+                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
+                          "
+                        />
+                      ),
+                      v: active?.banos,
+                    },
+                    {
+                      icon: (
+                        <Car
+                          className="
+                            h-5 w-5 text-[#6C819B]
+                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
+                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
+                          "
+                        />
+                      ),
+                      v: active?.estacionamientos,
+                    },
+                    {
+                      icon: (
+                        <Ruler
+                          className="
+                            h-5 w-5 text-[#6C819B]
+                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
+                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
+                          "
+                        />
+                      ),
+                      v: fmtInt(active?.superficie_util_m2),
+                    },
+                    {
+                      icon: (
+                        <Square
+                          className="
+                            h-5 w-5 text-[#6C819B]
+                            [@media(max-width:768px)_and_(orientation:landscape)]:h-4
+                            [@media(max-width:768px)_and_(orientation:landscape)]:w-4
+                          "
+                        />
+                      ),
+                      v: fmtInt(active?.superficie_terreno_m2),
+                    },
                   ].map((t, idx) => (
                     <div
                       key={idx}
-                      className={`${idx < 4 ? 'border-r border-slate-200 ' : ''} flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]`}
+                      className={`
+                        ${idx < 4 ? 'border-r border-slate-200 ' : ''}
+                        flex flex-col items-center justify-center gap-1
+                        py-2 md:py-[10px]
+
+                        [@media(max-width:768px)_and_(orientation:landscape)]:py-1.5
+                        [@media(max-width:768px)_and_(orientation:landscape)]:gap-0.5
+                      `}
                     >
                       {t.icon}
-                      <span className="text-sm text-slate-800 leading-none">{(t as any).v ?? dash}</span>
+                      <span
+                        className="
+                          text-sm text-slate-800 leading-none
+                          [@media(max-width:768px)_and_(orientation:landscape)]:text-[0.78rem]
+                        "
+                      >
+                        {(t as any).v ?? dash}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* ---------- Botón + precio ---------- */}
-              <div className="mt-4 flex items-end gap-3">
+              <div
+                className="
+                  mt-4 flex items-end gap-3
+                  [@media(max-width:768px)_and_(orientation:landscape)]:mt-3
+                "
+              >
                 {active?.id && (
                   <Link
                     ref={verMasRef}
                     href={`/propiedades/${active.id}`}
-                    className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+                    className="
+                      inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white
+                      [@media(max-width:768px)_and_(orientation:landscape)]:text-[0.78rem]
+                    "
                     style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
                   >
                     Ver más
@@ -392,11 +539,23 @@ export default function HomePage() {
                 )}
 
                 <div ref={priceBoxRef} className="ml-auto text-right">
-                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
+                  <div
+                    className="
+                      text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none
+                      [@media(max-width:768px)_and_(orientation:landscape)]:text-[1.02rem]
+                    "
+                  >
                     {precioUfHero ? fmtUF(precioUfHero) : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
                   </div>
                   {precioClpHero > 0 && (
-                    <div className="text-sm md:text-base text-slate-600 mt-[2px]">{fmtCLP(precioClpHero)}</div>
+                    <div
+                      className="
+                        text-sm md:text-base text-slate-600 mt-[2px]
+                        [@media(max-width:768px)_and_(orientation:landscape)]:text-[0.78rem]
+                      "
+                    >
+                      {fmtCLP(precioClpHero)}
+                    </div>
                   )}
                 </div>
               </div>
