@@ -144,6 +144,7 @@ const COMUNAS_UI: Record<string, string[]> = {
     'Limache',
     'Olmué',
   ],
+  // Puedes ir agregando más regiones/comunas cuando quieras
 };
 
 const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
@@ -237,6 +238,7 @@ export default function HomePage() {
       const n = destacadas.length;
       return ((p + dir) % n + n) % n;
     });
+    // reset del temporizador al navegar manual
     startAutoplay();
   };
 
@@ -275,6 +277,7 @@ export default function HomePage() {
 
   /* ---------- hero data ---------- */
   const active = destacadas[i];
+  // mezcla el detalle hidratado si existe
   const enrichedActive = active ? { ...active, ...(detailById[active.id] || {}) } : undefined;
   const bg = useMemo(() => getHeroImage(enrichedActive), [enrichedActive]);
 
@@ -346,16 +349,27 @@ export default function HomePage() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* ✅ Opción 1: “cover inteligente” (solo móvil con media queries abajo) */}
+        {/* ✅ Opción 3: fondo blur + imagen contenida SOLO en móvil (elegante, sin recortes raros) */}
         <div
           className="hero-bg absolute inset-0 -z-10 bg-center bg-cover"
           style={{ backgroundImage: `url(${bg})` }}
         />
         <div className="absolute inset-0 -z-10 bg-black/35" />
 
-        <div className="hero-inner relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
+        {/* Imagen “contenida” solo móvil (md:hidden). Desktop queda EXACTAMENTE igual que antes. */}
+        <div className="hero-mobile-frame absolute inset-0 -z-10 md:hidden">
+          <img
+            src={bg}
+            alt=""
+            aria-hidden="true"
+            className="hero-mobile-img"
+            draggable={false}
+          />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            <div className="hero-card bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{active?.titulo ?? 'Propiedad destacada'}</h1>
               <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
@@ -384,8 +398,8 @@ export default function HomePage() {
               <div className="mt-4 flex items-end gap-3">
                 {active?.id && (
                   <Link
-                    ref={verMasRef}
                     href={`/propiedades/${active.id}`}
+                    ref={verMasRef}
                     className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
                     style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
                   >
@@ -433,43 +447,48 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* ✅ SOLO CSS (mobile) — NO toca desktop */}
+        {/* ✅ SOLO CSS PARA MÓVIL: “contain + blur cover detrás”, y landscape controlado */}
         <style jsx global>{`
-          /* Default (desktop & general): queda igual que antes */
+          /* Desktop / general: queda tal cual */
           #gp-hero .hero-bg {
             background-position: center center;
           }
 
-          /* Mobile portrait: “cover inteligente” con foco más alto y altura más controlada */
-          @media (max-width: 768px) and (orientation: portrait) {
+          /* Mobile: convertimos el fondo en “blurred fill” y ponemos la imagen contenida encima */
+          @media (max-width: 768px) {
             #gp-hero .hero-bg {
-              /* Sube el foco para evitar que el encuadre quede “en la mitad” */
-              background-position: center 22%;
+              filter: blur(14px);
+              transform: scale(1.06);
+              background-position: center center;
             }
-            #gp-hero .hero-inner {
-              /* Mantiene feel full-screen, pero con padding elegante */
-              min-height: 100svh;
-              padding-bottom: 64px;
+            #gp-hero .hero-mobile-frame {
+              display: block;
             }
-            #gp-hero .hero-card {
-              background: rgba(255, 255, 255, 0.72);
-              backdrop-filter: blur(10px);
+            #gp-hero .hero-mobile-img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+              object-position: center center;
+              /* un toque de “elegancia”: suaviza bordes del contenido en pantallas chicas */
+              filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.18));
             }
           }
 
-          /* Mobile landscape: evita que se vea “aplastado” */
+          /* Mobile portrait: mantenemos full-screen pero con aire para que no “apriete” */
+          @media (max-width: 768px) and (orientation: portrait) {
+            #gp-hero {
+              min-height: 100svh;
+            }
+          }
+
+          /* Mobile landscape: evitamos el “se ve pésimo” bajando altura y manteniendo contain */
           @media (max-width: 768px) and (orientation: landscape) {
-            #gp-hero .hero-bg {
-              background-position: center 35%;
+            #gp-hero .hero-mobile-img {
+              object-fit: contain;
             }
-            #gp-hero .hero-inner {
-              /* reduce altura del hero para que no quede ridículo en horizontal */
-              min-height: 70svh;
-              padding-bottom: 22px;
-            }
-            #gp-hero .hero-card {
-              background: rgba(255, 255, 255, 0.74);
-              backdrop-filter: blur(10px);
+            #gp-hero > div.relative.max-w-7xl {
+              min-height: 72svh !important;
+              padding-bottom: 18px !important;
             }
           }
         `}</style>
@@ -478,6 +497,7 @@ export default function HomePage() {
       {/* ================= REFERIDOS ================= */}
       <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16">
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          {/* encabezado */}
           <div className="px-6 py-8 text-center">
             <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Gift className="h-5 w-5 text-blue-600" />
@@ -490,7 +510,9 @@ export default function HomePage() {
             </p>
           </div>
 
+          {/* formulario */}
           <div className="px-6 pb-8">
+            {/* ---------- referente ---------- */}
             <h3 className="text-sm md:text-base uppercase tracking-[0.25em]">TUS DATOS (REFERENTE)</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
@@ -516,6 +538,7 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* ---------- referido ---------- */}
             <h3 className="mt-8 text-sm md:text-base uppercase tracking-[0.25em]">DATOS DEL REFERIDO</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
@@ -541,8 +564,10 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* ---------- preferencias ---------- */}
             <h3 className="mt-8 text-sm md:text-base uppercase tracking-[0.25em]">PREFERENCIAS DEL REFERIDO</h3>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
+              {/* servicio */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita?</label>
                 <SmartSelect
@@ -553,6 +578,7 @@ export default function HomePage() {
                   className="w-full"
                 />
               </div>
+              {/* tipo propiedad */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad</label>
                 <SmartSelect
@@ -563,6 +589,7 @@ export default function HomePage() {
                   className="w-full"
                 />
               </div>
+              {/* región → TU LISTA LITERAL */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Región</label>
                 <SmartSelect
@@ -576,6 +603,7 @@ export default function HomePage() {
                   className="w-full"
                 />
               </div>
+              {/* comuna (habilitada solo si hay región) */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Comuna</label>
                 <SmartSelect
@@ -587,6 +615,7 @@ export default function HomePage() {
                   className="w-full"
                 />
               </div>
+              {/* presupuesto */}
               <div>
                 <label className="block text-sm text-slate-700 mb-1">Presupuesto mínimo (UF)</label>
                 <input
@@ -603,6 +632,7 @@ export default function HomePage() {
                   placeholder="0"
                 />
               </div>
+              {/* comentarios */}
               <div className="md:col-span-2">
                 <label className="block text-sm text-slate-700 mb-1">Comentarios adicionales</label>
                 <textarea
@@ -613,6 +643,7 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* botón enviar */}
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
