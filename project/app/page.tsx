@@ -341,20 +341,28 @@ export default function HomePage() {
   /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
-     {/* ================= HERO ================= */}
+{/* ================= HERO ================= */}
 <section
   className="relative w-full overflow-hidden isolate"
   onTouchStart={onTouchStart}
   onTouchMove={onTouchMove}
   onTouchEnd={onTouchEnd}
 >
+  {/* ✅ Fondo blur (solo se activa en mobile por CSS) */}
   <div
-    className="hero-bg absolute inset-0 -z-10 bg-cover"
+    className="hero-bg-blur absolute inset-0 -z-20 bg-center bg-cover"
     style={{ backgroundImage: `url(${bg})` }}
   />
+
+  {/* ✅ Fondo principal (desktop sigue igual / mobile pasa a contain) */}
+  <div
+    className="hero-bg absolute inset-0 -z-10 bg-center bg-cover"
+    style={{ backgroundImage: `url(${bg})` }}
+  />
+
   <div className="absolute inset-0 -z-10 bg-black/35" />
 
-  <div className="hero-wrap relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
+  <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
     <div className="w-full">
       <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
         <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
@@ -374,9 +382,7 @@ export default function HomePage() {
             ].map((t, idx) => (
               <div
                 key={idx}
-                className={`${
-                  idx < 4 ? 'border-r border-slate-200 ' : ''
-                } flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]`}
+                className={`${idx < 4 ? 'border-r border-slate-200 ' : ''} flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]`}
               >
                 {t.icon}
                 <span className="text-sm text-slate-800 leading-none">{(t as any).v ?? dash}</span>
@@ -438,24 +444,34 @@ export default function HomePage() {
     )}
   </div>
 
-  {/* ✅ SOLO MOBILE: mejora portrait + landscape sin tocar desktop */}
+  {/* ✅ SOLO MOBILE: no recorta (contain) + blur de fondo. Desktop queda igual. */}
   <style jsx>{`
-    @media (max-width: 768px) and (orientation: portrait) {
+    /* blur apagado por defecto (desktop) */
+    .hero-bg-blur {
+      display: none;
+      filter: blur(22px);
+      transform: scale(1.15);
+      opacity: 0.85;
+    }
+
+    @media (max-width: 768px) {
+      /* mobile: activamos blur atrás */
+      .hero-bg-blur {
+        display: block;
+      }
+
+      /* mobile: imagen principal se ve COMPLETA (sin crop) */
       .hero-bg {
-        background-position: 50% 25%;
+        background-size: contain !important;
+        background-repeat: no-repeat;
+        background-position: center center;
       }
     }
 
+    /* mobile landscape: mismo enfoque + evitamos que se vea “horrible” al rotar */
     @media (max-width: 768px) and (orientation: landscape) {
       .hero-bg {
-        background-size: contain;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-color: #000;
-      }
-
-      .hero-wrap {
-        min-height: 100vh;
+        background-size: contain !important;
       }
     }
   `}</style>
