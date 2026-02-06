@@ -341,97 +341,125 @@ export default function HomePage() {
   /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
-      {/* ================= HERO ================= */}
-      <section
-        className="relative w-full overflow-hidden isolate"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
-        <div className="absolute inset-0 -z-10 bg-black/35" />
+     {/* ================= HERO ================= */}
+<section
+  className="relative w-full overflow-hidden isolate"
+  onTouchStart={onTouchStart}
+  onTouchMove={onTouchMove}
+  onTouchEnd={onTouchEnd}
+>
+  <div
+    className="hero-bg absolute inset-0 -z-10 bg-cover"
+    style={{ backgroundImage: `url(${bg})` }}
+  />
+  <div className="absolute inset-0 -z-10 bg-black/35" />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
-          <div className="w-full">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
-              <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{active?.titulo ?? 'Propiedad destacada'}</h1>
-              <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
+  <div className="hero-wrap relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
+    <div className="w-full">
+      <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
+        <h1 className="text-[1.4rem] md:text-2xl text-gray-900">
+          {active?.titulo ?? 'Propiedad destacada'}
+        </h1>
+        <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
-              {/* ---------- Tiles ---------- */}
-              <div className="mt-4">
-                <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
-                  {[
-                    { icon: <Bed className="h-5 w-5 text-[#6C819B]" />, v: active?.dormitorios },
-                    { icon: <ShowerHead className="h-5 w-5 text-[#6C819B]" />, v: active?.banos },
-                    { icon: <Car className="h-5 w-5 text-[#6C819B]" />, v: active?.estacionamientos },
-                    { icon: <Ruler className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_util_m2) },
-                    { icon: <Square className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_terreno_m2) },
-                  ].map((t, idx) => (
-                    <div
-                      key={idx}
-                      className={`${idx < 4 ? 'border-r border-slate-200 ' : ''} flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]`}
-                    >
-                      {t.icon}
-                      <span className="text-sm text-slate-800 leading-none">{(t as any).v ?? dash}</span>
-                    </div>
-                  ))}
-                </div>
+        {/* ---------- Tiles ---------- */}
+        <div className="mt-4">
+          <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
+            {[
+              { icon: <Bed className="h-5 w-5 text-[#6C819B]" />, v: active?.dormitorios },
+              { icon: <ShowerHead className="h-5 w-5 text-[#6C819B]" />, v: active?.banos },
+              { icon: <Car className="h-5 w-5 text-[#6C819B]" />, v: active?.estacionamientos },
+              { icon: <Ruler className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_util_m2) },
+              { icon: <Square className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_terreno_m2) },
+            ].map((t, idx) => (
+              <div
+                key={idx}
+                className={`${
+                  idx < 4 ? 'border-r border-slate-200 ' : ''
+                } flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]`}
+              >
+                {t.icon}
+                <span className="text-sm text-slate-800 leading-none">{(t as any).v ?? dash}</span>
               </div>
-
-              {/* ---------- Botón + precio ---------- */}
-              <div className="mt-4 flex items-end gap-3">
-                {active?.id && (
-                  <Link
-                    ref={verMasRef}
-                    href={`/propiedades/${active.id}`}
-                    className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
-                    style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
-                  >
-                    Ver más
-                  </Link>
-                )}
-
-                <div ref={priceBoxRef} className="ml-auto text-right">
-                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
-                    {precioUfHero ? fmtUF(precioUfHero) : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
-                  </div>
-                  {precioClpHero > 0 && (
-                    <div className="text-sm md:text-base text-slate-600 mt-[2px]">{fmtCLP(precioClpHero)}</div>
-                  )}
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
-
-          {destacadas.length > 1 && (
-            <>
-              <button
-                aria-label="Anterior"
-                onClick={() => go(-1)}
-                className="group absolute left-4 md:left-6 top-1/2 -translate-y-1/2 p-2"
-              >
-                <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
-              </button>
-              <button
-                aria-label="Siguiente"
-                onClick={() => go(1)}
-                className="group absolute right-4 md:right-6 top-1/2 -translate-y-1/2 p-2"
-              >
-                <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
-              </button>
-            </>
-          )}
-
-          {destacadas.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              {destacadas.map((_, idx) => (
-                <span key={idx} className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`} />
-              ))}
-            </div>
-          )}
         </div>
-      </section>
 
+        {/* ---------- Botón + precio ---------- */}
+        <div className="mt-4 flex items-end gap-3">
+          {active?.id && (
+            <Link
+              ref={verMasRef}
+              href={`/propiedades/${active.id}`}
+              className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+              style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
+            >
+              Ver más
+            </Link>
+          )}
+
+          <div ref={priceBoxRef} className="ml-auto text-right">
+            <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
+              {precioUfHero ? fmtUF(precioUfHero) : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
+            </div>
+            {precioClpHero > 0 && (
+              <div className="text-sm md:text-base text-slate-600 mt-[2px]">{fmtCLP(precioClpHero)}</div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {destacadas.length > 1 && (
+      <>
+        <button
+          aria-label="Anterior"
+          onClick={() => go(-1)}
+          className="group absolute left-4 md:left-6 top-1/2 -translate-y-1/2 p-2"
+        >
+          <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
+        </button>
+        <button
+          aria-label="Siguiente"
+          onClick={() => go(1)}
+          className="group absolute right-4 md:right-6 top-1/2 -translate-y-1/2 p-2"
+        >
+          <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
+        </button>
+      </>
+    )}
+
+    {destacadas.length > 1 && (
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        {destacadas.map((_, idx) => (
+          <span key={idx} className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`} />
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* ✅ SOLO MOBILE: mejora portrait + landscape sin tocar desktop */}
+  <style jsx>{`
+    @media (max-width: 768px) and (orientation: portrait) {
+      .hero-bg {
+        background-position: 50% 25%;
+      }
+    }
+
+    @media (max-width: 768px) and (orientation: landscape) {
+      .hero-bg {
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #000;
+      }
+
+      .hero-wrap {
+        min-height: 100vh;
+      }
+    }
+  `}</style>
+</section>
       {/* ================= REFERIDOS ================= */}
       {/* ✅ Igualamos espacio arriba y abajo: pt-16 pb-16 */}
       <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16">
