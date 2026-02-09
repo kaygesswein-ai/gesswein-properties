@@ -15,7 +15,7 @@ const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
 
 const PHOTOS = {
-  carolina: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Loli%20-%20Optimizada.jpeg',
+  carolina: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Carolina%20-%20Optimizada.JPG',
   alberto: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Tito%20-%20Optimizada.JPG',
   jan: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Jan%20-%20Optimizada.jpeg',
   kay: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Kay%20-%20Optimizada.JPG',
