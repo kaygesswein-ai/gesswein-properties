@@ -15,10 +15,10 @@ const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
 
 const PHOTOS = {
-  carolina: '/team/carolina-san-martin.png',
-  alberto: '/team/alberto-gesswein.png',
-  jan: '/team/jan-gesswein.png',
-  kay: '/team/kay-gesswein.png',
+  carolina: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Loli%20-%20Oficial.jpeg',
+  alberto: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Tito%20-%20Oficial.jpeg',
+  jan: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Jan%20-%20Oficial.jpeg',
+  kay: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Kay%20-%20Oficial.jpeg',
 };
 
 type Member = {
