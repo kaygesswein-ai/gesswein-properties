@@ -1,275 +1,249 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import LeadForm from '@/components/LeadForm';
-import {
-  MapPin,
-  Phone,
-  Mail,
-  Clock,
-  MessageCircle,
-  Calendar,
-  Building2,
-} from 'lucide-react';
-import { trackWhatsAppClick } from '@/lib/analytics';
+import { Mail, Phone, Send } from 'lucide-react';
 
-const contactInfo = [
-  {
-    icon: Phone,
-    title: 'Teléfono',
-    content: '+56 9 9331 8039',
-    description: 'Lunes a viernes de 9:00 a 18:00',
-    href: 'tel:+56912345678',
-  },
-  {
-    icon: Mail,
-    title: 'Email',
-    content: 'contacto@gessweinproperties.cl',
-    description: 'Respuesta en menos de 24 horas',
-    href: 'mailto:contacto@gessweinproperties.cl',
-  },
-  {
-    icon: MessageCircle,
-    title: 'WhatsApp',
-    content: '+56 9 1234 5678',
-    description: 'Disponible 24/7 para consultas',
-    href: 'https://wa.me/56912345678',
-  },
-  {
-    icon: MapPin,
-    title: 'Oficina',
-    content: 'Av. Providencia 1234, Of. 502',
-    description: 'Providencia, Santiago, Chile',
-    href: '#',
-  },
-];
+type Status = 'idle' | 'loading' | 'ok' | 'error';
 
-const officeHours = [
-  { day: 'Lunes - Viernes', hours: '9:00 - 18:00' },
-  { day: 'Sábados', hours: '10:00 - 14:00' },
-  { day: 'Domingos', hours: 'Solo citas agendadas' },
-];
+export default function ContactPage() {
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
 
-export default function ContactoPage() {
+  const [status, setStatus] = useState<Status>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const onChange =
+    (k: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setForm((p) => ({ ...p, [k]: e.target.value }));
+    };
+
+  const canSend =
+    form.name.trim().length >= 2 &&
+    form.email.trim().length >= 5 &&
+    form.message.trim().length >= 10;
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSend || status === 'loading') return;
+
+    setStatus('loading');
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          message: form.message.trim(),
+          source: 'website',
+        }),
+      });
+
+      const j = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setStatus('error');
+        setErrorMsg(j?.error || 'No se pudo enviar el mensaje. Intenta nuevamente.');
+        return;
+      }
+
+      setStatus('ok');
+      setForm({ name: '', email: '', phone: '', message: '' });
+    } catch {
+      setStatus('error');
+      setErrorMsg('No se pudo enviar el mensaje. Revisa tu conexión e intenta nuevamente.');
+    }
+  };
+
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <section className="bg-gradient-to-br from-blue-900 to-blue-700 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Contáctanos</h1>
-            <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              Estamos aquí para ayudarte. Ponte en contacto y comencemos a
-              trabajar juntos en tu próximo proyecto inmobiliario
-            </p>
-          </div>
+    <main className="bg-white">
+      {/* HERO alineado al estilo del sitio (limpio, azul, minimal) */}
+      <section className="border-b">
+        <div className="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 pt-16 pb-10">
+          <p className="text-xs md:text-sm uppercase tracking-[0.35em] text-[#0A2E57]/70">
+            Contacto
+          </p>
+          <h1 className="mt-3 text-3xl md:text-5xl font-semibold text-[#0A2E57]">
+            Contáctanos
+          </h1>
+          <p className="mt-4 text-slate-600 max-w-2xl leading-relaxed">
+            Escríbenos y cuéntanos qué necesitas. Te responderemos a la brevedad.
+          </p>
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Contact Information */}
-          <div className="space-y-8">
-            <div className="space-y-6">
-              <h2 className="text-3xl font-bold text-gray-900">
-                Información de Contacto
-              </h2>
-              <p className="text-lg text-gray-600">
-                Múltiples formas de contactarnos para tu comodidad
-              </p>
-            </div>
+      <section className="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* INFO */}
+          <div className="lg:col-span-5">
+            <h2 className="text-sm md:text-base uppercase tracking-[0.25em] text-slate-900">
+              Información de contacto
+            </h2>
+            <p className="mt-3 text-slate-600 leading-relaxed">
+              Puedes contactarnos por teléfono o email. Si prefieres, deja tu mensaje y te
+              responderemos por la vía que indiques.
+            </p>
 
-            {/* Contact methods */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {contactInfo.map((info, index) => {
-                const Icon = info.icon;
-                return (
-                  <Card
-                    key={index}
-                    className="hover:shadow-lg transition-shadow cursor-pointer"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div className="space-y-1">
-                          <h3 className="font-semibold text-gray-900">
-                            {info.title}
-                          </h3>
-                          <p className="font-medium text-blue-600">
-                            {info.content}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {info.description}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-
-            {/* Office hours */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Horarios de Atención
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {officeHours.map((schedule, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center py-2 border-b last:border-b-0"
-                  >
-                    <span className="font-medium text-gray-900">
-                      {schedule.day}
+            <div className="mt-6 space-y-4">
+              <Card className="rounded-none border-slate-200 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-3 text-base">
+                    <span className="inline-flex h-9 w-9 items-center justify-center border border-slate-200 bg-white">
+                      <Phone className="h-4 w-4 text-[#0A2E57]" />
                     </span>
-                    <span className="text-gray-600">{schedule.hours}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Quick actions */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-gray-900">
-                Acciones Rápidas
-              </h3>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  className="bg-green-600 hover:bg-green-700 flex-1"
-                  onClick={() => trackWhatsAppClick('contact-page')}
-                  asChild
-                >
+                    Teléfono
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
                   <a
-                    href="https://wa.me/56912345678?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20sus%20servicios"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="tel:+56993318039"
+                    className="text-[#0A2E57] hover:underline font-medium"
                   >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    WhatsApp Directo
+                    +56 9 9331 8039
                   </a>
-                </Button>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Atención por coordinación (respuestas en horario hábil).
+                  </p>
+                </CardContent>
+              </Card>
 
-                <Button variant="outline" className="flex-1" asChild>
+              <Card className="rounded-none border-slate-200 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-3 text-base">
+                    <span className="inline-flex h-9 w-9 items-center justify-center border border-slate-200 bg-white">
+                      <Mail className="h-4 w-4 text-[#0A2E57]" />
+                    </span>
+                    Email
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
                   <a
-                    href="https://calendly.com/gessweinproperties"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="mailto:contacto@gessweinproperties.cl"
+                    className="text-[#0A2E57] hover:underline font-medium break-all"
                   >
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Agendar Cita
+                    contacto@gessweinproperties.cl
                   </a>
-                </Button>
-              </div>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Respuesta dentro de 24 horas hábiles.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-
-            {/* Map placeholder */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Ubicación de la Oficina
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center space-y-2">
-                    <Building2 className="w-12 h-12 mx-auto text-gray-400" />
-                    <p className="text-gray-500 font-medium">
-                      Av. Providencia 1234, Of. 502
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Providencia, Santiago, Chile
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 text-center">
-                  <Button variant="outline" size="sm" asChild>
-                    <a
-                      href="https://maps.google.com/?q=Av.+Providencia+1234,+Providencia,+Santiago,+Chile"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Ver en Google Maps
-                    </a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
-          {/* Contact Form */}
-          <div className="space-y-8">
-            <LeadForm
-              type="general"
-              title="Envíanos un mensaje"
-              description="Completa el formulario y nos pondremos en contacto contigo a la brevedad"
-            />
-
-            {/* Additional info */}
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-lg text-blue-900 mb-3">
-                  ¿Qué puedes esperar de nosotros?
-                </h3>
-                <ul className="space-y-2 text-sm text-blue-800">
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                    Respuesta en menos de 24 horas
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                    Asesoría personalizada sin compromiso
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                    Propuesta de valor adaptada a tus necesidades
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                    Seguimiento profesional durante todo el proceso
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Emergency contact */}
-            <Card className="bg-yellow-50 border-yellow-200">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-lg text-yellow-900 mb-2">
-                  ¿Necesitas atención inmediata?
-                </h3>
-                <p className="text-sm text-yellow-800 mb-3">
-                  Para emergencias o consultas urgentes fuera del horario de
-                  oficina:
+          {/* FORM */}
+          <div className="lg:col-span-7">
+            <Card className="rounded-none border-slate-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base md:text-lg">Déjanos tu mensaje</CardTitle>
+                <p className="text-sm text-slate-600">
+                  Completa el formulario y nos pondremos en contacto contigo.
                 </p>
-                <Button
-                  variant="outline"
-                  className="border-yellow-600 text-yellow-700 hover:bg-yellow-100"
-                  onClick={() => trackWhatsAppClick('emergency-contact')}
-                  asChild
-                >
-                  <a
-                    href="https://wa.me/56912345678?text=URGENTE%3A%20"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    WhatsApp de Emergencia
-                  </a>
-                </Button>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={onSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-slate-700 mb-1">
+                        Nombre completo <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        value={form.name}
+                        onChange={onChange('name')}
+                        className="w-full rounded-none border border-slate-300 bg-gray-50 px-3 py-2 text-slate-800 placeholder-slate-400"
+                        placeholder="Tu nombre completo"
+                        autoComplete="name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-slate-700 mb-1">
+                        Email <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        value={form.email}
+                        onChange={onChange('email')}
+                        className="w-full rounded-none border border-slate-300 bg-gray-50 px-3 py-2 text-slate-800 placeholder-slate-400"
+                        placeholder="tu@email.com"
+                        autoComplete="email"
+                        inputMode="email"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
+                    <input
+                      value={form.phone}
+                      onChange={onChange('phone')}
+                      className="w-full rounded-none border border-slate-300 bg-gray-50 px-3 py-2 text-slate-800 placeholder-slate-400"
+                      placeholder="+56 9 ..."
+                      autoComplete="tel"
+                      inputMode="tel"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">
+                      Mensaje <span className="text-red-600">*</span>
+                    </label>
+                    <textarea
+                      value={form.message}
+                      onChange={onChange('message')}
+                      rows={6}
+                      className="w-full rounded-none border border-slate-300 bg-gray-50 px-3 py-2 text-slate-800 placeholder-slate-400"
+                      placeholder="Cuéntanos qué necesitas (mínimo 10 caracteres)…"
+                    />
+                  </div>
+
+                  {/* feedback */}
+                  {status === 'ok' && (
+                    <div className="text-sm text-emerald-700 border border-emerald-200 bg-emerald-50 px-3 py-2">
+                      Mensaje enviado. Te contactaremos a la brevedad.
+                    </div>
+                  )}
+                  {status === 'error' && (
+                    <div className="text-sm text-red-700 border border-red-200 bg-red-50 px-3 py-2">
+                      {errorMsg || 'Ocurrió un error al enviar.'}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-xs text-slate-500">
+                      Al enviar, aceptas nuestra política de privacidad.
+                    </p>
+
+                    <button
+                      type="submit"
+                      disabled={!canSend || status === 'loading'}
+                      className={`inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white rounded-none
+                        ${!canSend || status === 'loading' ? 'bg-[#0A2E57]/60' : 'bg-[#0A2E57] hover:bg-[#082646]'}
+                      `}
+                      style={{
+                        boxShadow:
+                          'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.25)',
+                      }}
+                    >
+                      <Send className="h-4 w-4" />
+                      {status === 'loading' ? 'Enviando…' : 'Enviar'}
+                    </button>
+                  </div>
+                </form>
               </CardContent>
             </Card>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
