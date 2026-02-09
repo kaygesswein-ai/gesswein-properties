@@ -9,16 +9,16 @@ import { Users, Award, Briefcase } from 'lucide-react';
    ========================= */
 
 const HERO_IMG =
-  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Equipo%20-%20Oficial.jpeg';
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20portada%20-%20Equipo%20-%20OPTIMIZADA.JPG';
 
 const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
 
 const PHOTOS = {
-  carolina: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Loli%20-%20Oficial.jpeg',
-  alberto: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Tito%20-%20Oficial.jpeg',
-  jan: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Jan%20-%20Oficial.jpeg',
-  kay: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Kay%20-%20Oficial.jpeg',
+  carolina: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Loli%20-%20Optimizada.jpeg',
+  alberto: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Tito%20-%20Optimizada.JPG',
+  jan: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Jan%20-%20Optimizada.jpeg',
+  kay: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Kay%20-%20Optimizada.JPG',
 };
 
 type Member = {
