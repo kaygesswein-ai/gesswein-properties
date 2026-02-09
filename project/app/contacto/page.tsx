@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 }
 
 const HERO_IMG =
-  'https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=2400&auto=format&fit=crop'
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Contacto.jpg'
 // Puedes cambiarlo por tu imagen real después.
 
 const SOCIALS = [
