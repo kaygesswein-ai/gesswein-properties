@@ -1,242 +1,280 @@
-/* eslint-disable @next/next/no-img-element */
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, Send } from 'lucide-react';
+import { useMemo, useState } from 'react'
+import { Metadata } from 'next'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Mail, Phone, Send, MessageCircle } from 'lucide-react'
 
-type Status = 'idle' | 'loading' | 'ok' | 'error';
+export const metadata: Metadata = {
+  title: 'Contacto - Gesswein Properties',
+  description: 'Contáctanos para asesoría inmobiliaria premium en Santiago de Chile.',
+}
+
+type Status = 'idle' | 'loading' | 'ok' | 'error'
 
 export default function ContactPage() {
+  const contact = useMemo(
+    () => ({
+      phoneDisplay: '+56 9 9331 8039',
+      phoneE164: '+56993318039',
+      email: 'contacto@gessweinproperties.cl',
+      whatsappLink: 'https://wa.me/56993318039',
+    }),
+    []
+  )
+
   const [form, setForm] = useState({
     name: '',
     email: '',
     phone: '',
     message: '',
-  });
+  })
 
-  const [status, setStatus] = useState<Status>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [status, setStatus] = useState<Status>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
 
   const onChange =
     (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setForm((p) => ({ ...p, [k]: e.target.value }));
-    };
+      setForm((p) => ({ ...p, [k]: e.target.value }))
+    }
 
-  const canSend =
-    form.name.trim().length >= 2 &&
-    form.email.trim().length >= 5 &&
-    form.message.trim().length >= 10;
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canSend || status === 'loading') return;
-
-    setStatus('loading');
-    setErrorMsg('');
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setErrorMsg('')
+    setStatus('loading')
 
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
           message: form.message.trim(),
-          source: 'website',
+          source: 'contact_page',
         }),
-      });
+      })
 
-      const j = await res.json().catch(() => null);
+      const data = (await res.json().catch(() => ({}))) as any
 
       if (!res.ok) {
-        setStatus('error');
-        setErrorMsg(j?.error || 'No se pudo enviar el mensaje. Intenta nuevamente.');
-        return;
+        setStatus('error')
+        setErrorMsg(data?.error ?? 'No se pudo enviar el mensaje. Intenta nuevamente.')
+        return
       }
 
-      setStatus('ok');
-      setForm({ name: '', email: '', phone: '', message: '' });
+      setStatus('ok')
+      setForm({ name: '', email: '', phone: '', message: '' })
     } catch {
-      setStatus('error');
-      setErrorMsg('No se pudo enviar el mensaje. Revisa tu conexión e intenta nuevamente.');
+      setStatus('error')
+      setErrorMsg('No se pudo enviar el mensaje. Revisa tu conexión e intenta nuevamente.')
     }
-  };
+  }
 
   return (
-    <main className="bg-white">
-      {/* HERO alineado al estilo del sitio (limpio, azul, minimal) */}
-      <section className="border-b">
-        <div className="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 pt-16 pb-10">
-          <p className="text-xs md:text-sm uppercase tracking-[0.35em] text-[#0A2E57]/70">
-            Contacto
-          </p>
-          <h1 className="mt-3 text-3xl md:text-5xl font-semibold text-[#0A2E57]">
-            Contáctanos
-          </h1>
-          <p className="mt-4 text-slate-600 max-w-2xl leading-relaxed">
-            Escríbenos y cuéntanos qué necesitas. Te responderemos a la brevedad.
-          </p>
+    <div className="min-h-screen bg-white">
+      {/* HERO (alineado con las otras portadas) */}
+      <section className="relative h-[420px] md:h-[520px] w-full overflow-hidden">
+        {/* Foto placeholder (cámbiala después por una de Contacto) */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=2400&q=80')",
+          }}
+        />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/45" />
+
+        {/* Contenido */}
+        <div className="relative z-10 h-full">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 h-full flex items-end">
+            <div className="pb-12 md:pb-16">
+              <p className="text-white/80 tracking-[0.32em] text-xs md:text-sm uppercase">
+                CONTACTO
+              </p>
+              <h1 className="mt-3 text-white text-4xl md:text-6xl font-semibold leading-tight">
+                Contáctanos
+              </h1>
+              <p className="mt-4 text-white/85 max-w-2xl text-base md:text-lg leading-relaxed">
+                Escríbenos y cuéntanos qué necesitas. Te responderemos a la brevedad.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* INFO */}
-          <div className="lg:col-span-5">
-            <h2 className="text-sm md:text-base uppercase tracking-[0.25em] text-slate-900">
-              Información de contacto
-            </h2>
-            <p className="mt-3 text-slate-600 leading-relaxed">
-              Puedes contactarnos por teléfono o email. Si prefieres, deja tu mensaje y te
-              responderemos por la vía que indiques.
-            </p>
+      {/* CONTENIDO */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-14 md:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* INFO CONTACTO */}
+          <div>
+            <div className="mb-6">
+              <p className="text-[#0B1F3B]/70 tracking-[0.32em] text-xs uppercase">
+                INFORMACIÓN DE CONTACTO
+              </p>
+              <p className="mt-3 text-[#0B1F3B]/80 leading-relaxed max-w-xl">
+                Puedes contactarnos por teléfono o email. Si prefieres, deja tu mensaje y te
+                responderemos por la vía que indiques.
+              </p>
+            </div>
 
-            <div className="mt-6 space-y-4">
-              <Card className="rounded-none border-slate-200 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-3 text-base">
-                    <span className="inline-flex h-9 w-9 items-center justify-center border border-slate-200 bg-white">
-                      <Phone className="h-4 w-4 text-[#0A2E57]" />
+            <div className="space-y-4">
+              <Card className="border-[#0B1F3B]/10 shadow-sm rounded-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-3 text-[#0B1F3B]">
+                    <span className="inline-flex h-10 w-10 items-center justify-center border border-[#0B1F3B]/15">
+                      <Phone className="h-5 w-5 text-[#0B1F3B]" />
                     </span>
                     Teléfono
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <a
-                    href="tel:+56993318039"
-                    className="text-[#0A2E57] hover:underline font-medium"
+                    href={`tel:${contact.phoneE164}`}
+                    className="text-[#0B1F3B] font-medium hover:underline"
                   >
-                    +56 9 9331 8039
+                    {contact.phoneDisplay}
                   </a>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-[#0B1F3B]/70">
                     Atención por coordinación (respuestas en horario hábil).
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="rounded-none border-slate-200 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-3 text-base">
-                    <span className="inline-flex h-9 w-9 items-center justify-center border border-slate-200 bg-white">
-                      <Mail className="h-4 w-4 text-[#0A2E57]" />
+              <Card className="border-[#0B1F3B]/10 shadow-sm rounded-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-3 text-[#0B1F3B]">
+                    <span className="inline-flex h-10 w-10 items-center justify-center border border-[#0B1F3B]/15">
+                      <Mail className="h-5 w-5 text-[#0B1F3B]" />
                     </span>
                     Email
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <a
-                    href="mailto:contacto@gessweinproperties.cl"
-                    className="text-[#0A2E57] hover:underline font-medium break-all"
+                    href={`mailto:${contact.email}`}
+                    className="text-[#0B1F3B] font-medium hover:underline break-all"
                   >
-                    contacto@gessweinproperties.cl
+                    {contact.email}
                   </a>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-[#0B1F3B]/70">
                     Respuesta dentro de 24 horas hábiles.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-[#0B1F3B]/10 shadow-sm rounded-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-3 text-[#0B1F3B]">
+                    <span className="inline-flex h-10 w-10 items-center justify-center border border-[#0B1F3B]/15">
+                      <MessageCircle className="h-5 w-5 text-[#0B1F3B]" />
+                    </span>
+                    WhatsApp
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <a
+                    href={contact.whatsappLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#0B1F3B] font-medium hover:underline"
+                  >
+                    Abrir conversación
+                  </a>
+                  <p className="mt-2 text-sm text-[#0B1F3B]/70">
+                    Escríbenos y te guiamos con tu solicitud.
                   </p>
                 </CardContent>
               </Card>
             </div>
           </div>
 
-          {/* FORM */}
-          <div className="lg:col-span-7">
-            <Card className="rounded-none border-slate-200 shadow-sm">
+          {/* FORM (mismo “look” que info contacto) */}
+          <div>
+            <Card className="border-[#0B1F3B]/10 shadow-sm rounded-none">
               <CardHeader>
-                <CardTitle className="text-base md:text-lg">Déjanos tu mensaje</CardTitle>
-                <p className="text-sm text-slate-600">
+                <CardTitle className="text-[#0B1F3B]">Déjanos tu mensaje</CardTitle>
+                <p className="text-sm text-[#0B1F3B]/70">
                   Completa el formulario y nos pondremos en contacto contigo.
                 </p>
               </CardHeader>
+
               <CardContent>
-                <form onSubmit={onSubmit} className="space-y-4">
+                <form onSubmit={onSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-slate-700 mb-1">
-                        Nombre completo <span className="text-red-600">*</span>
-                      </label>
-                      <input
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#0B1F3B]/80">Nombre completo *</label>
+                      <Input
                         value={form.name}
                         onChange={onChange('name')}
-                        className="w-full rounded-none border border-slate-300 bg-gray-50 px-3 py-2 text-slate-800 placeholder-slate-400"
-                        placeholder="Tu nombre completo"
-                        autoComplete="name"
+                        placeholder="Tu nombre"
+                        required
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm text-slate-700 mb-1">
-                        Email <span className="text-red-600">*</span>
-                      </label>
-                      <input
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#0B1F3B]/80">Email *</label>
+                      <Input
                         value={form.email}
                         onChange={onChange('email')}
-                        className="w-full rounded-none border border-slate-300 bg-gray-50 px-3 py-2 text-slate-800 placeholder-slate-400"
                         placeholder="tu@email.com"
-                        autoComplete="email"
-                        inputMode="email"
+                        type="email"
+                        required
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm text-slate-700 mb-1">Teléfono</label>
-                    <input
+                  <div className="space-y-2">
+                    <label className="text-sm text-[#0B1F3B]/80">Teléfono</label>
+                    <Input
                       value={form.phone}
                       onChange={onChange('phone')}
-                      className="w-full rounded-none border border-slate-300 bg-gray-50 px-3 py-2 text-slate-800 placeholder-slate-400"
-                      placeholder="+56 9 ..."
-                      autoComplete="tel"
-                      inputMode="tel"
+                      placeholder="+56 9 xxxx xxxx"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm text-slate-700 mb-1">
-                      Mensaje <span className="text-red-600">*</span>
-                    </label>
-                    <textarea
+                  <div className="space-y-2">
+                    <label className="text-sm text-[#0B1F3B]/80">Mensaje *</label>
+                    <Textarea
                       value={form.message}
                       onChange={onChange('message')}
-                      rows={6}
-                      className="w-full rounded-none border border-slate-300 bg-gray-50 px-3 py-2 text-slate-800 placeholder-slate-400"
-                      placeholder="Cuéntanos qué necesitas (mínimo 10 caracteres)…"
+                      placeholder="Cuéntanos qué necesitas…"
+                      required
+                      className="min-h-[180px]"
                     />
                   </div>
 
-                  {/* feedback */}
-                  {status === 'ok' && (
-                    <div className="text-sm text-emerald-700 border border-emerald-200 bg-emerald-50 px-3 py-2">
-                      Mensaje enviado. Te contactaremos a la brevedad.
+                  {status === 'error' && (
+                    <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                      {errorMsg || 'Ocurrió un error al enviar el mensaje.'}
                     </div>
                   )}
-                  {status === 'error' && (
-                    <div className="text-sm text-red-700 border border-red-200 bg-red-50 px-3 py-2">
-                      {errorMsg || 'Ocurrió un error al enviar.'}
+
+                  {status === 'ok' && (
+                    <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                      Mensaje enviado correctamente. Te contactaremos a la brevedad.
                     </div>
                   )}
 
                   <div className="flex items-center justify-between gap-4">
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#0B1F3B]/60">
                       Al enviar, aceptas nuestra política de privacidad.
                     </p>
 
-                    <button
+                    <Button
                       type="submit"
-                      disabled={!canSend || status === 'loading'}
-                      className={`inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white rounded-none
-                        ${!canSend || status === 'loading' ? 'bg-[#0A2E57]/60' : 'bg-[#0A2E57] hover:bg-[#082646]'}
-                      `}
-                      style={{
-                        boxShadow:
-                          'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.25)',
-                      }}
+                      disabled={status === 'loading'}
+                      className="rounded-none bg-[#0B1F3B] hover:bg-[#0B1F3B]/90"
                     >
-                      <Send className="h-4 w-4" />
+                      <Send className="h-4 w-4 mr-2" />
                       {status === 'loading' ? 'Enviando…' : 'Enviar'}
-                    </button>
+                    </Button>
                   </div>
                 </form>
               </CardContent>
@@ -244,6 +282,6 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
-    </main>
-  );
+    </div>
+  )
 }
