@@ -101,7 +101,7 @@ export default function ContactoPage() {
             Redes Sociales
           </h2>
           <p className="mt-4 max-w-3xl text-[14px] text-black/70 leading-relaxed">
-            También puedes escribirnos por cualquiera de nuestras redes. Te responderemos lo antes posible.
+            Puedes escribirnos por cualquiera de nuestras redes. Te responderemos lo antes posible.
           </p>
 
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
