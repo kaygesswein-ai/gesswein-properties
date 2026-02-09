@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   const email = (body.email ?? '').trim()
   const phone = (body.phone ?? '').trim()
   const message = (body.message ?? '').trim()
-  const source = (body.source ?? 'contact_page').trim()
+  const source = (body.source ?? 'contacto_page').trim()
 
   if (!name || !email || !message) {
     return NextResponse.json(
