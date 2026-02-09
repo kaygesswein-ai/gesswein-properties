@@ -9,7 +9,7 @@ import { Users, Award, Briefcase } from 'lucide-react';
    ========================= */
 
 const HERO_IMG =
-  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Gemini_Generated_Image_1c3kp91c3kp91c3k.png';
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20Equipo%20-%20Oficial.jpeg';
 
 const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
