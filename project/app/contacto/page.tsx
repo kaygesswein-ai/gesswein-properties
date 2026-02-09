@@ -1,21 +1,15 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Metadata } from 'next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Mail, Phone, Send, MessageCircle } from 'lucide-react'
 
-export const metadata: Metadata = {
-  title: 'Contacto - Gesswein Properties',
-  description: 'Contáctanos para asesoría inmobiliaria premium en Santiago de Chile.',
-}
-
 type Status = 'idle' | 'loading' | 'ok' | 'error'
 
-export default function ContactPage() {
+export default function ContactoPage() {
   const contact = useMemo(
     () => ({
       phoneDisplay: '+56 9 9331 8039',
@@ -56,7 +50,7 @@ export default function ContactPage() {
           email: form.email.trim(),
           phone: form.phone.trim(),
           message: form.message.trim(),
-          source: 'contact_page',
+          source: 'contacto_page',
         }),
       })
 
@@ -78,9 +72,9 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* HERO (alineado con las otras portadas) */}
+      {/* HERO (portada tipo “Servicios/Equipo”) */}
       <section className="relative h-[420px] md:h-[520px] w-full overflow-hidden">
-        {/* Foto placeholder (cámbiala después por una de Contacto) */}
+        {/* Placeholder: cámbiala luego por una foto de Contacto */}
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -88,10 +82,8 @@ export default function ContactPage() {
               "url('https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=2400&q=80')",
           }}
         />
-        {/* Overlay */}
         <div className="absolute inset-0 bg-black/45" />
 
-        {/* Contenido */}
         <div className="relative z-10 h-full">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 h-full flex items-end">
             <div className="pb-12 md:pb-16">
@@ -195,7 +187,7 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* FORM (mismo “look” que info contacto) */}
+          {/* FORM (mismo formato visual que info contacto) */}
           <div>
             <Card className="border-[#0B1F3B]/10 shadow-sm rounded-none">
               <CardHeader>
