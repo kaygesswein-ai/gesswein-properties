@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Users, Award, Briefcase } from 'lucide-react';
+import { Users, Award, Briefcase, Mail, Phone, Linkedin } from 'lucide-react';
 
 /* =========================
    DATOS
@@ -609,6 +609,75 @@ function TeamOgilvy() {
     closePanel();
   }
 
+  function formatPhoneForTel(phone: string) {
+    return phone.replace(/[^\d+]/g, '');
+  }
+
+  function safeLinkedinHref(url?: string) {
+    if (!url) return undefined;
+    if (url.trim() === '#' || url.trim() === '') return undefined;
+    return url;
+  }
+
+  function ContactPills({ m }: { m: Member }) {
+    const tel = m.phone ? formatPhoneForTel(m.phone) : undefined;
+    const linkedinHref = safeLinkedinHref(m.linkedin);
+
+    const pillBase =
+      'inline-flex items-center gap-2 px-3 py-2 border border-black/15 bg-white/60 hover:bg-white transition text-[12px] tracking-[.14em] uppercase text-[#0E2C4A]';
+
+    const iconBox =
+      'w-8 h-8 flex items-center justify-center border border-black/10 bg-slate-100';
+
+    return (
+      <div className="flex flex-wrap gap-3">
+        {m.email && (
+          <a
+            className={pillBase}
+            href={`mailto:${m.email}`}
+            aria-label={`Enviar correo a ${m.name}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className={iconBox}>
+              <Mail className="h-4 w-4 text-[#0A2E57]" />
+            </span>
+            <span>Correo</span>
+          </a>
+        )}
+
+        {m.phone && tel && (
+          <a
+            className={pillBase}
+            href={`tel:${tel}`}
+            aria-label={`Llamar a ${m.name}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className={iconBox}>
+              <Phone className="h-4 w-4 text-[#0A2E57]" />
+            </span>
+            <span>Teléfono</span>
+          </a>
+        )}
+
+        {linkedinHref && (
+          <a
+            className={pillBase}
+            href={linkedinHref}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Abrir LinkedIn de ${m.name}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className={iconBox}>
+              <Linkedin className="h-4 w-4 text-[#0A2E57]" />
+            </span>
+            <span>LinkedIn</span>
+          </a>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div ref={containerRef} className="relative mt-10">
       {/* GRID */}
@@ -672,23 +741,12 @@ function TeamOgilvy() {
                     </div>
                     <div>{m.specialties}</div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    {m.email && (
-                      <a className="underline" href={`mailto:${m.email}`} aria-label={`Enviar correo a ${m.name}`}>
-                        {m.email}
-                      </a>
-                    )}
-                    {m.phone && (
-                      <a className="underline" href={`tel:${m.phone.replace(/\s+/g, '')}`} aria-label={`Llamar a ${m.name}`}>
-                        {m.phone}
-                      </a>
-                    )}
-                    {m.linkedin && (
-                      <a className="underline" href={m.linkedin} target="_blank" rel="noreferrer" aria-label={`Abrir LinkedIn de ${m.name}`}>
-                        {m.linkedin.replace(/^https?:\/\//, '')}
-                      </a>
-                    )}
+
+                  {/* === CAMBIO PUNTUAL: contactos con iconos (sin texto literal) === */}
+                  <div className="pt-2">
+                    <ContactPills m={m} />
                   </div>
+                  {/* === FIN CAMBIO PUNTUAL === */}
                 </div>
               </div>
             </div>
@@ -733,23 +791,9 @@ function TeamOgilvy() {
               </div>
 
               <div className="mt-auto pt-6 text-[14px]">
-                <div className="flex flex-col gap-1">
-                  {team[active].email && (
-                    <a className="underline" href={`mailto:${team[active].email}`} aria-label={`Enviar correo a ${team[active].name}`}>
-                      {team[active].email}
-                    </a>
-                  )}
-                  {team[active].phone && (
-                    <a className="underline" href={`tel:${team[active].phone.replace(/\s+/g, '')}`} aria-label={`Llamar a ${team[active].name}`}>
-                      {team[active].phone}
-                    </a>
-                  )}
-                  {team[active].linkedin && (
-                    <a className="underline" href={team[active].linkedin} target="_blank" rel="noreferrer" aria-label={`Abrir LinkedIn de ${team[active].name}`}>
-                      {team[active].linkedin.replace(/^https?:\/\//, '')}
-                    </a>
-                  )}
-                </div>
+                {/* === CAMBIO PUNTUAL: contactos con iconos (sin texto literal) === */}
+                <ContactPills m={team[active]} />
+                {/* === FIN CAMBIO PUNTUAL === */}
               </div>
             </div>
           </div>
@@ -758,3 +802,4 @@ function TeamOgilvy() {
     </div>
   );
 }
+
