@@ -619,59 +619,50 @@ function TeamOgilvy() {
     return url;
   }
 
-  function ContactPills({ m }: { m: Member }) {
+  function ContactIcons({ m }: { m: Member }) {
     const tel = m.phone ? formatPhoneForTel(m.phone) : undefined;
     const linkedinHref = safeLinkedinHref(m.linkedin);
 
-    const pillBase =
-      'inline-flex items-center gap-2 px-3 py-2 border border-black/15 bg-white/60 hover:bg-white transition text-[12px] tracking-[.14em] uppercase text-[#0E2C4A]';
-
-    const iconBox =
-      'w-8 h-8 flex items-center justify-center border border-black/10 bg-slate-100';
+    const iconBtn =
+      'inline-flex items-center justify-center w-10 h-10 text-[#0A2E57] hover:text-[#0E2C4A] transition';
 
     return (
-      <div className="flex flex-wrap gap-3">
+      <div className="flex items-center gap-5">
         {m.email && (
           <a
-            className={pillBase}
+            className={iconBtn}
             href={`mailto:${m.email}`}
             aria-label={`Enviar correo a ${m.name}`}
             onClick={(e) => e.stopPropagation()}
+            title="Correo"
           >
-            <span className={iconBox}>
-              <Mail className="h-4 w-4 text-[#0A2E57]" />
-            </span>
-            <span>Correo</span>
+            <Mail className="h-6 w-6" />
           </a>
         )}
 
         {m.phone && tel && (
           <a
-            className={pillBase}
+            className={iconBtn}
             href={`tel:${tel}`}
             aria-label={`Llamar a ${m.name}`}
             onClick={(e) => e.stopPropagation()}
+            title="Teléfono"
           >
-            <span className={iconBox}>
-              <Phone className="h-4 w-4 text-[#0A2E57]" />
-            </span>
-            <span>Teléfono</span>
+            <Phone className="h-6 w-6" />
           </a>
         )}
 
         {linkedinHref && (
           <a
-            className={pillBase}
+            className={iconBtn}
             href={linkedinHref}
             target="_blank"
             rel="noreferrer"
             aria-label={`Abrir LinkedIn de ${m.name}`}
             onClick={(e) => e.stopPropagation()}
+            title="LinkedIn"
           >
-            <span className={iconBox}>
-              <Linkedin className="h-4 w-4 text-[#0A2E57]" />
-            </span>
-            <span>LinkedIn</span>
+            <Linkedin className="h-6 w-6" />
           </a>
         )}
       </div>
@@ -742,9 +733,9 @@ function TeamOgilvy() {
                     <div>{m.specialties}</div>
                   </div>
 
-                  {/* === CAMBIO PUNTUAL: contactos con iconos (sin texto literal) === */}
+                  {/* === CAMBIO PUNTUAL: solo íconos (sin texto, sin rectángulo) === */}
                   <div className="pt-2">
-                    <ContactPills m={m} />
+                    <ContactIcons m={m} />
                   </div>
                   {/* === FIN CAMBIO PUNTUAL === */}
                 </div>
@@ -791,8 +782,8 @@ function TeamOgilvy() {
               </div>
 
               <div className="mt-auto pt-6 text-[14px]">
-                {/* === CAMBIO PUNTUAL: contactos con iconos (sin texto literal) === */}
-                <ContactPills m={team[active]} />
+                {/* === CAMBIO PUNTUAL: solo íconos (sin texto, sin rectángulo) === */}
+                <ContactIcons m={team[active]} />
                 {/* === FIN CAMBIO PUNTUAL === */}
               </div>
             </div>
@@ -802,4 +793,3 @@ function TeamOgilvy() {
     </div>
   );
 }
-
