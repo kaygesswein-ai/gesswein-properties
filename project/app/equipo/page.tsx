@@ -15,7 +15,7 @@ const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
 
 const PHOTOS = {
-  carolina: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Carolina%20-%20Optimizada.JPG',
+  carolina: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Carolina%20-%20Optimizada.jpeg',
   alberto: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Tito%20-%20Optimizada.JPG',
   jan: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Jan%20-%20Optimizada.jpeg',
   kay: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Kay%20-%20Optimizada.JPG',
@@ -94,7 +94,7 @@ const TEAM_PRINCIPAL: Member[] = [
     bioShort:
       'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera y evaluación de negocios a nivel nacional e internacional. Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo. Ha participado en procesos de due diligence, modelamiento financiero y valorización de activos en múltiples industrias, aportando una mirada estratégica aplicada al mercado inmobiliario.',
     bioDetail: [
-      Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera y evaluación de negocios a nivel nacional e internacional. Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo. Ha participado en procesos de due diligence, modelamiento financiero y valorización de activos en múltiples industrias, aportando una mirada estratégica aplicada al mercado inmobiliario.',
+      'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera y evaluación de negocios a nivel nacional e internacional. Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo. Ha participado en procesos de due diligence, modelamiento financiero y valorización de activos en múltiples industrias, aportando una mirada estratégica aplicada al mercado inmobiliario.',
     ],
     education: 'Ingeniería Comercial, Universidad Adolfo Ibáñez.',
     specialties: 'Análisis y valoración de activos · Due diligence.',
