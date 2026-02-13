@@ -382,7 +382,7 @@ function TeamOgilvy() {
 
   // === NUEVO: posiciones fijas para ida/vuelta idénticas ===
   const initialXRef = useRef<number[]>([]); // X inicial de cada card (relativo al grid)
-  const firstXRef = useRef<number>(0);      // X inicial de la primera columna
+  const firstXRef = useRef<number>(0); // X inicial de la primera columna
 
   // Animación
   const DURATION = 450;
@@ -619,6 +619,14 @@ function TeamOgilvy() {
     return url;
   }
 
+  function splitRole(roleLine: string) {
+    const parts = roleLine.split('·').map((s) => s.trim()).filter(Boolean);
+    return {
+      title: parts[0] || roleLine,
+      area: parts.slice(1).join(' · '),
+    };
+  }
+
   function ContactIcons({ m }: { m: Member }) {
     const tel = m.phone ? formatPhoneForTel(m.phone) : undefined;
     const linkedinHref = safeLinkedinHref(m.linkedin);
@@ -673,122 +681,160 @@ function TeamOgilvy() {
     <div ref={containerRef} className="relative mt-10">
       {/* GRID */}
       <div ref={gridRef} className="relative grid grid-cols-1 md:grid-cols-4 gap-6">
-        {team.map((m, i) => (
-          <div
-            key={m.id}
-            ref={(el) => { cardRefs.current[i] = el; }}
-            data-team-card
-            className="relative group cursor-pointer select-none transition-opacity"
-            onClick={() => openMember(i)}
-            aria-expanded={active === i}
-          >
-            {/* Foto */}
-            <div className="border border-black/10">
-              <Image
-                src={m.photo || ''}
-                alt={m.name}
-                width={1200}
-                height={1500}
-                className="w-full h-full object-cover aspect-[4/5]"
-                priority={i < 2}
-              />
-            </div>
-
-            {/* Overlay (DESKTOP) — ROL EN MAYÚSCULAS */}
+        {team.map((m, i) => {
+          const r = splitRole(m.roleLine);
+          return (
             <div
-              data-overlay
-              className="hidden md:flex absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex-col justify-end p-6 pointer-events-none"
+              key={m.id}
+              ref={(el) => { cardRefs.current[i] = el; }}
+              data-team-card
+              className="relative group cursor-pointer select-none transition-opacity"
+              onClick={() => openMember(i)}
+              aria-expanded={active === i}
             >
-              <h3 className="text-white text-lg font-semibold">{m.name}</h3>
-              <p className="text-[#BFD1E5] text-sm tracking-[.12em] uppercase">
-                {m.roleLine}
-              </p>
-              <p className="text-white/85 text-xs mt-1 line-clamp-2">{m.bioShort}</p>
-            </div>
+              {/* Foto */}
+              <div className="border border-black/10">
+                <Image
+                  src={m.photo || ''}
+                  alt={m.name}
+                  width={1200}
+                  height={1500}
+                  className="w-full h-full object-cover aspect-[4/5]"
+                  priority={i < 2}
+                />
+              </div>
 
-            {/* Panel ACORDEÓN (MOBILE) */}
-            <div
-              className={`md:hidden overflow-hidden transition-all duration-300 ${
-                active === i ? 'max-h-[800px] opacity-100 mt-3' : 'max-h-0 opacity-0'
-              }`}
-            >
-              <div className="w-full bg-[#EAEAEA] p-5 border border-black/10">
-                <h4 className="text-xl font-semibold text-[#0E2C4A]">{m.name}</h4>
-                <p className="text-[#0A2E57] text-sm tracking-[.14em] uppercase mt-1">
-                  {m.roleLine}
-                </p>
-                <p className="mt-4 text-[14px] text-[#0E2C4A]">{m.bioDetail[0]}</p>
+              {/* Overlay (DESKTOP) — CARGO + ÁREA EN 2 LÍNEAS */}
+              <div
+                data-overlay
+                className="hidden md:flex absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex-col justify-end p-6 pointer-events-none"
+              >
+                <h3 className="text-white text-lg font-semibold">{m.name}</h3>
 
-                <div className="mt-5 grid gap-3 text-[13px] text-[#0E2C4A]">
-                  <div>
-                    <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
-                      Educación
+                {/* === CAMBIO PUNTUAL: separar cargo y área === */}
+                <div className="mt-1">
+                  <div className="text-white/95 text-[13px] tracking-[.18em] uppercase font-semibold">
+                    {r.title}
+                  </div>
+                  {r.area ? (
+                    <div className="text-[#BFD1E5] text-[12px] tracking-[.14em] uppercase mt-1">
+                      {r.area}
                     </div>
-                    <div>{m.education}</div>
+                  ) : null}
+                </div>
+                {/* === FIN CAMBIO PUNTUAL === */}
+
+                <p className="text-white/85 text-xs mt-2 line-clamp-2">{m.bioShort}</p>
+              </div>
+
+              {/* Panel ACORDEÓN (MOBILE) */}
+              <div
+                className={`md:hidden overflow-hidden transition-all duration-300 ${
+                  active === i ? 'max-h-[800px] opacity-100 mt-3' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="w-full bg-[#EAEAEA] p-5 border border-black/10">
+                  <h4 className="text-xl font-semibold text-[#0E2C4A]">{m.name}</h4>
+
+                  {/* === CAMBIO PUNTUAL: separar cargo y área === */}
+                  <div className="mt-1">
+                    <div className="text-[#0A2E57] text-[13px] tracking-[.18em] uppercase font-semibold">
+                      {r.title}
+                    </div>
+                    {r.area ? (
+                      <div className="text-[#0E2C4A]/70 text-[12px] tracking-[.14em] uppercase mt-1">
+                        {r.area}
+                      </div>
+                    ) : null}
+                  </div>
+                  {/* === FIN CAMBIO PUNTUAL === */}
+
+                  <p className="mt-4 text-[14px] text-[#0E2C4A]">{m.bioDetail[0]}</p>
+
+                  <div className="mt-5 grid gap-3 text-[13px] text-[#0E2C4A]">
+                    <div>
+                      <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
+                        Educación
+                      </div>
+                      <div>{m.education}</div>
+                    </div>
+                    <div>
+                      <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
+                        Especialidades
+                      </div>
+                      <div>{m.specialties}</div>
+                    </div>
+
+                    {/* === CAMBIO PUNTUAL: solo íconos (sin texto, sin rectángulo) === */}
+                    <div className="pt-2">
+                      <ContactIcons m={m} />
+                    </div>
+                    {/* === FIN CAMBIO PUNTUAL === */}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* PANEL LATERAL (DESKTOP) */}
+        {active !== null && (() => {
+          const r = splitRole(team[active].roleLine);
+          return (
+            <div
+              ref={panelRef}
+              className="hidden md:block absolute top-0 bg-[#EAEAEA] border border-black/10 shadow-[0_4px_10px_rgba(0,0,0,0.06)] overflow-hidden"
+              style={{
+                left: `${panelDims.left}px`,
+                width: `${panelDims.width}px`,
+                height: `${panelDims.height}px`,
+                transition: `transform ${DURATION}ms ${EASING}, opacity 220ms ease`,
+                transform: 'translateX(0)',
+                opacity: 1,
+                zIndex: 40,
+              }}
+              onClick={onPanelClick}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="h-full w-full p-10 text-[#0E2C4A] flex flex-col">
+                <h3 className="text-3xl font-semibold">{team[active].name}</h3>
+
+                {/* === CAMBIO PUNTUAL: separar cargo y área === */}
+                <div className="mt-2">
+                  <div className="text-[#0A2E57] tracking-[.18em] uppercase text-[13px] font-semibold">
+                    {r.title}
+                  </div>
+                  {r.area ? (
+                    <div className="text-[#0E2C4A]/70 tracking-[.16em] uppercase text-[12px] mt-1">
+                      {r.area}
+                    </div>
+                  ) : null}
+                </div>
+                {/* === FIN CAMBIO PUNTUAL === */}
+
+                <p className="mt-6 text-[15px] leading-relaxed">{team[active].bioDetail[0]}</p>
+
+                <div className="mt-8 grid grid-cols-2 gap-8 text-[14px]">
+                  <div>
+                    <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">Educación</div>
+                    <div className="mt-1">{team[active].education}</div>
                   </div>
                   <div>
-                    <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
-                      Especialidades
-                    </div>
-                    <div>{m.specialties}</div>
+                    <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">Especialidades</div>
+                    <div className="mt-1">{team[active].specialties}</div>
                   </div>
+                </div>
 
+                <div className="mt-auto pt-6 text-[14px]">
                   {/* === CAMBIO PUNTUAL: solo íconos (sin texto, sin rectángulo) === */}
-                  <div className="pt-2">
-                    <ContactIcons m={m} />
-                  </div>
+                  <ContactIcons m={team[active]} />
                   {/* === FIN CAMBIO PUNTUAL === */}
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-
-        {/* PANEL LATERAL (DESKTOP) */}
-        {active !== null && (
-          <div
-            ref={panelRef}
-            className="hidden md:block absolute top-0 bg-[#EAEAEA] border border-black/10 shadow-[0_4px_10px_rgba(0,0,0,0.06)] overflow-hidden"
-            style={{
-              left: `${panelDims.left}px`,
-              width: `${panelDims.width}px`,
-              height: `${panelDims.height}px`,
-              transition: `transform ${DURATION}ms ${EASING}, opacity 220ms ease`,
-              transform: 'translateX(0)',
-              opacity: 1,
-              zIndex: 40,
-            }}
-            onClick={onPanelClick}
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="h-full w-full p-10 text-[#0E2C4A] flex flex-col">
-              <h3 className="text-3xl font-semibold">{team[active].name}</h3>
-              <p className="text-[#0A2E57] mt-2 tracking-[.18em] uppercase">
-                {team[active].roleLine}
-              </p>
-
-              <p className="mt-6 text-[15px] leading-relaxed">{team[active].bioDetail[0]}</p>
-
-              <div className="mt-8 grid grid-cols-2 gap-8 text-[14px]">
-                <div>
-                  <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">Educación</div>
-                  <div className="mt-1">{team[active].education}</div>
-                </div>
-                <div>
-                  <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">Especialidades</div>
-                  <div className="mt-1">{team[active].specialties}</div>
-                </div>
-              </div>
-
-              <div className="mt-auto pt-6 text-[14px]">
-                {/* === CAMBIO PUNTUAL: solo íconos (sin texto, sin rectángulo) === */}
-                <ContactIcons m={team[active]} />
-                {/* === FIN CAMBIO PUNTUAL === */}
-              </div>
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
