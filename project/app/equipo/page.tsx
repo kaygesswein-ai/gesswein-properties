@@ -76,12 +76,12 @@ const TEAM_PRINCIPAL: Member[] = [
     name: 'Jan Gesswein',
     roleLine: 'Socio Fundador · Legal',
     bioShort:
-      'Abogado especializado en derecho inmobiliario y regulaciones urbanas.',
+      'Abogado especializado en derecho inmobiliario, tributario y comercial, con experiencia en procesos de due diligence y en la identificación estratégica de riesgos legales. Integra análisis jurídico riguroso y visión de negocio para estructurar y acompañar operaciones inmobiliarias, elaborando la documentación necesaria para resguardar cada etapa del proceso de corretaje, desde la negociación inicial hasta el cierre definitivo.',
     bioDetail: [
-      'Supervisa aspectos legales: contratos sólidos, cumplimiento normativo y procesos transparentes.',
+      'Abogado especializado en derecho inmobiliario, tributario y comercial, con experiencia en procesos de due diligence y en la identificación estratégica de riesgos legales. Integra análisis jurídico riguroso y visión de negocio para estructurar y acompañar operaciones inmobiliarias, elaborando la documentación necesaria para resguardar cada etapa del proceso de corretaje, desde la negociación inicial hasta el cierre definitivo.',
     ],
     education: 'Derecho, Universidad del Desarrollo.',
-    specialties: 'Derecho inmobiliario · Contratos · Due Diligence Legal.',
+    specialties: 'Análisis y estructuración legal de operaciones inmobiliarias • Due diligence y gestión de riesgos • Planificación tributaria inmobiliaria • Contratos y documentación estratégica • Compliance inmobiliario',
     email: 'jangesswein@gmail.com',
     phone: '+56 9 9909 9502',
     linkedin: '#',
