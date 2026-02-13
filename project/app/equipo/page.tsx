@@ -802,7 +802,7 @@ function TeamOgilvy() {
 
                 {/* === CAMBIO PUNTUAL: separar cargo y área === */}
                 <div className="mt-2">
-                  <div className="text-[#0A2E57] tracking-[.18em] uppercase text-[13px] font-semibold">
+                  <div className="text-[#0A2E57] tracking-[.18em] uppercase text-[13px]">
                     {r.title}
                   </div>
                   {r.area ? (
