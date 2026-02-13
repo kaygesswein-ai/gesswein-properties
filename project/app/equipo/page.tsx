@@ -45,7 +45,7 @@ const TEAM_PRINCIPAL: Member[] = [
     bioDetail: [
       'Dirige el desarrollo arquitectónico de Gesswein Properties, asegurando que cada propiedad combine belleza, funcionalidad y valorización a largo plazo.',
     ],
-    education: 'Arquitecta, Pontificia Universidad Católica de Chile.',
+    education: 'Arquitectura, Pontificia Universidad Católica de Chile.',
     specialties:
       'Arquitectura residencial · Sustentabilidad · Gestión de proyectos.',
     email: 'carolina@gessweinproperties.cl',
@@ -63,7 +63,7 @@ const TEAM_PRINCIPAL: Member[] = [
     bioDetail: [
       'Lidera la estrategia comunicacional y marketing de la empresa con enfoque humano y excelencia técnica.',
     ],
-    education: 'Periodista, Pontificia Universidad Católica de Chile.',
+    education: 'Periodismo, Pontificia Universidad Católica de Chile.',
     specialties:
       'Corretaje inmobiliario · Comunicación estratégica · Negociación.',
     email: 'alberto@gesswein.tv',
@@ -90,14 +90,18 @@ const TEAM_PRINCIPAL: Member[] = [
   {
     id: 'kay',
     name: 'Kay Gesswein',
-    roleLine: 'Socio Fundador · Comercial & Finanzas',
+    roleLine: 'Socio Fundador · Administración & Finanzas',
     bioShort:
-      'Ingeniero Comercial con Magíster en Finanzas. Experto en marketing y producción visual inmobiliaria.',
+      'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera y evaluación de negocios a nivel nacional e internacional.
+
+Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo.
+
+Ha participado en procesos de due diligence, modelación financiera y valorización de activos en múltiples industrias, aportando una mirada estratégica aplicada al mercado inmobiliario.',
     bioDetail: [
       'Lidera estrategia digital y posicionamiento, integrando análisis financiero con comunicación visual.',
     ],
-    education: 'Ingeniero Comercial, Universidad Adolfo Ibáñez.',
-    specialties: 'Finanzas · Marketing Digital · Fotografía inmobiliaria.',
+    education: 'Ingeniería Comercial, Universidad Adolfo Ibáñez.',
+    specialties: 'Análisis y modelación financiera · Evaluación de inversiones inmobiliarias · Due diligence y valorización de activos · Estrategia comercial y posicionamiento.',
     email: 'kaygesswein@gmail.com',
     phone: '+56 9 9334 5413',
     linkedin: 'https://www.linkedin.com/in/kay-gesswein-san-martin/',
