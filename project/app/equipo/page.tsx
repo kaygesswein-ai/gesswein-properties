@@ -81,7 +81,7 @@ const TEAM_PRINCIPAL: Member[] = [
       'Abogado especializado en derecho inmobiliario, tributario y comercial, con experiencia en procesos de due diligence y en la identificación estratégica de riesgos legales. Integra análisis jurídico riguroso y visión de negocio para estructurar y acompañar operaciones inmobiliarias, elaborando la documentación necesaria para resguardar cada etapa del proceso de corretaje, desde la negociación inicial hasta el cierre definitivo.',
     ],
     education: 'Derecho, Universidad del Desarrollo.',
-    specialties: 'Análisis y estructuración legal inmobiliaria • Due diligence y gestión de riesgos • Planificación tributaria • Contratos • Compliance',
+    specialties: 'Análisis y estructuración legal inmobiliaria • Due diligence • Planificación tributaria • Contratos • Compliance',
     email: 'jangesswein@gmail.com',
     phone: '+56 9 9909 9502',
     linkedin: '#',
