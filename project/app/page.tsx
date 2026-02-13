@@ -151,6 +151,14 @@ const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Co
 const TIPO_PROPIEDAD = ['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'];
 
 /* ------------------------------------------------------------------ */
+/*                IMÁGENES (secciones nuevas bajo el hero)             */
+/* ------------------------------------------------------------------ */
+const WHY_IMG =
+  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1600&auto=format&fit=crop';
+const OPORT_IMG =
+  'https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=1600&auto=format&fit=crop';
+
+/* ------------------------------------------------------------------ */
 /*                              HOME PAGE                             */
 /* ------------------------------------------------------------------ */
 export default function HomePage() {
@@ -338,11 +346,50 @@ export default function HomePage() {
   const [comunaRef, setComunaRef] = useState('');
   const comunaOpts = regionRef ? COMUNAS_UI[regionRef] || [] : [];
 
+  /* ================== ESTADO FORM (REQUERIDOS) ================== */
+  const [refNombre, setRefNombre] = useState('');
+  const [refEmail, setRefEmail] = useState('');
+  const [refTelefono, setRefTelefono] = useState('');
+
+  const [cliNombre, setCliNombre] = useState('');
+  const [cliEmail, setCliEmail] = useState('');
+  const [cliTelefono, setCliTelefono] = useState('');
+
+  const [servicio, setServicio] = useState('');
+  const [tipoProp, setTipoProp] = useState('');
+  const [precioMin, setPrecioMin] = useState('');
+  const [precioMax, setPrecioMax] = useState('');
+  const [comentarios, setComentarios] = useState('');
+
+  const isValid =
+    refNombre.trim() &&
+    refEmail.trim() &&
+    refTelefono.trim() &&
+    cliNombre.trim() &&
+    cliEmail.trim() &&
+    cliTelefono.trim() &&
+    servicio.trim() &&
+    tipoProp.trim() &&
+    regionRef.trim() &&
+    comunaRef.trim() &&
+    precioMin.trim() &&
+    precioMax.trim();
+
+  const onSubmitReferido = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValid) return;
+
+    // Aquí conectas tu lógica real de envío (API / email / etc.)
+    // Por ahora dejamos el comportamiento de “no se puede mandar” si falta algo.
+    // Puedes reemplazar esto después por tu handler real.
+    alert('Referido listo para enviar (conecta aquí tu endpoint).');
+  };
+
   /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
       {/* ================= HERO ================= */}
-      {/* 🚫 NO TOCAR CARRUSEL */}
+      {/* ⚠️ NO TOCAR CARRUSEL */}
       <section
         className="relative w-full overflow-hidden isolate"
         onTouchStart={onTouchStart}
@@ -370,9 +417,7 @@ export default function HomePage() {
                   ].map((t, idx) => (
                     <div
                       key={idx}
-                      className={`${
-                        idx < 4 ? 'border-r border-slate-200 ' : ''
-                      } flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]`}
+                      className={`${idx < 4 ? 'border-r border-slate-200 ' : ''} flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]`}
                     >
                       {t.icon}
                       <span className="text-sm text-slate-800 leading-none">{(t as any).v ?? dash}</span>
@@ -434,29 +479,47 @@ export default function HomePage() {
           )}
         </div>
       </section>
+      {/* ✅ FIN CARRUSEL */}
 
       {/* ================= ¿POR QUÉ GESSWEIN PROPERTIES? ================= */}
       <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="pl-2 sm:pl-4 max-w-4xl">
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-              ¿Por qué Gesswein Properties?
-            </h2>
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid gap-8 md:grid-cols-2 items-stretch">
+            {/* Texto */}
+            <div className="md:order-1 order-2">
+              <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
+                ¿Por qué Gesswein Properties?
+              </h2>
+              <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
+                <p>
+                  (Texto placeholder) Aquí va tu discurso de venta: cómo trabajas, en qué te diferencias, por qué
+                  el estándar boutique, el rigor técnico y la experiencia integral cambian el resultado.
+                </p>
+                <p>
+                  (Texto placeholder) Puedes reforzar método, transparencia, estética y ejecución comercial — y
+                  explicar por qué eso genera mejor precio, mejor proceso y mejor experiencia.
+                </p>
+              </div>
 
-            {/* ✅ texto placeholder para que lo reemplaces por tu discurso */}
-            <p className="text-black/70 text-[14px] leading-relaxed">
-              Aquí va tu discurso de venta para diferenciarte y destacarte de la competencia.
-              Puedes explicar tu enfoque boutique, el rigor técnico (arquitectura, legal, finanzas),
-              la comunicación estratégica, la estética y el estándar de ejecución.
-            </p>
+              <div className="mt-8">
+                <Link
+                  href="/servicios"
+                  className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+                >
+                  Ver más
+                </Link>
+              </div>
+            </div>
 
-            <div className="mt-8">
-              <Link
-                href="/servicios"
-                className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
-              >
-                Ver más
-              </Link>
+            {/* Imagen */}
+            <div className="md:order-2 order-1">
+              <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
+                <img
+                  src={WHY_IMG}
+                  alt="¿Por qué Gesswein Properties?"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -464,246 +527,257 @@ export default function HomePage() {
 
       {/* ================= OPORTUNIDADES EXCLUSIVAS ================= */}
       <section className="py-20 bg-[#f8f9fb]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="pl-2 sm:pl-4 max-w-4xl">
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-              Oportunidades Exclusivas
-            </h2>
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid gap-8 md:grid-cols-2 items-stretch">
+            {/* Texto */}
+            <div className="md:order-1 order-2">
+              <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
+                Oportunidades Exclusivas
+              </h2>
+              <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
+                <p>
+                  (Texto placeholder) Explica qué son las oportunidades exclusivas: acceso temprano, propiedades
+                  curadas, condiciones especiales, oportunidades off-market, etc.
+                </p>
+                <p>
+                  (Texto placeholder) Puedes agregar cómo se accede, qué tipo de activo incluye, y por qué esto
+                  le conviene al cliente.
+                </p>
+              </div>
 
-            {/* ✅ texto placeholder */}
-            <p className="text-black/70 text-[14px] leading-relaxed">
-              Presenta aquí qué significa “Oportunidades Exclusivas” (off-market, acceso anticipado,
-              oportunidades curadas, mandato directo, etc.) y por qué es valioso para el cliente.
-            </p>
+              <div className="mt-8">
+                <Link
+                  href="/oportunidades-exclusivas"
+                  className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+                >
+                  Ver más
+                </Link>
+              </div>
+            </div>
 
-            <div className="mt-8">
-              <Link
-                href="/oportunidades-exclusivas"
-                className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
-              >
-                Ver más
-              </Link>
+            {/* Imagen */}
+            <div className="md:order-2 order-1">
+              <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
+                <img
+                  src={OPORT_IMG}
+                  alt="Oportunidades Exclusivas"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= REFERIDOS (REDISEÑADO) ================= */}
+      {/* ================= REFERIDOS ================= */}
       <section id="referidos" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header estilo “Servicios” */}
-          <div className="pl-2 sm:pl-4 max-w-4xl">
-            <div className="inline-flex items-center gap-3">
-              <span className="h-10 w-10 border border-black/10 bg-[#F9FAFB] flex items-center justify-center">
-                <Gift className="h-5 w-5 text-[#0A2E57]" />
-              </span>
-              <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
-                Programa de Referidos
-              </h2>
-            </div>
-
-            <p className="mt-4 text-black/70 text-[14px] leading-relaxed">
-              ¿Conoces a alguien que busca propiedad? Refiérelo y accede a beneficios exclusivos.
-              Completa los datos y nuestro equipo hará el seguimiento con el estándar Gesswein Properties.
-            </p>
-          </div>
-
-          {/* Contenedor del formulario (estética GP) */}
-          <div className="mt-10 pl-2 sm:pl-4">
-            <div className="border border-slate-200 bg-white shadow-sm">
-              <div className="p-6 sm:p-8">
-                {/* Grid de “bloques” al estilo servicios */}
-                <div className="grid gap-6 lg:grid-cols-3">
-                  {/* Bloque 1: Referente */}
-                  <div className="border border-black/10 bg-[#F9FAFB] p-5">
-                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                      Tus datos
-                    </div>
-                    <h3 className="mt-1 text-[14px] text-black/90">Referente</h3>
-
-                    <div className="mt-4 grid gap-4">
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">Nombre completo *</label>
-                        <input
-                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
-                          placeholder="Tu nombre completo"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">Email *</label>
-                        <input
-                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
-                          placeholder="tu@email.com"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">Teléfono</label>
-                        <input
-                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
-                          placeholder="+56 9 1234 5678"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bloque 2: Referido */}
-                  <div className="border border-black/10 bg-[#F9FAFB] p-5">
-                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                      Datos del cliente
-                    </div>
-                    <h3 className="mt-1 text-[14px] text-black/90">Referido</h3>
-
-                    <div className="mt-4 grid gap-4">
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">Nombre completo *</label>
-                        <input
-                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
-                          placeholder="Nombre del referido"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">Email *</label>
-                        <input
-                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
-                          placeholder="correo@referido.com"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">Teléfono</label>
-                        <input
-                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
-                          placeholder="+56 9 1234 5678"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bloque 3: Preferencias */}
-                  <div className="border border-black/10 bg-[#F9FAFB] p-5">
-                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                      Preferencias
-                    </div>
-                    <h3 className="mt-1 text-[14px] text-black/90">Lo que necesita</h3>
-
-                    <div className="mt-4 grid gap-4">
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">¿Qué servicio necesita?</label>
-                        <SmartSelect
-                          options={SERVICIOS}
-                          value={''}
-                          onChange={() => {}}
-                          placeholder="Seleccionar o escribir…"
-                          className="w-full"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">Tipo de propiedad</label>
-                        <SmartSelect
-                          options={TIPO_PROPIEDAD}
-                          value={''}
-                          onChange={() => {}}
-                          placeholder="Seleccionar o escribir…"
-                          className="w-full"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">Región</label>
-                        <SmartSelect
-                          options={REGIONES_UI as string[]}
-                          value={regionRef}
-                          onChange={(v) => {
-                            setRegionRef(v);
-                            setComunaRef('');
-                          }}
-                          placeholder="Seleccionar o escribir…"
-                          className="w-full"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[13px] text-black/70 mb-1">Comuna</label>
-                        <SmartSelect
-                          options={comunaOpts}
-                          value={comunaRef}
-                          onChange={setComunaRef}
-                          placeholder={regionRef ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
-                          disabled={!regionRef || comunaOpts.length === 0}
-                          className="w-full"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-[13px] text-black/70 mb-1">Presupuesto mínimo (UF)</label>
-                          <input
-                            inputMode="numeric"
-                            className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
-                            placeholder="0"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[13px] text-black/70 mb-1">Presupuesto máximo (UF)</label>
-                          <input
-                            inputMode="numeric"
-                            className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Comentarios + CTA */}
-                <div className="mt-6 grid gap-6 lg:grid-cols-3">
-                  <div className="lg:col-span-2 border border-black/10 bg-white p-5">
-                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                      Contexto adicional
-                    </div>
-                    <h3 className="mt-1 text-[14px] text-black/90">Comentarios</h3>
-
-                    <div className="mt-4">
-                      <textarea
-                        rows={5}
-                        className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
-                        placeholder="Cualquier información adicional que pueda ser útil…"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="border border-black/10 bg-white p-5 flex flex-col">
-                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                      Enviar
-                    </div>
-                    <h3 className="mt-1 text-[14px] text-black/90">Confirmación</h3>
-
-                    <p className="mt-3 text-[13px] text-black/70 leading-relaxed">
-                      Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
-                    </p>
-
-                    <div className="mt-auto pt-5">
-                      <button
-                        type="button"
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-[12px] uppercase tracking-[.25em] text-white bg-[#0A2E57] rounded-none hover:bg-[#0E2C4A] transition"
-                        style={{
-                          boxShadow:
-                            'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
-                        }}
-                      >
-                        <Gift className="h-4 w-4" /> Enviar referido
-                      </button>
-
-                      <p className="mt-3 text-center text-[12px] text-black/50 leading-relaxed">
-                        Responderemos a la brevedad.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="border border-slate-200 bg-white shadow-sm">
+            {/* encabezado */}
+            <div className="px-6 py-10 text-center border-b border-black/10">
+              <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
+                <Gift className="h-5 w-5 text-blue-600" />
               </div>
+              <h2 className="mt-3 text-xl md:text-2xl uppercase tracking-[0.25em]">
+                PROGRAMA DE REFERIDOS CON EXCLUSIVIDAD
+              </h2>
+              <p className="mt-2 text-slate-600">
+                ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
+              </p>
             </div>
+
+            {/* formulario */}
+            <form className="px-6 py-10" onSubmit={onSubmitReferido}>
+              {/* ---------- tus datos ---------- */}
+              <h3 className="text-sm md:text-base uppercase tracking-[0.25em]">
+                TUS DATOS (REFERENTE)
+              </h3>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                  <input
+                    required
+                    value={refNombre}
+                    onChange={(e) => setRefNombre(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="Tu nombre completo"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                  <input
+                    required
+                    type="email"
+                    value={refEmail}
+                    onChange={(e) => setRefEmail(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="tu@email.com"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
+                  <input
+                    required
+                    value={refTelefono}
+                    onChange={(e) => setRefTelefono(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="+56 9 1234 5678"
+                  />
+                </div>
+              </div>
+
+              {/* ---------- referido ---------- */}
+              <h3 className="mt-10 text-sm md:text-base uppercase tracking-[0.25em]">
+                DATOS DEL REFERIDO
+              </h3>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                  <input
+                    required
+                    value={cliNombre}
+                    onChange={(e) => setCliNombre(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="Nombre del referido"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                  <input
+                    required
+                    type="email"
+                    value={cliEmail}
+                    onChange={(e) => setCliEmail(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="correo@referido.com"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
+                  <input
+                    required
+                    value={cliTelefono}
+                    onChange={(e) => setCliTelefono(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="+56 9 1234 5678"
+                  />
+                </div>
+              </div>
+
+              {/* ---------- preferencias ---------- */}
+              <h3 className="mt-10 text-sm md:text-base uppercase tracking-[0.25em]">
+                PREFERENCIAS DEL REFERIDO
+              </h3>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                {/* servicio */}
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita? *</label>
+                  <SmartSelect
+                    options={SERVICIOS}
+                    value={servicio}
+                    onChange={setServicio}
+                    placeholder="Seleccionar o escribir…"
+                    className="w-full"
+                  />
+                </div>
+
+                {/* tipo propiedad */}
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad *</label>
+                  <SmartSelect
+                    options={TIPO_PROPIEDAD}
+                    value={tipoProp}
+                    onChange={setTipoProp}
+                    placeholder="Seleccionar o escribir…"
+                    className="w-full"
+                  />
+                </div>
+
+                {/* región */}
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">Región *</label>
+                  <SmartSelect
+                    options={REGIONES_UI as string[]}
+                    value={regionRef}
+                    onChange={(v) => {
+                      setRegionRef(v);
+                      setComunaRef('');
+                    }}
+                    placeholder="Seleccionar o escribir…"
+                    className="w-full"
+                  />
+                </div>
+
+                {/* comuna */}
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">Comuna *</label>
+                  <SmartSelect
+                    options={comunaOpts}
+                    value={comunaRef}
+                    onChange={setComunaRef}
+                    placeholder={regionRef ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
+                    disabled={!regionRef || comunaOpts.length === 0}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* precio */}
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">Precio mínimo (UF) *</label>
+                  <input
+                    required
+                    inputMode="numeric"
+                    value={precioMin}
+                    onChange={(e) => setPrecioMin(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-700 mb-1">Precio máximo (UF) *</label>
+                  <input
+                    required
+                    inputMode="numeric"
+                    value={precioMax}
+                    onChange={(e) => setPrecioMax(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="0"
+                  />
+                </div>
+
+                {/* contexto adicional (NO requerido) */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-slate-700 mb-1">Contexto adicional</label>
+                  <textarea
+                    rows={4}
+                    value={comentarios}
+                    onChange={(e) => setComentarios(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="Cualquier información adicional que pueda ser útil…"
+                  />
+                </div>
+              </div>
+
+              {/* botón enviar (sin texto abajo) */}
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="submit"
+                  disabled={!isValid}
+                  className={`inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none transition ${
+                    !isValid ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-95'
+                  }`}
+                  style={{
+                    boxShadow:
+                      'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                  }}
+                >
+                  <Gift className="h-4 w-4" /> Enviar referido
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </section>
