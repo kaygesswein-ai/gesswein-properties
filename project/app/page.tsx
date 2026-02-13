@@ -1,479 +1,712 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Megaphone,
-  LineChart,
-  Building2,
-  Gavel,
+  ChevronLeft,
+  ChevronRight,
+  Bed,
+  ShowerHead,
   Ruler,
-  ClipboardList,
-  TrendingUp,
+  Gift,
+  Car,
+  Square,
 } from 'lucide-react';
+import useUf from '../hooks/useUf';
+import SmartSelect from '../components/SmartSelect';
 
-/** =========================================================
- *  Página de Servicios — coherente con Inicio y Propiedades
- *  ========================================================= */
-export default function ServiciosPage() {
+/* ------------------------------------------------------------------ */
+/*                               TIPOS                                */
+/* ------------------------------------------------------------------ */
+type Property = {
+  id: string;
+  titulo?: string;
+  comuna?: string;
+  operacion?: 'venta' | 'arriendo';
+  tipo?: string;
+  precio_uf?: number | null;
+  precio_clp?: number | null;
+  dormitorios?: number | null;
+  banos?: number | null;
+  estacionamientos?: number | null;
+  superficie_util_m2?: number | null;
+  superficie_terreno_m2?: number | null;
+  imagenes?: string[];
+  images?: string[];
+  coverImage?: string;
+  destacada?: boolean;
+
+  // pueden venir o no en el listado
+  portada_url?: string | null;
+  portada_fija_url?: string | null;
+};
+
+/* ------------------------------------------------------------------ */
+/*                             UTILIDADES                             */
+/* ------------------------------------------------------------------ */
+const fmtUF = (n: number) =>
+  `UF ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`;
+const fmtCLP = (n: number) =>
+  `$ ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`;
+
+const fmtPrecioFallback = (pUf?: number | null, pClp?: number | null) =>
+  typeof pUf === 'number' && pUf > 0
+    ? fmtUF(pUf)
+    : typeof pClp === 'number' && pClp > 0
+      ? fmtCLP(pClp)
+      : 'Consultar';
+
+const capFirst = (s?: string | null) => {
+  if (!s) return '';
+  const lower = s.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+};
+
+/* capitaliza cada palabra (“las condes” → “Las Condes”) */
+const capWords = (s?: string | null) =>
+  (s ?? '')
+    .split(' ')
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : ''))
+    .join(' ')
+    .trim();
+
+const HERO_FALLBACK =
+  'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
+
+/* ✅ PRIORIDAD de portada */
+function getHeroImage(p?: Partial<Property>) {
+  if (!p) return HERO_FALLBACK;
+  const anyP: any = p;
+  const cand: (string | undefined | null)[] = [
+    p.portada_url,
+    p.portada_fija_url,
+    p.coverImage,
+    anyP.imagen,
+    anyP.image,
+    anyP.foto,
+    p.images?.[0],
+    p.imagenes?.[0],
+  ];
+  const src = cand.find((s) => typeof s === 'string' && s.trim().length > 4);
+  return (src as string) || HERO_FALLBACK;
+}
+
+/* ------------------------------------------------------------------ */
+/*                 REGIONES (solo para el formulario)                  */
+/* ------------------------------------------------------------------ */
+const REGIONES_UI: readonly string[] = [
+  'XV - Arica y Parinacota',
+  'I - Tarapacá',
+  'II - Antofagasta',
+  'III - Atacama',
+  'IV - Coquimbo',
+  'V - Valparaíso',
+  'RM - Región Metropolitana de Santiago',
+  'VI - Libertador General Bernardo O’Higgins',
+  'VII - Maule',
+  'XVI - Ñuble',
+  'VIII - Biobío',
+  'IX - La Araucanía',
+  'XIV - Los Ríos',
+  'X - Los Lagos',
+  'XI - Aysén',
+  'XII - Magallanes y la Antártica Chilena',
+];
+
+/* 🔹 Comunas por región para habilitar el selector */
+const COMUNAS_UI: Record<string, string[]> = {
+  'RM - Región Metropolitana de Santiago': [
+    'Las Condes',
+    'Vitacura',
+    'Lo Barnechea',
+    'Providencia',
+    'Santiago',
+    'Ñuñoa',
+    'La Reina',
+    'Huechuraba',
+    'La Florida',
+    'Maipú',
+    'Puente Alto',
+    'Colina',
+    'Lampa',
+    'Talagante',
+    'Peñalolén',
+    'Macul',
+  ],
+  'V - Valparaíso': [
+    'Casablanca',
+    'Viña del Mar',
+    'Valparaíso',
+    'Concón',
+    'Quilpué',
+    'Villa Alemana',
+    'Limache',
+    'Olmué',
+  ],
+  // Puedes ir agregando más regiones/comunas cuando quieras
+};
+
+const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
+const TIPO_PROPIEDAD = ['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'];
+
+/* ------------------------------------------------------------------ */
+/*                              HOME PAGE                             */
+/* ------------------------------------------------------------------ */
+export default function HomePage() {
+  const [destacadas, setDestacadas] = useState<Property[]>([]);
+  const [i, setI] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 🔹 cache con portadas traídas por id (hidratación)
+  const [detailById, setDetailById] = useState<
+    Record<string, { portada_url?: string | null; portada_fija_url?: string | null }>
+  >({});
+
+  const priceBoxRef = useRef<HTMLDivElement | null>(null);
+  const verMasRef = useRef<HTMLAnchorElement | null>(null);
+
+  /* ---------- fetch propiedades destacadas ---------- */
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/propiedades?destacada=true&limit=6', { cache: 'no-store' });
+        const j = await res.json().catch(() => null);
+        if (!mounted) return;
+        const data: Array<Property> = Array.isArray(j?.data) ? j.data : [];
+        const fixed = data.map((p) =>
+          (p.precio_uf ?? 0) <= 0 && (p.precio_clp ?? 0) <= 0 ? { ...p, precio_uf: 2300 } : p
+        );
+        setDestacadas(fixed);
+      } catch {
+        if (mounted) setDestacadas([]);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  /* ---------- HIDRATAR portadas por id si no vinieron en el listado ---------- */
+  useEffect(() => {
+    const need = destacadas
+      .filter((p) => !(p.portada_url || p.portada_fija_url))
+      .map((p) => p.id)
+      .filter((id) => !detailById[id]);
+
+    if (need.length === 0) return;
+
+    let cancel = false;
+    (async () => {
+      for (const id of need) {
+        try {
+          const r = await fetch(`/api/propiedades/${encodeURIComponent(id)}`, { cache: 'no-store' });
+          const j = await r.json().catch(() => null);
+          const d = j?.data || j || {};
+          const portada_url = d?.portada_url || null;
+          const portada_fija_url = d?.portada_fija_url || null;
+          if (cancel) return;
+          setDetailById((prev) => ({ ...prev, [id]: { portada_url, portada_fija_url } }));
+        } catch {
+          /* ignore */
+        }
+      }
+    })();
+
+    return () => {
+      cancel = true;
+    };
+  }, [destacadas, detailById]);
+
+  /* ---------- autoplay con “reset” al navegar manual ---------- */
+  const startAutoplay = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setI((p) => (p + 1) % Math.max(destacadas.length, 1)), 5000);
+  };
+  useEffect(() => {
+    if (!destacadas.length) return;
+    startAutoplay();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [destacadas.length]);
+
+  const go = (dir: -1 | 1) => {
+    if (!destacadas.length) return;
+    setI((p) => {
+      const n = destacadas.length;
+      return ((p + dir) % n + n) % n;
+    });
+    // reset del temporizador al navegar manual
+    startAutoplay();
+  };
+
+  /* ---------- teclado: flechas izquierda/derecha ---------- */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') go(1);
+      else if (e.key === 'ArrowLeft') go(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [destacadas.length]);
+
+  /* ---------- touch swipe ---------- */
+  const touchStartX = useRef<number | null>(null);
+  const touchDeltaX = useRef(0);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchDeltaX.current = 0;
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current !== null) {
+      touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+    }
+  };
+  const onTouchEnd = () => {
+    const dx = touchDeltaX.current;
+    if (Math.abs(dx) > 50) {
+      dx < 0 ? go(1) : go(-1);
+    }
+    touchStartX.current = null;
+    touchDeltaX.current = 0;
+    if (destacadas.length) startAutoplay();
+  };
+
+  /* ---------- hero data ---------- */
+  const active = destacadas[i];
+  // mezcla el detalle hidratado si existe
+  const enrichedActive = active ? { ...active, ...(detailById[active.id] || {}) } : undefined;
+  const bg = useMemo(() => getHeroImage(enrichedActive), [enrichedActive]);
+
+  const lineaSecundaria = [
+    capWords(active?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
+    capFirst(active?.tipo),
+    capFirst(active?.operacion),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  const ufHoy = useUf();
+  const precioUfHero =
+    typeof active?.precio_uf === 'number' && active.precio_uf > 0
+      ? Math.round(active.precio_uf)
+      : active?.precio_clp && ufHoy
+        ? Math.round(active.precio_clp / ufHoy)
+        : 0;
+
+  const precioClpHero =
+    typeof active?.precio_clp === 'number' && active.precio_clp > 0
+      ? Math.round(active.precio_clp)
+      : active?.precio_uf && ufHoy
+        ? Math.round(active.precio_uf * ufHoy)
+        : 0;
+
+  /* ---------- sincronizar alto del botón ---------- */
+  useEffect(() => {
+    const sync = () => {
+      const h = priceBoxRef.current?.offsetHeight;
+      if (verMasRef.current && h) {
+        verMasRef.current.style.height = `${h}px`;
+        verMasRef.current.style.display = 'inline-flex';
+        verMasRef.current.style.alignItems = 'center';
+        verMasRef.current.style.justifyContent = 'center';
+        verMasRef.current.style.padding = '0 16px';
+      }
+    };
+    sync();
+    let ro: ResizeObserver | null = null;
+    if ('ResizeObserver' in window) {
+      ro = new ResizeObserver(sync);
+      if (priceBoxRef.current) ro.observe(priceBoxRef.current);
+    }
+    return () => {
+      try {
+        ro?.disconnect();
+      } catch {}
+    };
+  }, [active]);
+
+  const dash = '—';
+  const fmtInt = (n: number | null | undefined) =>
+    typeof n === 'number' ? new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n) : dash;
+
+  /* ================== ESTADO SOLO PARA REGION/COMUNA (FORM) ================== */
+  const [regionRef, setRegionRef] = useState('');
+  const [comunaRef, setComunaRef] = useState('');
+  const comunaOpts = regionRef ? COMUNAS_UI[regionRef] || [] : [];
+
+  /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
+      {/* ================= HERO ================= */}
+      {/* 🚫 NO TOCAR CARRUSEL */}
+      <section
+        className="relative w-full overflow-hidden isolate"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <div className="absolute inset-0 -z-10 bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }} />
+        <div className="absolute inset-0 -z-10 bg-black/35" />
 
-      {/* ================= HERO (igual a Propiedades) ================= */}
-      <section className="relative min-h-[100svh]">
-        <img
-          src="https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Servicios%20-%20OPTIMIZADA.jpeg"
-          alt="Portada Servicios"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '50% 35%' }}
-        />
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="absolute bottom-6 left-0 right-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="pl-2 sm:pl-4">
-              <div className="max-w-3xl">
-                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
-                  SERVICIOS
-                </h1>
-                <p className="text-white/85 mt-2">
-                  Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
-                  con la mejor experiencia y resultados.
-                </p>
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
+          <div className="w-full">
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
+              <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{active?.titulo ?? 'Propiedad destacada'}</h1>
+              <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
+
+              {/* ---------- Tiles ---------- */}
+              <div className="mt-4">
+                <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
+                  {[
+                    { icon: <Bed className="h-5 w-5 text-[#6C819B]" />, v: active?.dormitorios },
+                    { icon: <ShowerHead className="h-5 w-5 text-[#6C819B]" />, v: active?.banos },
+                    { icon: <Car className="h-5 w-5 text-[#6C819B]" />, v: active?.estacionamientos },
+                    { icon: <Ruler className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_util_m2) },
+                    { icon: <Square className="h-5 w-5 text-[#6C819B]" />, v: fmtInt(active?.superficie_terreno_m2) },
+                  ].map((t, idx) => (
+                    <div
+                      key={idx}
+                      className={`${
+                        idx < 4 ? 'border-r border-slate-200 ' : ''
+                      } flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]`}
+                    >
+                      {t.icon}
+                      <span className="text-sm text-slate-800 leading-none">{(t as any).v ?? dash}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {/* ---------- Botón + precio ---------- */}
+              <div className="mt-4 flex items-end gap-3">
+                {active?.id && (
+                  <Link
+                    ref={verMasRef}
+                    href={`/propiedades/${active.id}`}
+                    className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+                    style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
+                  >
+                    Ver más
+                  </Link>
+                )}
+
+                <div ref={priceBoxRef} className="ml-auto text-right">
+                  <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
+                    {precioUfHero ? fmtUF(precioUfHero) : fmtPrecioFallback(active?.precio_uf, active?.precio_clp)}
+                  </div>
+                  {precioClpHero > 0 && (
+                    <div className="text-sm md:text-base text-slate-600 mt-[2px]">{fmtCLP(precioClpHero)}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {destacadas.length > 1 && (
+            <>
+              <button
+                aria-label="Anterior"
+                onClick={() => go(-1)}
+                className="group absolute left-4 md:left-6 top-1/2 -translate-y-1/2 p-2"
+              >
+                <ChevronLeft className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
+              </button>
+              <button
+                aria-label="Siguiente"
+                onClick={() => go(1)}
+                className="group absolute right-4 md:right-6 top-1/2 -translate-y-1/2 p-2"
+              >
+                <ChevronRight className="h-8 w-8 stroke-white/80 group-hover:stroke-white" />
+              </button>
+            </>
+          )}
+
+          {destacadas.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              {destacadas.map((_, idx) => (
+                <span key={idx} className={`h-1.5 w-6 rounded-full ${i === idx ? 'bg-white' : 'bg-white/50'}`} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ================= ¿POR QUÉ GESSWEIN PROPERTIES? ================= */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="pl-2 sm:pl-4 max-w-4xl">
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
+              ¿Por qué Gesswein Properties?
+            </h2>
+
+            {/* ✅ texto placeholder para que lo reemplaces por tu discurso */}
+            <p className="text-black/70 text-[14px] leading-relaxed">
+              Aquí va tu discurso de venta para diferenciarte y destacarte de la competencia.
+              Puedes explicar tu enfoque boutique, el rigor técnico (arquitectura, legal, finanzas),
+              la comunicación estratégica, la estética y el estándar de ejecución.
+            </p>
+
+            <div className="mt-8">
+              <Link
+                href="/servicios"
+                className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+              >
+                Ver más
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= (MOVIDO AL INICIO) PROCESO — LÍNEA DE TIEMPO ================= */}
-      <section className="py-20 bg-white">
+      {/* ================= OPORTUNIDADES EXCLUSIVAS ================= */}
+      <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="pl-2 sm:pl-4 max-w-4xl mb-12">
+          <div className="pl-2 sm:pl-4 max-w-4xl">
             <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-              Un proceso claro y transparente
+              Oportunidades Exclusivas
             </h2>
+
+            {/* ✅ texto placeholder */}
             <p className="text-black/70 text-[14px] leading-relaxed">
-              Estructuramos nuestro proceso en etapas cuidadosamente diseñadas, aplicables de manera transversal a cada servicio, garantizando una experiencia coherente, transparente y de excelencia en todos nuestros proyectos.
+              Presenta aquí qué significa “Oportunidades Exclusivas” (off-market, acceso anticipado,
+              oportunidades curadas, mandato directo, etc.) y por qué es valioso para el cliente.
+            </p>
+
+            <div className="mt-8">
+              <Link
+                href="/oportunidades-exclusivas"
+                className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+              >
+                Ver más
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= REFERIDOS (REDISEÑADO) ================= */}
+      <section id="referidos" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header estilo “Servicios” */}
+          <div className="pl-2 sm:pl-4 max-w-4xl">
+            <div className="inline-flex items-center gap-3">
+              <span className="h-10 w-10 border border-black/10 bg-[#F9FAFB] flex items-center justify-center">
+                <Gift className="h-5 w-5 text-[#0A2E57]" />
+              </span>
+              <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
+                Programa de Referidos
+              </h2>
+            </div>
+
+            <p className="mt-4 text-black/70 text-[14px] leading-relaxed">
+              ¿Conoces a alguien que busca propiedad? Refiérelo y accede a beneficios exclusivos.
+              Completa los datos y nuestro equipo hará el seguimiento con el estándar Gesswein Properties.
             </p>
           </div>
 
-          {/* DESKTOP / TABLET — NO TOCAR */}
-          <div className="hidden sm:block relative">
-            <div className="absolute left-[5%] right-[5%] top-8 h-px bg-[#0A2E57]/30" />
-            <div className="grid grid-cols-4 gap-8 text-center">
-              {PROCESO.map((p, i) => (
-                <div key={p.title} className="pt-10">
-                  <span className="mx-auto -mt-7 mb-5 block h-2 w-2 bg-[#0A2E57] ring-2 ring-[#0A2E57]/25" />
-                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                    Paso {i + 1}
-                  </div>
-                  <h3 className="mt-1 text-[14px] text-black/90">{p.title}</h3>
-                  <p className="mt-2 text-[13px] text-black/70 leading-relaxed max-w-[260px] mx-auto">
-                    {p.text}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Contenedor del formulario (estética GP) */}
+          <div className="mt-10 pl-2 sm:pl-4">
+            <div className="border border-slate-200 bg-white shadow-sm">
+              <div className="p-6 sm:p-8">
+                {/* Grid de “bloques” al estilo servicios */}
+                <div className="grid gap-6 lg:grid-cols-3">
+                  {/* Bloque 1: Referente */}
+                  <div className="border border-black/10 bg-[#F9FAFB] p-5">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                      Tus datos
+                    </div>
+                    <h3 className="mt-1 text-[14px] text-black/90">Referente</h3>
 
-          {/* MÓVIL — sin puntos, misma línea vertical y tipografía */}
-          <div className="sm:hidden relative pl-8">
-            <div className="absolute left-3 top-0 bottom-0 w-px bg-[#0A2E57]/25" />
-            <ol className="flex flex-col gap-8">
-              {PROCESO.map((p, i) => (
-                <li key={p.title} className="relative">
-                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase ml-1">
-                    Paso {i + 1}
+                    <div className="mt-4 grid gap-4">
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">Nombre completo *</label>
+                        <input
+                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
+                          placeholder="Tu nombre completo"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">Email *</label>
+                        <input
+                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
+                          placeholder="tu@email.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">Teléfono</label>
+                        <input
+                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
+                          placeholder="+56 9 1234 5678"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="mt-1 text-[14px] text-black/90">{p.title}</h3>
-                  <p className="mt-1 text-[13px] text-black/70 leading-relaxed">
-                    {p.text}
-                  </p>
-                </li>
-              ))}
-            </ol>
+
+                  {/* Bloque 2: Referido */}
+                  <div className="border border-black/10 bg-[#F9FAFB] p-5">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                      Datos del cliente
+                    </div>
+                    <h3 className="mt-1 text-[14px] text-black/90">Referido</h3>
+
+                    <div className="mt-4 grid gap-4">
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">Nombre completo *</label>
+                        <input
+                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
+                          placeholder="Nombre del referido"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">Email *</label>
+                        <input
+                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
+                          placeholder="correo@referido.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">Teléfono</label>
+                        <input
+                          className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
+                          placeholder="+56 9 1234 5678"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bloque 3: Preferencias */}
+                  <div className="border border-black/10 bg-[#F9FAFB] p-5">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                      Preferencias
+                    </div>
+                    <h3 className="mt-1 text-[14px] text-black/90">Lo que necesita</h3>
+
+                    <div className="mt-4 grid gap-4">
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">¿Qué servicio necesita?</label>
+                        <SmartSelect
+                          options={SERVICIOS}
+                          value={''}
+                          onChange={() => {}}
+                          placeholder="Seleccionar o escribir…"
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">Tipo de propiedad</label>
+                        <SmartSelect
+                          options={TIPO_PROPIEDAD}
+                          value={''}
+                          onChange={() => {}}
+                          placeholder="Seleccionar o escribir…"
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">Región</label>
+                        <SmartSelect
+                          options={REGIONES_UI as string[]}
+                          value={regionRef}
+                          onChange={(v) => {
+                            setRegionRef(v);
+                            setComunaRef('');
+                          }}
+                          placeholder="Seleccionar o escribir…"
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[13px] text-black/70 mb-1">Comuna</label>
+                        <SmartSelect
+                          options={comunaOpts}
+                          value={comunaRef}
+                          onChange={setComunaRef}
+                          placeholder={regionRef ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
+                          disabled={!regionRef || comunaOpts.length === 0}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[13px] text-black/70 mb-1">Presupuesto mínimo (UF)</label>
+                          <input
+                            inputMode="numeric"
+                            className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[13px] text-black/70 mb-1">Presupuesto máximo (UF)</label>
+                          <input
+                            inputMode="numeric"
+                            className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Comentarios + CTA */}
+                <div className="mt-6 grid gap-6 lg:grid-cols-3">
+                  <div className="lg:col-span-2 border border-black/10 bg-white p-5">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                      Contexto adicional
+                    </div>
+                    <h3 className="mt-1 text-[14px] text-black/90">Comentarios</h3>
+
+                    <div className="mt-4">
+                      <textarea
+                        rows={5}
+                        className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
+                        placeholder="Cualquier información adicional que pueda ser útil…"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border border-black/10 bg-white p-5 flex flex-col">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                      Enviar
+                    </div>
+                    <h3 className="mt-1 text-[14px] text-black/90">Confirmación</h3>
+
+                    <p className="mt-3 text-[13px] text-black/70 leading-relaxed">
+                      Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de privacidad.
+                    </p>
+
+                    <div className="mt-auto pt-5">
+                      <button
+                        type="button"
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-[12px] uppercase tracking-[.25em] text-white bg-[#0A2E57] rounded-none hover:bg-[#0E2C4A] transition"
+                        style={{
+                          boxShadow:
+                            'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                        }}
+                      >
+                        <Gift className="h-4 w-4" /> Enviar referido
+                      </button>
+
+                      <p className="mt-3 text-center text-[12px] text-black/50 leading-relaxed">
+                        Responderemos a la brevedad.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </div>
         </div>
       </section>
-
-      {/* ================= NUEVA SECCIÓN: SERVICIOS GESSWEIN PROPERTIES ================= */}
-      <ServiciosEtapasSeccion />
     </main>
   );
 }
-
-/* ============================================================================
- *  SECCIÓN “Servicios Gesswein Properties”
- *  - Dos bloques con cards interactivas
- *  - Overlay que sube desde abajo y, al clic, EXPANDE a toda la foto con el detalle
- * ========================================================================== */
-function ServiciosEtapasSeccion() {
-  // índice de card expandida (full overlay). null = ninguna
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
-
-  // cerrar al presionar Escape (accesibilidad)
-  useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setExpandedIdx(null); };
-    window.addEventListener('keydown', onEsc);
-    return () => window.removeEventListener('keydown', onEsc);
-  }, []);
-
-  return (
-    <section className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {/* Header sección */}
-        <header className="pl-2 sm:pl-4 max-w-4xl">
-          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
-            Servicios Gesswein Properties
-          </h2>
-
-          {/* Línea 1 */}
-          <p className="text-black/70 text-[14px] leading-relaxed mt-3">
-            Dominamos cada etapa del proceso inmobiliario — desde la estrategia patrimonial hasta la gestión y
-            valorización del activo, con el fin de acompañarte en cada decisión y ser el sustento que necesitas
-            para llevar a cabo tu inversión y tu proyecto de vida.
-          </p>
-
-          {/* Línea 2 */}
-          <p className="text-black/70 text-[14px] leading-relaxed mt-2">
-            Nuestros servicios se agrupan en dos áreas complementarias: Gestión del Activo Inmobiliario y
-            Gestión Patrimonial & Familiar.
-          </p>
-
-          {/* Nota editorial */}
-          <div className="mt-6 border border-black/10 bg-[#F9FAFB] text-black/70 text-[13px] leading-relaxed p-4 italic">
-            Cada servicio forma parte de una cadena integral que cubre todo el ciclo inmobiliario.<br />
-            Podemos ejecutarlos de manera independiente o combinada, diseñando la solución que mejor se adapta a tus
-            objetivos, tu momento y tu inversión.
-          </div>
-        </header>
-
-        {/* ======= BLOQUE I ======= */}
-        <div className="mt-12 pl-2 sm:pl-4">
-          <div className="text-[#0A2E57] text-[13px] tracking-[.25em] uppercase">
-            Gestión del Activo Inmobiliario
-          </div>
-          <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
-            Cuidamos cada detalle del activo físico: su valor, su potencial y su expresión arquitectónica.
-          </p>
-        </div>
-
-        <CardsGrid
-          cards={ACTIVO_CARDS}
-          expandedIdx={expandedIdx}
-          setExpandedIdx={setExpandedIdx}
-          cols={{ md: 2, xl: 3 }}
-          className="mt-8"
-        />
-
-        {/* ======= BLOQUE II ======= */}
-        <div className="mt-16 pl-2 sm:pl-4">
-          <div className="text-[#0A2E57] text-[13px] tracking-[.25em] uppercase">
-            Gestión Patrimonial & Familiar
-          </div>
-          <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
-            Acompañamos a las personas y familias detrás de cada inversión, con visión financiera, legal y humana.
-          </p>
-        </div>
-
-        <CardsGrid
-          cards={PATRIMONIAL_CARDS}
-          expandedIdx={expandedIdx}
-          setExpandedIdx={setExpandedIdx}
-          cols={{ md: 2, xl: 3 }}
-          className="mt-8"
-        />
-      </div>
-    </section>
-  );
-}
-
-/* ====== GRID DE CARDS (overlay desde abajo → full overlay al clic) ====== */
-function CardsGrid({
-  cards,
-  expandedIdx,
-  setExpandedIdx,
-  cols,
-  className = '',
-}: {
-  cards: ServiceCard[];
-  expandedIdx: number | null;
-  setExpandedIdx: (v: number | null) => void;
-  cols: { md: number; xl: number };
-  className?: string;
-}) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState<boolean[]>(Array(cards.length).fill(false));
-
-  // reveal on scroll
-  useEffect(() => {
-    const nodes = containerRef.current?.querySelectorAll('[data-card]') ?? [];
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            const idx = Number((e.target as HTMLElement).dataset.index);
-            setVisible((v) => {
-              const n = [...v];
-              n[idx] = true;
-              return n;
-            });
-          }
-        });
-      },
-      { threshold: 0.18, rootMargin: '0px 0px -10% 0px' }
-    );
-    nodes.forEach((n) => io.observe(n));
-    return () => io.disconnect();
-  }, [cards.length]);
-
-  const gridClass = [
-    'grid gap-6 xl:gap-8',
-    'grid-cols-1',
-    `md:grid-cols-${cols.md}`,
-    `xl:grid-cols-${cols.xl}`,
-  ].join(' ');
-
-  return (
-    <div ref={containerRef} className={`${gridClass} ${className}`}>
-      {cards.map((c, i) => {
-        const isExpanded = expandedIdx === i;
-
-        const toggle = () => setExpandedIdx(isExpanded ? null : i);
-
-        return (
-          <article
-            key={c.title}
-            data-card
-            data-index={i}
-            className={[
-              'group relative overflow-hidden border border-slate-200 bg-white shadow-sm select-none',
-              'transition transform',
-              'hover:-translate-y-[4px] hover:shadow-md',
-              visible[i] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
-            ].join(' ')}
-            style={{ transitionDuration: '600ms', transitionTimingFunction: 'ease-out' }}
-          >
-            {/* Imagen + click en cualquier parte */}
-            <div
-              className="relative aspect-[4/3] cursor-pointer"
-              onClick={toggle}
-            >
-              <img
-                src={c.img}
-                alt={c.title}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-
-              {/* Overlay: bottom sheet en hover → FULL overlay al clic */}
-              <div
-                className={[
-                  // base
-                  'absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-[1px] border-t border-black/10',
-                  // animación de entrada tipo "desde abajo"
-                  'translate-y-full opacity-0',
-                  'group-hover:translate-y-0 group-hover:opacity-100',
-                  'transition-[transform,opacity] duration-300 ease-out',
-                  // estado expandido: cubrir toda la foto
-                  isExpanded ? 'inset-0 !translate-y-0 !opacity-100 overflow-auto' : '',
-                ].join(' ')}
-              >
-                <div className="p-5 sm:p-6">
-                  {/* Título tipo kicker (se mantiene el mismo formato) */}
-                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                    {c.title}
-                  </div>
-
-                  {/* Resumen */}
-                  <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{c.summary}</p>
-
-                  {/* Detalle: SOLO visible cuando está expandido (dentro de la misma card) */}
-                  <div
-                    className={[
-                      'overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
-                      isExpanded ? 'max-h-[560px] opacity-100 mt-3' : 'max-h-0 opacity-0',
-                    ].join(' ')}
-                  >
-                    <ul className="space-y-1.5 text-[13px] text-black/80 leading-relaxed">
-                      {c.details.map((it) => (
-                        <li key={it} className="pl-3 relative">
-                          <span className="absolute left-0 top-[9px] h-[5px] w-[5px] bg-[#0A2E57]" />
-                          {it}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* CTA: Ver más → Cerrar (toggle) */}
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); toggle(); }}
-                      className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
-                    >
-                      {isExpanded ? 'Cerrar' : 'Ver más'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ====================== TIPOS Y DATOS ====================== */
-type ServiceCard = {
-  kicker: string;
-  title: string;
-  summary: string;
-  details: string[];
-  img: string;
-};
-
-/* BLOQUE I — Gestión del Activo Inmobiliario (5 cards) */
-const ACTIVO_CARDS: ServiceCard[] = [
-  {
-    kicker: 'Compra-Venta',
-    title: 'Compra-venta de propiedades',
-    summary:
-      'Acompañamos todo el proceso de compra o venta, desde la búsqueda hasta el cierre, con estrategia y control absoluto.',
-    details: [
-      'Búsqueda on/off market y análisis comparativo de mercado (ACM)',
-      'Tasación, due diligence técnica y legal',
-      'Negociación de oferta y condiciones comerciales',
-      'Firma notarial e inscripción del título de propiedad en el Conservador de Bienes Raíces',
-      'Control documental y seguimiento post-cierre',
-      'Estrategia de venta con storytelling visual y gestión comercial premium',
-    ],
-    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Compra-venta.jpeg',
-  },
-  {
-    kicker: 'Arriendos',
-    title: 'Arriendos y gestión integral',
-    summary:
-      'Buscamos o administramos tu propiedad en arriendo, con un enfoque personalizado y financiero.',
-    details: [
-      'Búsqueda de propiedades de arriendo según tus necesidades',
-      'Asesoría contractual y negociación de condiciones',
-      'Scoring y selección de arrendatarios',
-      'Cobranza, reajustes, mantenciones y seguros',
-      'Administración integral con reportes mensuales',
-      'Estrategias de rentabilidad y control de flujos',
-    ],
-    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Depto.jpg',
-  },
-  {
-    kicker: 'Valoración',
-    title: 'Tasación y valoración inmobiliaria',
-    summary:
-      'Determinamos el valor real de tus activos con rigor profesional y enfoque integral de valorización.',
-    details: [
-      'Tasación de mercado, reposición y flujo descontado',
-      'Estudio normativo, entorno y plusvalía',
-      'Benchmark comparativo de zona y tendencias',
-      'Modelos financieros de valorización y sensibilidad',
-      'Informes técnicos con respaldo profesional y certificación',
-    ],
-    img: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1600&auto=format&fit=crop',
-  },
-  {
-    kicker: 'Arquitectura',
-    title: 'Arquitectura y remodelación',
-    summary:
-      'Desarrollamos proyectos arquitectónicos y remodelaciones integrales con control de calidad y diseño coherente.',
-    details: [
-      'Anteproyecto y diseño arquitectónico',
-      'Regularización y permisos municipales (DOM)',
-      'Remodelaciones parciales o integrales',
-      'Licitación y supervisión de contratistas',
-      'Gestión de plazos, costos y calidad',
-      'Recepción de obra y entrega llave en mano',
-    ],
-    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Arquitectura.jpg',
-  },
-  {
-    kicker: 'Interiores',
-    title: 'Diseño de interiores',
-    summary:
-      'Creamos espacios que combinan estética, funcionalidad y valorización patrimonial.',
-    details: [
-      'Diseño interior residencial o corporativo',
-      'Selección de materiales, mobiliario y luminarias',
-      'Propuesta estética alineada al perfil del cliente',
-      'Supervisión de implementación y detalles finales',
-      'Home staging para potenciar venta o arriendo',
-    ],
-    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/IMG_5373.jpeg',
-  },
-];
-
-/* BLOQUE II — Gestión Patrimonial & Familiar (3 cards) */
-const PATRIMONIAL_CARDS: ServiceCard[] = [
-  {
-    kicker: 'Asesoría integral',
-    title: 'Asesoría legal, tributaria y financiera',
-    summary:
-      'Estrategia personalizada que integra lo legal, tributario y financiero para optimizar tus decisiones inmobiliarias.',
-    details: [
-      'Diagnóstico patrimonial y análisis crediticio',
-      'Definición de la estructura jurídica ideal (natural, SpA, sociedad familiar)',
-      'Optimización tributaria y planificación sucesoria',
-      'Búsqueda y negociación de financiamiento con bancos o mutuarias',
-      'Estructuración de operaciones en UF o USD según perfil de riesgo',
-      'Estrategia de inversión y gestión de activos',
-    ],
-    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/job-5382501_1920.jpg',
-  },
-  {
-    kicker: 'Gestión continua',
-    title: 'Gestión activa y asesoría continua',
-    summary:
-      'Supervisamos tu portafolio inmobiliario de forma permanente, asegurando control, eficiencia y crecimiento sostenido.',
-    details: [
-      'Revisión de tasas y refinanciamiento hipotecario',
-      'Evaluación de ROI, flujos y rentas netas',
-      'Estrategias de reinversión o desinversión',
-      'Consolidación de deuda y proyección de valorización',
-      'Reportes anuales de performance inmobiliario',
-      'Planificación patrimonial y sucesoria familiar',
-    ],
-    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/Asesoria%20Continua.jpg',
-  },
-  {
-    kicker: 'Relocation',
-    title: 'Relocation & asesoría internacional',
-    summary:
-      'Acompañamos a familias, ejecutivos o embajadas en su instalación en Chile, gestionando un proceso llave en mano.',
-    details: [
-      'Búsqueda y adecuación de vivienda (compra o arriendo)',
-      'Remodelación, diseño y entrega lista para habitar',
-      'Coordinación con colegios, bancos y servicios',
-      'Asistencia legal y logística de instalación',
-      'Seguimiento post-arribo y gestión personalizada',
-    ],
-    img: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Servicios/move-2481718_1920.jpg',
-  },
-];
-
-/* ================= PROCESO (SE MANTIENE, SOLO SE MOVIÓ ARRIBA) ================= */
-const PROCESO = [
-  {
-    title: 'Alcance del Trabajo & Propuesta de servicios',
-    text: 'Iniciamos con una reunión personalizada y una evaluación detallada de los requerimientos, para luego presentar una propuesta de valor a medida, diseñada para reflejar las verdaderas necesidades y aspiraciones del cliente.',
-  },
-  {
-    title: 'Puesta en Marcha',
-    text: 'Transformamos los objetivos del cliente en un plan de acción concreto, definiendo cada etapa con precisión y poniendo en movimiento las gestiones necesarias para materializar su visión.',
-  },
-  {
-    title: 'Ejecución & Seguimiento',
-    text: 'Llevamos a cabo el plan definido, supervisando los avances y asegurando una comunicación constante con el cliente para garantizar alineación y resultados coherentes con sus expectativas.',
-  },
-  {
-    title: 'Cierre & Satisfacción',
-    text: 'Consolidamos los resultados, verificamos el cumplimiento de cada detalle y nos aseguramos de que la experiencia final refleje plenamente la calidad y excelencia que distinguen a nuestra firma.',
-  },
-] as const;
