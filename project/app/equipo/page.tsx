@@ -97,7 +97,7 @@ const TEAM_PRINCIPAL: Member[] = [
       'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera, due diligence y modelación en múltiples industrias a nivel nacional e internacional. Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo.',
     ],
     education: 'Ingeniería Comercial con Magíster en Finanzas, Universidad Adolfo Ibáñez.',
-    specialties: 'Análisis y valoración de activos · Due diligence.',
+    specialties: 'Análisis y valoración de activos · Due diligence · Estructuración de modelos de inversión',
     email: 'kaygesswein@gmail.com',
     phone: '+56 9 9334 5413',
     linkedin: 'https://www.linkedin.com/in/kay-gesswein-san-martin/',
