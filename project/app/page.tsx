@@ -338,7 +338,7 @@ export default function HomePage() {
   const [comunaRef, setComunaRef] = useState('');
   const comunaOpts = regionRef ? COMUNAS_UI[regionRef] || [] : [];
 
-  /* ================== FORM (REFERIDOS) — ESTADO + VALIDACIÓN ================== */
+  /* ================== REFERIDOS (FORM STATE) ================== */
   const [refNombre, setRefNombre] = useState('');
   const [refEmail, setRefEmail] = useState('');
   const [refTelefono, setRefTelefono] = useState('');
@@ -347,65 +347,39 @@ export default function HomePage() {
   const [cliEmail, setCliEmail] = useState('');
   const [cliTelefono, setCliTelefono] = useState('');
 
-  const [servicio, setServicio] = useState('');
+  const [servicioNeed, setServicioNeed] = useState('');
   const [tipoProp, setTipoProp] = useState('');
-  const [precioMin, setPrecioMin] = useState('');
-  const [precioMax, setPrecioMax] = useState('');
+
+  const [precioMinUf, setPrecioMinUf] = useState('');
+  const [precioMaxUf, setPrecioMaxUf] = useState('');
   const [comentarios, setComentarios] = useState('');
 
-  const [formError, setFormError] = useState<string>('');
+  const formRef = useRef<HTMLFormElement | null>(null);
 
-  const requiredOk =
-    refNombre.trim() &&
-    refEmail.trim() &&
-    refTelefono.trim() &&
-    cliNombre.trim() &&
-    cliEmail.trim() &&
-    cliTelefono.trim() &&
-    servicio.trim() &&
-    tipoProp.trim() &&
-    regionRef.trim() &&
-    comunaRef.trim() &&
-    String(precioMin).trim() &&
-    String(precioMax).trim();
-
-  function onSubmitReferido(e: React.FormEvent) {
+  function onSubmitReferidos(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setFormError('');
+    const form = e.currentTarget;
 
-    // Validación extra (SmartSelect no siempre respeta "required")
-    if (!requiredOk) {
-      setFormError('Por favor completa todos los campos obligatorios (*) antes de enviar.');
-      return;
-    }
-
-    // Validación numérica simple (UF)
-    const min = Number(String(precioMin).replace(/[^\d]/g, ''));
-    const max = Number(String(precioMax).replace(/[^\d]/g, ''));
-    if (!Number.isFinite(min) || !Number.isFinite(max)) {
-      setFormError('Revisa los valores de Precio mínimo y Precio máximo (UF).');
-      return;
-    }
-    if (min <= 0 || max <= 0) {
-      setFormError('Precio mínimo y máximo deben ser mayores que 0.');
-      return;
-    }
-    if (min > max) {
-      setFormError('El Precio mínimo (UF) no puede ser mayor que el Precio máximo (UF).');
+    // Validación nativa (incluye required de inputs + hidden required para SmartSelect)
+    if (!form.checkValidity()) {
+      form.reportValidity();
       return;
     }
 
-    // TODO: aquí puedes conectar API / envío real.
-    // Por ahora, solo limpiamos el error (y podrías mostrar un toast).
-    setFormError('');
-    // console.log({ refNombre, refEmail, refTelefono, cliNombre, cliEmail, cliTelefono, servicio, tipoProp, regionRef, comunaRef, precioMin: min, precioMax: max, comentarios });
+    // Aquí luego conectas tu endpoint.
+    // Por ahora no hacemos nada (solo mantenemos el formato y las validaciones).
   }
+
+  /* ================== IMÁGENES SECCIONES NUEVAS ================== */
+  const WHY_IMG =
+    'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1600&auto=format&fit=crop';
+  const OPPS_IMG =
+    'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?q=80&w=1600&auto=format&fit=crop';
 
   /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
-      {/* ================= HERO ================= */}
-      {/* ✅ NO TOCAR CARRUSEL */}
+      {/* ================= HERO (NO TOCAR) ================= */}
       <section
         className="relative w-full overflow-hidden isolate"
         onTouchStart={onTouchStart}
@@ -495,116 +469,115 @@ export default function HomePage() {
           )}
         </div>
       </section>
-      {/* ✅ FIN CARRUSEL */}
 
-      {/* ================= ¿POR QUÉ GESSWEIN PROPERTIES? ================= */}
+      {/* ================= ¿POR QUÉ GESSWEIN PROPERTIES? (VOLVER AL FORMATO “FOTO 2”) ================= */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid gap-8 md:grid-cols-2 items-stretch">
+          <div className="grid gap-10 md:grid-cols-2 items-stretch">
+            {/* Texto */}
             <div className="md:order-1 order-2">
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
                 ¿Por qué Gesswein Properties?
               </h2>
+
+              {/* Placeholder (tú lo cambias después) */}
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
                 <p>
-                  (Texto placeholder) Aquí va tu discurso de venta: boutique real estate, rigor técnico, diseño,
-                  negociación y ejecución impecable en cada etapa del proceso.
+                  (Texto placeholder) Aquí va tu discurso de venta: cómo trabajas, en qué te diferencias, por qué el
+                  estándar boutique, el rigor técnico y la experiencia integral cambian el resultado.
                 </p>
                 <p>
-                  (Texto placeholder) Diferenciadores: metodología, estética, datos, red, off-market, due diligence,
-                  comunicación y estándar premium.
+                  (Texto placeholder) Puedes reforzar método, transparencia, estética y ejecución comercial — y explicar
+                  por qué eso genera mejor precio, mejor proceso y mejor experiencia.
                 </p>
               </div>
 
               <div className="mt-8">
                 <Link
                   href="/servicios"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+                  className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
                 >
                   Ver más
                 </Link>
               </div>
             </div>
 
+            {/* Imagen */}
             <div className="md:order-2 order-1">
               <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
-                <img
-                  src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop"
-                  alt="Gesswein Properties — Por qué"
-                  className="w-full h-full object-cover"
-                />
+                <img src={WHY_IMG} alt="¿Por qué Gesswein Properties?" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= OPORTUNIDADES EXCLUSIVAS ================= */}
+      {/* ================= OPORTUNIDADES EXCLUSIVAS (MISMO FORMATO “FOTO 2” + FONDO GRIS) ================= */}
       <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid gap-8 md:grid-cols-2 items-stretch">
-            <div className="md:order-2 order-2">
+          <div className="grid gap-10 md:grid-cols-2 items-stretch">
+            {/* Texto */}
+            <div className="md:order-1 order-2">
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
                 Oportunidades Exclusivas
               </h2>
+
+              {/* Placeholder (tú lo cambias después) */}
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
                 <p>
-                  (Texto placeholder) Qué son: oportunidades off-market / curadas, con análisis y acceso preferente.
+                  (Texto placeholder) Explica qué son las oportunidades exclusivas: acceso temprano, propiedades curadas,
+                  condiciones especiales, oportunidades off-market, etc.
                 </p>
                 <p>
-                  (Texto placeholder) Para quién: clientes que buscan algo específico, timing, o inversión con criterio.
+                  (Texto placeholder) Puedes agregar cómo se accede, qué tipo de activo incluye, y por qué esto le
+                  conviene al cliente.
                 </p>
               </div>
 
               <div className="mt-8">
                 <Link
                   href="/oportunidades-exclusivas"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
+                  className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
                 >
                   Ver más
                 </Link>
               </div>
             </div>
 
-            <div className="md:order-1 order-1">
-              <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
-                <img
-                  src="https://images.unsplash.com/photo-1560185127-6a8c0b00b7a1?q=80&w=1600&auto=format&fit=crop"
-                  alt="Gesswein Properties — Oportunidades"
-                  className="w-full h-full object-cover"
-                />
+            {/* Imagen */}
+            <div className="md:order-2 order-1">
+              <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10 bg-white">
+                <img src={OPPS_IMG} alt="Oportunidades Exclusivas" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= REFERIDOS (FORMATO FOTO 2) ================= */}
+      {/* ================= REFERIDOS (VOLVER AL FORMATO “FOTO 2” + ENVIAR COMO “FOTO 3”) ================= */}
       <section id="referidos" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           {/* Header */}
-          <div className="pl-2 sm:pl-4 max-w-4xl">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
-                <Gift className="h-5 w-5 text-[#0A2E57]" />
-              </div>
-              <div>
-                <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
-                  Programa de Referidos
-                </h2>
-                <p className="mt-2 text-black/70 text-[14px] leading-relaxed">
-                  ¿Conoces a alguien que busca propiedad? Refiérelo y accede a beneficios exclusivos. Completa los
-                  datos y nuestro equipo hará el seguimiento con el estándar Gesswein Properties.
-                </p>
-              </div>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
+              <Gift className="h-5 w-5 text-[#0A2E57]" />
+            </div>
+            <div className="max-w-3xl">
+              <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
+                Programa de Referidos
+              </h2>
+              <p className="mt-2 text-[14px] text-black/70 leading-relaxed">
+                ¿Conoces a alguien que busca propiedad? Refiérelo y accede a beneficios exclusivos. Completa los datos y
+                nuestro equipo hará el seguimiento con el estándar Gesswein Properties.
+              </p>
             </div>
           </div>
 
-          <form onSubmit={onSubmitReferido} className="mt-10">
-            {/* Grid principal (3 arriba, 2 abajo) */}
+          <form ref={formRef} onSubmit={onSubmitReferidos} className="mt-10">
+            {/* TOP GRID (3 columnas) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* ================= CARD: TUS DATOS (REFERENTE) ================= */}
-              <article className="border border-black/10 bg-white shadow-sm p-6">
+              {/* Tus datos (Referente) */}
+              <div className="border border-slate-200 bg-white shadow-sm p-6">
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                   Tus datos (Referente)
                 </div>
@@ -616,11 +589,10 @@ export default function HomePage() {
                       required
                       value={refNombre}
                       onChange={(e) => setRefNombre(e.target.value)}
-                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
                       placeholder="Tu nombre completo"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm text-slate-700 mb-1">Email *</label>
                     <input
@@ -628,26 +600,25 @@ export default function HomePage() {
                       type="email"
                       value={refEmail}
                       onChange={(e) => setRefEmail(e.target.value)}
-                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
                       placeholder="tu@email.com"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
                     <input
                       required
                       value={refTelefono}
                       onChange={(e) => setRefTelefono(e.target.value)}
-                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
                       placeholder="+56 9 1234 5678"
                     />
                   </div>
                 </div>
-              </article>
+              </div>
 
-              {/* ================= CARD: DATOS DEL REFERIDO ================= */}
-              <article className="border border-black/10 bg-white shadow-sm p-6">
+              {/* Datos del Referido */}
+              <div className="border border-slate-200 bg-white shadow-sm p-6">
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                   Datos del Referido
                 </div>
@@ -659,11 +630,10 @@ export default function HomePage() {
                       required
                       value={cliNombre}
                       onChange={(e) => setCliNombre(e.target.value)}
-                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
                       placeholder="Nombre del referido"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm text-slate-700 mb-1">Email *</label>
                     <input
@@ -671,26 +641,25 @@ export default function HomePage() {
                       type="email"
                       value={cliEmail}
                       onChange={(e) => setCliEmail(e.target.value)}
-                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
                       placeholder="correo@referido.com"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
                     <input
                       required
                       value={cliTelefono}
                       onChange={(e) => setCliTelefono(e.target.value)}
-                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
                       placeholder="+56 9 1234 5678"
                     />
                   </div>
                 </div>
-              </article>
+              </div>
 
-              {/* ================= CARD: PREFERENCIAS ================= */}
-              <article className="border border-black/10 bg-white shadow-sm p-6">
+              {/* Preferencias */}
+              <div className="border border-slate-200 bg-white shadow-sm p-6">
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                   Preferencias
                 </div>
@@ -700,11 +669,13 @@ export default function HomePage() {
                     <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita? *</label>
                     <SmartSelect
                       options={SERVICIOS}
-                      value={servicio}
-                      onChange={setServicio}
+                      value={servicioNeed}
+                      onChange={setServicioNeed}
                       placeholder="Seleccionar o escribir…"
                       className="w-full"
                     />
+                    {/* required real (para SmartSelect) */}
+                    <input required value={servicioNeed} onChange={() => {}} className="hidden" />
                   </div>
 
                   <div>
@@ -716,6 +687,7 @@ export default function HomePage() {
                       placeholder="Seleccionar o escribir…"
                       className="w-full"
                     />
+                    <input required value={tipoProp} onChange={() => {}} className="hidden" />
                   </div>
 
                   <div>
@@ -730,6 +702,7 @@ export default function HomePage() {
                       placeholder="Seleccionar o escribir…"
                       className="w-full"
                     />
+                    <input required value={regionRef} onChange={() => {}} className="hidden" />
                   </div>
 
                   <div>
@@ -742,6 +715,7 @@ export default function HomePage() {
                       disabled={!regionRef || comunaOpts.length === 0}
                       className="w-full"
                     />
+                    <input required value={comunaRef} onChange={() => {}} className="hidden" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -750,9 +724,9 @@ export default function HomePage() {
                       <input
                         required
                         inputMode="numeric"
-                        value={precioMin}
-                        onChange={(e) => setPrecioMin(e.target.value)}
-                        className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                        value={precioMinUf}
+                        onChange={(e) => setPrecioMinUf(e.target.value)}
+                        className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
                         placeholder="0"
                       />
                     </div>
@@ -761,21 +735,21 @@ export default function HomePage() {
                       <input
                         required
                         inputMode="numeric"
-                        value={precioMax}
-                        onChange={(e) => setPrecioMax(e.target.value)}
-                        className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                        value={precioMaxUf}
+                        onChange={(e) => setPrecioMaxUf(e.target.value)}
+                        className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
                         placeholder="0"
                       />
                     </div>
                   </div>
                 </div>
-              </article>
+              </div>
             </div>
 
-            {/* Row inferior (2 cards) */}
+            {/* BOTTOM GRID (2 columnas) */}
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* ================= CARD: CONTEXTO ADICIONAL ================= */}
-              <article className="border border-black/10 bg-white shadow-sm p-6 lg:col-span-2">
+              {/* Contexto adicional (2/3) */}
+              <div className="lg:col-span-2 border border-slate-200 bg-white shadow-sm p-6">
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                   Contexto adicional
                 </div>
@@ -783,43 +757,38 @@ export default function HomePage() {
                 <div className="mt-5">
                   <label className="block text-sm text-slate-700 mb-1">Comentarios</label>
                   <textarea
-                    rows={6}
+                    rows={5}
                     value={comentarios}
                     onChange={(e) => setComentarios(e.target.value)}
-                    className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                    className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-800 placeholder-slate-400"
                     placeholder="Cualquier información adicional que pueda ser útil…"
                   />
                 </div>
-              </article>
+              </div>
 
-              {/* ================= CARD: ENVIAR ================= */}
-              <article className="border border-black/10 bg-white shadow-sm p-6">
-                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                  Enviar
-                </div>
+              {/* Enviar (1/3) — ESTILO FOTO 3 */}
+              <div className="border border-slate-200 bg-white shadow-sm p-6 flex flex-col">
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">Enviar</div>
+                <div className="mt-1 text-[16px] text-black/90">Confirmación</div>
 
-                <div className="mt-6">
-                  {formError ? (
-                    <div className="mb-4 text-[13px] text-red-700 border border-red-200 bg-red-50 p-3">
-                      {formError}
-                    </div>
-                  ) : null}
+                <p className="mt-4 text-[13px] text-black/70 leading-relaxed">
+                  Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de
+                  privacidad.
+                </p>
 
-                  <button
-                    type="submit"
-                    disabled={!requiredOk}
-                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-[12px] uppercase tracking-[.25em] rounded-none transition
-                      ${requiredOk ? 'bg-[#0A2E57] text-white hover:bg-[#0E2C4A]' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}
-                    style={{
-                      boxShadow: requiredOk
-                        ? 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)'
-                        : 'none',
-                    }}
-                  >
-                    <Gift className="h-4 w-4" /> Enviar referido
-                  </button>
-                </div>
-              </article>
+                <button
+                  type="submit"
+                  className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-3 text-sm tracking-[.25em] uppercase text-white bg-[#0A2E57] rounded-none"
+                  style={{
+                    boxShadow:
+                      'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                  }}
+                >
+                  <Gift className="h-4 w-4" /> Enviar referido
+                </button>
+
+                <div className="mt-3 text-center text-[12px] text-black/60">Responderemos a la brevedad.</div>
+              </div>
             </div>
           </form>
         </div>
