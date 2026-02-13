@@ -151,14 +151,6 @@ const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Co
 const TIPO_PROPIEDAD = ['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'];
 
 /* ------------------------------------------------------------------ */
-/*                IMÁGENES (secciones nuevas bajo el hero)             */
-/* ------------------------------------------------------------------ */
-const WHY_IMG =
-  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1600&auto=format&fit=crop';
-const OPORT_IMG =
-  'https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=1600&auto=format&fit=crop';
-
-/* ------------------------------------------------------------------ */
 /*                              HOME PAGE                             */
 /* ------------------------------------------------------------------ */
 export default function HomePage() {
@@ -346,49 +338,74 @@ export default function HomePage() {
   const [comunaRef, setComunaRef] = useState('');
   const comunaOpts = regionRef ? COMUNAS_UI[regionRef] || [] : [];
 
-  /* ================== ESTADO REFERIDOS (VALIDACIÓN) ================== */
+  /* ================== FORM (REFERIDOS) — ESTADO + VALIDACIÓN ================== */
   const [refNombre, setRefNombre] = useState('');
   const [refEmail, setRefEmail] = useState('');
   const [refTelefono, setRefTelefono] = useState('');
 
-  const [refdNombre, setRefdNombre] = useState('');
-  const [refdEmail, setRefdEmail] = useState('');
-  const [refdTelefono, setRefdTelefono] = useState('');
+  const [cliNombre, setCliNombre] = useState('');
+  const [cliEmail, setCliEmail] = useState('');
+  const [cliTelefono, setCliTelefono] = useState('');
 
   const [servicio, setServicio] = useState('');
   const [tipoProp, setTipoProp] = useState('');
-
   const [precioMin, setPrecioMin] = useState('');
   const [precioMax, setPrecioMax] = useState('');
   const [comentarios, setComentarios] = useState('');
 
-  const isValid =
+  const [formError, setFormError] = useState<string>('');
+
+  const requiredOk =
     refNombre.trim() &&
     refEmail.trim() &&
     refTelefono.trim() &&
-    refdNombre.trim() &&
-    refdEmail.trim() &&
-    refdTelefono.trim() &&
+    cliNombre.trim() &&
+    cliEmail.trim() &&
+    cliTelefono.trim() &&
     servicio.trim() &&
     tipoProp.trim() &&
     regionRef.trim() &&
     comunaRef.trim() &&
-    precioMin.trim() &&
-    precioMax.trim();
+    String(precioMin).trim() &&
+    String(precioMax).trim();
 
-  const onSubmitReferido = (e: React.FormEvent) => {
+  function onSubmitReferido(e: React.FormEvent) {
     e.preventDefault();
-    if (!isValid) return;
+    setFormError('');
 
-    // Conecta aquí tu endpoint real
-    alert('Referido listo para enviar (conecta aquí tu endpoint).');
-  };
+    // Validación extra (SmartSelect no siempre respeta "required")
+    if (!requiredOk) {
+      setFormError('Por favor completa todos los campos obligatorios (*) antes de enviar.');
+      return;
+    }
+
+    // Validación numérica simple (UF)
+    const min = Number(String(precioMin).replace(/[^\d]/g, ''));
+    const max = Number(String(precioMax).replace(/[^\d]/g, ''));
+    if (!Number.isFinite(min) || !Number.isFinite(max)) {
+      setFormError('Revisa los valores de Precio mínimo y Precio máximo (UF).');
+      return;
+    }
+    if (min <= 0 || max <= 0) {
+      setFormError('Precio mínimo y máximo deben ser mayores que 0.');
+      return;
+    }
+    if (min > max) {
+      setFormError('El Precio mínimo (UF) no puede ser mayor que el Precio máximo (UF).');
+      return;
+    }
+
+    // TODO: aquí puedes conectar API / envío real.
+    // Por ahora, solo limpiamos el error (y podrías mostrar un toast).
+    setFormError('');
+    // console.log({ refNombre, refEmail, refTelefono, cliNombre, cliEmail, cliTelefono, servicio, tipoProp, regionRef, comunaRef, precioMin: min, precioMax: max, comentarios });
+  }
 
   /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
       {/* ================= HERO ================= */}
-      {/* ⚠️ NO TOCAR CARRUSEL */}
+      {/* ✅ NO TOCAR CARRUSEL */}
       <section
         className="relative w-full overflow-hidden isolate"
         onTouchStart={onTouchStart}
@@ -484,19 +501,18 @@ export default function HomePage() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-8 md:grid-cols-2 items-stretch">
-            {/* Texto */}
             <div className="md:order-1 order-2">
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
                 ¿Por qué Gesswein Properties?
               </h2>
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
                 <p>
-                  (Texto placeholder) Aquí va tu discurso de venta: cómo trabajas, en qué te diferencias, por qué
-                  el estándar boutique, el rigor técnico y la experiencia integral cambian el resultado.
+                  (Texto placeholder) Aquí va tu discurso de venta: boutique real estate, rigor técnico, diseño,
+                  negociación y ejecución impecable en cada etapa del proceso.
                 </p>
                 <p>
-                  (Texto placeholder) Puedes reforzar método, transparencia, estética y ejecución comercial — y
-                  explicar por qué eso genera mejor precio, mejor proceso y mejor experiencia.
+                  (Texto placeholder) Diferenciadores: metodología, estética, datos, red, off-market, due diligence,
+                  comunicación y estándar premium.
                 </p>
               </div>
 
@@ -510,10 +526,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Imagen */}
             <div className="md:order-2 order-1">
               <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
-                <img src={WHY_IMG} alt="¿Por qué Gesswein Properties?" className="w-full h-full object-cover" />
+                <img
+                  src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop"
+                  alt="Gesswein Properties — Por qué"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>
@@ -524,19 +543,16 @@ export default function HomePage() {
       <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-8 md:grid-cols-2 items-stretch">
-            {/* Texto */}
-            <div className="md:order-1 order-2">
+            <div className="md:order-2 order-2">
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
                 Oportunidades Exclusivas
               </h2>
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
                 <p>
-                  (Texto placeholder) Explica qué son las oportunidades exclusivas: acceso temprano, propiedades
-                  curadas, condiciones especiales, oportunidades off-market, etc.
+                  (Texto placeholder) Qué son: oportunidades off-market / curadas, con análisis y acceso preferente.
                 </p>
                 <p>
-                  (Texto placeholder) Puedes agregar cómo se accede, qué tipo de activo incluye, y por qué esto
-                  le conviene al cliente.
+                  (Texto placeholder) Para quién: clientes que buscan algo específico, timing, o inversión con criterio.
                 </p>
               </div>
 
@@ -550,219 +566,260 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Imagen */}
-            <div className="md:order-2 order-1">
+            <div className="md:order-1 order-1">
               <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
-                <img src={OPORT_IMG} alt="Oportunidades Exclusivas" className="w-full h-full object-cover" />
+                <img
+                  src="https://images.unsplash.com/photo-1560185127-6a8c0b00b7a1?q=80&w=1600&auto=format&fit=crop"
+                  alt="Gesswein Properties — Oportunidades"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= REFERIDOS (VOLVER AL FORMATO QUE TENÍAN) ================= */}
-      <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16">
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          {/* encabezado */}
-          <div className="px-6 py-8 text-center">
-            <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
-              <Gift className="h-5 w-5 text-blue-600" />
+      {/* ================= REFERIDOS (FORMATO FOTO 2) ================= */}
+      <section id="referidos" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Header */}
+          <div className="pl-2 sm:pl-4 max-w-4xl">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
+                <Gift className="h-5 w-5 text-[#0A2E57]" />
+              </div>
+              <div>
+                <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
+                  Programa de Referidos
+                </h2>
+                <p className="mt-2 text-black/70 text-[14px] leading-relaxed">
+                  ¿Conoces a alguien que busca propiedad? Refiérelo y accede a beneficios exclusivos. Completa los
+                  datos y nuestro equipo hará el seguimiento con el estándar Gesswein Properties.
+                </p>
+              </div>
             </div>
-            <h2 className="mt-3 text-xl md:text-2xl uppercase tracking-[0.25em]">
-              PROGRAMA DE REFERIDOS CON EXCLUSIVIDAD
-            </h2>
-            <p className="mt-2 text-slate-600">
-              ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
-            </p>
           </div>
 
-          {/* formulario */}
-          <form className="px-6 pb-8" onSubmit={onSubmitReferido}>
-            {/* ---------- referente ---------- */}
-            <h3 className="text-sm md:text-base uppercase tracking-[0.25em]">
-              TUS DATOS (REFERENTE)
-            </h3>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input
-                  required
-                  value={refNombre}
-                  onChange={(e) => setRefNombre(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="Tu nombre completo"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input
-                  required
-                  type="email"
-                  value={refEmail}
-                  onChange={(e) => setRefEmail(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="tu@email.com"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
-                <input
-                  required
-                  value={refTelefono}
-                  onChange={(e) => setRefTelefono(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="+56 9 1234 5678"
-                />
-              </div>
+          <form onSubmit={onSubmitReferido} className="mt-10">
+            {/* Grid principal (3 arriba, 2 abajo) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* ================= CARD: TUS DATOS (REFERENTE) ================= */}
+              <article className="border border-black/10 bg-white shadow-sm p-6">
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                  Tus datos (Referente)
+                </div>
+
+                <div className="mt-5 grid gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                    <input
+                      required
+                      value={refNombre}
+                      onChange={(e) => setRefNombre(e.target.value)}
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      placeholder="Tu nombre completo"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                    <input
+                      required
+                      type="email"
+                      value={refEmail}
+                      onChange={(e) => setRefEmail(e.target.value)}
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      placeholder="tu@email.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
+                    <input
+                      required
+                      value={refTelefono}
+                      onChange={(e) => setRefTelefono(e.target.value)}
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      placeholder="+56 9 1234 5678"
+                    />
+                  </div>
+                </div>
+              </article>
+
+              {/* ================= CARD: DATOS DEL REFERIDO ================= */}
+              <article className="border border-black/10 bg-white shadow-sm p-6">
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                  Datos del Referido
+                </div>
+
+                <div className="mt-5 grid gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                    <input
+                      required
+                      value={cliNombre}
+                      onChange={(e) => setCliNombre(e.target.value)}
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      placeholder="Nombre del referido"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                    <input
+                      required
+                      type="email"
+                      value={cliEmail}
+                      onChange={(e) => setCliEmail(e.target.value)}
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      placeholder="correo@referido.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
+                    <input
+                      required
+                      value={cliTelefono}
+                      onChange={(e) => setCliTelefono(e.target.value)}
+                      className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                      placeholder="+56 9 1234 5678"
+                    />
+                  </div>
+                </div>
+              </article>
+
+              {/* ================= CARD: PREFERENCIAS ================= */}
+              <article className="border border-black/10 bg-white shadow-sm p-6">
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                  Preferencias
+                </div>
+
+                <div className="mt-5 grid gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita? *</label>
+                    <SmartSelect
+                      options={SERVICIOS}
+                      value={servicio}
+                      onChange={setServicio}
+                      placeholder="Seleccionar o escribir…"
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad *</label>
+                    <SmartSelect
+                      options={TIPO_PROPIEDAD}
+                      value={tipoProp}
+                      onChange={setTipoProp}
+                      placeholder="Seleccionar o escribir…"
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Región *</label>
+                    <SmartSelect
+                      options={REGIONES_UI as string[]}
+                      value={regionRef}
+                      onChange={(v) => {
+                        setRegionRef(v);
+                        setComunaRef('');
+                      }}
+                      placeholder="Seleccionar o escribir…"
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-700 mb-1">Comuna *</label>
+                    <SmartSelect
+                      options={comunaOpts}
+                      value={comunaRef}
+                      onChange={setComunaRef}
+                      placeholder={regionRef ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
+                      disabled={!regionRef || comunaOpts.length === 0}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm text-slate-700 mb-1">Precio mínimo (UF) *</label>
+                      <input
+                        required
+                        inputMode="numeric"
+                        value={precioMin}
+                        onChange={(e) => setPrecioMin(e.target.value)}
+                        className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-slate-700 mb-1">Precio máximo (UF) *</label>
+                      <input
+                        required
+                        inputMode="numeric"
+                        value={precioMax}
+                        onChange={(e) => setPrecioMax(e.target.value)}
+                        className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </article>
             </div>
 
-            {/* ---------- referido ---------- */}
-            <h3 className="mt-8 text-sm md:text-base uppercase tracking-[0.25em]">
-              DATOS DEL REFERIDO
-            </h3>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                <input
-                  required
-                  value={refdNombre}
-                  onChange={(e) => setRefdNombre(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="Nombre del referido"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                <input
-                  required
-                  type="email"
-                  value={refdEmail}
-                  onChange={(e) => setRefdEmail(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="correo@referido.com"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
-                <input
-                  required
-                  value={refdTelefono}
-                  onChange={(e) => setRefdTelefono(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="+56 9 1234 5678"
-                />
-              </div>
-            </div>
+            {/* Row inferior (2 cards) */}
+            <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* ================= CARD: CONTEXTO ADICIONAL ================= */}
+              <article className="border border-black/10 bg-white shadow-sm p-6 lg:col-span-2">
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                  Contexto adicional
+                </div>
 
-            {/* ---------- preferencias ---------- */}
-            <h3 className="mt-8 text-sm md:text-base uppercase tracking-[0.25em]">
-              PREFERENCIAS DEL REFERIDO
-            </h3>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {/* servicio */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita? *</label>
-                <SmartSelect
-                  options={SERVICIOS}
-                  value={servicio}
-                  onChange={setServicio}
-                  placeholder="Seleccionar o escribir…"
-                  className="w-full"
-                />
-              </div>
+                <div className="mt-5">
+                  <label className="block text-sm text-slate-700 mb-1">Comentarios</label>
+                  <textarea
+                    rows={6}
+                    value={comentarios}
+                    onChange={(e) => setComentarios(e.target.value)}
+                    className="w-full rounded-none border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="Cualquier información adicional que pueda ser útil…"
+                  />
+                </div>
+              </article>
 
-              {/* tipo propiedad */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad *</label>
-                <SmartSelect
-                  options={TIPO_PROPIEDAD}
-                  value={tipoProp}
-                  onChange={setTipoProp}
-                  placeholder="Seleccionar o escribir…"
-                  className="w-full"
-                />
-              </div>
+              {/* ================= CARD: ENVIAR ================= */}
+              <article className="border border-black/10 bg-white shadow-sm p-6">
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                  Enviar
+                </div>
 
-              {/* región → TU LISTA LITERAL */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Región *</label>
-                <SmartSelect
-                  options={REGIONES_UI as string[]}
-                  value={regionRef}
-                  onChange={(v) => {
-                    setRegionRef(v);
-                    setComunaRef('');
-                  }}
-                  placeholder="Seleccionar o escribir…"
-                  className="w-full"
-                />
-              </div>
+                <div className="mt-6">
+                  {formError ? (
+                    <div className="mb-4 text-[13px] text-red-700 border border-red-200 bg-red-50 p-3">
+                      {formError}
+                    </div>
+                  ) : null}
 
-              {/* comuna (habilitada solo si hay región) */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Comuna *</label>
-                <SmartSelect
-                  options={comunaOpts}
-                  value={comunaRef}
-                  onChange={setComunaRef}
-                  placeholder={regionRef ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
-                  disabled={!regionRef || comunaOpts.length === 0}
-                  className="w-full"
-                />
-              </div>
-
-              {/* precio */}
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Precio mínimo (UF) *</label>
-                <input
-                  required
-                  inputMode="numeric"
-                  value={precioMin}
-                  onChange={(e) => setPrecioMin(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-700 mb-1">Precio máximo (UF) *</label>
-                <input
-                  required
-                  inputMode="numeric"
-                  value={precioMax}
-                  onChange={(e) => setPrecioMax(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="0"
-                />
-              </div>
-
-              {/* contexto adicional (NO requerido) */}
-              <div className="md:col-span-2">
-                <label className="block text-sm text-slate-700 mb-1">Contexto adicional</label>
-                <textarea
-                  rows={4}
-                  value={comentarios}
-                  onChange={(e) => setComentarios(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  placeholder="Cualquier información adicional que pueda ser útil…"
-                />
-              </div>
-            </div>
-
-            {/* botón enviar (sin texto abajo) */}
-            <div className="mt-6 flex justify-center">
-              <button
-                type="submit"
-                disabled={!isValid}
-                className={`inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none transition ${
-                  !isValid ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-95'
-                }`}
-                style={{
-                  boxShadow:
-                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
-                }}
-              >
-                <Gift className="h-4 w-4" /> Enviar referido
-              </button>
+                  <button
+                    type="submit"
+                    disabled={!requiredOk}
+                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-[12px] uppercase tracking-[.25em] rounded-none transition
+                      ${requiredOk ? 'bg-[#0A2E57] text-white hover:bg-[#0E2C4A]' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}
+                    style={{
+                      boxShadow: requiredOk
+                        ? 'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)'
+                        : 'none',
+                    }}
+                  >
+                    <Gift className="h-4 w-4" /> Enviar referido
+                  </button>
+                </div>
+              </article>
             </div>
           </form>
         </div>
