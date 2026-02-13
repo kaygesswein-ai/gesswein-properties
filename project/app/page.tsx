@@ -346,17 +346,18 @@ export default function HomePage() {
   const [comunaRef, setComunaRef] = useState('');
   const comunaOpts = regionRef ? COMUNAS_UI[regionRef] || [] : [];
 
-  /* ================== ESTADO FORM (REQUERIDOS) ================== */
+  /* ================== ESTADO REFERIDOS (VALIDACIÓN) ================== */
   const [refNombre, setRefNombre] = useState('');
   const [refEmail, setRefEmail] = useState('');
   const [refTelefono, setRefTelefono] = useState('');
 
-  const [cliNombre, setCliNombre] = useState('');
-  const [cliEmail, setCliEmail] = useState('');
-  const [cliTelefono, setCliTelefono] = useState('');
+  const [refdNombre, setRefdNombre] = useState('');
+  const [refdEmail, setRefdEmail] = useState('');
+  const [refdTelefono, setRefdTelefono] = useState('');
 
   const [servicio, setServicio] = useState('');
   const [tipoProp, setTipoProp] = useState('');
+
   const [precioMin, setPrecioMin] = useState('');
   const [precioMax, setPrecioMax] = useState('');
   const [comentarios, setComentarios] = useState('');
@@ -365,9 +366,9 @@ export default function HomePage() {
     refNombre.trim() &&
     refEmail.trim() &&
     refTelefono.trim() &&
-    cliNombre.trim() &&
-    cliEmail.trim() &&
-    cliTelefono.trim() &&
+    refdNombre.trim() &&
+    refdEmail.trim() &&
+    refdTelefono.trim() &&
     servicio.trim() &&
     tipoProp.trim() &&
     regionRef.trim() &&
@@ -379,9 +380,7 @@ export default function HomePage() {
     e.preventDefault();
     if (!isValid) return;
 
-    // Aquí conectas tu lógica real de envío (API / email / etc.)
-    // Por ahora dejamos el comportamiento de “no se puede mandar” si falta algo.
-    // Puedes reemplazar esto después por tu handler real.
+    // Conecta aquí tu endpoint real
     alert('Referido listo para enviar (conecta aquí tu endpoint).');
   };
 
@@ -514,11 +513,7 @@ export default function HomePage() {
             {/* Imagen */}
             <div className="md:order-2 order-1">
               <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
-                <img
-                  src={WHY_IMG}
-                  alt="¿Por qué Gesswein Properties?"
-                  className="w-full h-full object-cover"
-                />
+                <img src={WHY_IMG} alt="¿Por qué Gesswein Properties?" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>
@@ -558,227 +553,218 @@ export default function HomePage() {
             {/* Imagen */}
             <div className="md:order-2 order-1">
               <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
-                <img
-                  src={OPORT_IMG}
-                  alt="Oportunidades Exclusivas"
-                  className="w-full h-full object-cover"
-                />
+                <img src={OPORT_IMG} alt="Oportunidades Exclusivas" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= REFERIDOS ================= */}
-      <section id="referidos" className="py-20 bg-white">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="border border-slate-200 bg-white shadow-sm">
-            {/* encabezado */}
-            <div className="px-6 py-10 text-center border-b border-black/10">
-              <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
-                <Gift className="h-5 w-5 text-blue-600" />
+      {/* ================= REFERIDOS (VOLVER AL FORMATO QUE TENÍAN) ================= */}
+      <section id="referidos" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          {/* encabezado */}
+          <div className="px-6 py-8 text-center">
+            <div className="mx-auto h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
+              <Gift className="h-5 w-5 text-blue-600" />
+            </div>
+            <h2 className="mt-3 text-xl md:text-2xl uppercase tracking-[0.25em]">
+              PROGRAMA DE REFERIDOS CON EXCLUSIVIDAD
+            </h2>
+            <p className="mt-2 text-slate-600">
+              ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
+            </p>
+          </div>
+
+          {/* formulario */}
+          <form className="px-6 pb-8" onSubmit={onSubmitReferido}>
+            {/* ---------- referente ---------- */}
+            <h3 className="text-sm md:text-base uppercase tracking-[0.25em]">
+              TUS DATOS (REFERENTE)
+            </h3>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <input
+                  required
+                  value={refNombre}
+                  onChange={(e) => setRefNombre(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="Tu nombre completo"
+                />
               </div>
-              <h2 className="mt-3 text-xl md:text-2xl uppercase tracking-[0.25em]">
-                PROGRAMA DE REFERIDOS CON EXCLUSIVIDAD
-              </h2>
-              <p className="mt-2 text-slate-600">
-                ¿Conoces a alguien que busca propiedad? Refiérelo y obtén beneficios exclusivos.
-              </p>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <input
+                  required
+                  type="email"
+                  value={refEmail}
+                  onChange={(e) => setRefEmail(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="tu@email.com"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
+                <input
+                  required
+                  value={refTelefono}
+                  onChange={(e) => setRefTelefono(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="+56 9 1234 5678"
+                />
+              </div>
             </div>
 
-            {/* formulario */}
-            <form className="px-6 py-10" onSubmit={onSubmitReferido}>
-              {/* ---------- tus datos ---------- */}
-              <h3 className="text-sm md:text-base uppercase tracking-[0.25em]">
-                TUS DATOS (REFERENTE)
-              </h3>
+            {/* ---------- referido ---------- */}
+            <h3 className="mt-8 text-sm md:text-base uppercase tracking-[0.25em]">
+              DATOS DEL REFERIDO
+            </h3>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
+                <input
+                  required
+                  value={refdNombre}
+                  onChange={(e) => setRefdNombre(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="Nombre del referido"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Email *</label>
+                <input
+                  required
+                  type="email"
+                  value={refdEmail}
+                  onChange={(e) => setRefdEmail(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="correo@referido.com"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
+                <input
+                  required
+                  value={refdTelefono}
+                  onChange={(e) => setRefdTelefono(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="+56 9 1234 5678"
+                />
+              </div>
+            </div>
 
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                  <input
-                    required
-                    value={refNombre}
-                    onChange={(e) => setRefNombre(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                    placeholder="Tu nombre completo"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                  <input
-                    required
-                    type="email"
-                    value={refEmail}
-                    onChange={(e) => setRefEmail(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                    placeholder="tu@email.com"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
-                  <input
-                    required
-                    value={refTelefono}
-                    onChange={(e) => setRefTelefono(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                    placeholder="+56 9 1234 5678"
-                  />
-                </div>
+            {/* ---------- preferencias ---------- */}
+            <h3 className="mt-8 text-sm md:text-base uppercase tracking-[0.25em]">
+              PREFERENCIAS DEL REFERIDO
+            </h3>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              {/* servicio */}
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita? *</label>
+                <SmartSelect
+                  options={SERVICIOS}
+                  value={servicio}
+                  onChange={setServicio}
+                  placeholder="Seleccionar o escribir…"
+                  className="w-full"
+                />
               </div>
 
-              {/* ---------- referido ---------- */}
-              <h3 className="mt-10 text-sm md:text-base uppercase tracking-[0.25em]">
-                DATOS DEL REFERIDO
-              </h3>
-
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">Nombre completo *</label>
-                  <input
-                    required
-                    value={cliNombre}
-                    onChange={(e) => setCliNombre(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                    placeholder="Nombre del referido"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">Email *</label>
-                  <input
-                    required
-                    type="email"
-                    value={cliEmail}
-                    onChange={(e) => setCliEmail(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                    placeholder="correo@referido.com"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-slate-700 mb-1">Teléfono *</label>
-                  <input
-                    required
-                    value={cliTelefono}
-                    onChange={(e) => setCliTelefono(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                    placeholder="+56 9 1234 5678"
-                  />
-                </div>
+              {/* tipo propiedad */}
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad *</label>
+                <SmartSelect
+                  options={TIPO_PROPIEDAD}
+                  value={tipoProp}
+                  onChange={setTipoProp}
+                  placeholder="Seleccionar o escribir…"
+                  className="w-full"
+                />
               </div>
 
-              {/* ---------- preferencias ---------- */}
-              <h3 className="mt-10 text-sm md:text-base uppercase tracking-[0.25em]">
-                PREFERENCIAS DEL REFERIDO
-              </h3>
-
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                {/* servicio */}
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">¿Qué servicio necesita? *</label>
-                  <SmartSelect
-                    options={SERVICIOS}
-                    value={servicio}
-                    onChange={setServicio}
-                    placeholder="Seleccionar o escribir…"
-                    className="w-full"
-                  />
-                </div>
-
-                {/* tipo propiedad */}
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">Tipo de propiedad *</label>
-                  <SmartSelect
-                    options={TIPO_PROPIEDAD}
-                    value={tipoProp}
-                    onChange={setTipoProp}
-                    placeholder="Seleccionar o escribir…"
-                    className="w-full"
-                  />
-                </div>
-
-                {/* región */}
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">Región *</label>
-                  <SmartSelect
-                    options={REGIONES_UI as string[]}
-                    value={regionRef}
-                    onChange={(v) => {
-                      setRegionRef(v);
-                      setComunaRef('');
-                    }}
-                    placeholder="Seleccionar o escribir…"
-                    className="w-full"
-                  />
-                </div>
-
-                {/* comuna */}
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">Comuna *</label>
-                  <SmartSelect
-                    options={comunaOpts}
-                    value={comunaRef}
-                    onChange={setComunaRef}
-                    placeholder={regionRef ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
-                    disabled={!regionRef || comunaOpts.length === 0}
-                    className="w-full"
-                  />
-                </div>
-
-                {/* precio */}
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">Precio mínimo (UF) *</label>
-                  <input
-                    required
-                    inputMode="numeric"
-                    value={precioMin}
-                    onChange={(e) => setPrecioMin(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-slate-700 mb-1">Precio máximo (UF) *</label>
-                  <input
-                    required
-                    inputMode="numeric"
-                    value={precioMax}
-                    onChange={(e) => setPrecioMax(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                    placeholder="0"
-                  />
-                </div>
-
-                {/* contexto adicional (NO requerido) */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-slate-700 mb-1">Contexto adicional</label>
-                  <textarea
-                    rows={4}
-                    value={comentarios}
-                    onChange={(e) => setComentarios(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                    placeholder="Cualquier información adicional que pueda ser útil…"
-                  />
-                </div>
-              </div>
-
-              {/* botón enviar (sin texto abajo) */}
-              <div className="mt-8 flex justify-center">
-                <button
-                  type="submit"
-                  disabled={!isValid}
-                  className={`inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none transition ${
-                    !isValid ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-95'
-                  }`}
-                  style={{
-                    boxShadow:
-                      'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+              {/* región → TU LISTA LITERAL */}
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Región *</label>
+                <SmartSelect
+                  options={REGIONES_UI as string[]}
+                  value={regionRef}
+                  onChange={(v) => {
+                    setRegionRef(v);
+                    setComunaRef('');
                   }}
-                >
-                  <Gift className="h-4 w-4" /> Enviar referido
-                </button>
+                  placeholder="Seleccionar o escribir…"
+                  className="w-full"
+                />
               </div>
-            </form>
-          </div>
+
+              {/* comuna (habilitada solo si hay región) */}
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Comuna *</label>
+                <SmartSelect
+                  options={comunaOpts}
+                  value={comunaRef}
+                  onChange={setComunaRef}
+                  placeholder={regionRef ? 'Seleccionar o escribir…' : 'Selecciona una región primero'}
+                  disabled={!regionRef || comunaOpts.length === 0}
+                  className="w-full"
+                />
+              </div>
+
+              {/* precio */}
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Precio mínimo (UF) *</label>
+                <input
+                  required
+                  inputMode="numeric"
+                  value={precioMin}
+                  onChange={(e) => setPrecioMin(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-700 mb-1">Precio máximo (UF) *</label>
+                <input
+                  required
+                  inputMode="numeric"
+                  value={precioMax}
+                  onChange={(e) => setPrecioMax(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="0"
+                />
+              </div>
+
+              {/* contexto adicional (NO requerido) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-700 mb-1">Contexto adicional</label>
+                <textarea
+                  rows={4}
+                  value={comentarios}
+                  onChange={(e) => setComentarios(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  placeholder="Cualquier información adicional que pueda ser útil…"
+                />
+              </div>
+            </div>
+
+            {/* botón enviar (sin texto abajo) */}
+            <div className="mt-6 flex justify-center">
+              <button
+                type="submit"
+                disabled={!isValid}
+                className={`inline-flex items-center gap-2 px-4 py-2 text-sm tracking-wide text-white bg-[#0A2E57] rounded-none transition ${
+                  !isValid ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-95'
+                }`}
+                style={{
+                  boxShadow:
+                    'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
+                }}
+              >
+                <Gift className="h-4 w-4" /> Enviar referido
+              </button>
+            </div>
+          </form>
         </div>
       </section>
     </main>
