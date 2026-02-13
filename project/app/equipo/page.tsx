@@ -41,13 +41,13 @@ const TEAM_PRINCIPAL: Member[] = [
     name: 'Carolina San Martín',
     roleLine: 'Socia Fundadora · Arquitectura & Corretaje',
     bioShort:
-      'Arquitecta con más de 15 años de experiencia en proyectos residenciales de alto estándar.',
+      'Ex socia del Estudio de Arquitectura “San Martín y Pascal arquitectos”. Dirige la visión arquitectónica de la empresa, evaluando el potencial y oportunidades de cada proyecto. Su mirada profesional, le ayuda a nuestros clientes a tomar decisiones más informadas.',
     bioDetail: [
-      'Dirige el desarrollo arquitectónico de Gesswein Properties, asegurando que cada propiedad combine belleza, funcionalidad y valorización a largo plazo.',
+      'Ex socia del Estudio de Arquitectura “San Martín y Pascal arquitectos”. Dirige la visión arquitectónica de la empresa, evaluando el potencial y oportunidades de cada proyecto. Su mirada profesional, le ayuda a nuestros clientes a tomar decisiones más informadas.',
     ],
     education: 'Arquitectura, Pontificia Universidad Católica de Chile.',
     specialties:
-      'Arquitectura residencial · Sustentabilidad · Gestión de proyectos.',
+      'Directora y coordinadora de proyectos · Directora de diseño',
     email: 'carolina@gessweinproperties.cl',
     phone: '+56 9 9331 8039',
     linkedin:
@@ -97,7 +97,7 @@ const TEAM_PRINCIPAL: Member[] = [
       'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera y evaluación de negocios a nivel nacional e internacional. Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo. Ha participado en procesos de due diligence, modelación financiera y valorización de activos en múltiples industrias, aportando una mirada estratégica aplicada al mercado inmobiliario.',
     ],
     education: 'Ingeniería Comercial, Universidad Adolfo Ibáñez.',
-    specialties: 'Análisis y valoración de activos · Modelamiento financiero · Due diligence.',
+    specialties: 'Análisis y valoración de activos · Due diligence.',
     email: 'kaygesswein@gmail.com',
     phone: '+56 9 9334 5413',
     linkedin: 'https://www.linkedin.com/in/kay-gesswein-san-martin/',
