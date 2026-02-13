@@ -57,15 +57,15 @@ const TEAM_PRINCIPAL: Member[] = [
   {
     id: 'alberto',
     name: 'Alberto Gesswein',
-    roleLine: 'Socio Fundador · Marketing & Comunicaciones',
+    roleLine: 'Socio Fundador · Estrategia, Marca & Desarrollo de Negocios',
     bioShort:
-      'Periodista con más de 25 años en dirección, gestión y comunicación estratégica.',
+      'Ejecutivo y empresario con más de 30 años de experiencia liderando proyectos de alto impacto en medios y gestión corporativa, especializado en posicionamiento estratégico, construcción de marca y desarrollo de activos. Fue Director del Área de Ficción de Canal 13 y ejecutivo en Televisión Nacional de Chile, gestionando producciones de gran escala y alto estándar. Como productor independiente, ha desarrollado exitosos proyectos cinematográficos y televisivos recientes, incluyendo Me Rompiste el Corazón. Ha liderado estrategias de comunicación institucional en eventos de relevancia internacional como los Juegos Panamericanos Santiago 2023. En Gesswein Properties aporta visión estratégica, estructuración comercial y marketing inmobiliario orientado a la valorización, diferenciación y proyección de activos en el segmento premium.',
     bioDetail: [
-      'Lidera la estrategia comunicacional y marketing de la empresa con enfoque humano y excelencia técnica.',
+      'Ejecutivo y empresario con más de 30 años de experiencia liderando proyectos de alto impacto en medios y gestión corporativa, especializado en posicionamiento estratégico, construcción de marca y desarrollo de activos. Fue Director del Área de Ficción de Canal 13 y ejecutivo en Televisión Nacional de Chile, gestionando producciones de gran escala y alto estándar. Como productor independiente, ha desarrollado exitosos proyectos cinematográficos y televisivos recientes, incluyendo Me Rompiste el Corazón. Ha liderado estrategias de comunicación institucional en eventos de relevancia internacional como los Juegos Panamericanos Santiago 2023. En Gesswein Properties aporta visión estratégica, estructuración comercial y marketing inmobiliario orientado a la valorización, diferenciación y proyección de activos en el segmento premium.',
     ],
-    education: 'Periodismo, Pontificia Universidad Católica de Chile.',
+    education: 'Periodista, Licenciado en Información Social, Pontificia Universidad Católica de Chile.',
     specialties:
-      'Corretaje inmobiliario · Comunicación estratégica · Negociación.',
+      'Estrategia de posicionamiento · Desarrollo y valorización de activos · Marketing inmobiliario premium · Comunicación corporativa · Gestión de proyectos de alto impacto',
     email: 'alberto@gesswein.tv',
     phone: '+56 9 9887 1751',
     linkedin: 'https://www.linkedin.com/in/alberto-gesswein-4a8246101/',
@@ -96,7 +96,7 @@ const TEAM_PRINCIPAL: Member[] = [
     bioDetail: [
       'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera, due diligence y modelación en múltiples industrias a nivel nacional e internacional. Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo.',
     ],
-    education: 'Ingeniería Comercial con Magíster en Finanzas, Universidad Adolfo Ibáñez.',
+    education: 'Ingeniería Comercial, Magíster en Finanzas, Universidad Adolfo Ibáñez.',
     specialties: 'Análisis y valoración de activos · Due diligence · Estructuración de modelos de inversión',
     email: 'kaygesswein@gmail.com',
     phone: '+56 9 9334 5413',
