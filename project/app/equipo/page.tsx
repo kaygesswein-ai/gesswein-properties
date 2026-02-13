@@ -92,13 +92,9 @@ const TEAM_PRINCIPAL: Member[] = [
     name: 'Kay Gesswein',
     roleLine: 'Socio Fundador · Administración & Finanzas',
     bioShort:
-      'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera y evaluación de negocios a nivel nacional e internacional.
-
-Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo.
-
-Ha participado en procesos de due diligence, modelación financiera y valorización de activos en múltiples industrias, aportando una mirada estratégica aplicada al mercado inmobiliario.',
+      'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera y evaluación de negocios a nivel nacional e internacional. Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo. Ha participado en procesos de due diligence, modelación financiera y valorización de activos en múltiples industrias, aportando una mirada estratégica aplicada al mercado inmobiliario.',
     bioDetail: [
-      'Lidera estrategia digital y posicionamiento, integrando análisis financiero con comunicación visual.',
+      'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera y evaluación de negocios a nivel nacional e internacional. Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo. Ha participado en procesos de due diligence, modelación financiera y valorización de activos en múltiples industrias, aportando una mirada estratégica aplicada al mercado inmobiliario.',
     ],
     education: 'Ingeniería Comercial, Universidad Adolfo Ibáñez.',
     specialties: 'Análisis y modelación financiera · Evaluación de inversiones inmobiliarias · Due diligence y valorización de activos · Estrategia comercial y posicionamiento.',
