@@ -123,18 +123,23 @@ const ALLIES = [
 const CULTURE = [
   {
     icon: Award,
-    title: 'Excelencia',
-    text: 'Buscamos la perfección en cada detalle, desde la asesoría inicial hasta la entrega final.',
+    title: 'Decisiones informadas, no intuición.',
+    text: 'El mercado suele operar con “comparables” rápidos y presión por publicar. Nosotros trabajamos con análisis: revisamos variables normativas, riesgos de regularización, compatibilidad con objetivos del cliente y coherencia financiera.',
   },
   {
     icon: Users,
-    title: 'Transparencia',
-    text: 'Comunicación directa, procesos claros y decisiones fundadas en información verificable.',
+    title: 'El valor real se construye, no se adivina.',
+    text: 'Una propiedad puede estar subvalorada por mala lectura técnica o sobrevalorada por expectativas irreales. Nuestro rol es identificar el punto exacto entre potencial y realidad: qué es viable, cuánto cuesta, qué aporta al precio final y en qué plazos.',
   },
   {
     icon: Briefcase,
-    title: 'Innovación',
-    text: 'Metodologías y herramientas digitales para mejorar cada experiencia.',
+    title: 'Estrategia antes de exposición.',
+    text: 'No creemos en la venta como trámite. Creemos en la venta como proceso de posicionamiento: segmentación del comprador correcto, relato basado en atributos verificables, propuesta de valor, presentación, orden documental y negociación con fundamentos.',
+  },
+  {
+    icon: Award,
+    title: 'Menos riesgo, más control.',
+    text: 'Los problemas fuertes en una compraventa rara vez aparecen por precio; aparecen por normativa, títulos, ampliaciones, deslindes, servidumbres, recepción final, afectaciones y expectativas mal calibradas. En Gesswein Properties la venta se gestiona con prevención, no con reacción.',
   },
 ];
 
@@ -218,7 +223,7 @@ export default function EquipoPage() {
         <div className="max-w-7xl mx-auto px-6">
           {/* === CAMBIO PUNTUAL: contenido + estética del segmento Misión/Visión === */}
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-            Propuesta de Valor — Gesswein Properties
+            Propuesta de Valor
           </h2>
 
           <div className="max-w-4xl">
@@ -243,6 +248,171 @@ export default function EquipoPage() {
                 <span className="text-[#0A2E57] font-medium">Las posicionamos como pueden llegar a ser.</span>
               </p>
             </div>
+
+            {/* === NUEVO: POR QUÉ GP === */}
+            <div className="mt-12">
+              <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-4">
+                Por qué Gesswein Properties
+              </h3>
+
+              <p className="text-black/80 text-[14px] leading-relaxed text-justify">
+                Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.
+              </p>
+
+              <p className="mt-4 text-black/80 text-[14px] leading-relaxed text-justify">
+                En Chile, la mayoría de las corredoras opera con un enfoque transaccional: captación,
+                fotos, publicación, coordinación de visitas y negociación. Ese modelo funciona cuando
+                la propiedad es simple y el mercado está “fácil”. Pero en propiedades premium —y
+                especialmente en activos con complejidad normativa, potencial de transformación o alto
+                valor patrimonial— ese enfoque deja valor en la mesa y eleva el riesgo.
+              </p>
+
+              <p className="mt-4 text-black/80 text-[14px] leading-relaxed text-justify">
+                Gesswein Properties trabaja distinto. Integramos arquitectura aplicada al real estate,
+                lo que nos permite analizar, proyectar y ejecutar estrategias de venta o compra con un
+                estándar superior.
+              </p>
+
+              <div className="mt-8">
+                <div className="text-[13px] tracking-[.18em] uppercase text-[#0A2E57] font-semibold">
+                  Nosotros vs. corredora tradicional
+                </div>
+
+                <div className="mt-5 space-y-8">
+                  <div>
+                    <div className="text-[#0E2C4A] text-[14px] font-semibold">
+                      1) Análisis técnico previo (antes de publicar)
+                    </div>
+                    <p className="mt-2 text-black/80 text-[14px] leading-relaxed text-justify">
+                      Corredora tradicional: toma la propiedad, estima un precio por comparables y la
+                      publica. <br />
+                      Gesswein Properties: inicia con diagnóstico:
+                    </p>
+                    <ul className="mt-3 list-disc pl-6 text-black/80 text-[14px] leading-relaxed space-y-1">
+                      <li>Lectura normativa y restricciones (qué se puede / qué no se puede hacer)</li>
+                      <li>
+                        Evaluación de potencial: ampliaciones, remodelación, proyecto nuevo, subdivisión
+                        o fusión
+                      </li>
+                      <li>
+                        Identificación de riesgos: constructivos, regulatorios, comerciales y documentales
+                      </li>
+                      <li>
+                        Coherencia financiera: costo/beneficio de intervenir o vender “tal cual”
+                      </li>
+                    </ul>
+                    <p className="mt-3 text-black/80 text-[14px] leading-relaxed text-justify">
+                      Resultado: el cliente entiende el activo como inversión patrimonial, no como
+                      improvisación de mercado.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="text-[#0E2C4A] text-[14px] font-semibold">
+                      2) Estrategia comercial basada en valor verificable
+                    </div>
+                    <p className="mt-2 text-black/80 text-[14px] leading-relaxed text-justify">
+                      Corredora tradicional: publica “bonita” y negocia sobre percepciones. <br />
+                      Gesswein Properties: posiciona la propiedad con argumentos sólidos:
+                    </p>
+                    <ul className="mt-3 list-disc pl-6 text-black/80 text-[14px] leading-relaxed space-y-1">
+                      <li>Atributos técnicos y comparables bien construidos</li>
+                      <li>Segmentación del comprador correcto (no visitas indiscriminadas)</li>
+                      <li>Storytelling premium sustentado (no promesas genéricas)</li>
+                      <li>Timing y plan de salida a mercado (cuándo conviene, cuándo perjudica)</li>
+                    </ul>
+
+                    <div className="mt-4 border-l-2 border-[#0A2E57]/60 pl-5">
+                      <p className="text-black/80 text-[14px] leading-relaxed text-justify">
+                        <span className="text-[#0A2E57] font-medium">Ejemplo práctico:</span> Una casa en
+                        sector prime puede venderse mal si se comunica como “casa antigua” cuando su
+                        valor real está en su terreno, cabida o posibilidad de remodelación de alto
+                        estándar. Nosotros definimos qué historia es verdadera y rentable: casa para
+                        actualizar, terreno para proyecto, o activo mixto con plan de valorización.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[#0E2C4A] text-[14px] font-semibold">
+                      3) Valorización real: vender mejor, no solo vender
+                    </div>
+                    <p className="mt-2 text-black/80 text-[14px] leading-relaxed text-justify">
+                      Corredora tradicional: propone ajustes de precio cuando “no hay interés”. <br />
+                      Gesswein Properties: propone acciones de valorización cuando hacen sentido:
+                    </p>
+                    <ul className="mt-3 list-disc pl-6 text-black/80 text-[14px] leading-relaxed space-y-1">
+                      <li>Home Staging y preparación técnica de presentación</li>
+                      <li>
+                        Ajustes concretos de layout, iluminación, paisajismo o materialidad (si aporta
+                        retorno)
+                      </li>
+                      <li>
+                        Proyección arquitectónica simple para mostrar “posible futuro” (cuando agrega
+                        valor)
+                      </li>
+                      <li>Corrección de puntos friccionantes: orden documental, claridad normativa, etc.</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <div className="text-[#0E2C4A] text-[14px] font-semibold">
+                      4) Barrido de mercado completo (incluso fuera de cartera)
+                    </div>
+                    <p className="mt-2 text-black/80 text-[14px] leading-relaxed text-justify">
+                      Corredora tradicional: ofrece lo que tiene publicado. <br />
+                      Gesswein Properties: busca lo que el cliente realmente necesita:
+                    </p>
+                    <ul className="mt-3 list-disc pl-6 text-black/80 text-[14px] leading-relaxed space-y-1">
+                      <li>Barridos de mercado por zona, tipología, potencial y restricciones</li>
+                      <li>Oportunidades fuera de portales o con baja visibilidad</li>
+                      <li>
+                        Identificación de terrenos escasos o activos que requieren gestión para liberarse
+                      </li>
+                    </ul>
+                    <p className="mt-3 text-black/80 text-[14px] leading-relaxed text-justify">
+                      Esto es clave en clientes exigentes: la operación no se define por “lo que apareció”,
+                      sino por lo que calza con el objetivo.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="text-[#0E2C4A] text-[14px] font-semibold">
+                      5) Acompañamiento integral y gestión de fricciones
+                    </div>
+                    <p className="mt-2 text-black/80 text-[14px] leading-relaxed text-justify">
+                      Corredora tradicional: coordina y deriva (abogado, banco, tasador). <br />
+                      Gesswein Properties: acompaña y gestiona:
+                    </p>
+                    <ul className="mt-3 list-disc pl-6 text-black/80 text-[14px] leading-relaxed space-y-1">
+                      <li>Revisión y estudios de títulos (enfoque preventivo)</li>
+                      <li>Coordinación de tasaciones profesionales con criterios correctos</li>
+                      <li>Asesoría de financiamiento y estructura de compra/venta</li>
+                      <li>Gestión de riesgos y obstáculos antes de firmar</li>
+                    </ul>
+
+                    <div className="mt-5">
+                      <div className="text-[#0A2E57] tracking-[.18em] uppercase text-[12px] font-semibold">
+                        Qué obtiene el cliente
+                      </div>
+                      <ul className="mt-3 list-disc pl-6 text-black/80 text-[14px] leading-relaxed space-y-1">
+                        <li>Mayor claridad y control del proceso</li>
+                        <li>Menos sorpresas normativas, técnicas o documentales</li>
+                        <li>Mejor estrategia de valorización y salida a mercado</li>
+                        <li>Negociación con fundamentos, no con presión</li>
+                        <li>Un socio técnico-comercial, no solo un intermediario</li>
+                      </ul>
+
+                      <p className="mt-4 text-black/80 text-[14px] leading-relaxed text-justify">
+                        Gesswein Properties es real estate con estándar profesional. <br />
+                        Para clientes que no compran ni venden “a ciegas”.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* === FIN NUEVO: POR QUÉ GP === */}
           </div>
 
           <div className="mt-10 grid md:grid-cols-2 gap-6">
@@ -281,17 +451,53 @@ export default function EquipoPage() {
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-12">
             Nuestra Cultura
           </h3>
-          <div className="grid gap-6 md:grid-cols-3">
+
+          <div className="max-w-4xl">
+            <div className="text-[#0E2C4A] text-[14px] leading-relaxed space-y-4 text-justify">
+              <p className="text-[#0A2E57] font-semibold">
+                Arquitectura aplicada al Real Estate
+              </p>
+              <p>
+                En real estate, la diferencia no está en “publicar bien”. <br />
+                La diferencia está en entender el activo.
+              </p>
+              <p>
+                Creemos que una propiedad no es una foto, ni un metraje, ni un precio sugerido. Una
+                propiedad es un conjunto de variables: normativa, emplazamiento, condición
+                constructiva, posibilidad de ampliación, cabida, restricciones, costos, mercado
+                objetivo, financiamiento y timing. Y es la gestión inteligente de esas variables lo
+                que define si una operación termina en un buen resultado o en una venta a la baja,
+                lenta o llena de fricciones.
+              </p>
+              <p>
+                Gesswein Properties existe para elevar el estándar del corretaje. No somos una
+                corredora tradicional: somos una firma boutique que integra arquitectura, desarrollo
+                inmobiliario, normativa y estrategia comercial para que comprar, vender o transformar
+                un activo sea un proceso claro, controlado y profesional.
+              </p>
+              <p className="text-[#0A2E57] font-semibold">Lo que defendemos</p>
+            </div>
+          </div>
+
+          <div className="mt-10 grid md:grid-cols-2 gap-6">
             {CULTURE.map((c) => (
               <article
                 key={c.title}
-                className="border border-black/10 bg-white p-6 text-center shadow-sm"
+                className="border border-black/10 bg-white p-7 shadow-sm"
               >
-                <div className="w-12 h-12 bg-slate-100 border border-black/10 mx-auto mb-4 flex items-center justify-center">
-                  <c.icon className="h-6 w-6 text-[#0A2E57]" />
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-slate-100 border border-black/10 flex items-center justify-center shrink-0">
+                    <c.icon className="h-6 w-6 text-[#0A2E57]" />
+                  </div>
+                  <div>
+                    <h4 className="text-[13px] tracking-[.18em] uppercase text-black/90">
+                      {c.title}
+                    </h4>
+                    <p className="text-[13px] text-black/70 mt-2 leading-relaxed text-justify">
+                      {c.text}
+                    </p>
+                  </div>
                 </div>
-                <h4 className="text-[13px] tracking-[.18em] uppercase text-black/90">{c.title}</h4>
-                <p className="text-[13px] text-black/70 mt-2 leading-relaxed">{c.text}</p>
               </article>
             ))}
           </div>
