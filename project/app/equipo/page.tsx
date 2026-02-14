@@ -176,7 +176,6 @@ export default function EquipoPage() {
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
                 Nuestra Historia
               </h2>
-              {/* === CAMBIO PUNTUAL: texto justificado === */}
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4 text-justify">
                 <p>
                   Gesswein Properties nace a partir de la trayectoria independiente de Carolina San
@@ -198,7 +197,6 @@ export default function EquipoPage() {
                   estado reservado al mundo corporativo.
                 </p>
               </div>
-              {/* === FIN CAMBIO PUNTUAL === */}
             </div>
 
             {/* Imagen */}
@@ -218,33 +216,62 @@ export default function EquipoPage() {
       {/* 2) PROPUESTA DE VALOR — GRIS */}
       <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
+          {/* === CAMBIO PUNTUAL: contenido + estética del segmento Misión/Visión === */}
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-            Propuesta de Valor
+            Propuesta de Valor — Gesswein Properties
           </h2>
-          <p className="text-black/80 text-[14px] leading-relaxed max-w-3xl">
-            En Gesswein Properties nos definimos por un enfoque boutique, que combina excelencia
-            técnica, comunicación cercana y una estética moderna aplicada a cada proyecto
-            inmobiliario. Nuestro compromiso es ofrecer un servicio profesional, transparente y con
-            alto estándar de ejecución.
-          </p>
 
-          <div className="mt-12 grid md:grid-cols-2 gap-6">
-            <article className="border border-black/10 bg-white p-6 shadow-sm">
-              <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-2">Misión</h3>
-              <p className="text-[13px] text-black/70 leading-relaxed">
-                Brindar asesoría inmobiliaria integral, basada en confianza, precisión técnica y
-                diseño.
+          <div className="max-w-4xl">
+            <p className="text-black/80 text-[14px] leading-relaxed text-justify">
+              Gesswein Properties integra arquitectura, normativa y estrategia comercial para
+              gestionar propiedades como verdaderos activos inmobiliarios. A diferencia del corretaje
+              tradicional, no nos limitamos a intermediar: analizamos el potencial técnico,
+              constructivo y normativo de cada propiedad antes de salir al mercado, anticipamos
+              riesgos y diseñamos una estrategia que maximiza su valor real.
+            </p>
+
+            <p className="mt-4 text-black/80 text-[14px] leading-relaxed text-justify">
+              Nuestro enfoque permite tomar decisiones inmobiliarias con claridad, respaldo
+              profesional y control del proceso, reduciendo incertidumbre y elevando el estándar de
+              la operación.
+            </p>
+
+            <div className="mt-8 border-l-2 border-[#0A2E57]/60 pl-5">
+              <p className="text-[#0E2C4A] text-[14px] leading-relaxed">
+                No vendemos propiedades como están.
+                <br />
+                <span className="text-[#0A2E57] font-medium">Las posicionamos como pueden llegar a ser.</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-10 grid md:grid-cols-2 gap-6">
+            <article className="group border border-black/10 bg-white p-7 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between gap-6">
+                <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57]">Misión</h3>
+                <div className="h-[2px] w-16 bg-[#0A2E57]/70 mt-2" />
+              </div>
+              <p className="mt-4 text-[13px] text-black/70 leading-relaxed text-justify">
+                Gestionar propiedades como activos inmobiliarios, integrando arquitectura, análisis
+                normativo y estrategia comercial para maximizar su valor real, reducir riesgos y
+                acompañar a nuestros clientes con un estándar profesional superior en cada etapa del
+                proceso.
               </p>
             </article>
 
-            <article className="border border-black/10 bg-white p-6 shadow-sm">
-              <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-2">Visión</h3>
-              <p className="text-[13px] text-black/70 leading-relaxed">
-                Ser la firma inmobiliaria de referencia en Chile por su excelencia estética,
-                profesionalismo y compromiso con la calidad de vida de quienes confían en nosotros.
+            <article className="group border border-black/10 bg-white p-7 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between gap-6">
+                <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57]">Visión</h3>
+                <div className="h-[2px] w-16 bg-[#0A2E57]/70 mt-2" />
+              </div>
+              <p className="mt-4 text-[13px] text-black/70 leading-relaxed text-justify">
+                Ser la firma boutique de real estate referente en el segmento premium, reconocida
+                por elevar el estándar del mercado inmobiliario chileno mediante un enfoque técnico,
+                estratégico y orientado a decisiones patrimoniales informadas.
               </p>
             </article>
           </div>
+          {/* === FIN CAMBIO PUNTUAL === */}
         </div>
       </section>
 
@@ -339,7 +366,6 @@ export default function EquipoPage() {
 function TeamOgilvy() {
   const team = TEAM_PRINCIPAL;
 
-  // Estado y refs
   const [active, setActive] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -350,22 +376,18 @@ function TeamOgilvy() {
   const activeIdxRef = useRef<number | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // === NUEVO: posiciones fijas para ida/vuelta idénticas ===
-  const initialXRef = useRef<number[]>([]); // X inicial de cada card (relativo al grid)
-  const firstXRef = useRef<number>(0); // X inicial de la primera columna
+  const initialXRef = useRef<number[]>([]);
+  const firstXRef = useRef<number>(0);
 
-  // Animación
   const DURATION = 450;
   const EASING = 'cubic-bezier(.22,.61,.36,1)';
 
-  // Dimensiones del panel (alineado a la derecha de la 1ª tarjeta)
   const [panelDims, setPanelDims] = useState<{ left: number; width: number; height: number }>({
     left: 0,
     width: 0,
     height: 0,
   });
 
-  // Cerrar con ESC
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closePanel();
@@ -374,27 +396,22 @@ function TeamOgilvy() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // === NUEVO: calcular layout fijo (X inicial de cada card y de la primera) ===
   useEffect(() => {
     function computeLayout() {
       const grid = gridRef.current;
       if (!grid) return;
       const gridRect = grid.getBoundingClientRect();
       const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]'));
-
       if (!cards.length) return;
 
-      // X inicial de la primera columna (card 0)
       const firstRect = cards[0].getBoundingClientRect();
       firstXRef.current = Math.round(firstRect.left - gridRect.left);
 
-      // X inicial de cada card (para que SIEMPRE vuelva al mismo punto)
       initialXRef.current = cards.map((el) => {
         const r = el.getBoundingClientRect();
         return Math.round(r.left - gridRect.left);
       });
 
-      // Dimensiones del panel (pegado al borde derecho del card 0)
       const left = Math.round(firstRect.right - gridRect.left);
       const width = Math.max(0, Math.round(gridRect.width - (firstRect.right - gridRect.left)));
       const height = Math.round(firstRect.height);
@@ -685,14 +702,12 @@ function TeamOgilvy() {
                 <p className="text-white/85 text-xs mt-2 line-clamp-2">{m.bioShort}</p>
               </div>
 
-              {/* Panel ACORDEÓN (MOBILE) */}
               <div
                 className={`md:hidden overflow-hidden transition-all duration-300 ${
                   active === i ? 'max-h-[800px] opacity-100 mt-3' : 'max-h-0 opacity-0'
                 }`}
               >
                 <div className="w-full bg-[#EAEAEA] p-5 border border-black/10">
-                  {/* === CAMBIO PUNTUAL: íconos arriba (mobile) === */}
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h4 className="text-xl font-semibold text-[#0E2C4A]">{m.name}</h4>
@@ -713,13 +728,8 @@ function TeamOgilvy() {
                       <ContactIcons m={m} />
                     </div>
                   </div>
-                  {/* === FIN CAMBIO PUNTUAL === */}
 
-                  {/* === CAMBIO PUNTUAL: texto justificado === */}
-                  <p className="mt-4 text-[14px] text-[#0E2C4A] text-justify">
-                    {m.bioDetail[0]}
-                  </p>
-                  {/* === FIN CAMBIO PUNTUAL === */}
+                  <p className="mt-4 text-[14px] text-[#0E2C4A] text-justify">{m.bioDetail[0]}</p>
 
                   <div className="mt-5 grid gap-3 text-[13px] text-[#0E2C4A]">
                     <div>
@@ -741,7 +751,6 @@ function TeamOgilvy() {
           );
         })}
 
-        {/* PANEL LATERAL (DESKTOP) */}
         {active !== null &&
           (() => {
             const r = splitRole(team[active].roleLine);
@@ -763,7 +772,6 @@ function TeamOgilvy() {
                 aria-modal="true"
               >
                 <div className="h-full w-full p-10 text-[#0E2C4A] flex flex-col">
-                  {/* === CAMBIO PUNTUAL: íconos arriba a la derecha (desktop) === */}
                   <div className="flex items-start justify-between gap-6">
                     <div>
                       <h3 className="text-3xl font-semibold">{team[active].name}</h3>
@@ -784,15 +792,9 @@ function TeamOgilvy() {
                       <ContactIcons m={team[active]} />
                     </div>
                   </div>
-                  {/* === FIN CAMBIO PUNTUAL === */}
 
-                  {/* === CAMBIO PUNTUAL: zona scrollable para poder leer completo === */}
                   <div className="mt-6 flex-1 min-h-0 overflow-y-auto pr-4">
-                    {/* === CAMBIO PUNTUAL: texto justificado === */}
-                    <p className="text-[15px] leading-relaxed text-justify">
-                      {team[active].bioDetail[0]}
-                    </p>
-                    {/* === FIN CAMBIO PUNTUAL === */}
+                    <p className="text-[15px] leading-relaxed text-justify">{team[active].bioDetail[0]}</p>
 
                     <div className="mt-8 grid grid-cols-2 gap-8 text-[14px]">
                       <div>
@@ -809,7 +811,6 @@ function TeamOgilvy() {
                       </div>
                     </div>
                   </div>
-                  {/* === FIN CAMBIO PUNTUAL === */}
                 </div>
               </div>
             );
