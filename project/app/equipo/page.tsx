@@ -15,8 +15,10 @@ const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
 
 const PHOTOS = {
-  carolina: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Carolina%20-%20Optimizada.jpeg',
-  alberto: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Tito%20-%20Optimizada.JPG',
+  carolina:
+    'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Carolina%20-%20Optimizada.jpeg',
+  alberto:
+    'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Tito%20-%20Optimizada.JPG',
   jan: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Jan%20-%20Optimizada.jpeg',
   kay: 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Kay%20-%20Optimizada.JPG',
 };
@@ -63,7 +65,8 @@ const TEAM_PRINCIPAL: Member[] = [
     bioDetail: [
       'Ejecutivo y empresario con más de 30 años de experiencia liderando proyectos de alto impacto en medios y gestión corporativa, especializado en posicionamiento estratégico, construcción de marca y desarrollo de activos. Fue Director del Área de Ficción de Canal 13 y ejecutivo en Televisión Nacional de Chile, gestionando producciones de gran escala y alto estándar. Como productor independiente, ha desarrollado exitosos proyectos cinematográficos y televisivos recientes, incluyendo Me Rompiste el Corazón. Ha liderado estrategias de comunicación institucional en eventos de relevancia internacional como los Juegos Panamericanos Santiago 2023. En Gesswein Properties aporta visión estratégica, estructuración comercial y marketing inmobiliario orientado a la valorización, diferenciación y proyección de activos en el segmento premium.',
     ],
-    education: 'Periodista, Licenciado en Información Social, Pontificia Universidad Católica de Chile.',
+    education:
+      'Periodista, Licenciado en Información Social, Pontificia Universidad Católica de Chile.',
     specialties:
       'Estrategia de posicionamiento · Desarrollo y valorización de activos · Marketing inmobiliario premium · Comunicación corporativa · Gestión de proyectos de alto impacto',
     email: 'alberto@gesswein.tv',
@@ -81,7 +84,8 @@ const TEAM_PRINCIPAL: Member[] = [
       'Abogado especializado en derecho inmobiliario, tributario y comercial, con experiencia en procesos de due diligence y en la identificación estratégica de riesgos legales. Integra análisis jurídico riguroso y visión de negocio para estructurar y acompañar operaciones inmobiliarias, elaborando la documentación necesaria para resguardar cada etapa del proceso de corretaje, desde la negociación inicial hasta el cierre definitivo.',
     ],
     education: 'Derecho, Universidad del Desarrollo.',
-    specialties: 'Análisis y estructuración legal inmobiliaria • Due diligence • Planificación tributaria • Contratos • Compliance',
+    specialties:
+      'Análisis y estructuración legal inmobiliaria • Due diligence • Planificación tributaria • Contratos • Compliance',
     email: 'jangesswein@gmail.com',
     phone: '+56 9 9909 9502',
     linkedin: '#',
@@ -120,14 +124,12 @@ const CULTURE = [
   {
     icon: Award,
     title: 'Excelencia',
-    text:
-      'Buscamos la perfección en cada detalle, desde la asesoría inicial hasta la entrega final.',
+    text: 'Buscamos la perfección en cada detalle, desde la asesoría inicial hasta la entrega final.',
   },
   {
     icon: Users,
     title: 'Transparencia',
-    text:
-      'Comunicación directa, procesos claros y decisiones fundadas en información verificable.',
+    text: 'Comunicación directa, procesos claros y decisiones fundadas en información verificable.',
   },
   {
     icon: Briefcase,
@@ -158,8 +160,8 @@ export default function EquipoPage() {
               NUESTRO EQUIPO
             </h1>
             <p className="text-white/85 mt-2 text-[14px] md:text-[15px] leading-relaxed">
-              Profesionales expertos unidos por la pasión de ayudarte a encontrar
-              la propiedad perfecta.
+              Profesionales expertos unidos por la pasión de ayudarte a encontrar la propiedad
+              perfecta.
             </p>
           </div>
         </div>
@@ -174,7 +176,8 @@ export default function EquipoPage() {
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
                 Nuestra Historia
               </h2>
-              <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
+              {/* === CAMBIO PUNTUAL: texto justificado === */}
+              <div className="text-[14px] text-black/70 leading-relaxed space-y-4 text-justify">
                 <p>
                   Gesswein Properties nace a partir de la trayectoria independiente de Carolina San
                   Martín, arquitecta con más de quince años de experiencia en el desarrollo de
@@ -184,8 +187,8 @@ export default function EquipoPage() {
                   Desde 2017, su ejercicio profesional ha estado orientado a crear viviendas que
                   conjugan precisión técnica, diseño y habitabilidad. Esa experiencia permitió
                   identificar una constante en el mercado inmobiliario: la ausencia de una asesoría
-                  integral y profesional que acompañe a las personas en decisiones tan
-                  trascendentes como la compra o venta de su hogar.
+                  integral y profesional que acompañe a las personas en decisiones tan trascendentes
+                  como la compra o venta de su hogar.
                 </p>
                 <p>
                   Frente a esa realidad, surge Gesswein Properties, conformada por cuatro socios
@@ -195,6 +198,7 @@ export default function EquipoPage() {
                   estado reservado al mundo corporativo.
                 </p>
               </div>
+              {/* === FIN CAMBIO PUNTUAL === */}
             </div>
 
             {/* Imagen */}
@@ -226,9 +230,7 @@ export default function EquipoPage() {
 
           <div className="mt-12 grid md:grid-cols-2 gap-6">
             <article className="border border-black/10 bg-white p-6 shadow-sm">
-              <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-2">
-                Misión
-              </h3>
+              <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-2">Misión</h3>
               <p className="text-[13px] text-black/70 leading-relaxed">
                 Brindar asesoría inmobiliaria integral, basada en confianza, precisión técnica y
                 diseño.
@@ -236,9 +238,7 @@ export default function EquipoPage() {
             </article>
 
             <article className="border border-black/10 bg-white p-6 shadow-sm">
-              <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-2">
-                Visión
-              </h3>
+              <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57] mb-2">Visión</h3>
               <p className="text-[13px] text-black/70 leading-relaxed">
                 Ser la firma inmobiliaria de referencia en Chile por su excelencia estética,
                 profesionalismo y compromiso con la calidad de vida de quienes confían en nosotros.
@@ -263,9 +263,7 @@ export default function EquipoPage() {
                 <div className="w-12 h-12 bg-slate-100 border border-black/10 mx-auto mb-4 flex items-center justify-center">
                   <c.icon className="h-6 w-6 text-[#0A2E57]" />
                 </div>
-                <h4 className="text-[13px] tracking-[.18em] uppercase text-black/90">
-                  {c.title}
-                </h4>
+                <h4 className="text-[13px] tracking-[.18em] uppercase text-black/90">{c.title}</h4>
                 <p className="text-[13px] text-black/70 mt-2 leading-relaxed">{c.text}</p>
               </article>
             ))}
@@ -329,35 +327,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 6) CTA FINAL — GRIS */}
-      <section className="py-16 bg-[#f8f9fb]">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
-            ¿Quieres trabajar con nosotros?
-          </h3>
-          <p className="text-[14px] text-black/70 mt-3">
-            Súmate para ayudarnos a captar propiedades y crecer junto a la comunidad Gesswein
-            Properties.
-          </p>
-
-          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-            <a
-              href="mailto:contacto@gessweinproperties.cl?subject=Quiero%20trabajar%20con%20ustedes"
-              className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
-            >
-              Enviar correo
-            </a>
-            <a
-              href="https://wa.me/56912345678?text=Hola%2C%20quiero%20sumarme%20al%20equipo%20de%20Gesswein%20Properties"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center px-5 py-3 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
-            >
-              WhatsApp
-            </a>
-          </div>
-        </div>
-      </section>
+      {/* === CAMBIO PUNTUAL: eliminado el segmento "¿Quieres trabajar con nosotros?" === */}
     </main>
   );
 }
@@ -431,10 +401,8 @@ function TeamOgilvy() {
       setPanelDims({ left, width, height });
     }
 
-    // calcular al montar y cuando cambia 'active' (por si altura de card varía)
     computeLayout();
 
-    // observar cambios de tamaño del grid
     const ro = new ResizeObserver(() => computeLayout());
     if (gridRef.current) ro.observe(gridRef.current);
     window.addEventListener('resize', computeLayout);
@@ -445,14 +413,12 @@ function TeamOgilvy() {
     };
   }, [active]);
 
-  // Bloquear/permitir interacción del grid durante transición
   function setGridInteractivity(blocked: boolean) {
     const grid = gridRef.current;
     if (!grid) return;
     grid.style.pointerEvents = blocked ? 'none' : 'auto';
   }
 
-  // ----- CERRAR (fade del panel → floater vuelve a transform:0 con MISMA velocidad) -----
   function closePanel() {
     if (isTransitioning) return;
     const i = activeIdxRef.current;
@@ -460,7 +426,6 @@ function TeamOgilvy() {
     setIsTransitioning(true);
     setGridInteractivity(true);
 
-    // Mobile: acordeón
     if (window.matchMedia('(max-width: 767px)').matches) {
       setActive(null);
       activeIdxRef.current = null;
@@ -469,7 +434,6 @@ function TeamOgilvy() {
       return;
     }
 
-    // 1) Desaparece el panel primero
     if (panelRef.current) {
       panelRef.current.style.transition = `opacity 220ms ease`;
       panelRef.current.style.opacity = '0';
@@ -482,7 +446,6 @@ function TeamOgilvy() {
       return;
     }
 
-    // 2) Volver EXACTAMENTE a la X inicial: transform: 0 (misma DURATION/EASING que la ida)
     floater.style.willChange = 'transform';
     requestAnimationFrame(() => {
       floater.style.transition = `transform ${DURATION}ms ${EASING}`;
@@ -523,17 +486,14 @@ function TeamOgilvy() {
     }
   }
 
-  // ----- ABRIR (clon desde X inicial → X de la primera columna con MISMA velocidad) -----
   function openMember(i: number) {
     if (isTransitioning) return;
 
-    // Toggle: si toco el mismo, cierro
     if (active === i) {
       closePanel();
       return;
     }
 
-    // Mobile: acordeón básico
     if (window.matchMedia('(max-width: 767px)').matches) {
       setActive(i);
       activeIdxRef.current = i;
@@ -552,7 +512,6 @@ function TeamOgilvy() {
     setIsTransitioning(true);
     setGridInteractivity(true);
 
-    // Construimos el clon en SU posición inicial fija
     const gridRect = grid.getBoundingClientRect();
     const srcRect = src.getBoundingClientRect();
     const w = Math.round(srcRect.width);
@@ -566,19 +525,20 @@ function TeamOgilvy() {
     clone.style.height = `${h}px`;
     clone.style.zIndex = '50';
     clone.style.cursor = 'pointer';
-    (clone.querySelector('[data-overlay]') as HTMLDivElement | null)?.style.setProperty('opacity', '0');
+    (clone.querySelector('[data-overlay]') as HTMLDivElement | null)?.style.setProperty(
+      'opacity',
+      '0'
+    );
     clone.addEventListener('click', closePanel);
 
     grid.appendChild(clone);
 
-    // Ocultamos origen y destino para evitar solapes
     src.style.visibility = 'hidden';
     dst.style.visibility = 'hidden';
 
     floaterRef.current = clone;
     activeIdxRef.current = i;
 
-    // Atenuar los demás mientras viaja
     Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el, idx) => {
       if (idx !== i && idx !== 0) {
         el.style.transition = 'opacity 200ms ease';
@@ -586,7 +546,6 @@ function TeamOgilvy() {
       }
     });
 
-    // Distancia EXACTA: desde initialX[i] hasta firstX (misma DURATION/EASING)
     const dx = firstXRef.current - initialXRef.current[i];
     clone.style.willChange = 'transform';
     requestAnimationFrame(() => {
@@ -598,7 +557,6 @@ function TeamOgilvy() {
       setActive(i);
       setIsTransitioning(false);
       setGridInteractivity(false);
-      // restaurar opacidades (el panel cubre cols 2–4)
       Array.from(grid.querySelectorAll<HTMLElement>('[data-team-card]')).forEach((el, idx) => {
         if (idx !== i && idx !== 0) el.style.opacity = '1';
       });
@@ -620,7 +578,10 @@ function TeamOgilvy() {
   }
 
   function splitRole(roleLine: string) {
-    const parts = roleLine.split('·').map((s) => s.trim()).filter(Boolean);
+    const parts = roleLine
+      .split('·')
+      .map((s) => s.trim())
+      .filter(Boolean);
     return {
       title: parts[0] || roleLine,
       area: parts.slice(1).join(' · '),
@@ -679,20 +640,20 @@ function TeamOgilvy() {
 
   return (
     <div ref={containerRef} className="relative mt-10">
-      {/* GRID */}
       <div ref={gridRef} className="relative grid grid-cols-1 md:grid-cols-4 gap-6">
         {team.map((m, i) => {
           const r = splitRole(m.roleLine);
           return (
             <div
               key={m.id}
-              ref={(el) => { cardRefs.current[i] = el; }}
+              ref={(el) => {
+                cardRefs.current[i] = el;
+              }}
               data-team-card
               className="relative group cursor-pointer select-none transition-opacity"
               onClick={() => openMember(i)}
               aria-expanded={active === i}
             >
-              {/* Foto */}
               <div className="border border-black/10">
                 <Image
                   src={m.photo || ''}
@@ -704,14 +665,12 @@ function TeamOgilvy() {
                 />
               </div>
 
-              {/* Overlay (DESKTOP) — CARGO + ÁREA EN 2 LÍNEAS */}
               <div
                 data-overlay
                 className="hidden md:flex absolute inset-0 bg-[#0A2E57]/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out flex-col justify-end p-6 pointer-events-none"
               >
                 <h3 className="text-white text-lg font-semibold">{m.name}</h3>
 
-                {/* === CAMBIO PUNTUAL: separar cargo y área === */}
                 <div className="mt-1">
                   <div className="text-white/95 text-[13px] tracking-[.18em] uppercase font-semibold">
                     {r.title}
@@ -722,7 +681,6 @@ function TeamOgilvy() {
                     </div>
                   ) : null}
                 </div>
-                {/* === FIN CAMBIO PUNTUAL === */}
 
                 <p className="text-white/85 text-xs mt-2 line-clamp-2">{m.bioShort}</p>
               </div>
@@ -734,22 +692,34 @@ function TeamOgilvy() {
                 }`}
               >
                 <div className="w-full bg-[#EAEAEA] p-5 border border-black/10">
-                  <h4 className="text-xl font-semibold text-[#0E2C4A]">{m.name}</h4>
+                  {/* === CAMBIO PUNTUAL: íconos arriba (mobile) === */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h4 className="text-xl font-semibold text-[#0E2C4A]">{m.name}</h4>
 
-                  {/* === CAMBIO PUNTUAL: separar cargo y área === */}
-                  <div className="mt-1">
-                    <div className="text-[#0A2E57] text-[13px] tracking-[.18em] uppercase font-semibold">
-                      {r.title}
-                    </div>
-                    {r.area ? (
-                      <div className="text-[#0E2C4A]/70 text-[12px] tracking-[.14em] uppercase mt-1">
-                        {r.area}
+                      <div className="mt-1">
+                        <div className="text-[#0A2E57] text-[13px] tracking-[.18em] uppercase font-semibold">
+                          {r.title}
+                        </div>
+                        {r.area ? (
+                          <div className="text-[#0E2C4A]/70 text-[12px] tracking-[.14em] uppercase mt-1">
+                            {r.area}
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
+                    </div>
+
+                    <div className="shrink-0 pt-1">
+                      <ContactIcons m={m} />
+                    </div>
                   </div>
                   {/* === FIN CAMBIO PUNTUAL === */}
 
-                  <p className="mt-4 text-[14px] text-[#0E2C4A]">{m.bioDetail[0]}</p>
+                  {/* === CAMBIO PUNTUAL: texto justificado === */}
+                  <p className="mt-4 text-[14px] text-[#0E2C4A] text-justify">
+                    {m.bioDetail[0]}
+                  </p>
+                  {/* === FIN CAMBIO PUNTUAL === */}
 
                   <div className="mt-5 grid gap-3 text-[13px] text-[#0E2C4A]">
                     <div>
@@ -764,12 +734,6 @@ function TeamOgilvy() {
                       </div>
                       <div>{m.specialties}</div>
                     </div>
-
-                    {/* === CAMBIO PUNTUAL: solo íconos (sin texto, sin rectángulo) === */}
-                    <div className="pt-2">
-                      <ContactIcons m={m} />
-                    </div>
-                    {/* === FIN CAMBIO PUNTUAL === */}
                   </div>
                 </div>
               </div>
@@ -778,63 +742,78 @@ function TeamOgilvy() {
         })}
 
         {/* PANEL LATERAL (DESKTOP) */}
-        {active !== null && (() => {
-          const r = splitRole(team[active].roleLine);
-          return (
-            <div
-              ref={panelRef}
-              className="hidden md:block absolute top-0 bg-[#EAEAEA] border border-black/10 shadow-[0_4px_10px_rgba(0,0,0,0.06)] overflow-hidden"
-              style={{
-                left: `${panelDims.left}px`,
-                width: `${panelDims.width}px`,
-                height: `${panelDims.height}px`,
-                transition: `transform ${DURATION}ms ${EASING}, opacity 220ms ease`,
-                transform: 'translateX(0)',
-                opacity: 1,
-                zIndex: 40,
-              }}
-              onClick={onPanelClick}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="h-full w-full p-10 text-[#0E2C4A] flex flex-col">
-                <h3 className="text-3xl font-semibold">{team[active].name}</h3>
+        {active !== null &&
+          (() => {
+            const r = splitRole(team[active].roleLine);
+            return (
+              <div
+                ref={panelRef}
+                className="hidden md:block absolute top-0 bg-[#EAEAEA] border border-black/10 shadow-[0_4px_10px_rgba(0,0,0,0.06)] overflow-hidden"
+                style={{
+                  left: `${panelDims.left}px`,
+                  width: `${panelDims.width}px`,
+                  height: `${panelDims.height}px`,
+                  transition: `transform ${DURATION}ms ${EASING}, opacity 220ms ease`,
+                  transform: 'translateX(0)',
+                  opacity: 1,
+                  zIndex: 40,
+                }}
+                onClick={onPanelClick}
+                role="dialog"
+                aria-modal="true"
+              >
+                <div className="h-full w-full p-10 text-[#0E2C4A] flex flex-col">
+                  {/* === CAMBIO PUNTUAL: íconos arriba a la derecha (desktop) === */}
+                  <div className="flex items-start justify-between gap-6">
+                    <div>
+                      <h3 className="text-3xl font-semibold">{team[active].name}</h3>
 
-                {/* === CAMBIO PUNTUAL: separar cargo y área === */}
-                <div className="mt-2">
-                  <div className="text-[#0A2E57] tracking-[.18em] uppercase text-[13px] font-semibold">
-                    {r.title}
-                  </div>
-                  {r.area ? (
-                    <div className="text-[#0E2C4A]/70 tracking-[.16em] uppercase text-[12px] mt-1">
-                      {r.area}
+                      <div className="mt-2">
+                        <div className="text-[#0A2E57] tracking-[.18em] uppercase text-[13px] font-semibold">
+                          {r.title}
+                        </div>
+                        {r.area ? (
+                          <div className="text-[#0E2C4A]/70 tracking-[.16em] uppercase text-[12px] mt-1">
+                            {r.area}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
-                  ) : null}
-                </div>
-                {/* === FIN CAMBIO PUNTUAL === */}
 
-                <p className="mt-6 text-[15px] leading-relaxed">{team[active].bioDetail[0]}</p>
-
-                <div className="mt-8 grid grid-cols-2 gap-8 text-[14px]">
-                  <div>
-                    <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">Educación</div>
-                    <div className="mt-1">{team[active].education}</div>
+                    <div className="shrink-0 pt-1">
+                      <ContactIcons m={team[active]} />
+                    </div>
                   </div>
-                  <div>
-                    <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">Especialidades</div>
-                    <div className="mt-1">{team[active].specialties}</div>
-                  </div>
-                </div>
+                  {/* === FIN CAMBIO PUNTUAL === */}
 
-                <div className="mt-auto pt-6 text-[14px]">
-                  {/* === CAMBIO PUNTUAL: solo íconos (sin texto, sin rectángulo) === */}
-                  <ContactIcons m={team[active]} />
+                  {/* === CAMBIO PUNTUAL: zona scrollable para poder leer completo === */}
+                  <div className="mt-6 flex-1 min-h-0 overflow-y-auto pr-4">
+                    {/* === CAMBIO PUNTUAL: texto justificado === */}
+                    <p className="text-[15px] leading-relaxed text-justify">
+                      {team[active].bioDetail[0]}
+                    </p>
+                    {/* === FIN CAMBIO PUNTUAL === */}
+
+                    <div className="mt-8 grid grid-cols-2 gap-8 text-[14px]">
+                      <div>
+                        <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
+                          Educación
+                        </div>
+                        <div className="mt-1">{team[active].education}</div>
+                      </div>
+                      <div>
+                        <div className="uppercase text-[#0A2E57] tracking-[.18em] text-[12px]">
+                          Especialidades
+                        </div>
+                        <div className="mt-1">{team[active].specialties}</div>
+                      </div>
+                    </div>
+                  </div>
                   {/* === FIN CAMBIO PUNTUAL === */}
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
       </div>
     </div>
   );
