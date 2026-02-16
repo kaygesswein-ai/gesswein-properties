@@ -66,7 +66,7 @@ export default function Navbar() {
 
                 <span className="mx-2 text-white/60">|</span>
 
-                {/* OPORTUNIDADES EXCLUSIVAS — destacado SOLO rectángulo (opción 1) */}
+                {/* PROYECTOS EXCLUSIVOS — destacado */}
                 <Link
                   href="/proyectos-exclusivos"
                   className="uppercase text-[11px] tracking-[.30em]
@@ -77,7 +77,7 @@ export default function Navbar() {
                              hover:bg-white/20
                              transition-colors"
                 >
-                  Oportunidades exclusivas
+                  Proyectos exclusivos
                 </Link>
 
                 <span className="mx-2 text-white/60">|</span>
@@ -126,7 +126,6 @@ export default function Navbar() {
                   <Instagram className="h-[18px] w-[18px]" />
                 </Link>
 
-                {/* TikTok (ya estaba bien) */}
                 <Link href="#" aria-label="TikTok" className={linkBase}>
                   <svg
                     viewBox="0 0 24 24"
@@ -182,11 +181,11 @@ export default function Navbar() {
             Inicio
           </Link>
           <Link
-            href="/oportunidades-exclusivas"
+            href="/proyectos-exclusivos"
             className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
             onClick={() => setOpen(false)}
           >
-            Oportunidades exclusivas
+            Proyectos exclusivos
           </Link>
           <Link
             href="/propiedades"
