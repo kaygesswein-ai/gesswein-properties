@@ -226,8 +226,9 @@ function getHeroImage(p?: Partial<Proyecto> | null, fotos?: FotoRow[]) {
 }
 
 function SealChip({ proj }: { proj: Proyecto | null }) {
-  const tipo = (proj?.sello_tipo ?? '') as ProjectSeal;
-  if (!tipo || tipo === '') return null;
+  // ✅ FIX TS: no comparar '' después de !tipo; usa null y check simple
+  const tipo = (proj?.sello_tipo ?? null) as ProjectSeal | null;
+  if (!tipo) return null;
 
   const key = tipo as Exclude<ProjectSeal, '' | null>;
   const label = SEAL_LABEL[key] ?? 'Sello';
@@ -409,8 +410,10 @@ function normalizeTag(row?: FotoRow): 'exterior'|'interior'|'planos'|'portada'|'
 }
 
 function GlossarioSellos({ proj }: { proj: Proyecto | null }) {
-  const tipo = (proj?.sello_tipo ?? '') as ProjectSeal;
-  if (!tipo || tipo === '') return null;
+  // ✅ mismo fix (consistente)
+  const tipo = (proj?.sello_tipo ?? null) as ProjectSeal | null;
+  if (!tipo) return null;
+
   const key = tipo as Exclude<ProjectSeal, '' | null>;
   const item = SEAL_GLOSSARY[key];
   if (!item) return null;
