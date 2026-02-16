@@ -47,21 +47,58 @@ type Proyecto = {
 
   tags?: string[] | null;
 
-  // opcional si quieres mostrarlo en detalle después
+  // sellos
   sello_tipo?: ProjectSeal;
-  tasa_novacion?: number | null;
+  tasa_novacion?: number | null; // % ej 3.4
 };
 
 const nfUF  = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const nf1   = new Intl.NumberFormat('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 const cls = (...s:(string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
 const wordsCap = (s?: string | null) =>
-  (s ?? '').toLowerCase().split(' ').map(w => (w ? w[0].toUpperCase() + w.slice(1) : '')).join(' ').trim();
+  (s ?? '')
+    .toLowerCase()
+    .split(' ')
+    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+    .join(' ')
+    .trim();
+
+/** ===== Sellos: label + glosario formal ===== */
+const SEAL_LABEL: Record<Exclude<ProjectSeal, '' | null>, string> = {
+  bajo_mercado: 'Bajo mercado',
+  novacion: 'Tasa de Novación',
+  flipping: 'Flipping',
+  densificacion: 'Densificación',
+};
+
+const SEAL_GLOSSARY: Record<Exclude<ProjectSeal, '' | null>, { title: string; desc: string }> = {
+  bajo_mercado: {
+    title: 'Bajo mercado',
+    desc:
+      'Activo ofrecido a un precio inferior a referencias comparables verificables para su micro-mercado, considerando atributos, condición, emplazamiento, normativa y liquidez. Implica una asimetría de precio que, de materializarse, puede traducirse en mayor margen de seguridad para el comprador.',
+  },
+  novacion: {
+    title: 'Novación hipotecaria (Tasa de Novación)',
+    desc:
+      'Operación por la cual se sustituye una obligación por otra (novación) vinculada al financiamiento hipotecario, típicamente para modificar condiciones del crédito (p. ej., tasa, plazo o estructura) mediante un nuevo acuerdo con la entidad financiera. En esta ficha, “Tasa de Novación” representa la tasa estimada/aplicable asociada a dicha reestructuración, expresada como porcentaje.',
+  },
+  flipping: {
+    title: 'Flipping',
+    desc:
+      'Estrategia de inversión orientada a capturar valor mediante compra, mejora (remodelación/puesta en valor) y venta en un horizonte de corto a mediano plazo. El retorno depende de costos totales (obra, permisos, transacción), tiempos y capacidad de vender al precio objetivo en condiciones de mercado.',
+  },
+  densificacion: {
+    title: 'Densificación',
+    desc:
+      'Potencial de incrementar superficie vendible o unidades mediante ampliación, subdivisión, cambio de destino u otra intervención posible según normativa aplicable, cabidas y restricciones del predio. Requiere evaluación técnica, normativa y económica (costos, plazos, permisos y demanda).',
+  },
+};
 
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
@@ -188,6 +225,28 @@ function getHeroImage(p?: Partial<Proyecto> | null, fotos?: FotoRow[]) {
   return /^https?:\/\//i.test(out) ? out : HERO_FALLBACK;
 }
 
+function SealChip({ proj }: { proj: Proyecto | null }) {
+  const tipo = (proj?.sello_tipo ?? '') as ProjectSeal;
+  if (!tipo || tipo === '') return null;
+
+  const key = tipo as Exclude<ProjectSeal, '' | null>;
+  const label = SEAL_LABEL[key] ?? 'Sello';
+
+  // Novación: mostrar 1 decimal
+  const extra =
+    key === 'novacion' && typeof proj?.tasa_novacion === 'number'
+      ? ` ${nf1.format(proj.tasa_novacion)}%`
+      : '';
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      <span className="inline-flex items-center gap-2 px-3 py-1 text-[12px] tracking-wide uppercase border border-slate-200 bg-white/80 text-slate-800">
+        {label}{extra}
+      </span>
+    </div>
+  );
+}
+
 export default function ProyectoExclusivoDetailPage({ params }: { params: { id: string } }) {
   const [proj, setProj] = useState<Proyecto | null>(null);
   const [fotos, setFotos] = useState<FotoRow[]>([]);
@@ -293,9 +352,12 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
         <div className="absolute inset-0 -z-10 bg-black/35" />
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
-            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[520px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{proj?.titulo ?? 'Proyecto'}</h1>
               <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
+
+              {/* SELLO (si existe) */}
+              <SealChip proj={proj} />
 
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
@@ -344,6 +406,31 @@ function normalizeTag(row?: FotoRow): 'exterior'|'interior'|'planos'|'portada'|'
   if (raw.includes('exterior') || /(fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/.test(raw)) return 'exterior';
   if (raw.includes('interior') || /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio)/.test(raw)) return 'interior';
   return 'todas';
+}
+
+function GlossarioSellos({ proj }: { proj: Proyecto | null }) {
+  const tipo = (proj?.sello_tipo ?? '') as ProjectSeal;
+  if (!tipo || tipo === '') return null;
+  const key = tipo as Exclude<ProjectSeal, '' | null>;
+  const item = SEAL_GLOSSARY[key];
+  if (!item) return null;
+
+  const novacionExtra =
+    key === 'novacion' && typeof proj?.tasa_novacion === 'number'
+      ? ` (tasa: ${nf1.format(proj.tasa_novacion)}%)`
+      : '';
+
+  return (
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
+        Glosario — Sellos
+      </h2>
+      <div className="border border-slate-200 bg-white p-5">
+        <div className="text-slate-900 font-semibold">{item.title}{novacionExtra}</div>
+        <p className="mt-2 text-slate-700 leading-relaxed">{item.desc}</p>
+      </div>
+    </section>
+  );
 }
 
 function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: FotoRow[] }) {
@@ -409,6 +496,9 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
           <p key={i} className="text-slate-700 leading-relaxed whitespace-pre-wrap mb-3 last:mb-0">{p}</p>
         )) : <p className="text-slate-700 leading-relaxed">Descripción no disponible por el momento.</p>}
       </section>
+
+      {/* Glosario de sellos (solo si el proyecto trae sello_tipo) */}
+      <GlossarioSellos proj={proj} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
