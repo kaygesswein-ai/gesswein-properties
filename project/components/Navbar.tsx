@@ -68,7 +68,7 @@ export default function Navbar() {
 
                 {/* OPORTUNIDADES EXCLUSIVAS — destacado SOLO rectángulo (opción 1) */}
                 <Link
-                  href="/oportunidades-exclusivas"
+                  href="/proyectos-exclusivos"
                   className="uppercase text-[11px] tracking-[.30em]
                              px-3 py-1
                              border border-white/40
