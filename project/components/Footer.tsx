@@ -6,7 +6,7 @@ import { Mail, Phone, Instagram, Facebook, Linkedin, MessageCircle } from "lucid
 
 const NAV = [
   { href: "/", label: "INICIO" },
-  { href: "/oportunidades-exclusivas", label: "OPORTUNIDADES EXCLUSIVAS" },
+  { href: "/proyectos-exclusivos", label: "PROYECTOS EXCLUSIVOS" },
   { href: "/propiedades", label: "PROPIEDADES" },
   { href: "/servicios", label: "SERVICIOS" },
   { href: "/equipo", label: "EQUIPO" },
@@ -33,7 +33,6 @@ function TikTokIcon() {
 function SocialIcons() {
   return (
     <div className="mt-2 flex items-center justify-center gap-6 md:gap-8 text-white">
-      {/* WhatsApp con teléfono dentro */}
       <Link
         aria-label="WhatsApp"
         href="#"
