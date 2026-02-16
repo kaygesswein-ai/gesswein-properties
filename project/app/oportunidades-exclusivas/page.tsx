@@ -1,4 +1,3 @@
-// FILE: project/app/proyectos-exclusivos/page.tsx
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -12,57 +11,60 @@ import {
   Square,
   SlidersHorizontal,
   Trash2,
-  BadgeDollarSign,
-  Percent,
-  RotateCw,
-  Layers3,
 } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
 
-type SealType = 'bajo_mercado' | 'innovacion' | 'flipping' | 'densificacion';
+type ProjectSeal = 'bajo_mercado' | 'novacion' | 'flipping' | 'densificacion' | '' | null;
 
-type Project = {
+type Proyecto = {
   id?: string;
   slug?: string;
+
   titulo?: string;
   comuna?: string;
   barrio?: string;
   region?: string;
   operacion?: 'venta' | 'arriendo' | string;
   tipo?: string;
+
   precio_uf?: number | null;
   precio_clp?: number | null;
+
   dormitorios?: number | null;
   banos?: number | null;
   superficie_util_m2?: number | null;
   superficie_terreno_m2?: number | null;
   estacionamientos?: number | null;
-  coverImage?: string;
-  imagenes?: string[] | null;
-  createdAt?: string;
 
   portada_url?: string | null;
   portada_fija_url?: string | null;
+  coverImage?: string;
 
-  // === SELLOS (NUEVO) ===
-  sello_tipo?: SealType | null;
-  tasa_innovacion?: number | null; // ej 2.0
+  // ✅ NUEVO: sello + tasa (si aplica)
+  sello_tipo?: ProjectSeal;
+  tasa_novacion?: number | null; // ej: 2.35 (porcentaje)
 };
 
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
 
-/* HERO (cámbiala por una portada específica de Proyectos Exclusivos cuando la tengas en Supabase) */
+/* HERO (cámbiala por tu portada real de Proyectos Exclusivos) */
 const HERO_IMG =
   'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2400&auto=format&fit=crop';
 
-/* Fallback card */
 const CARD_FALLBACK =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
+// ✅ Tasa con decimales (2)
+const nfTASA = new Intl.NumberFormat('es-CL', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 const fmtMiles = (raw: string) => {
   const digits = (raw || '').replace(/\D+/g, '');
@@ -92,7 +94,7 @@ function useUfValue() {
   return uf;
 }
 
-/* ==== SOLO RM y Valparaíso ==== */
+/* ==== SOLO RM y Valparaíso (misma lógica que Propiedades) ==== */
 const REGIONES: string[] = ['Metropolitana de Santiago', 'Valparaíso'];
 
 const COMUNAS: Record<string, string[]> = {
@@ -144,19 +146,14 @@ const BARRIOS: Record<string, string[]> = {
   Casablanca: ['Tunquén'],
 };
 
-/* ==== Normalización y región ==== */
 const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalize = (s?: string) => stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
 
-/** Resuelve región a partir de comuna y, si es necesario, por barrio.
- *  Tunquén -> Casablanca -> Valparaíso
- */
 function inferRegion(comuna?: string, barrio?: string): string | undefined {
   const cNorm = normalize(comuna);
   const bNorm = normalize(barrio);
 
-  const comunaEfectiva = cNorm === 'tunquen' || bNorm.includes('tunquen') ? 'Casablanca' : (comuna || '');
-
+  const comunaEfectiva = cNorm === 'tunquen' || bNorm.includes('tunquen') ? 'Casablanca' : comuna || '';
   const c = normalize(comunaEfectiva);
   if (!c) return undefined;
 
@@ -166,141 +163,70 @@ function inferRegion(comuna?: string, barrio?: string): string | undefined {
   return undefined;
 }
 
-/* ========= SELLOS ========= */
-function SealBadge({ tipo, tasa }: { tipo?: SealType | null; tasa?: number | null }) {
-  if (!tipo) return null;
+/* ---------- Selos UI ---------- */
+const sealMeta: Record<
+  Exclude<ProjectSeal, '' | null>,
+  { label: string; short: string; colorClass: string }
+> = {
+  bajo_mercado: {
+    label: 'Precio bajo mercado',
+    short: 'BAJO\nMERCADO',
+    colorClass: 'bg-white/90 border border-slate-200 text-slate-900',
+  },
+  novacion: {
+    label: 'Tasa de Novación Hipotecaria',
+    short: 'TASA\nNOVACIÓN',
+    colorClass: 'bg-white/90 border border-slate-200 text-slate-900',
+  },
+  flipping: {
+    label: 'Posibilidad de flipping',
+    short: 'FLIPPING',
+    colorClass: 'bg-white/90 border border-slate-200 text-slate-900',
+  },
+  densificacion: {
+    label: 'Densificación / desarrollo',
+    short: 'DENSI\nFICACIÓN',
+    colorClass: 'bg-white/90 border border-slate-200 text-slate-900',
+  },
+};
 
-  const base =
-    'absolute top-3 right-3 z-10 w-[88px] h-[88px] border border-white/70 bg-[#0A2E57]/85 text-white shadow-[0_10px_24px_rgba(0,0,0,0.25)] flex items-center justify-center';
-  const inner = 'w-full h-full flex flex-col items-center justify-center gap-1 text-center px-2';
+function SealBadge({ tipo, tasa }: { tipo?: ProjectSeal; tasa?: number | null }) {
+  const t = (tipo || '') as ProjectSeal;
+  if (!t || t === '') return null;
+  const meta = sealMeta[t as Exclude<ProjectSeal, '' | null>];
+  if (!meta) return null;
 
-  if (tipo === 'bajo_mercado') {
-    return (
-      <div className={base}>
-        <div className={inner}>
-          <BadgeDollarSign className="h-6 w-6" />
-          <div className="text-[10px] tracking-[.22em] uppercase leading-tight">Bajo mercado</div>
-        </div>
-      </div>
-    );
-  }
+  const showRate = t === 'novacion' && typeof tasa === 'number' && Number.isFinite(tasa);
 
-  if (tipo === 'innovacion') {
-    const n = typeof tasa === 'number' ? tasa : null;
-    return (
-      <div className={base}>
-        <div className={inner}>
-          <Percent className="h-6 w-6" />
-          <div className="text-[10px] tracking-[.22em] uppercase leading-tight">Innovación</div>
-          <div className="text-[16px] font-semibold leading-none">{n != null ? `${n}%` : '—'}</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (tipo === 'flipping') {
-    return (
-      <div className={base}>
-        <div className={inner}>
-          <RotateCw className="h-6 w-6" />
-          <div className="text-[10px] tracking-[.22em] uppercase leading-tight">Flipping</div>
-        </div>
-      </div>
-    );
-  }
-
-  // densificación
   return (
-    <div className={base}>
-      <div className={inner}>
-        <Layers3 className="h-6 w-6" />
-        <div className="text-[10px] tracking-[.22em] uppercase leading-tight">Densificación</div>
+    <div className="absolute left-3 top-3 z-10">
+      <div
+        className={`leading-none ${meta.colorClass} shadow-sm`}
+        style={{
+          borderRadius: 8,
+          padding: showRate ? '10px 10px 8px' : '10px 10px',
+          minWidth: 110,
+        }}
+        title={meta.label}
+      >
+        <div className="text-[11px] uppercase tracking-[0.20em] whitespace-pre-line">
+          {meta.short}
+        </div>
+
+        {showRate && (
+          <div
+            className="mt-2 text-center font-semibold"
+            style={{ color: BRAND_BLUE, fontSize: 16 }}
+          >
+            {nfTASA.format(tasa)}%
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function SealsGlossary() {
-  const itemBase =
-    'flex items-start gap-3 border border-slate-200 bg-white p-4 shadow-sm';
-  const iconBox =
-    'w-10 h-10 border border-black/10 bg-slate-50 flex items-center justify-center shrink-0';
-
-  return (
-    <section className="bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="pl-2 sm:pl-4">
-          <h3 className="text-slate-900 uppercase tracking-[0.25em] text-[15px]">
-            Glosario de sellos
-          </h3>
-          <p className="text-slate-600 mt-2 text-[13px] leading-relaxed max-w-3xl">
-            Cada proyecto puede incluir un sello de lectura rápida. Estos sellos no reemplazan el análisis; lo
-            sintetizan.
-          </p>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className={itemBase}>
-              <div className={iconBox}>
-                <BadgeDollarSign className="h-5 w-5 text-slate-700" />
-              </div>
-              <div>
-                <div className="text-[12px] tracking-[.22em] uppercase text-[#0A2E57] font-semibold">
-                  Bajo mercado
-                </div>
-                <div className="mt-1 text-[13px] text-slate-700 leading-relaxed">
-                  Precio bajo comparables relevantes o condición excepcional.
-                </div>
-              </div>
-            </div>
-
-            <div className={itemBase}>
-              <div className={iconBox}>
-                <Percent className="h-5 w-5 text-slate-700" />
-              </div>
-              <div>
-                <div className="text-[12px] tracking-[.22em] uppercase text-[#0A2E57] font-semibold">
-                  Innovación (tasa)
-                </div>
-                <div className="mt-1 text-[13px] text-slate-700 leading-relaxed">
-                  Tasa visible en el sello. Indica una oportunidad asociada a condiciones financieras específicas.
-                </div>
-              </div>
-            </div>
-
-            <div className={itemBase}>
-              <div className={iconBox}>
-                <RotateCw className="h-5 w-5 text-slate-700" />
-              </div>
-              <div>
-                <div className="text-[12px] tracking-[.22em] uppercase text-[#0A2E57] font-semibold">
-                  Flipping
-                </div>
-                <div className="mt-1 text-[13px] text-slate-700 leading-relaxed">
-                  Potencial de revalorización por mejora, regularización o reposicionamiento.
-                </div>
-              </div>
-            </div>
-
-            <div className={itemBase}>
-              <div className={iconBox}>
-                <Layers3 className="h-5 w-5 text-slate-700" />
-              </div>
-              <div>
-                <div className="text-[12px] tracking-[.22em] uppercase text-[#0A2E57] font-semibold">
-                  Densificación
-                </div>
-                <div className="mt-1 text-[13px] text-slate-700 leading-relaxed">
-                  Potencial normativo/constructivo para mayor intensidad, desarrollo o cabida.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
+/* ---------------- Página ---------------- */
 export default function ProyectosExclusivosPage() {
   /* — Filtros UI — */
   const [operacion, setOperacion] = useState('');
@@ -340,7 +266,7 @@ export default function ProyectosExclusivosPage() {
   const [aEstac, setAEstac] = useState('');
 
   /* — Resultados — */
-  const [items, setItems] = useState<Project[]>([]);
+  const [items, setItems] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(false);
   const [trigger, setTrigger] = useState(0);
 
@@ -348,7 +274,9 @@ export default function ProyectosExclusivosPage() {
   const [portadasById, setPortadasById] = useState<Record<string, string>>({});
 
   /* Orden */
-  const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | ''>('');
+  const [sortMode, setSortMode] = useState<
+    'price-desc' | 'price-asc' | 'bajo_mercado' | 'novacion' | 'flipping' | 'densificacion' | ''
+  >('');
   const [sortOpen, setSortOpen] = useState(false);
 
   const ufValue = useUfValue();
@@ -365,7 +293,6 @@ export default function ProyectosExclusivosPage() {
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
     if (aComuna) p.set('comuna', aComuna);
-    // NO enviamos 'barrio' al backend; se filtra en cliente.
 
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(aMinValor);
@@ -397,12 +324,11 @@ export default function ProyectosExclusivosPage() {
     setLoading(true);
     let cancel = false;
 
-    // ✅ Endpoint proyectos (crea /api/proyectos equivalente a /api/propiedades)
     fetch(`/api/proyectos?${p.toString()}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => {
         if (cancel) return;
-        setItems(Array.isArray(j?.data) ? (j.data as Project[]) : []);
+        setItems(Array.isArray(j?.data) ? (j.data as Proyecto[]) : []);
       })
       .catch(() => {
         if (!cancel) setItems([]);
@@ -487,7 +413,7 @@ export default function ProyectosExclusivosPage() {
       }
 
       if (aComuna) {
-        const cItem = normalize(normalize(x.comuna) === 'tunquen' ? 'Casablanca' : (x.comuna || ''));
+        const cItem = normalize(normalize(x.comuna) === 'tunquen' ? 'Casablanca' : x.comuna || '');
         if (cItem !== norm(aComuna)) return false;
       }
 
@@ -543,15 +469,24 @@ export default function ProyectosExclusivosPage() {
 
   /* Ordenamiento */
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
-  const getComparablePriceUF = (p: Project) => {
+
+  const getComparablePriceUF = (p: Proyecto) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
     if (p.precio_clp && p.precio_clp > 0 && CLPfromUF) return p.precio_clp / CLPfromUF;
     return -Infinity;
   };
+
   const displayedItems = useMemo(() => {
     const arr = filteredItems.slice();
+
+    // filtros/sort por sello (modo “curación”)
+    if (sortMode === 'bajo_mercado' || sortMode === 'novacion' || sortMode === 'flipping' || sortMode === 'densificacion') {
+      return arr.filter((x) => (x.sello_tipo || '') === sortMode);
+    }
+
     if (sortMode === 'price-desc') arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
     else if (sortMode === 'price-asc') arr.sort((a, b) => getComparablePriceUF(a) - getComparablePriceUF(b));
+
     return arr;
   }, [filteredItems, sortMode, CLPfromUF]);
 
@@ -585,6 +520,8 @@ export default function ProyectosExclusivosPage() {
     setAMinM2Terreno('');
     setAEstac('');
 
+    setSortMode('');
+    setSortOpen(false);
     setTrigger((v) => v + 1);
   };
 
@@ -609,7 +546,7 @@ export default function ProyectosExclusivosPage() {
     setTrigger((v) => v + 1);
   };
 
-  /* ENTER -> Buscar (atajo) */
+  /* ENTER -> Buscar */
   const handleKeyDownSearch = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -629,7 +566,7 @@ export default function ProyectosExclusivosPage() {
           src={HERO_IMG}
           alt="Portada"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '50% 45%' }}
+          style={{ objectPosition: '50% 35%' }}
         />
         <div className="absolute inset-0 bg-black/35" />
         <div className="absolute bottom-6 left-0 right-0">
@@ -639,46 +576,44 @@ export default function ProyectosExclusivosPage() {
                 <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
                   PROYECTOS EXCLUSIVOS
                 </h1>
-                <p className="text-white/85 mt-2">
-                  Activos fuera del circuito tradicional.
-                </p>
+                <p className="text-white/85 mt-2">Activos fuera del circuito tradicional.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* INTRO (antes del buscador) */}
+      {/* DESCRIPCIÓN (antes del motor) */}
       <section className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="pl-2 sm:pl-4 max-w-4xl">
-            <h2 className="text-slate-900 uppercase tracking-[0.25em] text-[15px]">
+            <h2 className="text-lg md:text-xl uppercase tracking-[0.25em]" style={{ color: BRAND_BLUE }}>
               Activos fuera del circuito tradicional
             </h2>
 
-            <div className="mt-6 space-y-4 text-slate-700 text-[14px] leading-relaxed text-justify">
+            <div className="mt-5 text-slate-700 leading-relaxed space-y-4">
               <p>
-                No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio
-                técnico, red estratégica y capacidad de estructuración.
+                No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio técnico,
+                red estratégica y capacidad de estructuración.
               </p>
               <p>
-                En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de
-                negocio, oportunidad financiera o particularidad normativa, se gestionan bajo un esquema
-                diferenciado y, en muchos casos, confidencial.
+                En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de negocio,
+                oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en muchos
+                casos, confidencial.
               </p>
               <p>
-                Aquí encontrarás alternativas que no compiten en el mercado masivo: novaciones estructuradas,
-                operaciones de flipping con fundamento técnico, propiedades bajo valor de mercado y activos con
-                potencial de densificación o desarrollo.
+                Aquí encontrarás alternativas que no compiten en el mercado masivo: novaciones estructuradas, operaciones
+                de flipping con fundamento técnico, propiedades bajo valor de mercado y activos con potencial de
+                densificación o desarrollo.
               </p>
               <p>
                 Cada oportunidad es previamente analizada desde su viabilidad normativa, potencial constructivo,
-                escenario de valorización y riesgo asociado. No se trata solo de “precio atractivo”, sino de
-                activos con lógica financiera y fundamento técnico.
+                escenario de valorización y riesgo asociado. No se trata solo de “precio atractivo”, sino de activos con
+                lógica financiera y fundamento técnico.
               </p>
               <p>
-                El acceso a esta sección es limitado y su disponibilidad cambia constantemente según oportunidades
-                reales detectadas y gestionadas por nuestro equipo.
+                El acceso a esta sección es limitado y su disponibilidad cambia constantemente según oportunidades reales
+                detectadas y gestionadas por nuestro equipo.
               </p>
               <p>
                 Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y
@@ -727,86 +662,19 @@ export default function ProyectosExclusivosPage() {
           {advancedMode === 'rapida' && (
             <>
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect
-                  options={['Venta', 'Arriendo']}
-                  value={operacion}
-                  onChange={setOperacion}
-                  placeholder="Operación"
-                />
-                <SmartSelect
-                  options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
-                  value={tipo}
-                  onChange={setTipo}
-                  placeholder="Tipo de propiedad"
-                />
-                <SmartSelect
-                  options={regionOptions}
-                  value={region}
-                  onChange={(v) => {
-                    setRegion(v);
-                    setComuna('');
-                    setBarrio('');
-                  }}
-                  placeholder="Región"
-                />
-                <SmartSelect
-                  options={comunaOptions}
-                  value={comuna}
-                  onChange={(v) => {
-                    setComuna(v);
-                    setBarrio('');
-                  }}
-                  placeholder="Comuna"
-                  disabled={!region}
-                />
-                <SmartSelect
-                  options={barrioOptions}
-                  value={barrio}
-                  onChange={setBarrio}
-                  placeholder="Barrio"
-                  disabled={!comuna || !barrioOptions.length}
-                />
+                <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
+                <SmartSelect options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']} value={tipo} onChange={setTipo} placeholder="Tipo de activo" />
+                <SmartSelect options={regionOptions} value={region} onChange={(v)=>{ setRegion(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
+                <SmartSelect options={comunaOptions} value={comuna} onChange={(v)=>{ setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
+                <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect
-                  options={['UF', 'CLP$']}
-                  value={moneda}
-                  onChange={(v) => setMoneda((v as any) || '')}
-                  placeholder="UF/CLP$"
-                />
-                <input
-                  value={minValor}
-                  onChange={(e) => setMinValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Mín"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                />
-                <input
-                  value={maxValor}
-                  onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Máx"
-                  className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                />
-                <button
-                  onClick={handleClear}
-                  className="w-full px-5 py-2 text-sm rounded-none border"
-                  style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                >
-                  Limpiar
-                </button>
-                <button
-                  onClick={applyAndSearch}
-                  className="w-full px-5 py-2 text-sm text-white rounded-none"
-                  style={{
-                    background: BRAND_BLUE,
-                    boxShadow:
-                      'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
-                  }}
-                >
-                  Buscar
-                </button>
+                <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
+                <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
+                <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
+                <button onClick={applyAndSearch} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
@@ -814,134 +682,89 @@ export default function ProyectosExclusivosPage() {
           {/* === AVANZADA === */}
           {advancedMode === 'avanzada' && (
             <>
-              <div className="pl-2 sm:pl-4">
-                <div className="h-px bg-slate-200 my-4" />
-              </div>
+              <div className="pl-2 sm:pl-4"><div className="h-px bg-slate-200 my-4" /></div>
 
               <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect
-                  options={['Venta', 'Arriendo']}
-                  value={operacion}
-                  onChange={setOperacion}
-                  placeholder="Operación"
-                />
-                <SmartSelect
-                  options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
-                  value={tipo}
-                  onChange={setTipo}
-                  placeholder="Tipo de propiedad"
-                />
-                <SmartSelect
-                  options={regionOptions}
-                  value={region}
-                  onChange={(v) => {
-                    setRegion(v);
-                    setComuna('');
-                    setBarrio('');
-                  }}
-                  placeholder="Región"
-                />
-                <SmartSelect
-                  options={comunaOptions}
-                  value={comuna}
-                  onChange={(v) => {
-                    setComuna(v);
-                    setBarrio('');
-                  }}
-                  placeholder="Comuna"
-                  disabled={!region}
-                />
-                <SmartSelect
-                  options={barrioOptions}
-                  value={barrio}
-                  onChange={setBarrio}
-                  placeholder="Barrio"
-                  disabled={!comuna || !barrioOptions.length}
-                />
+                <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
+                <SmartSelect options={['Casa','Departamento','Bodega','Oficina','Local comercial','Terreno']} value={tipo} onChange={setTipo} placeholder="Tipo de activo" />
+                <SmartSelect options={regionOptions} value={region} onChange={(v)=>{ setRegion(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
+                <SmartSelect options={comunaOptions} value={comuna} onChange={(v)=>{ setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
+                <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
               </div>
 
               <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect
-                  options={['UF', 'CLP', 'CLP$']}
-                  value={moneda}
-                  onChange={(v) => setMoneda((v as any) || '')}
-                  placeholder="UF/CLP$"
-                />
-                <input
-                  value={minValor}
-                  onChange={(e) => setMinValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Mín"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={maxValor}
-                  onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Máx"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={minDorm}
-                  onChange={(e) => setMinDorm((e.target.value || '').replace(/\D+/g, ''))}
-                  inputMode="numeric"
-                  placeholder="Mín. dormitorios"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={minBanos}
-                  onChange={(e) => setMinBanos((e.target.value || '').replace(/\D+/g, ''))}
-                  inputMode="numeric"
-                  placeholder="Mín. baños"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={estac}
-                  onChange={(e) => setEstac((e.target.value || '').replace(/\D+/g, ''))}
-                  inputMode="numeric"
-                  placeholder="Estacionamientos"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={minM2Const}
-                  onChange={(e) => setMinM2Const(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Mín. m² construidos"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <input
-                  value={minM2Terreno}
-                  onChange={(e) => setMinM2Terreno(fmtMiles(e.target.value))}
-                  inputMode="numeric"
-                  placeholder="Mín. m² terreno"
-                  className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                />
-                <button
-                  onClick={handleClear}
-                  className="w-full px-5 py-2 text-sm rounded-none border"
-                  style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                >
-                  Limpiar
-                </button>
-                <button
-                  onClick={applyAndSearch}
-                  className="w-full px-5 py-2 text-sm text-white rounded-none"
-                  style={{
-                    background: BRAND_BLUE,
-                    boxShadow:
-                      'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
-                  }}
-                >
-                  Buscar
-                </button>
+                <SmartSelect options={['UF', 'CLP', 'CLP$']} value={moneda} onChange={(v)=>setMoneda((v as any)||'')} placeholder="UF/CLP$" />
+                <input value={minValor} onChange={(e)=>setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={maxValor} onChange={(e)=>setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={minDorm} onChange={(e)=>setMinDorm((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={minBanos} onChange={(e)=>setMinBanos((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={estac} onChange={(e)=>setEstac((e.target.value||'').replace(/\D+/g,''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={minM2Const} onChange={(e)=>setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <input value={minM2Terreno} onChange={(e)=>setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
+                <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>Limpiar</button>
+                <button onClick={applyAndSearch} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>Buscar</button>
               </div>
             </>
           )}
         </div>
       </section>
 
-      {/* GLOSARIO (debajo de búsqueda y antes del listado) */}
-      <SealsGlossary />
+      {/* GLOSARIO (formal) */}
+      <section className="bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="pl-2 sm:pl-4">
+            <h3 className="text-sm uppercase tracking-[0.25em]" style={{ color: BRAND_BLUE }}>
+              Glosario de sellos
+            </h3>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="border border-slate-200 p-4">
+                <div className="text-sm uppercase tracking-[0.20em]" style={{ color: BRAND_BLUE }}>
+                  Precio bajo mercado
+                </div>
+                <p className="mt-2 text-slate-700 leading-relaxed">
+                  Identifica activos cuyo precio de oferta se encuentra por debajo de referencias observables y comparables,
+                  conforme a una evaluación preliminar de mercado (comparable sales, stock activo y condiciones de cierre).
+                  Su objetivo es resaltar oportunidades donde la hipótesis central es una valorización por convergencia a precio de mercado.
+                </p>
+              </div>
+
+              <div className="border border-slate-200 p-4">
+                <div className="text-sm uppercase tracking-[0.20em]" style={{ color: BRAND_BLUE }}>
+                  Tasa de Novación Hipotecaria
+                </div>
+                <p className="mt-2 text-slate-700 leading-relaxed">
+                  Señala activos en que existe la posibilidad de estructurar una novación hipotecaria (o mecanismo equivalente)
+                  que permita acceder a condiciones de financiamiento preexistentes. El porcentaje visible corresponde a la tasa
+                  referencial asociada a la operación y se presenta con decimales para precisión comparativa.
+                </p>
+              </div>
+
+              <div className="border border-slate-200 p-4">
+                <div className="text-sm uppercase tracking-[0.20em]" style={{ color: BRAND_BLUE }}>
+                  Posibilidad de flipping
+                </div>
+                <p className="mt-2 text-slate-700 leading-relaxed">
+                  Identifica activos donde existe una hipótesis razonable de mejora de valor en el corto/mediano plazo mediante
+                  intervención (remodelación, regularización, reposicionamiento comercial u optimización funcional), con salida proyectada
+                  y criterios mínimos de margen y liquidez.
+                </p>
+              </div>
+
+              <div className="border border-slate-200 p-4">
+                <div className="text-sm uppercase tracking-[0.20em]" style={{ color: BRAND_BLUE }}>
+                  Densificación / desarrollo
+                </div>
+                <p className="mt-2 text-slate-700 leading-relaxed">
+                  Indica activos con potencial de densificación o desarrollo inmobiliario, sujeto a verificación normativa
+                  (instrumentos de planificación, coeficientes, afectaciones, cabidas, restricciones y factibilidad).
+                  Su foco es resaltar oportunidades donde la creación de valor proviene de la mejor explotación del suelo.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* LISTADO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -955,10 +778,7 @@ export default function ProyectosExclusivosPage() {
             <button
               type="button"
               aria-label="Limpiar orden"
-              onClick={() => {
-                setSortMode('');
-                setSortOpen(false);
-              }}
+              onClick={() => { setSortMode(''); setSortOpen(false); }}
               className="inline-flex items-center justify-center px-3 py-2 rounded-none"
               style={{ background: '#fff', border: '1px solid #000', color: '#000' }}
               title="Limpiar orden"
@@ -979,27 +799,27 @@ export default function ProyectosExclusivosPage() {
             </button>
 
             {sortOpen && (
-              <div
-                className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 shadow-lg z-10"
-                role="menu"
-              >
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                  onClick={() => {
-                    setSortMode('price-desc');
-                    setSortOpen(false);
-                  }}
-                >
+              <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 shadow-lg z-10" role="menu">
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-desc'); setSortOpen(false); }}>
                   Precio: mayor a menor
                 </button>
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                  onClick={() => {
-                    setSortMode('price-asc');
-                    setSortOpen(false);
-                  }}
-                >
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-asc'); setSortOpen(false); }}>
                   Precio: menor a mayor
+                </button>
+
+                <div className="h-px bg-slate-200 my-1" />
+
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('bajo_mercado'); setSortOpen(false); }}>
+                  Precio bajo mercado (sello)
+                </button>
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('novacion'); setSortOpen(false); }}>
+                  Tasa de Novación Hipotecaria (sello)
+                </button>
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('flipping'); setSortOpen(false); }}>
+                  Posibilidad de flipping (sello)
+                </button>
+                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('densificacion'); setSortOpen(false); }}>
+                  Densificación / desarrollo (sello)
                 </button>
               </div>
             )}
@@ -1020,8 +840,7 @@ export default function ProyectosExclusivosPage() {
                 return null;
               })();
 
-              const terreno =
-                (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
+              const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
               const bodega = (p.tipo || '').toLowerCase().includes('bodega');
               const linkId = (p.id || p.slug || '').toString();
 
@@ -1031,7 +850,6 @@ export default function ProyectosExclusivosPage() {
                 (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
                 (portadaHidratada && String(portadaHidratada).trim()) ||
                 (p.coverImage && String(p.coverImage).trim()) ||
-                (Array.isArray(p.imagenes) && p.imagenes[0]) ||
                 CARD_FALLBACK;
 
               const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
@@ -1043,14 +861,14 @@ export default function ProyectosExclusivosPage() {
                   className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
                 >
                   <div className="relative aspect-[4/3] bg-slate-100">
+                    {/* ✅ Sello */}
+                    <SealBadge tipo={p.sello_tipo} tasa={p.tasa_novacion} />
+
                     <img
                       src={cardImage}
                       alt={p.titulo || 'Proyecto'}
                       className="w-full h-full object-cover group-hover:opacity-95 transition"
                     />
-
-                    {/* SELLO */}
-                    <SealBadge tipo={p.sello_tipo ?? null} tasa={p.tasa_innovacion ?? null} />
                   </div>
 
                   <div className="p-4 flex flex-col">
@@ -1058,119 +876,36 @@ export default function ProyectosExclusivosPage() {
                       {p.titulo || 'Proyecto'}
                     </h3>
                     <p className="mt-1 text-sm text-slate-600">
-                      {[p.comuna || '', tipoCap, p.operacion ? capFirst(String(p.operacion)) : '']
-                        .filter(Boolean)
-                        .join(' · ')}
+                      {[p.comuna || '', tipoCap, p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
                     </p>
 
                     {!terreno && !bodega ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Bed className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <ShowerHead className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.banos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Car className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Ruler className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                          </div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Square className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                          </div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
                       </div>
                     ) : terreno ? (
                       <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Bed className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <ShowerHead className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Car className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Ruler className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">—</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Square className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                          </div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
                       </div>
                     ) : (
                       <div className="mt-3 grid grid-cols-4 text-center">
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Bed className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.dormitorios ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <ShowerHead className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.banos ?? '—'}</div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Ruler className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">
-                            {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                          </div>
-                        </div>
-                        <div className="border border-slate-200 p-2">
-                          <div className="flex items-center justify-center">
-                            <Car className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-sm">{p.estacionamientos ?? '—'}</div>
-                        </div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
+                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
                       </div>
                     )}
 
                     <div className="mt-4 flex items-center justify-between">
-                      <span
-                        className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
-                        style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                      >
+                      <span className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>
                         Ver más
                       </span>
                       <div className="text-right">
