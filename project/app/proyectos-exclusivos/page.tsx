@@ -1,196 +1,356 @@
-// project/app/proyectos-exclusivos/page.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  Search,
+  Filter,
   SlidersHorizontal,
-  Tag,
+  Trash2,
+  ArrowDownCircle,
   Percent,
-  RefreshCcw,
-  Building2,
-  X,
+  Ruler,
 } from 'lucide-react';
-
-/** =========================
- *  Tipos
- *  ========================= */
-type ProjectSeal = 'flipping' | 'bajo_mercado' | 'novacion' | 'densificacion';
+import SmartSelect from '../../components/SmartSelect';
 
 type Proyecto = {
-  id: string;
-  titulo: string;
-  operacion: string | null;
-  tipo: string | null;
-  region: string | null;
-  comuna: string | null;
-  barrio: string | null;
-  precio_uf: number | null;
-  sello_tipo: ProjectSeal | null;
-  tasa_novacion: number | null;
-  publicado: boolean | null;
-  created_at?: string | null;
+  id?: string;
+  titulo?: string;
+  operacion?: 'venta' | 'arriendo' | string;
+  tipo?: string;
+  region?: string;
+  comuna?: string;
+  barrio?: string;
+  precio_uf?: number | null;
+
+  sello_tipo?: 'flipping' | 'bajo_mercado' | 'novacion' | 'densificacion' | null;
+  tasa_novacion?: number | null;
+
+  portada_url?: string | null;
+  imagenes?: string[] | null;
+
+  publicado?: boolean | null;
 };
 
-/** =========================
- *  Meta Sellos (UI)
- *  ========================= */
-const sealMeta: Record<
-  ProjectSeal,
-  {
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    short: string;
-    description: string;
-    examples?: string[];
-    showRate?: boolean;
-  }
-> = {
-  bajo_mercado: {
-    label: 'Bajo mercado',
-    icon: Tag,
-    short: 'Precio bajo comparables relevantes o condición excepcional.',
-    description:
-      'Un activo “bajo mercado” se ofrece por debajo de su valor de mercado observado en comparables cercanos (ventas/arriendos similares) o por una condición específica que abre una oportunidad. No reemplaza el análisis: exige revisar motivo, timing, liquidez y riesgos.',
-    examples: [
-      'Venta rápida por necesidad de liquidez.',
-      'Precio atractivo por trabajo de regularización pendiente.',
-      'Oportunidad off-market con ventana corta.',
-    ],
-  },
-  novacion: {
-    label: 'Innovación (tasa)',
-    icon: Percent,
-    short: 'Tasa visible en el sello: oportunidad asociada a condiciones financieras específicas.',
-    description:
-      'La “innovación (tasa)” señala que el negocio incorpora una condición financiera destacable (por ejemplo, una tasa heredada o condiciones de crédito asociadas a una modificación/novación del financiamiento existente). Es un sello para detectar oportunidades donde la estructura financiera mueve el resultado.',
-    examples: [
-      'Tasa heredada en una operación específica (p.ej. tasa preferente por estructura previa).',
-      'Condiciones bancarias especiales sujetas a requisitos concretos.',
-      'Estructuras con fijación/ajuste de tasa que cambian el flujo total.',
-    ],
-    showRate: true,
-  },
-  flipping: {
-    label: 'Flipping',
-    icon: RefreshCcw,
-    short: 'Potencial de revalorización por mejora, regularización o reposicionamiento.',
-    description:
-      'Flipping es una estrategia de compra con foco en crear valor (mejoras, regularizaciones o reposicionamiento) para vender posteriormente. Este sello indica que el activo tiene variables “accionables” que podrían mejorar precio, velocidad de venta o perfil de comprador.',
-    examples: [
-      'Remodelación focalizada (cocina/baños) para subir ticket.',
-      'Regularización DOM / recepción / subdivisión documental.',
-      'Reposicionamiento comercial (staging + pricing + timing).',
-    ],
-  },
-  densificacion: {
-    label: 'Densificación',
-    icon: Building2,
-    short: 'Potencial normativo/constructivo para mayor intensidad, desarrollo o cabida.',
-    description:
-      'Densificación indica potencial de aumentar intensidad de uso o capacidad del suelo/activo (según normativa y factibilidad). No es “hacer más metros” a ciegas: implica cabida, restricciones, costos, permisos, tiempos y mercado objetivo.',
-    examples: [
-      'Subdivisiones (cuando la normativa y el predio lo permiten).',
-      'Condominios / conjuntos con reorganización del suelo.',
-      'Ampliaciones o nuevas unidades dentro de la cabida permitida.',
-    ],
-  },
-};
+const BRAND_BLUE = '#0A2E57';
+const BTN_GRAY_BORDER = '#e2e8f0';
 
-function formatUF(value: number | null | undefined) {
-  if (value === null || value === undefined) return '—';
-  return value.toLocaleString('es-CL', { maximumFractionDigits: 0 }) + ' UF';
+const HERO_IMG =
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Proyectos%20-%20OPTIMIZADA.jpeg';
+
+const CARD_FALLBACK =
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
+
+const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+const normalize = (s?: string) => (s || '').toLowerCase().trim();
+
+/** Títulos = estilo Servicios */
+function SectionTitle({ title }: { title: string }) {
+  return (
+    <div className="pt-14">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="pl-2 sm:pl-4">
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
+            {title}
+          </h2>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function toQuery(params: Record<string, string | undefined | null>) {
-  const sp = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => {
-    if (v && v.trim() !== '') sp.set(k, v.trim());
-  });
-  return sp.toString();
+/** Icono flipping: flecha circular continua (una sola vuelta) */
+function FlippingLoopIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {/* arco continuo + punta */}
+      <path d="M20 12a8 8 0 1 1-2.35-5.65" />
+      <path d="M20 4v6h-6" />
+    </svg>
+  );
 }
 
-/** =========================
- *  Página
- *  ========================= */
+/** Sello circular NOVACIÓN (más “insignia”, propio) */
+function NovacionSeal({ tasa }: { tasa?: number | null }) {
+  if (tasa == null) return null;
+
+  const tasaTxt = `${tasa.toFixed(2).replace('.', ',')}%`;
+
+  return (
+    <div className="absolute top-3 right-3 z-10 select-none">
+      <div className="relative w-[96px] h-[96px] rounded-full bg-white/95 shadow-sm">
+        {/* doble aro */}
+        <div className="absolute inset-0 rounded-full border border-black/15" />
+        <div className="absolute inset-[6px] rounded-full border border-black/10" />
+
+        {/* texto circular */}
+        <div className="absolute inset-0 grid place-items-center">
+          <svg viewBox="0 0 120 120" className="w-[96px] h-[96px]">
+            <defs>
+              <path
+                id="gp-circle-novacion"
+                d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"
+              />
+            </defs>
+            <text
+              fontSize="10"
+              letterSpacing="2.2"
+              fill="#0A2E57"
+              style={{ textTransform: 'uppercase' }}
+            >
+              <textPath href="#gp-circle-novacion" startOffset="50%" textAnchor="middle">
+                GESSWEIN PROPERTIES • TASA DE NOVACIÓN •
+              </textPath>
+            </text>
+          </svg>
+        </div>
+
+        {/* centro */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {/* marca/insignia sutil */}
+          <div className="absolute text-[26px] font-semibold tracking-[.10em] text-[#0A2E57]/10">
+            GP
+          </div>
+
+          <div className="text-[18px] font-semibold text-[#0A2E57] leading-none">
+            {tasaTxt}
+          </div>
+          <div className="mt-1 text-[10px] uppercase tracking-[.22em] text-black/60">
+            NOVACIÓN
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Glosario MUY chico: filas compactas + despliegue */
+function GlosarioSellosCompacto() {
+  const [open, setOpen] = useState<string | null>(null);
+
+  const items = [
+    {
+      key: 'bajo_mercado',
+      title: 'Bajo mercado',
+      icon: <ArrowDownCircle className="h-4 w-4" color={BRAND_BLUE} />,
+      text:
+        'Activo ofrecido por debajo de comparables relevantes por condición excepcional, urgencia o asimetría de información. Es una señal para revisar fundamentos.',
+    },
+    {
+      key: 'novacion',
+      title: 'Tasa de NOVACIÓN',
+      icon: <Percent className="h-4 w-4" color={BRAND_BLUE} />,
+      text:
+        'NOVACIÓN hipotecaria: modificación/reemplazo del crédito asociado al inmueble (tasa, plazo, estructura). Busca capturar una condición financiera más conveniente.',
+    },
+    {
+      key: 'flipping',
+      title: 'Flipping',
+      icon: <FlippingLoopIcon className="h-4 w-4" />,
+      text:
+        'Compra con creación de valor en corto/mediano plazo (mejoras, regularización, reposicionamiento) para vender con valorización.',
+    },
+    {
+      key: 'densificacion',
+      title: 'Densificación',
+      icon: <Ruler className="h-4 w-4" color={BRAND_BLUE} />,
+      text:
+        'Potencial para aumentar unidades o superficie vendible: subdivisión, condominio, ampliación, cabida u otros ajustes según normativa y factibilidad técnica.',
+    },
+  ];
+
+  return (
+    <section className="py-6 border-b border-slate-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="pl-2 sm:pl-4">
+          <div className="space-y-2">
+            {items.map((it) => {
+              const isOpen = open === it.key;
+              return (
+                <div key={it.key} className="border border-slate-200 bg-white shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(isOpen ? null : it.key)}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-left"
+                  >
+                    <span className="shrink-0">{it.icon}</span>
+                    <div className="text-[11px] uppercase tracking-[.22em] text-slate-900">
+                      {it.title}
+                    </div>
+                    <div className="ml-auto text-[11px] uppercase tracking-[.18em] text-slate-500">
+                      {isOpen ? 'Cerrar' : 'Ver'}
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-3 pb-3">
+                      <p className="text-[13px] text-black/70 leading-relaxed">
+                        {it.text}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function ProyectosExclusivosPage() {
-  // filtros
-  const [modo, setModo] = useState<'rapida' | 'avanzada'>('rapida');
+  /* filtros UI (mismo patrón que Propiedades) */
+  const [operacion, setOperacion] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [region, setRegion] = useState('');
+  const [comuna, setComuna] = useState('');
+  const [barrio, setBarrio] = useState('');
 
-  const [operacion, setOperacion] = useState<string>('');
-  const [tipo, setTipo] = useState<string>('');
-  const [region, setRegion] = useState<string>('');
-  const [comuna, setComuna] = useState<string>('');
-  const [barrio, setBarrio] = useState<string>('');
-  const [moneda, setMoneda] = useState<'UF' | 'CLP'>('UF');
-  const [min, setMin] = useState<string>('');
-  const [max, setMax] = useState<string>('');
+  /* aplicados */
+  const [aOperacion, setAOperacion] = useState('');
+  const [aTipo, setATipo] = useState('');
+  const [aRegion, setARegion] = useState('');
+  const [aComuna, setAComuna] = useState('');
+  const [aBarrio, setABarrio] = useState('');
 
-  // data
-  const [loading, setLoading] = useState<boolean>(false);
   const [items, setItems] = useState<Proyecto[]>([]);
-  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [trigger, setTrigger] = useState(0);
 
-  const query = useMemo(() => {
-    return toQuery({
-      publicado: 'true',
-      operacion,
-      tipo,
-      region,
-      comuna,
-      barrio,
-      moneda,
-      min,
-      max,
-    });
-  }, [operacion, tipo, region, comuna, barrio, moneda, min, max]);
+  /* orden (igual UX que Propiedades) */
+  const [sortMode, setSortMode] = useState<
+    'price-desc' | 'price-asc' | 'novacion' | 'flipping' | 'densificacion' | ''
+  >('');
+  const [sortOpen, setSortOpen] = useState(false);
 
-  async function fetchProjects() {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`/api/proyectos?${query}`, { cache: 'no-store' });
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || 'Error cargando proyectos');
-      }
-      const data = (await res.json()) as { projects?: Proyecto[]; data?: Proyecto[] };
-      const list = (data.projects ?? data.data ?? []) as Proyecto[];
-      setItems(list);
-    } catch (e: any) {
-      setError(e?.message || 'Error inesperado');
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  /* carga inicial */
   useEffect(() => {
-    fetchProjects();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+    setTrigger((v) => v + 1);
+  }, []);
 
-  function clearFilters() {
+  /* fetch (solo cuando cambia trigger) */
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (aOperacion) p.set('operacion', aOperacion);
+    if (aTipo) p.set('tipo', aTipo);
+    if (aRegion) p.set('region', aRegion);
+    if (aComuna) p.set('comuna', aComuna);
+    if (aBarrio) p.set('barrio', aBarrio);
+
+    // IMPORTANTE: filtrar publicados
+    p.set('publicado', 'true');
+
+    setLoading(true);
+    let cancel = false;
+
+    fetch(`/api/proyectos?${p.toString()}`, { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((j) => {
+        if (cancel) return;
+        const data = Array.isArray(j?.data)
+          ? (j.data as Proyecto[])
+          : Array.isArray(j)
+          ? (j as Proyecto[])
+          : [];
+        setItems(data);
+      })
+      .catch(() => {
+        if (!cancel) setItems([]);
+      })
+      .finally(() => {
+        if (!cancel) setLoading(false);
+      });
+
+    return () => {
+      cancel = true;
+    };
+  }, [trigger, aOperacion, aTipo, aRegion, aComuna, aBarrio]);
+
+  const applyAndSearch = () => {
+    setAOperacion(operacion);
+    setATipo(tipo);
+    setARegion(region);
+    setAComuna(comuna);
+    setABarrio(barrio);
+    setTrigger((v) => v + 1);
+  };
+
+  const handleClear = () => {
     setOperacion('');
     setTipo('');
     setRegion('');
     setComuna('');
     setBarrio('');
-    setMoneda('UF');
-    setMin('');
-    setMax('');
-  }
+    setAOperacion('');
+    setATipo('');
+    setARegion('');
+    setAComuna('');
+    setABarrio('');
+    setSortMode('');
+    setSortOpen(false);
+    setTrigger((v) => v + 1);
+  };
+
+  const filteredItems = useMemo(() => {
+    const ok = (x: Proyecto) => {
+      if (aOperacion && normalize(x.operacion) !== normalize(aOperacion)) return false;
+      if (aTipo && !normalize(x.tipo).startsWith(normalize(aTipo))) return false;
+      if (aRegion && normalize(x.region) !== normalize(aRegion)) return false;
+      if (aComuna && normalize(x.comuna) !== normalize(aComuna)) return false;
+      if (aBarrio && !normalize(x.barrio).includes(normalize(aBarrio))) return false;
+      return true;
+    };
+    return (items || []).filter(ok);
+  }, [items, aOperacion, aTipo, aRegion, aComuna, aBarrio]);
+
+  const getPriceUF = (p: Proyecto) =>
+    p.precio_uf && p.precio_uf > 0 ? p.precio_uf : -Infinity;
+
+  const displayedItems = useMemo(() => {
+    const arr = filteredItems.slice();
+
+    if (sortMode === 'price-desc') arr.sort((a, b) => getPriceUF(b) - getPriceUF(a));
+    if (sortMode === 'price-asc') arr.sort((a, b) => getPriceUF(a) - getPriceUF(b));
+
+    if (sortMode === 'novacion')
+      arr.sort(
+        (a, b) =>
+          (b.sello_tipo === 'novacion' ? 1 : 0) - (a.sello_tipo === 'novacion' ? 1 : 0)
+      );
+    if (sortMode === 'flipping')
+      arr.sort(
+        (a, b) =>
+          (b.sello_tipo === 'flipping' ? 1 : 0) - (a.sello_tipo === 'flipping' ? 1 : 0)
+      );
+    if (sortMode === 'densificacion')
+      arr.sort(
+        (a, b) =>
+          (b.sello_tipo === 'densificacion' ? 1 : 0) -
+          (a.sello_tipo === 'densificacion' ? 1 : 0)
+      );
+
+    return arr;
+  }, [filteredItems, sortMode]);
 
   return (
     <main className="bg-white">
-      {/* ================= HERO (igual a Servicios / Propiedades) ================= */}
+      {/* HERO — EXACTO como Propiedades */}
       <section className="relative min-h-[100svh]">
         <img
-          src="https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Oportunidades%20Exclusivas%20-%20OPTIMIZADA.jpg"
-          alt="Portada Proyectos Exclusivos"
+          src={HERO_IMG}
+          alt="Portada"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '50% 55%' }}
+          style={{ objectPosition: '50% 35%' }}
         />
         <div className="absolute inset-0 bg-black/35" />
         <div className="absolute bottom-6 left-0 right-0">
@@ -200,395 +360,297 @@ export default function ProyectosExclusivosPage() {
                 <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
                   PROYECTOS EXCLUSIVOS
                 </h1>
-                <p className="text-white/85 mt-2">
-                  Activos fuera del circuito tradicional.
-                </p>
+                <p className="text-white/85 mt-2">Activos fuera del circuito tradicional.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= INTRO (mismo estilo de títulos) ================= */}
-      <section className="py-20 bg-white">
+      {/* DEFINICIÓN (texto JUSTIFICADO y ancho completo) */}
+      <SectionTitle title="Activos fuera del circuito tradicional" />
+      <section className="py-10 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="pl-2 sm:pl-4 max-w-4xl">
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-              Activos fuera del circuito tradicional
-            </h2>
-
-            <div className="space-y-4 text-black/70 text-[14px] leading-relaxed">
-              <p>
-                No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio técnico,
-                red estratégica y capacidad de estructuración.
-              </p>
-              <p>
-                En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de negocio,
-                oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en muchos casos,
-                con absoluta confidencialidad.
-              </p>
-              <p>
-                Aquí encontrarás alternativas que no compiten en el mercado masivo: operaciones estructuradas, oportunidades
-                de <em>flipping</em> con fundamento técnico, activos bajo valor de mercado y activos con potencial de densificación o desarrollo.
-              </p>
-              <p>
-                Cada oportunidad es previamente analizada desde su viabilidad normativa, potencial constructivo, escenario de valorización
-                y riesgos asociados.
-              </p>
-              <p>
-                El acceso a esta sección es limitado y su disponibilidad cambia constantemente según oportunidades reales detectadas y gestionadas
-                por nuestro equipo.
-              </p>
-            </div>
-
-            <div className="mt-10 h-px w-full bg-black/10" />
-          </div>
-        </div>
-      </section>
-
-      {/* ================= BÚSQUEDA (mismo look) ================= */}
-      <section className="pb-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="pl-2 sm:pl-4">
-            <div className="flex items-end justify-between gap-6 flex-wrap">
-              <div className="max-w-3xl">
-                <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
-                  Búsqueda
-                </h2>
-                <p className="text-black/70 text-[14px] leading-relaxed mt-3">
-                  Filtra por operación, ubicación y rango de precio. En búsqueda avanzada puedes afinar el resultado con mayor precisión.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setModo('rapida')}
-                  className={[
-                    'px-4 py-2 border text-[12px] uppercase tracking-[.25em] transition',
-                    modo === 'rapida'
-                      ? 'border-[#0A2E57] text-[#0A2E57] bg-[#0A2E57]/5'
-                      : 'border-black/15 text-black/60 hover:text-black hover:border-black/30',
-                  ].join(' ')}
-                >
-                  Búsqueda rápida
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setModo('avanzada')}
-                  className={[
-                    'px-4 py-2 border text-[12px] uppercase tracking-[.25em] transition inline-flex items-center gap-2',
-                    modo === 'avanzada'
-                      ? 'border-[#0A2E57] text-[#0A2E57] bg-[#0A2E57]/5'
-                      : 'border-black/15 text-black/60 hover:text-black hover:border-black/30',
-                  ].join(' ')}
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Avanzada
-                </button>
-              </div>
-            </div>
-
-            {/* Form */}
-            <div className="mt-8 border border-black/10 bg-white">
-              <div className="p-4 sm:p-5">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                  <Select
-                    label="Operación"
-                    value={operacion}
-                    onChange={setOperacion}
-                    options={[
-                      { value: '', label: 'Todas' },
-                      { value: 'venta', label: 'Venta' },
-                      { value: 'arriendo', label: 'Arriendo' },
-                    ]}
-                  />
-                  <Input label="Tipo de propiedad" value={tipo} onChange={setTipo} placeholder="Ej: Departamento" />
-                  <Input label="Región" value={region} onChange={setRegion} placeholder="Ej: Metropolitana de Santiago" />
-                  <Input label="Comuna" value={comuna} onChange={setComuna} placeholder="Ej: Las Condes" />
-                  <Input label="Barrio" value={barrio} onChange={setBarrio} placeholder="Ej: El Golf" />
-                </div>
-
-                <div className="mt-3 grid grid-cols-1 md:grid-cols-5 gap-3">
-                  <Select
-                    label="Moneda"
-                    value={moneda}
-                    onChange={(v) => setMoneda((v as 'UF' | 'CLP') || 'UF')}
-                    options={[
-                      { value: 'UF', label: 'UF' },
-                      { value: 'CLP', label: 'CLP' },
-                    ]}
-                  />
-                  <Input label="Min" value={min} onChange={setMin} placeholder={moneda === 'UF' ? 'Ej: 8000' : 'Ej: 250000000'} />
-                  <Input label="Max" value={max} onChange={setMax} placeholder={moneda === 'UF' ? 'Ej: 15000' : 'Ej: 600000000'} />
-
-                  <div className="md:col-span-2 flex items-end gap-3">
-                    <button
-                      type="button"
-                      onClick={clearFilters}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-black/20 text-[12px] uppercase tracking-[.25em] hover:bg-black/5 transition"
-                    >
-                      <X className="h-4 w-4" />
-                      Limpiar
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={fetchProjects}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-[#0A2E57] bg-[#0A2E57] text-white text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57]/90 transition"
-                    >
-                      <Search className="h-4 w-4" />
-                      Buscar
-                    </button>
-                  </div>
-                </div>
-
-                {modo === 'avanzada' ? (
-                  <div className="mt-4 text-[13px] text-black/60 leading-relaxed border-t border-black/10 pt-4">
-                    Búsqueda avanzada activa: agrega detalles con precisión (por ejemplo, “Departamento”, “El Golf”, “Vitacura”),
-                    y combina con rango de precio para acotar resultados.
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          {/* ================= GLOSARIO DE SELLOS (mismo look) ================= */}
-          <div className="pl-2 sm:pl-4 mt-14">
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
-              Glosario de sellos
-            </h2>
-            <p className="text-black/70 text-[14px] leading-relaxed mt-3 max-w-4xl">
-              Cada proyecto puede incluir un sello de lectura rápida. Estos sellos no reemplazan el análisis: lo sintetizan.
+          <div className="pl-2 sm:pl-4 text-[14px] text-black/70 leading-relaxed space-y-4 text-justify">
+            <p>
+              No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio técnico,
+              red estratégica y capacidad de estructuración.
             </p>
-
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SealCard seal="bajo_mercado" />
-              <SealCard seal="novacion" />
-              <SealCard seal="flipping" />
-              <SealCard seal="densificacion" />
-            </div>
-
-            <div className="mt-12 h-px w-full bg-black/10" />
-          </div>
-
-          {/* ================= PROYECTOS DISPONIBLES ================= */}
-          <div className="pl-2 sm:pl-4 mt-14">
-            <div className="flex items-end justify-between gap-6 flex-wrap">
-              <div>
-                <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
-                  Proyectos disponibles
-                </h2>
-                <p className="text-black/70 text-[14px] leading-relaxed mt-3">
-                  Resultados según tu filtro actual.
-                </p>
-              </div>
-            </div>
-
-            {/* list */}
-            <div className="mt-8">
-              {loading ? (
-                <div className="text-black/60 text-[14px]">Cargando proyectos…</div>
-              ) : error ? (
-                <div className="text-red-600 text-[14px]">{error}</div>
-              ) : items.length === 0 ? (
-                <div className="text-black/60 text-[14px]">No se encontraron proyectos.</div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 xl:gap-8">
-                  {items.map((p) => (
-                    <ProjectCard key={p.id} p={p} />
-                  ))}
-                </div>
-              )}
-            </div>
+            <p>
+              En esta sección agrupamos activos singulares y proyectos especiales que, por su modelo de negocio,
+              oportunidad financiera o particularidad normativa, se gestionan de forma confidencial o diferenciada.
+            </p>
           </div>
         </div>
       </section>
-    </main>
-  );
-}
 
-/** =========================
- *  UI Components
- *  ========================= */
-function Input({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <label className="block">
-      <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase mb-2">
-        {label}
-      </div>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full h-10 px-3 border border-black/15 text-[13px] outline-none focus:border-[#0A2E57]/60"
-      />
-    </label>
-  );
-}
+      {/* BÚSQUEDA — EXACTA como Propiedades */}
+      <section className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center gap-2 text-slate-800 mb-4 pl-2 sm:pl-4">
+            <Filter className="h-5 w-5" color={BRAND_BLUE} />
+            <span className="text-lg md:text-xl uppercase tracking-[0.25em]">BÚSQUEDA</span>
+          </div>
 
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <label className="block">
-      <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase mb-2">
-        {label}
-      </div>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-10 px-3 border border-black/15 text-[13px] bg-white outline-none focus:border-[#0A2E57]/60"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
+          <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+            <SmartSelect
+              options={['Venta', 'Arriendo']}
+              value={operacion}
+              onChange={setOperacion}
+              placeholder="Operación"
+            />
+            <SmartSelect
+              options={['Casa', 'Departamento', 'Terreno', 'Oficina', 'Local comercial']}
+              value={tipo}
+              onChange={setTipo}
+              placeholder="Tipo"
+            />
+            <SmartSelect
+              options={['Metropolitana de Santiago', 'Valparaíso']}
+              value={region}
+              onChange={(v) => {
+                setRegion(v);
+                setComuna('');
+                setBarrio('');
+              }}
+              placeholder="Región"
+            />
+            <SmartSelect
+              options={
+                region === 'Metropolitana de Santiago'
+                  ? ['Las Condes', 'Vitacura', 'Lo Barnechea', 'Providencia', 'Santiago', 'Ñuñoa']
+                  : region === 'Valparaíso'
+                  ? ['Casablanca', 'Viña del Mar', 'Concón', 'Valparaíso']
+                  : []
+              }
+              value={comuna}
+              onChange={(v) => {
+                setComuna(v);
+                setBarrio('');
+              }}
+              placeholder="Comuna"
+              disabled={!region}
+            />
+            <SmartSelect options={[]} value={barrio} onChange={setBarrio} placeholder="Barrio" />
+          </div>
 
-function SealCard({ seal }: { seal: ProjectSeal }) {
-  const meta = sealMeta[seal];
-  const Icon = meta.icon;
+          <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+            <div className="lg:col-span-3" />
 
-  return (
-    <div className="border border-black/10 bg-white p-5">
-      <div className="flex items-start gap-3">
-        <div className="mt-[2px] h-9 w-9 border border-black/10 bg-white flex items-center justify-center">
-          <Icon className="h-5 w-5 text-[#0A2E57]" />
+            <button
+              onClick={handleClear}
+              className="w-full px-5 py-2 text-sm rounded-none border"
+              style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+            >
+              Limpiar
+            </button>
+            <button
+              onClick={applyAndSearch}
+              className="w-full px-5 py-2 text-sm text-white rounded-none"
+              style={{
+                background: BRAND_BLUE,
+                boxShadow:
+                  'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+              }}
+            >
+              Buscar
+            </button>
+          </div>
         </div>
-        <div className="min-w-0">
-          <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-            {meta.label}
+      </section>
+
+      {/* GLOSARIO — MUY compacto */}
+      <SectionTitle title="Glosario de sellos" />
+      <GlosarioSellosCompacto />
+
+      {/* LISTADO — EXACTO como Propiedades */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-4 relative">
+          <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
+            PROYECTOS DISPONIBLES
+          </h2>
+
+          {/* Acciones de orden */}
+          <div className="relative flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Limpiar orden"
+              onClick={() => {
+                setSortMode('');
+                setSortOpen(false);
+              }}
+              className="inline-flex items-center justify-center px-3 py-2 rounded-none"
+              style={{ background: '#fff', border: '1px solid #000', color: '#000' }}
+              title="Limpiar orden"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSortOpen((s) => !s)}
+              className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
+              style={{ background: BRAND_BLUE, border: `1px solid ${BTN_GRAY_BORDER}` }}
+              aria-haspopup="menu"
+              aria-expanded={sortOpen}
+              title="Filtrar / ordenar"
+            >
+              <SlidersHorizontal className="h-5 w-5" />
+            </button>
+
+            {sortOpen && (
+              <div
+                className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 shadow-lg z-10"
+                role="menu"
+              >
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => {
+                    setSortMode('price-desc');
+                    setSortOpen(false);
+                  }}
+                >
+                  Precio: mayor a menor
+                </button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => {
+                    setSortMode('price-asc');
+                    setSortOpen(false);
+                  }}
+                >
+                  Precio: menor a mayor
+                </button>
+                <div className="h-px bg-slate-200 my-1" />
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => {
+                    setSortMode('novacion');
+                    setSortOpen(false);
+                  }}
+                >
+                  NOVACIÓN hipotecaria
+                </button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => {
+                    setSortMode('flipping');
+                    setSortOpen(false);
+                  }}
+                >
+                  Oportunidad de flipping
+                </button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  onClick={() => {
+                    setSortMode('densificacion');
+                    setSortOpen(false);
+                  }}
+                >
+                  Oportunidad de densificación
+                </button>
+              </div>
+            )}
           </div>
-          <div className="mt-1 text-[13px] text-black/70 leading-relaxed">
-            {meta.short}
-          </div>
-          <div className="mt-3 text-[13px] text-black/70 leading-relaxed">
-            {meta.description}
-          </div>
-          {meta.examples?.length ? (
-            <ul className="mt-3 space-y-1.5 text-[13px] text-black/70 leading-relaxed">
-              {meta.examples.map((ex) => (
-                <li key={ex} className="pl-3 relative">
-                  <span className="absolute left-0 top-[9px] h-[5px] w-[5px] bg-[#0A2E57]" />
-                  {ex}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProjectCard({ p }: { p: Proyecto }) {
-  const seal = p.sello_tipo || null;
-  const meta = seal ? sealMeta[seal] : null;
-
-  return (
-    <Link
-      href={`/proyectos-exclusivos/${p.id}`}
-      className="group block border border-black/10 bg-white shadow-sm hover:shadow-md transition"
-    >
-      <div className="relative aspect-[4/3] overflow-hidden">
-        {/* Placeholder visual (si luego quieres imagen por proyecto, lo conectamos) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/10 to-black/30" />
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1400&auto=format&fit=crop')] bg-cover bg-center opacity-95 group-hover:scale-[1.02] transition-transform duration-300" />
-
-        {/* Sello / badge estético (arriba-derecha, circular) */}
-        <SealBadge tipo={seal} tasa={p.tasa_novacion} />
-      </div>
-
-      <div className="p-5">
-        <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-          {p.operacion ? p.operacion.toUpperCase() : '—'}
-        </div>
-
-        <h3 className="mt-1 text-[15px] text-black/90 leading-snug">
-          {p.titulo}
-        </h3>
-
-        <div className="mt-3 text-[13px] text-black/70 leading-relaxed">
-          <div>
-            {[
-              p.tipo,
-              p.barrio,
-              p.comuna,
-              p.region,
-            ]
-              .filter(Boolean)
-              .join(' · ') || '—'}
-          </div>
-          <div className="mt-2 text-black/85">
-            {formatUF(p.precio_uf)}
-          </div>
-
-          {meta ? (
-            <div className="mt-3 inline-flex items-center gap-2 text-black/70">
-              <meta.icon className="h-4 w-4 text-[#0A2E57]" />
-              <span className="text-[12.5px]">{meta.label}</span>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-/** Badge sin comparar con '' (corrige el error TS del build) */
-function SealBadge({ tipo, tasa }: { tipo: ProjectSeal | null; tasa?: number | null }) {
-  if (!tipo) return null;
-  const meta = sealMeta[tipo];
-  if (!meta) return null;
-
-  const showRate = tipo === 'novacion' && typeof tasa === 'number';
-
-  return (
-    <div className="absolute top-3 right-3">
-      <div
-        className={[
-          'rounded-full border border-white/70 bg-white/90 backdrop-blur-sm shadow-sm',
-          'px-3 py-2 min-w-[92px] text-center',
-        ].join(' ')}
-      >
-        <div className="text-[#0A2E57] text-[10px] tracking-[.22em] uppercase leading-none">
-          {meta.label}
         </div>
 
-        {showRate ? (
-          <div className="mt-1 text-[#0A2E57] font-medium text-[14px] leading-none">
-            {tasa!.toFixed(1)}%
-          </div>
+        {loading ? (
+          <p className="text-slate-600">Cargando proyectos…</p>
+        ) : (displayedItems ?? []).length === 0 ? (
+          <p className="text-slate-600">No se encontraron proyectos.</p>
         ) : (
-          <div className="mt-1 text-black/70 text-[12px] leading-none">
-            Sello
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {displayedItems.map((p) => {
+              const linkId = (p.id || '').toString();
+
+              const cardImage =
+                (p.portada_url && String(p.portada_url).trim()) ||
+                (Array.isArray(p.imagenes) && p.imagenes[0]) ||
+                CARD_FALLBACK;
+
+              const showUF = !!(p.precio_uf && p.precio_uf > 0);
+
+              return (
+                <Link
+                  key={p.id ?? Math.random().toString(36).slice(2)}
+                  href={`/proyectos-exclusivos/${encodeURIComponent(linkId)}`}
+                  className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
+                >
+                  <div className="relative aspect-[4/3] bg-slate-100">
+                    <img
+                      src={cardImage}
+                      alt={p.titulo || 'Proyecto'}
+                      className="w-full h-full object-cover group-hover:opacity-95 transition"
+                    />
+
+                    {/* sello circular SOLO si es NOVACIÓN y hay tasa */}
+                    {p.sello_tipo === 'novacion' && <NovacionSeal tasa={p.tasa_novacion} />}
+                  </div>
+
+                  <div className="p-4 flex flex-col">
+                    <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
+                      {p.titulo || 'Proyecto'}
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-600">
+                      {[
+                        p.comuna || '',
+                        p.barrio ? `Barrio ${p.barrio}` : '',
+                        p.operacion ? capFirst(String(p.operacion)) : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+
+                    {/* chips de sellos (pequeños) */}
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[.18em] text-slate-700">
+                      {p.sello_tipo === 'bajo_mercado' && (
+                        <span className="inline-flex items-center gap-2 border border-slate-200 px-2 py-1">
+                          <ArrowDownCircle className="h-4 w-4" color={BRAND_BLUE} />
+                          Bajo mercado
+                        </span>
+                      )}
+                      {p.sello_tipo === 'novacion' && (
+                        <span className="inline-flex items-center gap-2 border border-slate-200 px-2 py-1">
+                          <Percent className="h-4 w-4" color={BRAND_BLUE} />
+                          NOVACIÓN
+                        </span>
+                      )}
+                      {p.sello_tipo === 'flipping' && (
+                        <span className="inline-flex items-center gap-2 border border-slate-200 px-2 py-1">
+                          <FlippingLoopIcon className="h-4 w-4" />
+                          Flipping
+                        </span>
+                      )}
+                      {p.sello_tipo === 'densificacion' && (
+                        <span className="inline-flex items-center gap-2 border border-slate-200 px-2 py-1">
+                          <Ruler className="h-4 w-4" color={BRAND_BLUE} />
+                          Densificación
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <span
+                        className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
+                        style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                      >
+                        Ver más
+                      </span>
+
+                      <div className="text-right">
+                        <div className="font-semibold" style={{ color: BRAND_BLUE }}>
+                          {showUF ? `UF ${nfUF.format(p.precio_uf as number)}` : 'Consultar'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
