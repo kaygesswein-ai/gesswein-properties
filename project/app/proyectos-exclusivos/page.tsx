@@ -12,6 +12,19 @@ import {
 } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
 
+/**
+ * Página: Proyectos Exclusivos
+ * REGLAS (según tu prompt):
+ * - Layout y módulos = página Propiedades (hero + búsqueda + listado).
+ * - Los títulos/SectionTitle = estilo Servicios (azul + tracking).
+ * - Orden visual: Definición (texto) -> separador -> Búsqueda -> separador -> Glosario compactísimo -> separador -> Proyectos disponibles.
+ * - Glosario: MUY pequeño, filas compactas y desplegable.
+ * - Íconos: mantener los que ya estaban (bajo mercado / NOVACIÓN / densificación) y flipping con loop continuo (una sola curva completa).
+ * - Terminología: SIEMPRE “NOVACIÓN” (nunca “innovación”).
+ * - Sello tasa: estilo “insignia” propio, NO copia. Se pega en cards como badge/circle.
+ * - Texto “Activos fuera del circuito tradicional” justificado y ancho completo.
+ */
+
 type Proyecto = {
   id?: string;
   titulo?: string;
@@ -34,6 +47,7 @@ type Proyecto = {
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
 
+/* HERO: misma lógica que Propiedades (ajusta tu URL si quieres otra portada específica) */
 const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Proyectos%20-%20OPTIMIZADA.jpeg';
 
@@ -44,10 +58,10 @@ const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 const normalize = (s?: string) => (s || '').toLowerCase().trim();
 
-/** Títulos = estilo Servicios */
+/* ====== TÍTULOS estilo Servicios ====== */
 function SectionTitle({ title }: { title: string }) {
   return (
-    <div className="pt-14">
+    <div className="pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pl-2 sm:pl-4">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
@@ -59,7 +73,7 @@ function SectionTitle({ title }: { title: string }) {
   );
 }
 
-/** Icono flipping: flecha circular continua (una sola vuelta) */
+/* ====== ÍCONO flipping: loop continuo (una sola curva) ====== */
 function FlippingLoopIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg
@@ -72,14 +86,17 @@ function FlippingLoopIcon({ className = 'h-5 w-5' }: { className?: string }) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* arco continuo + punta */}
+      {/* loop continuo */}
       <path d="M20 12a8 8 0 1 1-2.35-5.65" />
       <path d="M20 4v6h-6" />
     </svg>
   );
 }
 
-/** Sello circular NOVACIÓN (más “insignia”, propio) */
+/* ====== SELLO “Tasa de NOVACIÓN” (insignia propia, NO copia) ======
+   - Diseño: doble aro + monograma GP + texto circular opcional
+   - Se muestra SOLO si sello_tipo === 'novacion' y tasa_novacion != null
+*/
 function NovacionSeal({ tasa }: { tasa?: number | null }) {
   if (tasa == null) return null;
 
@@ -92,7 +109,33 @@ function NovacionSeal({ tasa }: { tasa?: number | null }) {
         <div className="absolute inset-0 rounded-full border border-black/15" />
         <div className="absolute inset-[6px] rounded-full border border-black/10" />
 
-        {/* texto circular */}
+        {/* “rayado” sutil para identidad, propio */}
+        <div
+          className="absolute inset-[10px] rounded-full opacity-[0.08]"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(45deg, rgba(10,46,87,1) 0, rgba(10,46,87,1) 2px, transparent 2px, transparent 6px)',
+          }}
+        />
+
+        {/* monograma */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-[28px] font-semibold tracking-[.12em] text-[#0A2E57]/12">
+            GP
+          </div>
+        </div>
+
+        {/* centro */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="text-[18px] font-semibold text-[#0A2E57] leading-none">
+            {tasaTxt}
+          </div>
+          <div className="mt-1 text-[10px] uppercase tracking-[.22em] text-black/60">
+            NOVACIÓN
+          </div>
+        </div>
+
+        {/* texto circular corto (para “insignia”, no invasivo) */}
         <div className="absolute inset-0 grid place-items-center">
           <svg viewBox="0 0 120 120" className="w-[96px] h-[96px]">
             <defs>
@@ -102,39 +145,24 @@ function NovacionSeal({ tasa }: { tasa?: number | null }) {
               />
             </defs>
             <text
-              fontSize="10"
+              fontSize="9.5"
               letterSpacing="2.2"
               fill="#0A2E57"
               style={{ textTransform: 'uppercase' }}
             >
               <textPath href="#gp-circle-novacion" startOffset="50%" textAnchor="middle">
-                GESSWEIN PROPERTIES • TASA DE NOVACIÓN •
+                GP • TASA DE NOVACIÓN •
               </textPath>
             </text>
           </svg>
-        </div>
-
-        {/* centro */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {/* marca/insignia sutil */}
-          <div className="absolute text-[26px] font-semibold tracking-[.10em] text-[#0A2E57]/10">
-            GP
-          </div>
-
-          <div className="text-[18px] font-semibold text-[#0A2E57] leading-none">
-            {tasaTxt}
-          </div>
-          <div className="mt-1 text-[10px] uppercase tracking-[.22em] text-black/60">
-            NOVACIÓN
-          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/** Glosario MUY chico: filas compactas + despliegue */
-function GlosarioSellosCompacto() {
+/* ====== GLOSARIO: compacto + desplegable ====== */
+function GlosarioSellosMini() {
   const [open, setOpen] = useState<string | null>(null);
 
   const items = [
@@ -143,36 +171,36 @@ function GlosarioSellosCompacto() {
       title: 'Bajo mercado',
       icon: <ArrowDownCircle className="h-4 w-4" color={BRAND_BLUE} />,
       text:
-        'Activo ofrecido por debajo de comparables relevantes por condición excepcional, urgencia o asimetría de información. Es una señal para revisar fundamentos.',
+        'Oferta bajo comparables relevantes por condición excepcional/urgencia. Señal para revisar fundamentos.',
     },
     {
       key: 'novacion',
       title: 'Tasa de NOVACIÓN',
       icon: <Percent className="h-4 w-4" color={BRAND_BLUE} />,
       text:
-        'NOVACIÓN hipotecaria: modificación/reemplazo del crédito asociado al inmueble (tasa, plazo, estructura). Busca capturar una condición financiera más conveniente.',
+        'NOVACIÓN hipotecaria: ajuste/reemplazo del crédito (tasa, plazo, estructura) asociado al inmueble.',
     },
     {
       key: 'flipping',
       title: 'Flipping',
       icon: <FlippingLoopIcon className="h-4 w-4" />,
       text:
-        'Compra con creación de valor en corto/mediano plazo (mejoras, regularización, reposicionamiento) para vender con valorización.',
+        'Compra con creación de valor (mejoras/regularización/reposicionamiento) para vender con valorización.',
     },
     {
       key: 'densificacion',
       title: 'Densificación',
       icon: <Ruler className="h-4 w-4" color={BRAND_BLUE} />,
       text:
-        'Potencial para aumentar unidades o superficie vendible: subdivisión, condominio, ampliación, cabida u otros ajustes según normativa y factibilidad técnica.',
+        'Potencial normativo/físico para aumentar unidades o superficie vendible según factibilidad.',
     },
   ];
 
   return (
-    <section className="py-6 border-b border-slate-200">
+    <section className="py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pl-2 sm:pl-4">
-          <div className="space-y-2">
+          <div className="grid gap-2 md:grid-cols-2">
             {items.map((it) => {
               const isOpen = open === it.key;
               return (
@@ -193,9 +221,7 @@ function GlosarioSellosCompacto() {
 
                   {isOpen && (
                     <div className="px-3 pb-3">
-                      <p className="text-[13px] text-black/70 leading-relaxed">
-                        {it.text}
-                      </p>
+                      <p className="text-[13px] text-black/70 leading-relaxed">{it.text}</p>
                     </div>
                   )}
                 </div>
@@ -209,7 +235,7 @@ function GlosarioSellosCompacto() {
 }
 
 export default function ProyectosExclusivosPage() {
-  /* filtros UI (mismo patrón que Propiedades) */
+  /* ====== Filtros (mismo patrón Propiedades, pero simples) ====== */
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState('');
@@ -227,18 +253,18 @@ export default function ProyectosExclusivosPage() {
   const [loading, setLoading] = useState(false);
   const [trigger, setTrigger] = useState(0);
 
-  /* orden (igual UX que Propiedades) */
+  /* Orden (igual UX) */
   const [sortMode, setSortMode] = useState<
     'price-desc' | 'price-asc' | 'novacion' | 'flipping' | 'densificacion' | ''
   >('');
   const [sortOpen, setSortOpen] = useState(false);
 
-  /* carga inicial */
+  /* Carga inicial */
   useEffect(() => {
     setTrigger((v) => v + 1);
   }, []);
 
-  /* fetch (solo cuando cambia trigger) */
+  /* Fetch (solo al Buscar, igual patrón) */
   useEffect(() => {
     const p = new URLSearchParams();
     if (aOperacion) p.set('operacion', aOperacion);
@@ -247,7 +273,6 @@ export default function ProyectosExclusivosPage() {
     if (aComuna) p.set('comuna', aComuna);
     if (aBarrio) p.set('barrio', aBarrio);
 
-    // IMPORTANTE: filtrar publicados
     p.set('publicado', 'true');
 
     setLoading(true);
@@ -344,7 +369,7 @@ export default function ProyectosExclusivosPage() {
 
   return (
     <main className="bg-white">
-      {/* HERO — EXACTO como Propiedades */}
+      {/* HERO (igual Propiedades) */}
       <section className="relative min-h-[100svh]">
         <img
           src={HERO_IMG}
@@ -367,10 +392,11 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* DEFINICIÓN (texto JUSTIFICADO y ancho completo) */}
+      {/* 1) DEFINICIÓN (primero) */}
       <SectionTitle title="Activos fuera del circuito tradicional" />
-      <section className="py-10 border-b border-slate-200">
+      <section className="py-12 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* ANCHO completo + justificado */}
           <div className="pl-2 sm:pl-4 text-[14px] text-black/70 leading-relaxed space-y-4 text-justify">
             <p>
               No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio técnico,
@@ -384,7 +410,7 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* BÚSQUEDA — EXACTA como Propiedades */}
+      {/* 2) BÚSQUEDA (después de un separador) */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-2 text-slate-800 mb-4 pl-2 sm:pl-4">
@@ -459,18 +485,20 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* GLOSARIO — MUY compacto */}
+      {/* 3) GLOSARIO (compacto, otro separador ya existe por borders) */}
       <SectionTitle title="Glosario de sellos" />
-      <GlosarioSellosCompacto />
+      <section className="border-b border-slate-200">
+        <GlosarioSellosMini />
+      </section>
 
-      {/* LISTADO — EXACTO como Propiedades */}
+      {/* 4) LISTADO (mismo formato Propiedades) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-4 relative">
           <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">
             PROYECTOS DISPONIBLES
           </h2>
 
-          {/* Acciones de orden */}
+          {/* acciones de orden */}
           <div className="relative flex items-center gap-2">
             <button
               type="button"
@@ -576,6 +604,7 @@ export default function ProyectosExclusivosPage() {
                   href={`/proyectos-exclusivos/${encodeURIComponent(linkId)}`}
                   className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
                 >
+                  {/* FOTO: MISMO aspect ratio que Propiedades */}
                   <div className="relative aspect-[4/3] bg-slate-100">
                     <img
                       src={cardImage}
@@ -583,7 +612,7 @@ export default function ProyectosExclusivosPage() {
                       className="w-full h-full object-cover group-hover:opacity-95 transition"
                     />
 
-                    {/* sello circular SOLO si es NOVACIÓN y hay tasa */}
+                    {/* SELLO: solo NOVACIÓN */}
                     {p.sello_tipo === 'novacion' && <NovacionSeal tasa={p.tasa_novacion} />}
                   </div>
 
@@ -602,7 +631,7 @@ export default function ProyectosExclusivosPage() {
                         .join(' · ')}
                     </p>
 
-                    {/* chips de sellos (pequeños) */}
+                    {/* chips: mismos íconos, terminología NOVACIÓN */}
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[.18em] text-slate-700">
                       {p.sello_tipo === 'bajo_mercado' && (
                         <span className="inline-flex items-center gap-2 border border-slate-200 px-2 py-1">
