@@ -18,7 +18,6 @@ type Proyecto = {
   barrio?: string;
 
   precio_uf?: number | null;
-  precio_clp?: number | null;
 
   dormitorios?: number | null;
   banos?: number | null;
@@ -49,14 +48,16 @@ const CARD_FALLBACK =
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
 const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+
 const fmtMiles = (raw: string) => {
   const digits = (raw || '').replace(/\D+/g, '');
   if (!digits) return '';
   return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(parseInt(digits, 10));
 };
 
-/* ==== Hook UF (igual a Propiedades) ==== */
+/* ==== Hook UF (igual Propiedades) ==== */
 function useUfValue() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -206,8 +207,8 @@ function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
   );
 }
 
-/** Flipping: casa + flecha hacia arriba (más claro visualmente) */
-function FlippingUpIcon({ className = 'h-5 w-5' }: { className?: string }) {
+/** Flipping: casa + flecha “plusvalía” (sin superposición fea) */
+function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -219,25 +220,35 @@ function FlippingUpIcon({ className = 'h-5 w-5' }: { className?: string }) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M3.5 10.5L12 4l8.5 6.5" />
-      <path d="M6.5 10.5V20h11V10.5" />
-      <path d="M12 20v-6" />
-      <path d="M14.5 8.5h5" />
-      <path d="M17 6v5" />
+      {/* Casa */}
+      <path d="M4 11.5L12 5l8 6.5" />
+      <path d="M6.5 10.8V19h7.2" />
+      <path d="M10 19v-4.2h3V19" />
+
+      {/* Flecha de valorización (separada a la derecha/arriba) */}
+      <path d="M14.8 12.8l3.7-3.7" />
+      <path d="M18.5 9.1h-3.1" />
+      <path d="M18.5 9.1v3.1" />
     </svg>
   );
 }
 
 /* ===== SELLOS: “ICONO CHICO EN ESQUINA” ===== */
 
-function SmallCornerBadge({ children }: { children: React.ReactNode }) {
+function SmallCornerBadge({
+  children,
+  size = 38,
+}: {
+  children: React.ReactNode;
+  size?: number;
+}) {
   return (
     <div className="absolute top-3 right-3 z-10">
       <div
         className="flex items-center justify-center rounded-md shadow-sm"
         style={{
-          width: 38,
-          height: 38,
+          width: size,
+          height: size,
           background: 'rgba(255,255,255,0.95)',
           border: '1px solid rgba(0,0,0,.12)',
           backdropFilter: 'blur(6px)',
@@ -249,44 +260,61 @@ function SmallCornerBadge({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** NOVACIÓN: proporción 1/4 arriba (Nov) + 3/4 tasa, todo centrado */
-function NovacionBadge({ tasa }: { tasa: number }) {
+/** Badge NOVACIÓN: mismo porte que los otros (cuadrado) + centrado real */
+function NovacionBadgeSquare({
+  tasa,
+  size = 38,
+  corner = true,
+}: {
+  tasa: number;
+  size?: number;
+  corner?: boolean;
+}) {
   const tasaTxt = `${tasa.toFixed(1).replace('.', ',')}%`;
+
+  const inner = (
+    <div
+      className="rounded-md shadow-sm overflow-hidden"
+      style={{
+        width: size,
+        height: size,
+        background: 'rgba(255,255,255,0.95)',
+        border: '1px solid rgba(0,0,0,.12)',
+        backdropFilter: 'blur(6px)',
+      }}
+    >
+      {/* 1/4 arriba: NOV */}
+      <div
+        className="text-[9px] uppercase tracking-[.22em] text-center flex items-center justify-center"
+        style={{
+          height: Math.round(size * 0.28),
+          background: BRAND_BLUE,
+          color: 'white',
+          lineHeight: 1,
+        }}
+      >
+        NOV
+      </div>
+
+      {/* 3/4 abajo: tasa centrada */}
+      <div
+        className="flex items-center justify-center"
+        style={{
+          height: size - Math.round(size * 0.28),
+        }}
+      >
+        <div className="font-semibold" style={{ color: BRAND_BLUE, fontSize: 12, lineHeight: 1 }}>
+          {tasaTxt}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!corner) return inner;
 
   return (
     <div className="absolute top-3 right-3 z-10">
-      <div
-        className="rounded-md shadow-sm overflow-hidden"
-        style={{
-          width: 58,
-          height: 40,
-          background: 'rgba(255,255,255,0.95)',
-          border: '1px solid rgba(0,0,0,.12)',
-          backdropFilter: 'blur(6px)',
-        }}
-      >
-        <div
-          className="flex items-center justify-center"
-          style={{
-            height: 10, // ~1/4 visual
-            background: BRAND_BLUE,
-            color: 'white',
-          }}
-        >
-          <span className="text-[9px] uppercase tracking-[.22em] leading-none">Nov</span>
-        </div>
-
-        <div
-          className="flex items-center justify-center"
-          style={{
-            height: 30, // ~3/4 visual
-          }}
-        >
-          <span className="text-[13px] font-semibold leading-none" style={{ color: BRAND_BLUE }}>
-            {tasaTxt}
-          </span>
-        </div>
-      </div>
+      {inner}
     </div>
   );
 }
@@ -297,12 +325,12 @@ function SealForProyecto(p: Proyecto) {
 
   if (s === 'novacion') {
     if (p.tasa_novacion == null) return null;
-    return <NovacionBadge tasa={p.tasa_novacion} />;
+    return <NovacionBadgeSquare tasa={p.tasa_novacion} size={38} />;
   }
 
   if (s === 'bajo_mercado') {
     return (
-      <SmallCornerBadge>
+      <SmallCornerBadge size={38}>
         <span style={{ color: BRAND_BLUE }}>
           <BajoMercadoIcon className="h-5 w-5" />
         </span>
@@ -312,9 +340,9 @@ function SealForProyecto(p: Proyecto) {
 
   if (s === 'flipping') {
     return (
-      <SmallCornerBadge>
+      <SmallCornerBadge size={38}>
         <span style={{ color: BRAND_BLUE }}>
-          <FlippingUpIcon className="h-5 w-5" />
+          <FlippingValueUpIcon className="h-5 w-5" />
         </span>
       </SmallCornerBadge>
     );
@@ -322,7 +350,7 @@ function SealForProyecto(p: Proyecto) {
 
   // densificación
   return (
-    <SmallCornerBadge>
+    <SmallCornerBadge size={38}>
       <Layers className="h-5 w-5" color={BRAND_BLUE} />
     </SmallCornerBadge>
   );
@@ -332,14 +360,31 @@ function SealForProyecto(p: Proyecto) {
 function GlosarioSellosCompacto() {
   const [open, setOpen] = useState<string | null>(null);
 
+  // Iconos del glosario: mismo “peso visual” (28px)
+  const GlossIconBox = ({ children }: { children: React.ReactNode }) => (
+    <div
+      className="flex items-center justify-center rounded-md"
+      style={{
+        width: 28,
+        height: 28,
+        background: 'rgba(255,255,255,0.95)',
+        border: '1px solid rgba(0,0,0,.12)',
+      }}
+    >
+      {children}
+    </div>
+  );
+
   const items = [
     {
       key: 'bajo_mercado',
       title: 'Bajo mercado',
       icon: (
-        <span style={{ color: BRAND_BLUE }}>
-          <BajoMercadoIcon className="h-5 w-5" />
-        </span>
+        <GlossIconBox>
+          <span style={{ color: BRAND_BLUE }}>
+            <BajoMercadoIcon className="h-5 w-5" />
+          </span>
+        </GlossIconBox>
       ),
       text:
         'Activo ofrecido por debajo de comparables relevantes por condición excepcional, urgencia o asimetría de información. Es una señal para revisar fundamentos, no reemplaza el análisis.',
@@ -348,26 +393,8 @@ function GlosarioSellosCompacto() {
       key: 'novacion',
       title: 'Tasa de novación',
       icon: (
-        <div
-          className="rounded-md overflow-hidden"
-          style={{
-            width: 42,
-            height: 28,
-            border: '1px solid rgba(0,0,0,.12)',
-            background: 'rgba(255,255,255,0.95)',
-          }}
-        >
-          <div
-            className="flex items-center justify-center"
-            style={{ height: 9, background: BRAND_BLUE, color: 'white' }}
-          >
-            <span className="text-[9px] uppercase tracking-[.20em] leading-none">Nov</span>
-          </div>
-          <div className="flex items-center justify-center" style={{ height: 19 }}>
-            <span className="text-[11px] font-semibold leading-none" style={{ color: BRAND_BLUE }}>
-              2,7%
-            </span>
-          </div>
+        <div style={{ transform: 'translateY(0px)' }}>
+          <NovacionBadgeSquare tasa={2.7} size={28} corner={false} />
         </div>
       ),
       text:
@@ -377,9 +404,11 @@ function GlosarioSellosCompacto() {
       key: 'flipping',
       title: 'Flipping',
       icon: (
-        <span style={{ color: BRAND_BLUE }}>
-          <FlippingUpIcon className="h-5 w-5" />
-        </span>
+        <GlossIconBox>
+          <span style={{ color: BRAND_BLUE }}>
+            <FlippingValueUpIcon className="h-5 w-5" />
+          </span>
+        </GlossIconBox>
       ),
       text:
         'Estrategia de compra con potencial de creación de valor (mejoras, regularización, reposicionamiento) para vender con valorización en el corto/mediano plazo.',
@@ -387,7 +416,11 @@ function GlosarioSellosCompacto() {
     {
       key: 'densificacion',
       title: 'Densificación',
-      icon: <Layers className="h-5 w-5" color={BRAND_BLUE} />,
+      icon: (
+        <GlossIconBox>
+          <Layers className="h-5 w-5" color={BRAND_BLUE} />
+        </GlossIconBox>
+      ),
       text:
         'Potencial normativo y/o físico para aumentar unidades o superficie vendible: subdivisión, condominio, ampliación, cabida o mayor intensidad de uso según normativa y factibilidad técnica.',
     },
@@ -423,7 +456,7 @@ function GlosarioSellosCompacto() {
 }
 
 export default function ProyectosExclusivosPage() {
-  /* — Filtros UI (igual Propiedades) — */
+  /* ====== BÚSQUEDA (idéntica a Propiedades) ====== */
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
 
   const [operacion, setOperacion] = useState('');
@@ -432,12 +465,11 @@ export default function ProyectosExclusivosPage() {
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
-  /* — UF / CLP UI — */
-  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
+  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  /* — Avanzada UI — */
+  // Avanzada
   const [minDorm, setMinDorm] = useState('');
   const [minBanos, setMinBanos] = useState('');
   const [minM2Const, setMinM2Const] = useState('');
@@ -451,7 +483,7 @@ export default function ProyectosExclusivosPage() {
   const [aComuna, setAComuna] = useState('');
   const [aBarrio, setABarrio] = useState('');
 
-  const [aMoneda, setAMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
+  const [aMoneda, setAMoneda] = useState<'' | 'UF' | 'CLP$'>('');
   const [aMinValor, setAMinValor] = useState('');
   const [aMaxValor, setAMaxValor] = useState('');
 
@@ -471,13 +503,14 @@ export default function ProyectosExclusivosPage() {
 
   /* Orden + filtro sello */
   const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | ''>('');
-  const [selloFilter, setSelloFilter] = useState<'novacion' | 'bajo_mercado' | 'flipping' | 'densificacion' | ''>('');
+  const [selloFilter, setSelloFilter] = useState<'novacion' | 'bajo_mercado' | 'flipping' | 'densificacion' | ''>(
+    ''
+  );
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuWrapRef = useRef<HTMLDivElement | null>(null);
 
   const ufValue = useUfValue();
-  const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
 
   /* Carga inicial */
   useEffect(() => {
@@ -496,7 +529,7 @@ export default function ProyectosExclusivosPage() {
     return () => document.removeEventListener('mousedown', onDown);
   }, [menuOpen]);
 
-  /* Fetch listado (SOLO al Buscar) — mantenemos backend simple */
+  /* Fetch listado (SOLO al Buscar) */
   useEffect(() => {
     const p = new URLSearchParams();
 
@@ -566,114 +599,6 @@ export default function ProyectosExclusivosPage() {
       cancel = true;
     };
   }, [items, portadasById]);
-
-  /* ====== FILTRO EN CLIENTE (igual lógica Propiedades) ====== */
-  const filteredItems = useMemo(() => {
-    const norm = (s?: string) => normalize(s || '');
-
-    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
-    const minN = toInt(aMinValor);
-    const maxN = toInt(aMaxValor);
-    const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
-    const rate = ufValue || null;
-
-    const minUF =
-      Number.isNaN(minN) ? -Infinity : isCLP ? (rate ? minN / rate : -Infinity) : minN;
-    const maxUF =
-      Number.isNaN(maxN) ? Infinity : isCLP ? (rate ? maxN / rate : Infinity) : maxN;
-
-    const ge = (val: number | null | undefined, min: number) => (val == null ? false : val >= min);
-
-    return (items || []).filter((x) => {
-      if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
-
-      if (aTipo) {
-        const xt = norm(x.tipo);
-        const ft = norm(aTipo);
-        if (!xt.startsWith(ft)) return false;
-      }
-
-      if (aRegion) {
-        const r = inferRegion(x.comuna, x.barrio);
-        if (norm(r) !== norm(aRegion)) return false;
-      }
-
-      if (aComuna) {
-        const cItem = normalize(normalize(x.comuna) === 'tunquen' ? 'Casablanca' : x.comuna || '');
-        if (cItem !== norm(aComuna)) return false;
-      }
-
-      if (aBarrio) {
-        const sel = norm(aBarrio);
-        const bx = norm(x.barrio);
-        const cx = norm(x.comuna);
-        const passBarrio = (bx && bx.includes(sel)) || (!bx && cx === 'tunquen');
-        if (!passBarrio) return false;
-      }
-
-      if (selloFilter) {
-        if ((x.sello_tipo || '') !== selloFilter) return false;
-      }
-
-      // Precio comparable (UF directo o CLP -> UF si existe)
-      let vUF: number | null = null;
-      if (x.precio_uf && x.precio_uf > 0) vUF = x.precio_uf;
-      else if (x.precio_clp && x.precio_clp > 0 && rate) vUF = x.precio_clp / rate;
-
-      if (vUF != null) {
-        if (vUF < minUF || vUF > maxUF) return false;
-      } else if (minUF !== -Infinity || maxUF !== Infinity) {
-        return false;
-      }
-
-      if (aMinDorm && !ge(x.dormitorios, parseInt(aMinDorm, 10))) return false;
-      if (aMinBanos && !ge(x.banos, parseInt(aMinBanos, 10))) return false;
-
-      if (aEstac && !ge(x.estacionamientos, parseInt(aEstac, 10))) return false;
-
-      if (aMinM2Const) {
-        const m = parseInt(aMinM2Const.replace(/\./g, ''), 10);
-        if (!ge(x.superficie_util_m2, m)) return false;
-      }
-      if (aMinM2Terreno) {
-        const m = parseInt(aMinM2Terreno.replace(/\./g, ''), 10);
-        if (!ge(x.superficie_terreno_m2, m)) return false;
-      }
-
-      return true;
-    });
-  }, [
-    items,
-    aOperacion,
-    aTipo,
-    aRegion,
-    aComuna,
-    aBarrio,
-    aMoneda,
-    aMinValor,
-    aMaxValor,
-    aMinDorm,
-    aMinBanos,
-    aMinM2Const,
-    aMinM2Terreno,
-    aEstac,
-    ufValue,
-    selloFilter,
-  ]);
-
-  /* Ordenamiento */
-  const getComparablePriceUF = (p: Proyecto) => {
-    if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
-    if (p.precio_clp && p.precio_clp > 0 && CLPfromUF) return p.precio_clp / CLPfromUF;
-    return -Infinity;
-  };
-
-  const displayedItems = useMemo(() => {
-    const arr = filteredItems.slice();
-    if (sortMode === 'price-desc') arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
-    else if (sortMode === 'price-asc') arr.sort((a, b) => getComparablePriceUF(a) - getComparablePriceUF(b));
-    return arr;
-  }, [filteredItems, sortMode, CLPfromUF]);
 
   const applyAndSearch = () => {
     setAOperacion(operacion);
@@ -746,6 +671,108 @@ export default function ProyectosExclusivosPage() {
   const comunaOptions = region ? COMUNAS[region] || [] : [];
   const barrioOptions = comuna && BARRIOS[comuna] ? BARRIOS[comuna] : [];
 
+  /* ===== FILTRO CLIENTE (idéntico lógica, adaptado a Proyectos: precio solo UF) ===== */
+  const filteredItems = useMemo(() => {
+    const norm = (s?: string) => normalize(s || '');
+
+    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
+    const minN = toInt(aMinValor);
+    const maxN = toInt(aMaxValor);
+
+    const isCLP = aMoneda === 'CLP$';
+    const rate = ufValue || null;
+
+    const minUF =
+      Number.isNaN(minN) ? -Infinity : isCLP ? (rate ? minN / rate : -Infinity) : minN;
+    const maxUF =
+      Number.isNaN(maxN) ? Infinity : isCLP ? (rate ? maxN / rate : Infinity) : maxN;
+
+    const ge = (val: number | null | undefined, min: number) => (val == null ? false : val >= min);
+
+    return (items || []).filter((x) => {
+      if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
+
+      if (aTipo) {
+        const xt = norm(x.tipo);
+        const ft = norm(aTipo);
+        if (!xt.startsWith(ft)) return false;
+      }
+
+      if (aRegion) {
+        const r = inferRegion(x.comuna, x.barrio);
+        if (norm(r) !== norm(aRegion)) return false;
+      }
+
+      if (aComuna) {
+        const cItem = normalize(normalize(x.comuna) === 'tunquen' ? 'Casablanca' : x.comuna || '');
+        if (cItem !== norm(aComuna)) return false;
+      }
+
+      if (aBarrio) {
+        const sel = norm(aBarrio);
+        const bx = norm(x.barrio);
+        const cx = norm(x.comuna);
+        const passBarrio = (bx && bx.includes(sel)) || (!bx && cx === 'tunquen');
+        if (!passBarrio) return false;
+      }
+
+      if (selloFilter) {
+        if ((x.sello_tipo || '') !== selloFilter) return false;
+      }
+
+      // Precio (UF) + conversión desde CLP$ (solo para filtrar)
+      const puf = x.precio_uf && x.precio_uf > 0 ? x.precio_uf : null;
+      if (puf != null) {
+        if (puf < minUF || puf > maxUF) return false;
+      } else if (minUF !== -Infinity || maxUF !== Infinity) {
+        return false;
+      }
+
+      if (aMinDorm && !ge(x.dormitorios, parseInt(aMinDorm, 10))) return false;
+      if (aMinBanos && !ge(x.banos, parseInt(aMinBanos, 10))) return false;
+
+      if (aMinM2Const) {
+        const m = parseInt(aMinM2Const.replace(/\./g, ''), 10);
+        if (!ge(x.superficie_util_m2, m)) return false;
+      }
+      if (aMinM2Terreno) {
+        const m = parseInt(aMinM2Terreno.replace(/\./g, ''), 10);
+        if (!ge(x.superficie_terreno_m2, m)) return false;
+      }
+      if (aEstac && !ge(x.estacionamientos, parseInt(aEstac, 10))) return false;
+
+      return true;
+    });
+  }, [
+    items,
+    aOperacion,
+    aTipo,
+    aRegion,
+    aComuna,
+    aBarrio,
+    aMoneda,
+    aMinValor,
+    aMaxValor,
+    aMinDorm,
+    aMinBanos,
+    aMinM2Const,
+    aMinM2Terreno,
+    aEstac,
+    selloFilter,
+    ufValue,
+  ]);
+
+  const displayedItems = useMemo(() => {
+    const getPriceUF = (p: Proyecto) => (p.precio_uf && p.precio_uf > 0 ? p.precio_uf : -Infinity);
+    const arr = filteredItems.slice();
+    if (sortMode === 'price-desc') arr.sort((a, b) => getPriceUF(b) - getPriceUF(a));
+    else if (sortMode === 'price-asc') arr.sort((a, b) => getPriceUF(a) - getPriceUF(b));
+    return arr;
+  }, [filteredItems, sortMode]);
+
+  // CLP estimado (solo display) desde UF
+  const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
+
   return (
     <main className="bg-white">
       {/* HERO */}
@@ -774,8 +801,7 @@ export default function ProyectosExclusivosPage() {
       {/* BLOQUE 1 */}
       <section className="bg-white">
         <SectionTitle title="Activos fuera del circuito tradicional" />
-        {/* Ajuste: menos espacio vertical para evitar “salto raro” */}
-        <div className="py-8">
+        <div className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="pl-2 sm:pl-4">
               <div className="max-w-none text-[14px] text-black/70 leading-relaxed text-justify space-y-4">
@@ -795,18 +821,21 @@ export default function ProyectosExclusivosPage() {
                   oportunidades reales detectadas, gestionadas e identificadas por nuestro equipo.
                 </p>
 
-                <p>Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y decisión.</p>
+                <p>
+                  Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y
+                  decisión.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* BLOQUE 2 — BÚSQUEDA (idéntico look & comportamiento a Propiedades) */}
-      <section className="bg-white border-b border-slate-200" onKeyDown={handleKeyDownSearch}>
+      {/* BLOQUE 2 (gris) — BÚSQUEDA (idéntica a Propiedades; solo título distinto) */}
+      <section className="bg-slate-50" onKeyDown={handleKeyDownSearch}>
         <SectionTitleWithIcon title="Búsqueda" icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />} />
 
-        <div className="py-6">
+        <div className="py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* modo */}
             <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
@@ -971,8 +1000,9 @@ export default function ProyectosExclusivosPage() {
                 </div>
 
                 <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                  {/* ✅ SOLO 2 opciones: UF y CLP$ (sin CLP redundante) */}
                   <SmartSelect
-                    options={['UF', 'CLP', 'CLP$']}
+                    options={['UF', 'CLP$']}
                     value={moneda}
                     onChange={(v) => setMoneda((v as any) || '')}
                     placeholder="UF/CLP$"
@@ -1169,7 +1199,6 @@ export default function ProyectosExclusivosPage() {
                   const showUF = !!(p.precio_uf && p.precio_uf > 0);
 
                   const clp = (() => {
-                    if (p.precio_clp && p.precio_clp > 0) return p.precio_clp;
                     if (showUF && CLPfromUF) return Math.round((p.precio_uf as number) * CLPfromUF);
                     return null;
                   })();
@@ -1206,12 +1235,7 @@ export default function ProyectosExclusivosPage() {
 
                         {/* Orden: Operación · Tipo · Comuna · Barrio */}
                         <p className="mt-1 text-sm text-slate-600">
-                          {[
-                            p.operacion ? capFirst(String(p.operacion)) : '',
-                            tipoCap,
-                            p.comuna || '',
-                            p.barrio || '',
-                          ]
+                          {[p.operacion ? capFirst(String(p.operacion)) : '', tipoCap, p.comuna || '', p.barrio || '']
                             .filter(Boolean)
                             .join(' · ')}
                         </p>
