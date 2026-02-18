@@ -24,7 +24,6 @@ type Proyecto = {
 
   portada_url?: string | null;
   portada_fija_url?: string | null;
-  imagenes?: string[] | null;
 
   publicado?: boolean | null;
 };
@@ -203,7 +202,7 @@ function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
   );
 }
 
-/* ===== SELLOS: “ICONO CHICO EN ESQUINA” (como tu foto) ===== */
+/* ===== SELLOS: “ICONO CHICO EN ESQUINA” ===== */
 
 function SmallCornerBadge({ children }: { children: React.ReactNode }) {
   return (
@@ -227,13 +226,12 @@ function SmallCornerBadge({ children }: { children: React.ReactNode }) {
 function NovacionBadge({ tasa }: { tasa: number }) {
   const tasaTxt = `${tasa.toFixed(1).replace('.', ',')}%`;
 
-  // “ticket” chico: arriba “Nov.”, abajo la tasa
   return (
     <div className="absolute top-3 right-3 z-10">
       <div
         className="rounded-md shadow-sm overflow-hidden"
         style={{
-          width: 54,
+          width: 56,
           height: 38,
           background: 'rgba(255,255,255,0.95)',
           border: '1px solid rgba(0,0,0,.12)',
@@ -285,7 +283,6 @@ function SealForProyecto(p: Proyecto) {
     );
   }
 
-  // densificación
   return (
     <SmallCornerBadge>
       <Layers className="h-5 w-5" color={BRAND_BLUE} />
@@ -293,7 +290,7 @@ function SealForProyecto(p: Proyecto) {
   );
 }
 
-/* ===== Glosario compacto (subtítulo bajo “Proyectos disponibles”) ===== */
+/* ===== Glosario compacto ===== */
 function GlosarioSellosCompacto() {
   const [open, setOpen] = useState<string | null>(null);
 
@@ -470,7 +467,7 @@ export default function ProyectosExclusivosPage() {
     };
   }, [trigger]);
 
-  /* Hidratación portadas */
+  /* Hidratación portadas (sin imagenes) */
   useEffect(() => {
     const need = (items || [])
       .filter((p) => p.id && !p.portada_url && !p.portada_fija_url)
@@ -490,7 +487,6 @@ export default function ProyectosExclusivosPage() {
           const img =
             (data?.portada_url && String(data.portada_url).trim()) ||
             (data?.portada_fija_url && String(data.portada_fija_url).trim()) ||
-            (Array.isArray(data?.imagenes) && data.imagenes[0]) ||
             '';
           if (img) entries.push([id, img]);
         } catch {}
@@ -598,7 +594,6 @@ export default function ProyectosExclusivosPage() {
         if ((x.sello_tipo || '') !== selloFilter) return false;
       }
 
-      // rango precio UF (cliente)
       const puf = x.precio_uf && x.precio_uf > 0 ? x.precio_uf : null;
       if (puf == null && (!Number.isNaN(minN) || !Number.isNaN(maxN))) return false;
 
@@ -644,7 +639,7 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* BLOQUE 1 (sin líneas separadoras, solo cambio de color) */}
+      {/* BLOQUE 1 */}
       <section className="bg-white">
         <SectionTitle title="Activos fuera del circuito tradicional" />
         <div className="py-12">
@@ -677,12 +672,10 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* BLOQUE 2 (gris, sin líneas) */}
+      {/* BLOQUE 2 */}
       <section className="bg-slate-50" onKeyDown={handleKeyDownSearch}>
-        {/* TÍTULO se queda igual como pediste */}
         <SectionTitleWithIcon title="Búsqueda" icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />} />
 
-        {/* Buscador “tipo Propiedades”: compacto, 2 filas claras */}
         <div className="py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
@@ -710,16 +703,10 @@ export default function ProyectosExclusivosPage() {
               </button>
             </div>
 
-            {/* RÁPIDA */}
             {advancedMode === 'rapida' && (
               <>
                 <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  <SmartSelect
-                    options={['Venta', 'Arriendo']}
-                    value={operacion}
-                    onChange={setOperacion}
-                    placeholder="Operación"
-                  />
+                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
                   <SmartSelect
                     options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
                     value={tipo}
@@ -729,20 +716,13 @@ export default function ProyectosExclusivosPage() {
                   <SmartSelect
                     options={regionOptions}
                     value={region}
-                    onChange={(v) => {
-                      setRegion(v);
-                      setComuna('');
-                      setBarrio('');
-                    }}
+                    onChange={(v) => { setRegion(v); setComuna(''); setBarrio(''); }}
                     placeholder="Región"
                   />
                   <SmartSelect
                     options={comunaOptions}
                     value={comuna}
-                    onChange={(v) => {
-                      setComuna(v);
-                      setBarrio('');
-                    }}
+                    onChange={(v) => { setComuna(v); setBarrio(''); }}
                     placeholder="Comuna"
                     disabled={!region}
                   />
@@ -771,7 +751,6 @@ export default function ProyectosExclusivosPage() {
                     className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
                   />
                   <div className="lg:col-span-1" />
-
                   <button
                     onClick={handleClear}
                     className="w-full px-5 py-2 text-sm rounded-none border"
@@ -793,20 +772,12 @@ export default function ProyectosExclusivosPage() {
               </>
             )}
 
-            {/* AVANZADA (igual base por ahora) */}
             {advancedMode === 'avanzada' && (
               <>
-                <div className="pl-2 sm:pl-4">
-                  <div className="h-px bg-slate-200 my-4" />
-                </div>
+                <div className="pl-2 sm:pl-4"><div className="h-px bg-slate-200 my-4" /></div>
 
                 <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  <SmartSelect
-                    options={['Venta', 'Arriendo']}
-                    value={operacion}
-                    onChange={setOperacion}
-                    placeholder="Operación"
-                  />
+                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
                   <SmartSelect
                     options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
                     value={tipo}
@@ -816,20 +787,13 @@ export default function ProyectosExclusivosPage() {
                   <SmartSelect
                     options={regionOptions}
                     value={region}
-                    onChange={(v) => {
-                      setRegion(v);
-                      setComuna('');
-                      setBarrio('');
-                    }}
+                    onChange={(v) => { setRegion(v); setComuna(''); setBarrio(''); }}
                     placeholder="Región"
                   />
                   <SmartSelect
                     options={comunaOptions}
                     value={comuna}
-                    onChange={(v) => {
-                      setComuna(v);
-                      setBarrio('');
-                    }}
+                    onChange={(v) => { setComuna(v); setBarrio(''); }}
                     placeholder="Comuna"
                     disabled={!region}
                   />
@@ -858,7 +822,6 @@ export default function ProyectosExclusivosPage() {
                     className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
                   />
                   <div className="lg:col-span-1" />
-
                   <button
                     onClick={handleClear}
                     className="w-full px-5 py-2 text-sm rounded-none border"
@@ -887,17 +850,15 @@ export default function ProyectosExclusivosPage() {
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="flex items-center justify-between mb-2 relative" ref={menuWrapRef}>
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">Proyectos disponibles</h2>
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
+              Proyectos disponibles
+            </h2>
 
             <div className="relative flex items-center gap-2">
               <button
                 type="button"
                 aria-label="Limpiar orden y filtros"
-                onClick={() => {
-                  setSortMode('');
-                  setSelloFilter('');
-                  setMenuOpen(false);
-                }}
+                onClick={() => { setSortMode(''); setSelloFilter(''); setMenuOpen(false); }}
                 className="inline-flex items-center justify-center px-3 py-2 rounded-none"
                 style={{ background: '#fff', border: '1px solid #000', color: '#000' }}
                 title="Limpiar"
@@ -919,23 +880,13 @@ export default function ProyectosExclusivosPage() {
 
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 shadow-lg z-10" role="menu">
-                  <div className="px-4 pt-3 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">Orden</div>
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                    onClick={() => {
-                      setSortMode('price-desc');
-                      setMenuOpen(false);
-                    }}
-                  >
+                  <div className="px-4 pt-3 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">
+                    Orden
+                  </div>
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-desc'); setMenuOpen(false); }}>
                     Precio: mayor a menor
                   </button>
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                    onClick={() => {
-                      setSortMode('price-asc');
-                      setMenuOpen(false);
-                    }}
-                  >
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-asc'); setMenuOpen(false); }}>
                     Precio: menor a mayor
                   </button>
 
@@ -944,40 +895,16 @@ export default function ProyectosExclusivosPage() {
                   <div className="px-4 pt-2 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">
                     Filtrar por sello
                   </div>
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                    onClick={() => {
-                      setSelloFilter('novacion');
-                      setMenuOpen(false);
-                    }}
-                  >
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSelloFilter('novacion'); setMenuOpen(false); }}>
                     Tasa de novación
                   </button>
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                    onClick={() => {
-                      setSelloFilter('bajo_mercado');
-                      setMenuOpen(false);
-                    }}
-                  >
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSelloFilter('bajo_mercado'); setMenuOpen(false); }}>
                     Bajo mercado
                   </button>
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                    onClick={() => {
-                      setSelloFilter('flipping');
-                      setMenuOpen(false);
-                    }}
-                  >
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSelloFilter('flipping'); setMenuOpen(false); }}>
                     Oportunidad de flipping
                   </button>
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50"
-                    onClick={() => {
-                      setSelloFilter('densificacion');
-                      setMenuOpen(false);
-                    }}
-                  >
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSelloFilter('densificacion'); setMenuOpen(false); }}>
                     Oportunidad de densificación
                   </button>
                 </div>
@@ -985,7 +912,6 @@ export default function ProyectosExclusivosPage() {
             </div>
           </div>
 
-          {/* Glosario va AQUÍ */}
           <div className="pl-2 sm:pl-4">
             <GlosarioSellosCompacto />
           </div>
@@ -1006,7 +932,6 @@ export default function ProyectosExclusivosPage() {
                     (p.portada_url && String(p.portada_url).trim()) ||
                     (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
                     (portadaHidratada && String(portadaHidratada).trim()) ||
-                    (Array.isArray(p.imagenes) && p.imagenes[0]) ||
                     CARD_FALLBACK;
 
                   const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
@@ -1024,23 +949,21 @@ export default function ProyectosExclusivosPage() {
                           className="w-full h-full object-cover group-hover:opacity-95 transition"
                         />
 
-                        {/* 1 SOLO SELLO ARRIBA DERECHA (correcto) */}
                         {SealForProyecto(p)}
                       </div>
 
                       <div className="p-4 flex flex-col">
-                        <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">{p.titulo || 'Proyecto'}</h3>
+                        <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
+                          {p.titulo || 'Proyecto'}
+                        </h3>
 
-                        {/* Orden: Operación · Tipo · Comuna · Barrio (sin “Barrio …”) */}
                         <p className="mt-1 text-sm text-slate-600">
                           {[
                             p.operacion ? capFirst(String(p.operacion)) : '',
                             tipoCap,
                             p.comuna || '',
                             p.barrio || '',
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
+                          ].filter(Boolean).join(' · ')}
                         </p>
 
                         <div className="mt-4 flex items-center justify-between">
