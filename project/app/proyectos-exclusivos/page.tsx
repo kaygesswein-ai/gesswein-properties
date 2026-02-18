@@ -19,12 +19,6 @@ type Proyecto = {
 
   precio_uf?: number | null;
 
-  dormitorios?: number | null;
-  banos?: number | null;
-  superficie_util_m2?: number | null;
-  superficie_terreno_m2?: number | null;
-  estacionamientos?: number | null;
-
   sello_tipo?: 'flipping' | 'bajo_mercado' | 'novacion' | 'densificacion' | null;
   tasa_novacion?: number | null;
 
@@ -46,38 +40,7 @@ const CARD_FALLBACK =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
-
 const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
-
-const fmtMiles = (raw: string) => {
-  const digits = (raw || '').replace(/\D+/g, '');
-  if (!digits) return '';
-  return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(parseInt(digits, 10));
-};
-
-/* ==== Hook UF (igual Propiedades) ==== */
-function useUfValue() {
-  const [uf, setUf] = useState<number | null>(null);
-  useEffect(() => {
-    let cancel = false;
-    (async () => {
-      try {
-        const r = await fetch('/api/uf', { cache: 'no-store' });
-        const j = await r.json().catch(() => ({} as any));
-        const value = typeof j?.uf === 'number' ? j.uf : null;
-        if (!cancel) setUf(value);
-      } catch {
-        if (!cancel) setUf(null);
-      }
-    })();
-    return () => {
-      cancel = true;
-    };
-  }, []);
-  return uf;
-}
 
 /* ==== SOLO RM y Valparaíso (igual Propiedades) ==== */
 const REGIONES: string[] = ['Metropolitana de Santiago', 'Valparaíso'];
@@ -114,8 +77,22 @@ const COMUNAS: Record<string, string[]> = {
 };
 
 const BARRIOS: Record<string, string[]> = {
-  'Las Condes': ['El Golf', 'Nueva Las Condes', 'San Damián', 'Estoril', 'Los Dominicos', 'Cantagallo', 'Apoquindo'],
-  Vitacura: ['Santa María de Manquehue', 'Lo Curro', 'Jardín del Este', 'Vitacura Centro', 'Parque Bicentenario'],
+  'Las Condes': [
+    'El Golf',
+    'Nueva Las Condes',
+    'San Damián',
+    'Estoril',
+    'Los Dominicos',
+    'Cantagallo',
+    'Apoquindo',
+  ],
+  Vitacura: [
+    'Santa María de Manquehue',
+    'Lo Curro',
+    'Jardín del Este',
+    'Vitacura Centro',
+    'Parque Bicentenario',
+  ],
   'Lo Barnechea': ['La Dehesa', 'Los Trapenses', 'El Huinganal', 'Valle La Dehesa'],
   Providencia: ['Los Leones', 'Pedro de Valdivia', 'Providencia Centro', 'Bellavista'],
   Ñuñoa: ['Plaza Ñuñoa', 'Villa Frei', 'Irarrazabal', 'Suárez Mujica'],
@@ -186,6 +163,25 @@ function SectionTitleWithIcon({ title, icon }: { title: string; icon: React.Reac
 
 /* ===== ICONOS PROPIOS ===== */
 
+/** Plusvalía / flipping: línea ascendente con flecha (SIN casa) */
+function PlusvaliaArrowIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 16l6-6 4 4 6-6" />
+      <path d="M16 8h4v4" />
+    </svg>
+  );
+}
+
 /** Bajo mercado: $ + flecha abajo */
 function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
@@ -207,48 +203,16 @@ function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
   );
 }
 
-/** Flipping: casa + flecha “plusvalía” (sin superposición fea) */
-function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/* Casa */}
-      <path d="M4 11.5L12 5l8 6.5" />
-      <path d="M6.5 10.8V19h7.2" />
-      <path d="M10 19v-4.2h3V19" />
-
-      {/* Flecha de valorización (separada a la derecha/arriba) */}
-      <path d="M14.8 12.8l3.7-3.7" />
-      <path d="M18.5 9.1h-3.1" />
-      <path d="M18.5 9.1v3.1" />
-    </svg>
-  );
-}
-
 /* ===== SELLOS: “ICONO CHICO EN ESQUINA” ===== */
 
-function SmallCornerBadge({
-  children,
-  size = 38,
-}: {
-  children: React.ReactNode;
-  size?: number;
-}) {
+function SmallCornerBadge({ children }: { children: React.ReactNode }) {
   return (
     <div className="absolute top-3 right-3 z-10">
       <div
         className="flex items-center justify-center rounded-md shadow-sm"
         style={{
-          width: size,
-          height: size,
+          width: 38,
+          height: 38,
           background: 'rgba(255,255,255,0.95)',
           border: '1px solid rgba(0,0,0,.12)',
           backdropFilter: 'blur(6px)',
@@ -260,61 +224,33 @@ function SmallCornerBadge({
   );
 }
 
-/** Badge NOVACIÓN: mismo porte que los otros (cuadrado) + centrado real */
-function NovacionBadgeSquare({
-  tasa,
-  size = 38,
-  corner = true,
-}: {
-  tasa: number;
-  size?: number;
-  corner?: boolean;
-}) {
+function NovacionBadge({ tasa }: { tasa: number }) {
   const tasaTxt = `${tasa.toFixed(1).replace('.', ',')}%`;
-
-  const inner = (
-    <div
-      className="rounded-md shadow-sm overflow-hidden"
-      style={{
-        width: size,
-        height: size,
-        background: 'rgba(255,255,255,0.95)',
-        border: '1px solid rgba(0,0,0,.12)',
-        backdropFilter: 'blur(6px)',
-      }}
-    >
-      {/* 1/4 arriba: NOV */}
-      <div
-        className="text-[9px] uppercase tracking-[.22em] text-center flex items-center justify-center"
-        style={{
-          height: Math.round(size * 0.28),
-          background: BRAND_BLUE,
-          color: 'white',
-          lineHeight: 1,
-        }}
-      >
-        NOV
-      </div>
-
-      {/* 3/4 abajo: tasa centrada */}
-      <div
-        className="flex items-center justify-center"
-        style={{
-          height: size - Math.round(size * 0.28),
-        }}
-      >
-        <div className="font-semibold" style={{ color: BRAND_BLUE, fontSize: 12, lineHeight: 1 }}>
-          {tasaTxt}
-        </div>
-      </div>
-    </div>
-  );
-
-  if (!corner) return inner;
 
   return (
     <div className="absolute top-3 right-3 z-10">
-      {inner}
+      <div
+        className="rounded-md shadow-sm overflow-hidden"
+        style={{
+          width: 38,
+          height: 38,
+          background: 'rgba(255,255,255,0.95)',
+          border: '1px solid rgba(0,0,0,.12)',
+          backdropFilter: 'blur(6px)',
+        }}
+      >
+        <div
+          className="text-[9px] uppercase tracking-[.25em] text-center py-[2px]"
+          style={{ background: BRAND_BLUE, color: 'white' }}
+        >
+          NOV
+        </div>
+        <div className="h-[calc(38px-16px)] flex items-center justify-center">
+          <div className="text-[12px] font-semibold leading-none" style={{ color: BRAND_BLUE }}>
+            {tasaTxt}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -325,12 +261,12 @@ function SealForProyecto(p: Proyecto) {
 
   if (s === 'novacion') {
     if (p.tasa_novacion == null) return null;
-    return <NovacionBadgeSquare tasa={p.tasa_novacion} size={38} />;
+    return <NovacionBadge tasa={p.tasa_novacion} />;
   }
 
   if (s === 'bajo_mercado') {
     return (
-      <SmallCornerBadge size={38}>
+      <SmallCornerBadge>
         <span style={{ color: BRAND_BLUE }}>
           <BajoMercadoIcon className="h-5 w-5" />
         </span>
@@ -340,9 +276,9 @@ function SealForProyecto(p: Proyecto) {
 
   if (s === 'flipping') {
     return (
-      <SmallCornerBadge size={38}>
+      <SmallCornerBadge>
         <span style={{ color: BRAND_BLUE }}>
-          <FlippingValueUpIcon className="h-5 w-5" />
+          <PlusvaliaArrowIcon className="h-5 w-5" />
         </span>
       </SmallCornerBadge>
     );
@@ -350,7 +286,7 @@ function SealForProyecto(p: Proyecto) {
 
   // densificación
   return (
-    <SmallCornerBadge size={38}>
+    <SmallCornerBadge>
       <Layers className="h-5 w-5" color={BRAND_BLUE} />
     </SmallCornerBadge>
   );
@@ -360,31 +296,14 @@ function SealForProyecto(p: Proyecto) {
 function GlosarioSellosCompacto() {
   const [open, setOpen] = useState<string | null>(null);
 
-  // Iconos del glosario: mismo “peso visual” (28px)
-  const GlossIconBox = ({ children }: { children: React.ReactNode }) => (
-    <div
-      className="flex items-center justify-center rounded-md"
-      style={{
-        width: 28,
-        height: 28,
-        background: 'rgba(255,255,255,0.95)',
-        border: '1px solid rgba(0,0,0,.12)',
-      }}
-    >
-      {children}
-    </div>
-  );
-
   const items = [
     {
       key: 'bajo_mercado',
       title: 'Bajo mercado',
       icon: (
-        <GlossIconBox>
-          <span style={{ color: BRAND_BLUE }}>
-            <BajoMercadoIcon className="h-5 w-5" />
-          </span>
-        </GlossIconBox>
+        <span style={{ color: BRAND_BLUE }}>
+          <BajoMercadoIcon className="h-5 w-5" />
+        </span>
       ),
       text:
         'Activo ofrecido por debajo de comparables relevantes por condición excepcional, urgencia o asimetría de información. Es una señal para revisar fundamentos, no reemplaza el análisis.',
@@ -393,8 +312,21 @@ function GlosarioSellosCompacto() {
       key: 'novacion',
       title: 'Tasa de novación',
       icon: (
-        <div style={{ transform: 'translateY(0px)' }}>
-          <NovacionBadgeSquare tasa={2.7} size={28} corner={false} />
+        <div
+          className="rounded-md overflow-hidden"
+          style={{ width: 28, height: 28, border: '1px solid rgba(0,0,0,.12)' }}
+        >
+          <div
+            className="text-[8px] uppercase tracking-[.18em] text-center"
+            style={{ background: BRAND_BLUE, color: 'white', lineHeight: '12px', paddingTop: 1 }}
+          >
+            NOV
+          </div>
+          <div className="flex items-center justify-center" style={{ height: 16 }}>
+            <div className="text-[9px] font-semibold leading-none" style={{ color: BRAND_BLUE }}>
+              2,7%
+            </div>
+          </div>
         </div>
       ),
       text:
@@ -404,11 +336,9 @@ function GlosarioSellosCompacto() {
       key: 'flipping',
       title: 'Flipping',
       icon: (
-        <GlossIconBox>
-          <span style={{ color: BRAND_BLUE }}>
-            <FlippingValueUpIcon className="h-5 w-5" />
-          </span>
-        </GlossIconBox>
+        <span style={{ color: BRAND_BLUE }}>
+          <PlusvaliaArrowIcon className="h-5 w-5" />
+        </span>
       ),
       text:
         'Estrategia de compra con potencial de creación de valor (mejoras, regularización, reposicionamiento) para vender con valorización en el corto/mediano plazo.',
@@ -416,11 +346,7 @@ function GlosarioSellosCompacto() {
     {
       key: 'densificacion',
       title: 'Densificación',
-      icon: (
-        <GlossIconBox>
-          <Layers className="h-5 w-5" color={BRAND_BLUE} />
-        </GlossIconBox>
-      ),
+      icon: <Layers className="h-5 w-5" color={BRAND_BLUE} />,
       text:
         'Potencial normativo y/o físico para aumentar unidades o superficie vendible: subdivisión, condominio, ampliación, cabida o mayor intensidad de uso según normativa y factibilidad técnica.',
     },
@@ -428,9 +354,13 @@ function GlosarioSellosCompacto() {
 
   return (
     <div className="mt-6 max-w-3xl">
-      <div className="text-[12px] tracking-[.22em] uppercase text-slate-600 mb-2">Glosario de sellos</div>
+      {/* Formato de subtítulo tipo “Gestión del activo inmobiliario” */}
+      <div className="text-[12px] tracking-[.22em] uppercase text-slate-600">Glosario de sellos</div>
+      <div className="mt-1 italic text-[13px] text-black/60">
+        Identifica rápidamente el tipo de oportunidad y su lógica detrás.
+      </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="mt-4 flex flex-col gap-2">
         {items.map((it) => {
           const isOpen = open === it.key;
           return (
@@ -456,7 +386,7 @@ function GlosarioSellosCompacto() {
 }
 
 export default function ProyectosExclusivosPage() {
-  /* ====== BÚSQUEDA (idéntica a Propiedades) ====== */
+  /* — Filtros UI — */
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
 
   const [operacion, setOperacion] = useState('');
@@ -465,16 +395,9 @@ export default function ProyectosExclusivosPage() {
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
-  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$'>('');
-  const [minValor, setMinValor] = useState('');
-  const [maxValor, setMaxValor] = useState('');
-
-  // Avanzada
-  const [minDorm, setMinDorm] = useState('');
-  const [minBanos, setMinBanos] = useState('');
-  const [minM2Const, setMinM2Const] = useState('');
-  const [minM2Terreno, setMinM2Terreno] = useState('');
-  const [estac, setEstac] = useState('');
+  /* precio (UF) */
+  const [minUF, setMinUF] = useState('');
+  const [maxUF, setMaxUF] = useState('');
 
   /* — APLICADOS — */
   const [aOperacion, setAOperacion] = useState('');
@@ -483,15 +406,8 @@ export default function ProyectosExclusivosPage() {
   const [aComuna, setAComuna] = useState('');
   const [aBarrio, setABarrio] = useState('');
 
-  const [aMoneda, setAMoneda] = useState<'' | 'UF' | 'CLP$'>('');
-  const [aMinValor, setAMinValor] = useState('');
-  const [aMaxValor, setAMaxValor] = useState('');
-
-  const [aMinDorm, setAMinDorm] = useState('');
-  const [aMinBanos, setAMinBanos] = useState('');
-  const [aMinM2Const, setAMinM2Const] = useState('');
-  const [aMinM2Terreno, setAMinM2Terreno] = useState('');
-  const [aEstac, setAEstac] = useState('');
+  const [aMinUF, setAMinUF] = useState('');
+  const [aMaxUF, setAMaxUF] = useState('');
 
   /* — Resultados — */
   const [items, setItems] = useState<Proyecto[]>([]);
@@ -509,8 +425,6 @@ export default function ProyectosExclusivosPage() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuWrapRef = useRef<HTMLDivElement | null>(null);
-
-  const ufValue = useUfValue();
 
   /* Carga inicial */
   useEffect(() => {
@@ -607,15 +521,8 @@ export default function ProyectosExclusivosPage() {
     setAComuna(comuna);
     setABarrio(barrio);
 
-    setAMoneda(moneda);
-    setAMinValor(minValor);
-    setAMaxValor(maxValor);
-
-    setAMinDorm(minDorm);
-    setAMinBanos(minBanos);
-    setAMinM2Const(minM2Const);
-    setAMinM2Terreno(minM2Terreno);
-    setAEstac(estac);
+    setAMinUF(minUF);
+    setAMaxUF(maxUF);
 
     setTrigger((v) => v + 1);
   };
@@ -626,32 +533,16 @@ export default function ProyectosExclusivosPage() {
     setRegion('');
     setComuna('');
     setBarrio('');
-
-    setMoneda('');
-    setMinValor('');
-    setMaxValor('');
-
-    setMinDorm('');
-    setMinBanos('');
-    setMinM2Const('');
-    setMinM2Terreno('');
-    setEstac('');
+    setMinUF('');
+    setMaxUF('');
 
     setAOperacion('');
     setATipo('');
     setARegion('');
     setAComuna('');
     setABarrio('');
-
-    setAMoneda('');
-    setAMinValor('');
-    setAMaxValor('');
-
-    setAMinDorm('');
-    setAMinBanos('');
-    setAMinM2Const('');
-    setAMinM2Terreno('');
-    setAEstac('');
+    setAMinUF('');
+    setAMaxUF('');
 
     setSortMode('');
     setSelloFilter('');
@@ -671,23 +562,15 @@ export default function ProyectosExclusivosPage() {
   const comunaOptions = region ? COMUNAS[region] || [] : [];
   const barrioOptions = comuna && BARRIOS[comuna] ? BARRIOS[comuna] : [];
 
-  /* ===== FILTRO CLIENTE (idéntico lógica, adaptado a Proyectos: precio solo UF) ===== */
   const filteredItems = useMemo(() => {
     const norm = (s?: string) => normalize(s || '');
 
-    const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
-    const minN = toInt(aMinValor);
-    const maxN = toInt(aMaxValor);
-
-    const isCLP = aMoneda === 'CLP$';
-    const rate = ufValue || null;
-
-    const minUF =
-      Number.isNaN(minN) ? -Infinity : isCLP ? (rate ? minN / rate : -Infinity) : minN;
-    const maxUF =
-      Number.isNaN(maxN) ? Infinity : isCLP ? (rate ? maxN / rate : Infinity) : maxN;
-
-    const ge = (val: number | null | undefined, min: number) => (val == null ? false : val >= min);
+    const toNum = (s: string) => {
+      const t = (s || '').replace(/[^\d]/g, '');
+      return t ? parseInt(t, 10) : NaN;
+    };
+    const minN = toNum(aMinUF);
+    const maxN = toNum(aMaxUF);
 
     return (items || []).filter((x) => {
       if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
@@ -720,47 +603,18 @@ export default function ProyectosExclusivosPage() {
         if ((x.sello_tipo || '') !== selloFilter) return false;
       }
 
-      // Precio (UF) + conversión desde CLP$ (solo para filtrar)
+      // rango precio UF (cliente)
       const puf = x.precio_uf && x.precio_uf > 0 ? x.precio_uf : null;
+      if (puf == null && (!Number.isNaN(minN) || !Number.isNaN(maxN))) return false;
+
       if (puf != null) {
-        if (puf < minUF || puf > maxUF) return false;
-      } else if (minUF !== -Infinity || maxUF !== Infinity) {
-        return false;
+        if (!Number.isNaN(minN) && puf < minN) return false;
+        if (!Number.isNaN(maxN) && puf > maxN) return false;
       }
-
-      if (aMinDorm && !ge(x.dormitorios, parseInt(aMinDorm, 10))) return false;
-      if (aMinBanos && !ge(x.banos, parseInt(aMinBanos, 10))) return false;
-
-      if (aMinM2Const) {
-        const m = parseInt(aMinM2Const.replace(/\./g, ''), 10);
-        if (!ge(x.superficie_util_m2, m)) return false;
-      }
-      if (aMinM2Terreno) {
-        const m = parseInt(aMinM2Terreno.replace(/\./g, ''), 10);
-        if (!ge(x.superficie_terreno_m2, m)) return false;
-      }
-      if (aEstac && !ge(x.estacionamientos, parseInt(aEstac, 10))) return false;
 
       return true;
     });
-  }, [
-    items,
-    aOperacion,
-    aTipo,
-    aRegion,
-    aComuna,
-    aBarrio,
-    aMoneda,
-    aMinValor,
-    aMaxValor,
-    aMinDorm,
-    aMinBanos,
-    aMinM2Const,
-    aMinM2Terreno,
-    aEstac,
-    selloFilter,
-    ufValue,
-  ]);
+  }, [items, aOperacion, aTipo, aRegion, aComuna, aBarrio, aMinUF, aMaxUF, selloFilter]);
 
   const displayedItems = useMemo(() => {
     const getPriceUF = (p: Proyecto) => (p.precio_uf && p.precio_uf > 0 ? p.precio_uf : -Infinity);
@@ -769,9 +623,6 @@ export default function ProyectosExclusivosPage() {
     else if (sortMode === 'price-asc') arr.sort((a, b) => getPriceUF(a) - getPriceUF(b));
     return arr;
   }, [filteredItems, sortMode]);
-
-  // CLP estimado (solo display) desde UF
-  const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
 
   return (
     <main className="bg-white">
@@ -831,13 +682,12 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* BLOQUE 2 (gris) — BÚSQUEDA (idéntica a Propiedades; solo título distinto) */}
+      {/* BLOQUE 2 (gris) */}
       <section className="bg-slate-50" onKeyDown={handleKeyDownSearch}>
         <SectionTitleWithIcon title="Búsqueda" icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />} />
 
         <div className="py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* modo */}
             <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
               <button
                 type="button"
@@ -845,7 +695,7 @@ export default function ProyectosExclusivosPage() {
                 className={`px-3 py-2 text-sm rounded-none border ${
                   advancedMode === 'rapida'
                     ? 'bg-gray-200 border-gray-300 text-slate-900'
-                    : 'bg-gray-50 border-gray-300 text-slate-700'
+                    : 'bg-white border-gray-300 text-slate-700'
                 }`}
               >
                 Búsqueda rápida
@@ -856,14 +706,14 @@ export default function ProyectosExclusivosPage() {
                 className={`px-3 py-2 text-sm rounded-none border ${
                   advancedMode === 'avanzada'
                     ? 'bg-gray-200 border-gray-300 text-slate-900'
-                    : 'bg-gray-50 border-gray-300 text-slate-700'
+                    : 'bg-white border-gray-300 text-slate-700'
                 }`}
               >
                 Búsqueda avanzada
               </button>
             </div>
 
-            {/* === RÁPIDA === */}
+            {/* RÁPIDA */}
             {advancedMode === 'rapida' && (
               <>
                 <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
@@ -909,26 +759,22 @@ export default function ProyectosExclusivosPage() {
                 </div>
 
                 <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  <SmartSelect
-                    options={['UF', 'CLP$']}
-                    value={moneda}
-                    onChange={(v) => setMoneda((v as any) || '')}
-                    placeholder="UF/CLP$"
+                  <input
+                    value={minUF}
+                    onChange={(e) => setMinUF((e.target.value || '').replace(/[^\d]/g, ''))}
+                    inputMode="numeric"
+                    placeholder="Mín UF"
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
                   />
                   <input
-                    value={minValor}
-                    onChange={(e) => setMinValor(fmtMiles(e.target.value))}
+                    value={maxUF}
+                    onChange={(e) => setMaxUF((e.target.value || '').replace(/[^\d]/g, ''))}
                     inputMode="numeric"
-                    placeholder="Mín"
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                    placeholder="Máx UF"
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
                   />
-                  <input
-                    value={maxValor}
-                    onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
-                    inputMode="numeric"
-                    placeholder="Máx"
-                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
-                  />
+                  <div className="lg:col-span-1" />
+
                   <button
                     onClick={handleClear}
                     className="w-full px-5 py-2 text-sm rounded-none border"
@@ -950,7 +796,7 @@ export default function ProyectosExclusivosPage() {
               </>
             )}
 
-            {/* === AVANZADA === */}
+            {/* AVANZADA (igual base por ahora) */}
             {advancedMode === 'avanzada' && (
               <>
                 <div className="pl-2 sm:pl-4">
@@ -1000,62 +846,22 @@ export default function ProyectosExclusivosPage() {
                 </div>
 
                 <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  {/* ✅ SOLO 2 opciones: UF y CLP$ (sin CLP redundante) */}
-                  <SmartSelect
-                    options={['UF', 'CLP$']}
-                    value={moneda}
-                    onChange={(v) => setMoneda((v as any) || '')}
-                    placeholder="UF/CLP$"
+                  <input
+                    value={minUF}
+                    onChange={(e) => setMinUF((e.target.value || '').replace(/[^\d]/g, ''))}
+                    inputMode="numeric"
+                    placeholder="Mín UF"
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
                   />
                   <input
-                    value={minValor}
-                    onChange={(e) => setMinValor(fmtMiles(e.target.value))}
+                    value={maxUF}
+                    onChange={(e) => setMaxUF((e.target.value || '').replace(/[^\d]/g, ''))}
                     inputMode="numeric"
-                    placeholder="Mín"
-                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                    placeholder="Máx UF"
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 placeholder-slate-400"
                   />
-                  <input
-                    value={maxValor}
-                    onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
-                    inputMode="numeric"
-                    placeholder="Máx"
-                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                  />
-                  <input
-                    value={minDorm}
-                    onChange={(e) => setMinDorm((e.target.value || '').replace(/\D+/g, ''))}
-                    inputMode="numeric"
-                    placeholder="Mín. dormitorios"
-                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                  />
-                  <input
-                    value={minBanos}
-                    onChange={(e) => setMinBanos((e.target.value || '').replace(/\D+/g, ''))}
-                    inputMode="numeric"
-                    placeholder="Mín. baños"
-                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                  />
-                  <input
-                    value={estac}
-                    onChange={(e) => setEstac((e.target.value || '').replace(/\D+/g, ''))}
-                    inputMode="numeric"
-                    placeholder="Estacionamientos"
-                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                  />
-                  <input
-                    value={minM2Const}
-                    onChange={(e) => setMinM2Const(fmtMiles(e.target.value))}
-                    inputMode="numeric"
-                    placeholder="Mín. m² construidos"
-                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                  />
-                  <input
-                    value={minM2Terreno}
-                    onChange={(e) => setMinM2Terreno(fmtMiles(e.target.value))}
-                    inputMode="numeric"
-                    placeholder="Mín. m² terreno"
-                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
-                  />
+                  <div className="lg:col-span-1" />
+
                   <button
                     onClick={handleClear}
                     className="w-full px-5 py-2 text-sm rounded-none border"
@@ -1182,7 +988,6 @@ export default function ProyectosExclusivosPage() {
             </div>
           </div>
 
-          {/* Glosario */}
           <div className="pl-2 sm:pl-4">
             <GlosarioSellosCompacto />
           </div>
@@ -1197,11 +1002,6 @@ export default function ProyectosExclusivosPage() {
                 {(displayedItems ?? []).map((p) => {
                   const linkId = (p.id || p.slug || '').toString();
                   const showUF = !!(p.precio_uf && p.precio_uf > 0);
-
-                  const clp = (() => {
-                    if (showUF && CLPfromUF) return Math.round((p.precio_uf as number) * CLPfromUF);
-                    return null;
-                  })();
 
                   const portadaHidratada = p.id ? portadasById[p.id] : '';
                   const cardImage =
@@ -1226,21 +1026,27 @@ export default function ProyectosExclusivosPage() {
                           className="w-full h-full object-cover group-hover:opacity-95 transition"
                         />
 
-                        {/* 1 SOLO SELLO ARRIBA DERECHA */}
                         {SealForProyecto(p)}
                       </div>
 
                       <div className="p-4 flex flex-col">
                         <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">{p.titulo || 'Proyecto'}</h3>
 
-                        {/* Orden: Operación · Tipo · Comuna · Barrio */}
-                        <p className="mt-1 text-sm text-slate-600">
-                          {[p.operacion ? capFirst(String(p.operacion)) : '', tipoCap, p.comuna || '', p.barrio || '']
+                        {/* ID: Operación · Tipo · Comuna (SIN barrio) + altura fija de 2 líneas */}
+                        <p className="mt-1 text-sm text-slate-600 line-clamp-2 min-h-[40px]">
+                          {[
+                            p.operacion ? capFirst(String(p.operacion)) : '',
+                            tipoCap,
+                            p.comuna || '',
+                          ]
                             .filter(Boolean)
                             .join(' · ')}
                         </p>
 
-                        <div className="mt-4 flex items-center justify-between">
+                        {/* Reserva de espacio para futuro bloque (dormitorios/baños/etc.) */}
+                        <div className="mt-3 h-14" aria-hidden="true" />
+
+                        <div className="mt-auto flex items-center justify-between">
                           <span
                             className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
                             style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
@@ -1252,7 +1058,6 @@ export default function ProyectosExclusivosPage() {
                             <div className="font-semibold" style={{ color: BRAND_BLUE }}>
                               {showUF ? `UF ${nfUF.format(p.precio_uf as number)}` : 'Consultar'}
                             </div>
-                            <div className="text-xs text-slate-500">{clp ? `$ ${nfCLP.format(clp)}` : ''}</div>
                           </div>
                         </div>
                       </div>
