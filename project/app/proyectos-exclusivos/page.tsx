@@ -1,25 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import {
-  Filter,
-  SlidersHorizontal,
-  Trash2,
-  Percent,
-  Layers,
-} from 'lucide-react';
+import { Filter, SlidersHorizontal, Trash2, Percent, Layers } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
 
 type Proyecto = {
   id?: string;
   slug?: string;
   titulo?: string;
-  comuna?: string;
-  barrio?: string;
-  region?: string;
+
   operacion?: 'venta' | 'arriendo' | string;
   tipo?: string;
+
+  region?: string;
+  comuna?: string;
+  barrio?: string;
+
   precio_uf?: number | null;
 
   sello_tipo?: 'flipping' | 'bajo_mercado' | 'novacion' | 'densificacion' | null;
@@ -35,11 +32,10 @@ type Proyecto = {
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
 
-/** HERO (dron / vista aérea) */
+/** HERO (dron / vista aérea urbana) */
 const HERO_IMG =
-  'https://images.unsplash.com/photo-1502920917128-1aa500764b6a?q=80&w=2400&auto=format&fit=crop';
+  'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2400&auto=format&fit=crop';
 
-/* Fallback card */
 const CARD_FALLBACK =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
@@ -51,18 +47,52 @@ const REGIONES: string[] = ['Metropolitana de Santiago', 'Valparaíso'];
 
 const COMUNAS: Record<string, string[]> = {
   'Metropolitana de Santiago': [
-    'Las Condes', 'Vitacura', 'Lo Barnechea', 'Providencia', 'Santiago', 'Ñuñoa', 'La Reina', 'Huechuraba',
-    'La Florida', 'Maipú', 'Puente Alto', 'Colina', 'Lampa', 'Talagante', 'Peñalolén', 'Macul',
+    'Las Condes',
+    'Vitacura',
+    'Lo Barnechea',
+    'Providencia',
+    'Santiago',
+    'Ñuñoa',
+    'La Reina',
+    'Huechuraba',
+    'La Florida',
+    'Maipú',
+    'Puente Alto',
+    'Colina',
+    'Lampa',
+    'Talagante',
+    'Peñalolén',
+    'Macul',
   ],
   Valparaíso: [
     'Casablanca', // Tunquén pertenece a Casablanca
-    'Viña del Mar', 'Valparaíso', 'Concón', 'Quilpué', 'Villa Alemana', 'Limache', 'Olmué',
+    'Viña del Mar',
+    'Valparaíso',
+    'Concón',
+    'Quilpué',
+    'Villa Alemana',
+    'Limache',
+    'Olmué',
   ],
 };
 
 const BARRIOS: Record<string, string[]> = {
-  'Las Condes': ['El Golf', 'Nueva Las Condes', 'San Damián', 'Estoril', 'Los Dominicos', 'Cantagallo', 'Apoquindo'],
-  Vitacura: ['Santa María de Manquehue', 'Lo Curro', 'Jardín del Este', 'Vitacura Centro', 'Parque Bicentenario'],
+  'Las Condes': [
+    'El Golf',
+    'Nueva Las Condes',
+    'San Damián',
+    'Estoril',
+    'Los Dominicos',
+    'Cantagallo',
+    'Apoquindo',
+  ],
+  Vitacura: [
+    'Santa María de Manquehue',
+    'Lo Curro',
+    'Jardín del Este',
+    'Vitacura Centro',
+    'Parque Bicentenario',
+  ],
   'Lo Barnechea': ['La Dehesa', 'Los Trapenses', 'El Huinganal', 'Valle La Dehesa'],
   Providencia: ['Los Leones', 'Pedro de Valdivia', 'Providencia Centro', 'Bellavista'],
   Ñuñoa: ['Plaza Ñuñoa', 'Villa Frei', 'Irarrazabal', 'Suárez Mujica'],
@@ -87,20 +117,15 @@ const BARRIOS: Record<string, string[]> = {
   Casablanca: ['Tunquén'],
 };
 
-/* ==== Normalización y región (igual Propiedades) ==== */
 const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalize = (s?: string) => stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
 
-/** Resuelve región a partir de comuna y, si es necesario, por barrio.
- *  Casos especiales: Tunquén -> Casablanca -> Valparaíso
- */
+/** Resuelve región a partir de comuna y, si es necesario, por barrio. */
 function inferRegion(comuna?: string, barrio?: string): string | undefined {
   const cNorm = normalize(comuna);
   const bNorm = normalize(barrio);
 
-  const comunaEfectiva =
-    cNorm === 'tunquen' || bNorm.includes('tunquen') ? 'Casablanca' : (comuna || '');
-
+  const comunaEfectiva = cNorm === 'tunquen' || bNorm.includes('tunquen') ? 'Casablanca' : comuna || '';
   const c = normalize(comunaEfectiva);
   if (!c) return undefined;
 
@@ -116,30 +141,20 @@ function SectionTitle({ title }: { title: string }) {
     <div className="pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pl-2 sm:pl-4">
-          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
-            {title}
-          </h2>
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">{title}</h2>
         </div>
       </div>
     </div>
   );
 }
 
-function SectionTitleWithIcon({
-  title,
-  icon,
-}: {
-  title: string;
-  icon: React.ReactNode;
-}) {
+function SectionTitleWithIcon({ title, icon }: { title: string; icon: React.ReactNode }) {
   return (
     <div className="pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pl-2 sm:pl-4 flex items-center gap-3">
           <span className="shrink-0">{icon}</span>
-          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
-            {title}
-          </h2>
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">{title}</h2>
         </div>
       </div>
     </div>
@@ -148,7 +163,7 @@ function SectionTitleWithIcon({
 
 /* ===== ICONOS PROPIOS ===== */
 
-/** Flipping: flecha circular continua (una sola vuelta “cerrada”) */
+/** Flipping: flecha circular continua */
 function FlippingLoopIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg
@@ -161,14 +176,13 @@ function FlippingLoopIcon({ className = 'h-5 w-5' }: { className?: string }) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* círculo casi completo + flecha integrada */}
       <path d="M21 12a9 9 0 1 1-3.2-6.9" />
       <path d="M21 5v6h-6" />
     </svg>
   );
 }
 
-/** Bajo mercado: símbolo $ con flecha hacia abajo (propio, compacto) */
+/** Bajo mercado: $ + flecha abajo */
 function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg
@@ -181,51 +195,91 @@ function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* símbolo $ */}
       <path d="M12 3v18" />
       <path d="M16 7.5c0-1.7-1.8-3-4-3s-4 1.3-4 3 1.1 2.5 4 3 4 1.3 4 3-1.8 3-4 3-4-1.3-4-3" />
-      {/* flecha hacia abajo */}
       <path d="M20 10v8" />
       <path d="M18 16l2 2 2-2" />
     </svg>
   );
 }
 
-/** Sello de tasa de novación: simple + elegante + propio */
-function NovacionSeal({ tasa }: { tasa?: number | null }) {
-  if (tasa == null) return null;
+/* ===== SELLOS (CUADRADOS, 1 SOLO ARRIBA DERECHA) ===== */
 
-  const tasaTxt = `${tasa.toFixed(1).replace('.', ',')}%`;
-
+function SquareSeal({
+  title,
+  icon,
+  bottom,
+}: {
+  title: string;
+  icon?: React.ReactNode;
+  bottom?: React.ReactNode;
+}) {
   return (
     <div className="absolute top-3 right-3 z-10">
       <div
-        className="relative w-[96px] h-[96px] rounded-full bg-white/95 shadow-sm"
+        className="w-[92px] h-[92px] bg-white/95 shadow-sm overflow-hidden"
         style={{ border: '1px solid rgba(0,0,0,.14)' }}
-        aria-label={`Tasa de novación ${tasaTxt}`}
       >
-        {/* anillo doble sutil */}
-        <div className="absolute inset-[7px] rounded-full" style={{ border: '1px solid rgba(10,46,87,.28)' }} />
-        <div className="absolute inset-[12px] rounded-full" style={{ border: '1px dashed rgba(10,46,87,.26)' }} />
-
-        {/* marca GP (propia) */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <div className="text-[10px] tracking-[.28em] uppercase" style={{ color: 'rgba(0,0,0,.55)' }}>
-            GP
-          </div>
-          <div className="mt-1 text-[18px] font-semibold leading-none" style={{ color: BRAND_BLUE }}>
-            {tasaTxt}
-          </div>
-          <div className="mt-1 text-[10px] tracking-[.22em]" style={{ color: 'rgba(0,0,0,.55)' }}>
-            Novación
-          </div>
+        <div className="h-1/2 px-2 flex items-center justify-center gap-2">
+          {icon ? <span className="shrink-0">{icon}</span> : null}
+          <span className="text-[10px] tracking-[.20em] uppercase text-slate-700 text-center leading-tight">
+            {title}
+          </span>
         </div>
+        <div className="h-px bg-black/10" />
+        <div className="h-1/2 flex items-center justify-center">{bottom}</div>
       </div>
     </div>
   );
 }
 
-/* ===== Glosario compacto (una bajo otra + desplegable) ===== */
+function SealForProyecto(p: Proyecto) {
+  const s = p.sello_tipo || null;
+  if (!s) return null;
+
+  if (s === 'novacion') {
+    if (p.tasa_novacion == null) return null;
+    const tasaTxt = `${p.tasa_novacion.toFixed(1).replace('.', ',')}%`;
+    return (
+      <SquareSeal
+        title="Novación"
+        icon={<Percent className="h-4 w-4" color={BRAND_BLUE} />}
+        bottom={<div className="text-[18px] font-semibold" style={{ color: BRAND_BLUE }}>{tasaTxt}</div>}
+      />
+    );
+  }
+
+  if (s === 'bajo_mercado') {
+    return (
+      <SquareSeal
+        title="Bajo mercado"
+        icon={<span style={{ color: BRAND_BLUE }}><BajoMercadoIcon className="h-4 w-4" /></span>}
+        bottom={<div className="text-[10px] tracking-[.18em] uppercase text-black/55">Oportunidad</div>}
+      />
+    );
+  }
+
+  if (s === 'flipping') {
+    return (
+      <SquareSeal
+        title="Flipping"
+        icon={<span style={{ color: BRAND_BLUE }}><FlippingLoopIcon className="h-4 w-4" /></span>}
+        bottom={<div className="text-[10px] tracking-[.18em] uppercase text-black/55">Revalorización</div>}
+      />
+    );
+  }
+
+  // densificación
+  return (
+    <SquareSeal
+      title="Densificación"
+      icon={<Layers className="h-4 w-4" color={BRAND_BLUE} />}
+      bottom={<div className="text-[10px] tracking-[.18em] uppercase text-black/55">Potencial</div>}
+    />
+  );
+}
+
+/* ===== Glosario compacto (subtítulo bajo “Proyectos disponibles”) ===== */
 function GlosarioSellosCompacto() {
   const [open, setOpen] = useState<string | null>(null);
 
@@ -233,7 +287,7 @@ function GlosarioSellosCompacto() {
     {
       key: 'bajo_mercado',
       title: 'Bajo mercado',
-      icon: <BajoMercadoIcon className="h-5 w-5" />,
+      icon: <span style={{ color: BRAND_BLUE }}><BajoMercadoIcon className="h-5 w-5" /></span>,
       text:
         'Activo ofrecido por debajo de comparables relevantes por condición excepcional, urgencia o asimetría de información. Es una señal para revisar fundamentos, no reemplaza el análisis.',
     },
@@ -247,7 +301,7 @@ function GlosarioSellosCompacto() {
     {
       key: 'flipping',
       title: 'Flipping',
-      icon: <FlippingLoopIcon className="h-5 w-5" />,
+      icon: <span style={{ color: BRAND_BLUE }}><FlippingLoopIcon className="h-5 w-5" /></span>,
       text:
         'Estrategia de compra con potencial de creación de valor (mejoras, regularización, reposicionamiento) para vender con valorización en el corto/mediano plazo.',
     },
@@ -261,53 +315,55 @@ function GlosarioSellosCompacto() {
   ];
 
   return (
-    <section className="py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pl-2 sm:pl-4">
-          <div className="max-w-3xl">
-            <div className="flex flex-col gap-2">
-              {items.map((it) => {
-                const isOpen = open === it.key;
-                return (
-                  <button
-                    key={it.key}
-                    type="button"
-                    onClick={() => setOpen(isOpen ? null : it.key)}
-                    className="text-left border border-slate-200 bg-white px-4 py-3 shadow-sm hover:shadow-md transition"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="shrink-0" style={{ color: BRAND_BLUE }}>{it.icon}</span>
-                      <div className="text-[12px] uppercase tracking-[.25em] text-slate-900">
-                        {it.title}
-                      </div>
-                      <span className="ml-auto text-slate-500 text-xs">
-                        {isOpen ? 'Cerrar' : 'Ver'}
-                      </span>
-                    </div>
-
-                    {isOpen && (
-                      <p className="mt-3 text-[13px] text-black/70 leading-relaxed">
-                        {it.text}
-                      </p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+    <div className="mt-6 max-w-3xl">
+      <div className="text-[12px] tracking-[.22em] uppercase text-slate-600 mb-2">
+        Glosario de sellos
       </div>
-    </section>
+
+      <div className="flex flex-col gap-2">
+        {items.map((it) => {
+          const isOpen = open === it.key;
+          return (
+            <button
+              key={it.key}
+              type="button"
+              onClick={() => setOpen(isOpen ? null : it.key)}
+              className="text-left border border-slate-200 bg-white px-4 py-3 shadow-sm hover:shadow-md transition"
+            >
+              <div className="flex items-center gap-3">
+                <span className="shrink-0">{it.icon}</span>
+                <div className="text-[12px] uppercase tracking-[.25em] text-slate-900">
+                  {it.title}
+                </div>
+                <span className="ml-auto text-slate-500 text-xs">{isOpen ? 'Cerrar' : 'Ver'}</span>
+              </div>
+
+              {isOpen && (
+                <p className="mt-3 text-[13px] text-black/70 leading-relaxed">
+                  {it.text}
+                </p>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
 export default function ProyectosExclusivosPage() {
-  /* — Filtros UI (mismo patrón Propiedades) — */
+  /* — Filtros UI — */
+  const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
+
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<string>('');
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
+
+  /* precio (UF) */
+  const [minUF, setMinUF] = useState('');
+  const [maxUF, setMaxUF] = useState('');
 
   /* — APLICADOS — */
   const [aOperacion, setAOperacion] = useState('');
@@ -316,20 +372,38 @@ export default function ProyectosExclusivosPage() {
   const [aComuna, setAComuna] = useState('');
   const [aBarrio, setABarrio] = useState('');
 
+  const [aMinUF, setAMinUF] = useState('');
+  const [aMaxUF, setAMaxUF] = useState('');
+
   /* — Resultados — */
   const [items, setItems] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(false);
   const [trigger, setTrigger] = useState(0);
 
-  /* Portadas “hidratadas” por id cuando la lista no las trae (igual Propiedades) */
+  /* Portadas hidratadas */
   const [portadasById, setPortadasById] = useState<Record<string, string>>({});
 
-  /* Orden */
-  const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | 'novacion' | 'flipping' | 'densificacion' | 'bajo_mercado' | ''>('');
-  const [sortOpen, setSortOpen] = useState(false);
+  /* Orden + filtro sello (separado, para que funcione como esperas) */
+  const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | ''>('');
+  const [selloFilter, setSelloFilter] = useState<'novacion' | 'bajo_mercado' | 'flipping' | 'densificacion' | ''>('');
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuWrapRef = useRef<HTMLDivElement | null>(null);
 
   /* Carga inicial */
   useEffect(() => { setTrigger((v) => v + 1); }, []);
+
+  /* Cerrar menú al click afuera */
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const el = menuWrapRef.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [menuOpen]);
 
   /* Fetch listado (SOLO al Buscar) */
   useEffect(() => {
@@ -338,9 +412,7 @@ export default function ProyectosExclusivosPage() {
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
     if (aComuna) p.set('comuna', aComuna);
-    // NO enviamos 'barrio' al backend; se filtra en cliente (igual Propiedades)
 
-    // publicados
     p.set('publicado', 'true');
 
     setLoading(true);
@@ -359,7 +431,7 @@ export default function ProyectosExclusivosPage() {
     return () => { cancel = true; };
   }, [trigger]);
 
-  /* Hidratación de portadas por id cuando faltan en la lista (igual Propiedades) */
+  /* Hidratación portadas */
   useEffect(() => {
     const need = (items || [])
       .filter(p => p.id && !p.portada_url && !p.portada_fija_url)
@@ -396,17 +468,33 @@ export default function ProyectosExclusivosPage() {
     return () => { cancel = true; };
   }, [items, portadasById]);
 
-  /* BUSCAR */
   const applyAndSearch = () => {
     setAOperacion(operacion);
     setATipo(tipo);
     setARegion(region);
     setAComuna(comuna);
     setABarrio(barrio);
+
+    setAMinUF(minUF);
+    setAMaxUF(maxUF);
+
     setTrigger((v) => v + 1);
   };
 
-  /* ENTER -> Buscar (atajo) */
+  const handleClear = () => {
+    setOperaciónSafe('');
+    function setOperaciónSafe(v: string) { setOperacion(v); } // evita lint raro
+
+    setOperacion(''); setTipo(''); setRegion(''); setComuna(''); setBarrio('');
+    setMinUF(''); setMaxUF('');
+
+    setAOperacion(''); setATipo(''); setARegion(''); setAComuna(''); setABarrio('');
+    setAMinUF(''); setAMaxUF('');
+
+    setSortMode(''); setSelloFilter(''); setMenuOpen(false);
+    setTrigger((v) => v + 1);
+  };
+
   const handleKeyDownSearch = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -414,17 +502,19 @@ export default function ProyectosExclusivosPage() {
     }
   };
 
-  /* LIMPIAR */
-  const handleClear = () => {
-    setOperacion(''); setTipo(''); setRegion(''); setComuna(''); setBarrio('');
-    setAOperacion(''); setATipo(''); setARegion(''); setAComuna(''); setABarrio('');
-    setSortMode(''); setSortOpen(false);
-    setTrigger((v) => v + 1);
-  };
+  const regionOptions = REGIONES;
+  const comunaOptions = region ? COMUNAS[region] || [] : [];
+  const barrioOptions = comuna && BARRIOS[comuna] ? BARRIOS[comuna] : [];
 
-  /* ====== FILTRO EN CLIENTE (igual lógica Propiedades para región/tunquén/barrio) ====== */
   const filteredItems = useMemo(() => {
     const norm = (s?: string) => normalize(s || '');
+
+    const toNum = (s: string) => {
+      const t = (s || '').replace(/[^\d]/g, '');
+      return t ? parseInt(t, 10) : NaN;
+    };
+    const minN = toNum(aMinUF);
+    const maxN = toNum(aMaxUF);
 
     return (items || []).filter((x) => {
       if (aOperacion && norm(x.operacion) !== norm(aOperacion)) return false;
@@ -435,58 +525,54 @@ export default function ProyectosExclusivosPage() {
         if (!xt.startsWith(ft)) return false;
       }
 
-      // Región por comuna o por barrio (Tunquén -> Casablanca -> Valparaíso)
       if (aRegion) {
         const r = inferRegion(x.comuna, x.barrio);
         if (norm(r) !== norm(aRegion)) return false;
       }
 
       if (aComuna) {
-        // Si p.comuna viene “Tunquén” y pediste Casablanca, lo aceptamos
         const cItem = normalize(
           normalize(x.comuna) === 'tunquen' ? 'Casablanca' : (x.comuna || '')
         );
         if (cItem !== norm(aComuna)) return false;
       }
 
-      // Barrio: tolerante a vacío o variantes (“El Rosario de Tunquén”)
       if (aBarrio) {
         const sel = norm(aBarrio);
         const bx = norm(x.barrio);
         const cx = norm(x.comuna);
-        const passBarrio =
-          (bx && bx.includes(sel)) ||
-          (!bx && cx === 'tunquen');
+        const passBarrio = (bx && bx.includes(sel)) || (!bx && cx === 'tunquen');
         if (!passBarrio) return false;
+      }
+
+      if (selloFilter) {
+        if ((x.sello_tipo || '') !== selloFilter) return false;
+      }
+
+      // rango precio UF (cliente)
+      const puf = x.precio_uf && x.precio_uf > 0 ? x.precio_uf : null;
+      if (puf == null && (!Number.isNaN(minN) || !Number.isNaN(maxN))) return false;
+
+      if (puf != null) {
+        if (!Number.isNaN(minN) && puf < minN) return false;
+        if (!Number.isNaN(maxN) && puf > maxN) return false;
       }
 
       return true;
     });
-  }, [items, aOperacion, aTipo, aRegion, aComuna, aBarrio]);
-
-  /* Ordenamiento */
-  const getPriceUF = (p: Proyecto) => (p.precio_uf && p.precio_uf > 0 ? p.precio_uf : -Infinity);
+  }, [items, aOperacion, aTipo, aRegion, aComuna, aBarrio, aMinUF, aMaxUF, selloFilter]);
 
   const displayedItems = useMemo(() => {
+    const getPriceUF = (p: Proyecto) => (p.precio_uf && p.precio_uf > 0 ? p.precio_uf : -Infinity);
     const arr = filteredItems.slice();
-
     if (sortMode === 'price-desc') arr.sort((a, b) => getPriceUF(b) - getPriceUF(a));
     else if (sortMode === 'price-asc') arr.sort((a, b) => getPriceUF(a) - getPriceUF(b));
-    else if (sortMode === 'novacion') arr.sort((a, b) => (b.sello_tipo === 'novacion' ? 1 : 0) - (a.sello_tipo === 'novacion' ? 1 : 0));
-    else if (sortMode === 'flipping') arr.sort((a, b) => (b.sello_tipo === 'flipping' ? 1 : 0) - (a.sello_tipo === 'flipping' ? 1 : 0));
-    else if (sortMode === 'densificacion') arr.sort((a, b) => (b.sello_tipo === 'densificacion' ? 1 : 0) - (a.sello_tipo === 'densificacion' ? 1 : 0));
-    else if (sortMode === 'bajo_mercado') arr.sort((a, b) => (b.sello_tipo === 'bajo_mercado' ? 1 : 0) - (a.sello_tipo === 'bajo_mercado' ? 1 : 0));
-
     return arr;
   }, [filteredItems, sortMode]);
 
-  const regionOptions = REGIONES;
-  const comunaOptions = region ? COMUNAS[region] || [] : [];
-  const barrioOptions = comuna && BARRIOS[comuna] ? BARRIOS[comuna] : [];
-
   return (
     <main className="bg-white">
-      {/* HERO — MISMO LAYOUT QUE PROPIEDADES */}
+      {/* HERO */}
       <section className="relative min-h-[100svh]">
         <img
           src={HERO_IMG}
@@ -509,36 +595,30 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* SEPARADOR (estilo “bloque” como Equipos) */}
-      <section className="bg-white border-t border-black/10">
+      {/* BLOQUE 1 (sin líneas separadoras, solo cambio de color) */}
+      <section className="bg-white">
         <SectionTitle title="Activos fuera del circuito tradicional" />
         <div className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="pl-2 sm:pl-4">
-              {/* full width + justificado */}
-              <div className="max-w-none text-[14px] text-black/70 leading-relaxed space-y-4 text-justify">
+              <div className="max-w-none text-[14px] text-black/70 leading-relaxed text-justify space-y-4">
+                {/* Párrafos con el patrón que pediste */}
                 <p>
                   No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio
                   técnico, red estratégica y capacidad de estructuración.
                 </p>
+
                 <p>
                   En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de negocio,
                   oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en
-                  muchos casos, confidencial.
+                  muchos casos, confidencial. Aquí encontrarás alternativas que no compiten en el mercado masivo:
+                  novaciones hipotecarias, oportunidades de flipping con fundamento técnico, propiedades con valor de
+                  mercado bajo y activos con potencial de densificación o desarrollo. Cada oportunidad es previamente
+                  analizada desde su viabilidad normativa, potencial constructivo, escenario de valorización y riesgo
+                  asociado. El acceso a esta sección es limitado y su disponibilidad cambia constantemente según
+                  oportunidades reales detectadas, gestionadas e identificadas por nuestro equipo.
                 </p>
-                <p>
-                  Aquí encontrarás alternativas que no compiten en el mercado masivo: novaciones hipotecarias,
-                  oportunidades de flipping con fundamento técnico, propiedades con valor de mercado bajo y activos con
-                  potencial de densificación o desarrollo.
-                </p>
-                <p>
-                  Cada oportunidad es previamente analizada desde su viabilidad normativa, potencial constructivo,
-                  escenario de valorización y riesgo asociado.
-                </p>
-                <p>
-                  El acceso a esta sección es limitado y su disponibilidad cambia constantemente según oportunidades
-                  reales detectadas, gestionadas e identificadas por nuestro equipo.
-                </p>
+
                 <p>
                   Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y
                   decisión.
@@ -549,241 +629,332 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* SEPARADOR (bloque gris suave, como segmentación visual) */}
-      <section className="bg-slate-50 border-t border-black/10" onKeyDown={handleKeyDownSearch}>
-        <SectionTitleWithIcon
-          title="Búsqueda"
-          icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />}
-        />
+      {/* BLOQUE 2 (gris, sin líneas) */}
+      <section className="bg-slate-50" onKeyDown={handleKeyDownSearch}>
+        <SectionTitleWithIcon title="Búsqueda" icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />} />
 
         <div className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-              <SmartSelect
-                options={['Venta', 'Arriendo']}
-                value={operacion}
-                onChange={setOperacion}
-                placeholder="Operación"
-              />
-              <SmartSelect
-                options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
-                value={tipo}
-                onChange={setTipo}
-                placeholder="Tipo de proyecto"
-              />
-              <SmartSelect
-                options={regionOptions}
-                value={region}
-                onChange={(v) => { setRegion(v); setComuna(''); setBarrio(''); }}
-                placeholder="Región"
-              />
-              <SmartSelect
-                options={comunaOptions}
-                value={comuna}
-                onChange={(v) => { setComuna(v); setBarrio(''); }}
-                placeholder="Comuna"
-                disabled={!region}
-              />
-              <SmartSelect
-                options={barrioOptions}
-                value={barrio}
-                onChange={setBarrio}
-                placeholder="Barrio"
-                disabled={!comuna || !barrioOptions.length}
-              />
+            <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAdvancedMode('rapida')}
+                className={`px-3 py-2 text-sm rounded-none border ${
+                  advancedMode === 'rapida'
+                    ? 'bg-gray-200 border-gray-300 text-slate-900'
+                    : 'bg-gray-50 border-gray-300 text-slate-700'
+                }`}
+              >
+                Búsqueda rápida
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdvancedMode('avanzada')}
+                className={`px-3 py-2 text-sm rounded-none border ${
+                  advancedMode === 'avanzada'
+                    ? 'bg-gray-200 border-gray-300 text-slate-900'
+                    : 'bg-gray-50 border-gray-300 text-slate-700'
+                }`}
+              >
+                Búsqueda avanzada
+              </button>
             </div>
 
-            <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-              <div className="lg:col-span-3" />
-              <button
-                onClick={handleClear}
-                className="w-full px-5 py-2 text-sm rounded-none border"
-                style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-              >
-                Limpiar
-              </button>
-              <button
-                onClick={applyAndSearch}
-                className="w-full px-5 py-2 text-sm text-white rounded-none"
-                style={{
-                  background: BRAND_BLUE,
-                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
-                }}
-              >
-                Buscar
-              </button>
-            </div>
+            {/* RÁPIDA */}
+            {advancedMode === 'rapida' && (
+              <>
+                <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
+                  <SmartSelect
+                    options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
+                    value={tipo}
+                    onChange={setTipo}
+                    placeholder="Tipo de proyecto"
+                  />
+                  <SmartSelect
+                    options={regionOptions}
+                    value={region}
+                    onChange={(v) => { setRegion(v); setComuna(''); setBarrio(''); }}
+                    placeholder="Región"
+                  />
+                  <SmartSelect
+                    options={comunaOptions}
+                    value={comuna}
+                    onChange={(v) => { setComuna(v); setBarrio(''); }}
+                    placeholder="Comuna"
+                    disabled={!region}
+                  />
+                  <SmartSelect
+                    options={barrioOptions}
+                    value={barrio}
+                    onChange={setBarrio}
+                    placeholder="Barrio"
+                    disabled={!comuna || !barrioOptions.length}
+                  />
+                </div>
+
+                <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                  <input
+                    value={minUF}
+                    onChange={(e) => setMinUF((e.target.value || '').replace(/[^\d]/g, ''))}
+                    inputMode="numeric"
+                    placeholder="Mín UF"
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  />
+                  <input
+                    value={maxUF}
+                    onChange={(e) => setMaxUF((e.target.value || '').replace(/[^\d]/g, ''))}
+                    inputMode="numeric"
+                    placeholder="Máx UF"
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  />
+                  <div className="lg:col-span-1" />
+                  <button
+                    onClick={handleClear}
+                    className="w-full px-5 py-2 text-sm rounded-none border"
+                    style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                  >
+                    Limpiar
+                  </button>
+                  <button
+                    onClick={applyAndSearch}
+                    className="w-full px-5 py-2 text-sm text-white rounded-none"
+                    style={{
+                      background: BRAND_BLUE,
+                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+                    }}
+                  >
+                    Buscar
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* AVANZADA (por ahora: misma base + precio UF, estructura igual a Propiedades) */}
+            {advancedMode === 'avanzada' && (
+              <>
+                <div className="pl-2 sm:pl-4"><div className="h-px bg-slate-200 my-4" /></div>
+
+                <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
+                  <SmartSelect
+                    options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
+                    value={tipo}
+                    onChange={setTipo}
+                    placeholder="Tipo de proyecto"
+                  />
+                  <SmartSelect
+                    options={regionOptions}
+                    value={region}
+                    onChange={(v) => { setRegion(v); setComuna(''); setBarrio(''); }}
+                    placeholder="Región"
+                  />
+                  <SmartSelect
+                    options={comunaOptions}
+                    value={comuna}
+                    onChange={(v) => { setComuna(v); setBarrio(''); }}
+                    placeholder="Comuna"
+                    disabled={!region}
+                  />
+                  <SmartSelect
+                    options={barrioOptions}
+                    value={barrio}
+                    onChange={setBarrio}
+                    placeholder="Barrio"
+                    disabled={!comuna || !barrioOptions.length}
+                  />
+                </div>
+
+                <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                  <input
+                    value={minUF}
+                    onChange={(e) => setMinUF((e.target.value || '').replace(/[^\d]/g, ''))}
+                    inputMode="numeric"
+                    placeholder="Mín UF"
+                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                  />
+                  <input
+                    value={maxUF}
+                    onChange={(e) => setMaxUF((e.target.value || '').replace(/[^\d]/g, ''))}
+                    inputMode="numeric"
+                    placeholder="Máx UF"
+                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                  />
+                  <div className="lg:col-span-1" />
+                  <button
+                    onClick={handleClear}
+                    className="w-full px-5 py-2 text-sm rounded-none border"
+                    style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                  >
+                    Limpiar
+                  </button>
+                  <button
+                    onClick={applyAndSearch}
+                    className="w-full px-5 py-2 text-sm text-white rounded-none"
+                    style={{
+                      background: BRAND_BLUE,
+                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+                    }}
+                  >
+                    Buscar
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
 
-      {/* SEPARADOR (blanco) */}
-      <section className="bg-white border-t border-black/10">
-        <SectionTitle title="Glosario de sellos" />
-        <GlosarioSellosCompacto />
-      </section>
-
-      {/* LISTADO — MISMO FORMATO QUE PROPIEDADES */}
-      <section className="bg-slate-50 border-t border-black/10">
+      {/* BLOQUE 3 (gris suave, sin líneas) */}
+      <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="flex items-center justify-between mb-4 relative">
-            {/* título formato servicios */}
+          <div className="flex items-center justify-between mb-2 relative" ref={menuWrapRef}>
             <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
               Proyectos disponibles
             </h2>
 
-            {/* Acciones de orden (igual UX Propiedades) */}
             <div className="relative flex items-center gap-2">
               <button
                 type="button"
-                aria-label="Limpiar orden"
-                onClick={() => { setSortMode(''); setSortOpen(false); }}
+                aria-label="Limpiar orden y filtros"
+                onClick={() => { setSortMode(''); setSelloFilter(''); setMenuOpen(false); }}
                 className="inline-flex items-center justify-center px-3 py-2 rounded-none"
                 style={{ background: '#fff', border: '1px solid #000', color: '#000' }}
-                title="Limpiar orden"
+                title="Limpiar"
               >
                 <Trash2 className="h-5 w-5" />
               </button>
 
               <button
                 type="button"
-                onClick={() => setSortOpen((s) => !s)}
+                onClick={() => setMenuOpen((s) => !s)}
                 className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
                 style={{ background: BRAND_BLUE, border: `1px solid ${BTN_GRAY_BORDER}` }}
                 aria-haspopup="menu"
-                aria-expanded={sortOpen}
+                aria-expanded={menuOpen}
                 title="Filtrar / ordenar"
               >
                 <SlidersHorizontal className="h-5 w-5" />
               </button>
 
-              {sortOpen && (
+              {menuOpen && (
                 <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 shadow-lg z-10" role="menu">
-                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-desc'); setSortOpen(false); }}>
+                  <div className="px-4 pt-3 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">
+                    Orden
+                  </div>
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-desc'); setMenuOpen(false); }}>
                     Precio: mayor a menor
                   </button>
-                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-asc'); setSortOpen(false); }}>
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-asc'); setMenuOpen(false); }}>
                     Precio: menor a mayor
                   </button>
+
                   <div className="h-px bg-slate-200 my-1" />
-                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('novacion'); setSortOpen(false); }}>
+
+                  <div className="px-4 pt-2 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">
+                    Filtrar por sello
+                  </div>
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSelloFilter('novacion'); setMenuOpen(false); }}>
                     Tasa de novación
                   </button>
-                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('bajo_mercado'); setSortOpen(false); }}>
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSelloFilter('bajo_mercado'); setMenuOpen(false); }}>
                     Bajo mercado
                   </button>
-                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('flipping'); setSortOpen(false); }}>
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSelloFilter('flipping'); setMenuOpen(false); }}>
                     Oportunidad de flipping
                   </button>
-                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('densificacion'); setSortOpen(false); }}>
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSelloFilter('densificacion'); setMenuOpen(false); }}>
                     Oportunidad de densificación
+                  </button>
+
+                  <div className="h-px bg-slate-200 my-1" />
+                  <button className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-600" onClick={() => { setSortMode(''); setSelloFilter(''); setMenuOpen(false); }}>
+                    Sin orden / sin filtro
                   </button>
                 </div>
               )}
             </div>
           </div>
 
-          {loading ? (
-            <p className="text-slate-600">Cargando proyectos…</p>
-          ) : (displayedItems ?? []).length === 0 ? (
-            <p className="text-slate-600">No se encontraron proyectos.</p>
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {(displayedItems ?? []).map((p) => {
-                const showUF = !!(p.precio_uf && p.precio_uf > 0);
-                const linkId = (p.id || p.slug || '').toString();
+          {/* Glosario va AQUÍ: entre el título y el grid */}
+          <div className="pl-2 sm:pl-4">
+            <GlosarioSellosCompacto />
+          </div>
 
-                const portadaHidratada = p.id ? portadasById[p.id] : '';
-                const cardImage =
-                  (p.portada_url && String(p.portada_url).trim()) ||
-                  (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
-                  (portadaHidratada && String(portadaHidratada).trim()) ||
-                  (Array.isArray(p.imagenes) && p.imagenes[0]) ||
-                  CARD_FALLBACK;
+          <div className="mt-10">
+            {loading ? (
+              <p className="text-slate-600">Cargando proyectos…</p>
+            ) : (displayedItems ?? []).length === 0 ? (
+              <p className="text-slate-600">No se encontraron proyectos.</p>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {(displayedItems ?? []).map((p) => {
+                  const linkId = (p.id || p.slug || '').toString();
+                  const showUF = !!(p.precio_uf && p.precio_uf > 0);
 
-                const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
+                  const portadaHidratada = p.id ? portadasById[p.id] : '';
+                  const cardImage =
+                    (p.portada_url && String(p.portada_url).trim()) ||
+                    (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
+                    (portadaHidratada && String(portadaHidratada).trim()) ||
+                    (Array.isArray(p.imagenes) && p.imagenes[0]) ||
+                    CARD_FALLBACK;
 
-                return (
-                  <Link
-                    key={p.id ?? p.slug ?? Math.random().toString(36).slice(2)}
-                    href={`/proyectos-exclusivos/${encodeURIComponent(linkId)}`}
-                    className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
-                  >
-                    {/* MISMO TAMAÑO QUE PROPIEDADES (4/3) + sello elegante */}
-                    <div className="relative aspect-[4/3] bg-slate-100">
-                      <img
-                        src={cardImage}
-                        alt={p.titulo || 'Proyecto'}
-                        className="w-full h-full object-cover group-hover:opacity-95 transition"
-                      />
+                  const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
 
-                      {/* sello solo si hay novación + tasa */}
-                      {p.sello_tipo === 'novacion' && p.tasa_novacion != null && (
-                        <NovacionSeal tasa={p.tasa_novacion} />
-                      )}
-                    </div>
+                  return (
+                    <Link
+                      key={p.id ?? p.slug ?? Math.random().toString(36).slice(2)}
+                      href={`/proyectos-exclusivos/${encodeURIComponent(linkId)}`}
+                      className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
+                    >
+                      <div className="relative aspect-[4/3] bg-slate-100">
+                        <img
+                          src={cardImage}
+                          alt={p.titulo || 'Proyecto'}
+                          className="w-full h-full object-cover group-hover:opacity-95 transition"
+                        />
 
-                    <div className="p-4 flex flex-col">
-                      <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
-                        {p.titulo || 'Proyecto'}
-                      </h3>
-
-                      <p className="mt-1 text-sm text-slate-600">
-                        {[
-                          p.comuna || '',
-                          tipoCap,
-                          p.operacion ? capFirst(String(p.operacion)) : '',
-                        ].filter(Boolean).join(' · ')}
-                      </p>
-
-                      {/* línea de sellos (iconos “como antes”, compactos) */}
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[.18em] text-slate-700">
-                        {p.sello_tipo === 'bajo_mercado' && (
-                          <span className="inline-flex items-center gap-2 border border-slate-200 px-2 py-1">
-                            <span style={{ color: BRAND_BLUE }}><BajoMercadoIcon className="h-4 w-4" /></span>
-                            Bajo mercado
-                          </span>
-                        )}
-                        {p.sello_tipo === 'novacion' && (
-                          <span className="inline-flex items-center gap-2 border border-slate-200 px-2 py-1">
-                            <Percent className="h-4 w-4" color={BRAND_BLUE} />
-                            Novación
-                          </span>
-                        )}
-                        {p.sello_tipo === 'flipping' && (
-                          <span className="inline-flex items-center gap-2 border border-slate-200 px-2 py-1">
-                            <FlippingLoopIcon className="h-4 w-4" />
-                            Flipping
-                          </span>
-                        )}
-                        {p.sello_tipo === 'densificacion' && (
-                          <span className="inline-flex items-center gap-2 border border-slate-200 px-2 py-1">
-                            <Layers className="h-4 w-4" color={BRAND_BLUE} />
-                            Densificación
-                          </span>
-                        )}
+                        {/* 1 SOLO SELLO ARRIBA DERECHA */}
+                        <SealForProyecto {...p} />
                       </div>
 
-                      <div className="mt-4 flex items-center justify-between">
-                        <span
-                          className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
-                          style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
-                        >
-                          Ver más
-                        </span>
+                      <div className="p-4 flex flex-col">
+                        <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
+                          {p.titulo || 'Proyecto'}
+                        </h3>
 
-                        <div className="text-right">
-                          <div className="font-semibold" style={{ color: BRAND_BLUE }}>
-                            {showUF ? `UF ${nfUF.format(p.precio_uf as number)}` : 'Consultar'}
+                        {/* Incluye barrio para que tenga sentido buscar por barrio */}
+                        <p className="mt-1 text-sm text-slate-600">
+                          {[
+                            p.comuna || '',
+                            p.barrio ? `Barrio ${p.barrio}` : '',
+                            tipoCap,
+                            p.operacion ? capFirst(String(p.operacion)) : '',
+                          ].filter(Boolean).join(' · ')}
+                        </p>
+
+                        <div className="mt-4 flex items-center justify-between">
+                          <span
+                            className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
+                            style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                          >
+                            Ver más
+                          </span>
+
+                          <div className="text-right">
+                            <div className="font-semibold" style={{ color: BRAND_BLUE }}>
+                              {showUF ? `UF ${nfUF.format(p.precio_uf as number)}` : 'Consultar'}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </main>
