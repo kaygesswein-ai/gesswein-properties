@@ -7,17 +7,8 @@ export const revalidate = 0;
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  // ideal: service role en server. Si no está, cae a anon.
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-function toBool(v: string | null): boolean | null {
-  if (v == null) return null;
-  const s = v.trim().toLowerCase();
-  if (s === 'true' || s === '1' || s === 't' || s === 'yes') return true;
-  if (s === 'false' || s === '0' || s === 'f' || s === 'no') return false;
-  return null;
-}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -25,50 +16,48 @@ export async function GET(req: Request) {
   const operacion = searchParams.get('operacion') || '';
   const tipo = searchParams.get('tipo') || '';
   const comuna = searchParams.get('comuna') || '';
-  const publicadoParam = toBool(searchParams.get('publicado')); // ✅ boolean real
+  const publicado = searchParams.get('publicado'); // 'true' | 'false' | null
 
-  let q = supabase
-    .from('proyectos')
-    .select(
-      [
-        'id',
-        'created_at',
-        'slug',
-        'titulo',
-        'operacion',
-        'tipo',
-        'region',
-        'comuna',
-        'barrio',
-        'precio_uf',
-        'sello_tipo',
-        'tasa_novacion',
-        'portada_url',
-        'portada_fija_url',
-        'imagenes',
-        'publicado',
-      ].join(',')
-    )
-    .order('created_at', { ascending: false });
+  try {
+    let q = supabase
+      .from('proyectos')
+      .select(
+        `
+        id, created_at, slug, titulo,
+        operacion, tipo,
+        region, comuna, barrio,
+        precio_uf,
+        sello_tipo, tasa_novacion,
+        portada_url, portada_fija_url,
+        publicado
+        `
+      )
+      .order('created_at', { ascending: false });
 
-  if (operacion) q = q.eq('operacion', operacion);
-  if (tipo) q = q.ilike('tipo', `${tipo}%`);
-  if (comuna) q = q.eq('comuna', comuna);
+    if (publicado) q = q.eq('publicado', publicado === 'true');
+    if (operacion) q = q.eq('operacion', operacion);
+    if (tipo) q = q.ilike('tipo', `${tipo}%`);
+    if (comuna) q = q.eq('comuna', comuna);
 
-  // ✅ aquí está el fix
-  if (publicadoParam !== null) q = q.eq('publicado', publicadoParam);
+    const { data, error } = await q;
 
-  const { data, error } = await q;
+    if (error) {
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 500, headers: { 'Cache-Control': 'no-store, no-cache, max-age=0' } }
+      );
+    }
 
-  if (error) {
     return NextResponse.json(
-      { error: error.message },
+      { ok: true, count: data?.length ?? 0, data: data ?? [] },
+      { headers: { 'Cache-Control': 'no-store, no-cache, max-age=0' } }
+    );
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: e?.message || String(e) },
       { status: 500, headers: { 'Cache-Control': 'no-store, no-cache, max-age=0' } }
     );
   }
-
-  return NextResponse.json(
-    { data: data ?? [] },
-    { headers: { 'Cache-Control': 'no-store, no-cache, max-age=0' } }
-  );
 }
+
+
