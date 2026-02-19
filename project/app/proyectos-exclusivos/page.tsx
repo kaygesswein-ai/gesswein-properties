@@ -2,7 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Filter, SlidersHorizontal, Trash2, Layers } from 'lucide-react';
+import {
+  Filter,
+  SlidersHorizontal,
+  Trash2,
+  Layers,
+  Bed,
+  ShowerHead,
+  Ruler,
+  Car,
+  Square,
+} from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
 
 type Proyecto = {
@@ -220,9 +230,15 @@ function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) 
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* ✅ ICONO “TREND” (flecha arriba / baja / arriba) como la foto */}
-      <path d="M3 17l6-6 4 4 8-8" />
-      <path d="M15 7h6v6" />
+      {/* Casa */}
+      <path d="M4 11.5L12 5l8 6.5" />
+      <path d="M6.5 10.8V19h7.2" />
+      <path d="M10 19v-4.2h3V19" />
+
+      {/* Flecha de valorización (separada a la derecha/arriba) */}
+      <path d="M14.8 12.8l3.7-3.7" />
+      <path d="M18.5 9.1h-3.1" />
+      <path d="M18.5 9.1v3.1" />
     </svg>
   );
 }
@@ -306,11 +322,7 @@ function NovacionBadgeSquare({
 
   if (!corner) return inner;
 
-  return (
-    <div className="absolute top-3 right-3 z-10">
-      {inner}
-    </div>
-  );
+  return <div className="absolute top-3 right-3 z-10">{inner}</div>;
 }
 
 function SealForProyecto(p: Proyecto) {
@@ -676,10 +688,8 @@ export default function ProyectosExclusivosPage() {
     const isCLP = aMoneda === 'CLP$';
     const rate = ufValue || null;
 
-    const minUF =
-      Number.isNaN(minN) ? -Infinity : isCLP ? (rate ? minN / rate : -Infinity) : minN;
-    const maxUF =
-      Number.isNaN(maxN) ? Infinity : isCLP ? (rate ? maxN / rate : Infinity) : maxN;
+    const minUF = Number.isNaN(minN) ? -Infinity : isCLP ? (rate ? minN / rate : -Infinity) : minN;
+    const maxUF = Number.isNaN(maxN) ? Infinity : isCLP ? (rate ? maxN / rate : Infinity) : maxN;
 
     const ge = (val: number | null | undefined, min: number) => (val == null ? false : val >= min);
 
@@ -1207,6 +1217,10 @@ export default function ProyectosExclusivosPage() {
 
                   const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
 
+                  const terreno =
+                    (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
+                  const bodega = (p.tipo || '').toLowerCase().includes('bodega');
+
                   return (
                     <Link
                       key={p.id ?? p.slug ?? Math.random().toString(36).slice(2)}
@@ -1228,11 +1242,115 @@ export default function ProyectosExclusivosPage() {
                         <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">{p.titulo || 'Proyecto'}</h3>
 
                         {/* Orden: Operación · Tipo · Comuna · Barrio */}
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-1 text-sm text-slate-600 line-clamp-2 min-h-[40px]">
                           {[p.operacion ? capFirst(String(p.operacion)) : '', tipoCap, p.comuna || '', p.barrio || '']
                             .filter(Boolean)
                             .join(' · ')}
                         </p>
+
+                        {/* DETALLES (IGUAL A PROPIEDADES) */}
+                        {!terreno && !bodega ? (
+                          <div className="mt-3 grid grid-cols-5 text-center">
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Bed className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <ShowerHead className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.banos ?? '—'}</div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Car className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.estacionamientos ?? '—'}</div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Ruler className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">
+                                {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
+                              </div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Square className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">
+                                {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
+                              </div>
+                            </div>
+                          </div>
+                        ) : terreno ? (
+                          <div className="mt-3 grid grid-cols-5 text-center">
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Bed className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">—</div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <ShowerHead className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">—</div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Car className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">—</div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Ruler className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">—</div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Square className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">
+                                {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-3 grid grid-cols-4 text-center">
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Bed className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <ShowerHead className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.banos ?? '—'}</div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Ruler className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">
+                                {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
+                              </div>
+                            </div>
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Car className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.estacionamientos ?? '—'}</div>
+                            </div>
+                          </div>
+                        )}
 
                         <div className="mt-4 flex items-center justify-between">
                           <span
