@@ -207,7 +207,7 @@ function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
   );
 }
 
-/** Flipping: casa + flecha dinámica (sube, baja y vuelve a subir) */
+/** Flipping: casa + flecha “plusvalía” (sin superposición fea) */
 function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg
@@ -220,17 +220,9 @@ function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) 
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* Casa */}
-      <path d="M4 11.5L12 5l8 6.5" />
-      <path d="M6.5 10.8V19h11V10.8" />
-      <path d="M10 19v-4.2h4V19" />
-
-      {/* Flecha: sube */}
-      <path d="M7 15l3-3 3 3" />
-      {/* baja */}
-      <path d="M10 12v5" />
-      {/* vuelve a subir */}
-      <path d="M14 9l3-3 3 3" />
+      {/* ✅ ICONO “TREND” (flecha arriba / baja / arriba) como la foto */}
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
     </svg>
   );
 }
@@ -684,8 +676,10 @@ export default function ProyectosExclusivosPage() {
     const isCLP = aMoneda === 'CLP$';
     const rate = ufValue || null;
 
-    const minUF = Number.isNaN(minN) ? -Infinity : isCLP ? (rate ? minN / rate : -Infinity) : minN;
-    const maxUF = Number.isNaN(maxN) ? Infinity : isCLP ? (rate ? maxN / rate : Infinity) : maxN;
+    const minUF =
+      Number.isNaN(minN) ? -Infinity : isCLP ? (rate ? minN / rate : -Infinity) : minN;
+    const maxUF =
+      Number.isNaN(maxN) ? Infinity : isCLP ? (rate ? maxN / rate : Infinity) : maxN;
 
     const ge = (val: number | null | undefined, min: number) => (val == null ? false : val >= min);
 
@@ -788,7 +782,9 @@ export default function ProyectosExclusivosPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="pl-2 sm:pl-4">
               <div className="max-w-3xl">
-                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">PROYECTOS EXCLUSIVOS</h1>
+                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                  PROYECTOS EXCLUSIVOS
+                </h1>
                 <p className="text-white/85 mt-2">Activos fuera del circuito tradicional.</p>
               </div>
             </div>
@@ -804,22 +800,25 @@ export default function ProyectosExclusivosPage() {
             <div className="pl-2 sm:pl-4">
               <div className="max-w-none text-[14px] text-black/70 leading-relaxed text-justify space-y-4">
                 <p>
-                  No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio técnico,
-                  red estratégica y capacidad de estructuración.
+                  No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio
+                  técnico, red estratégica y capacidad de estructuración.
                 </p>
 
                 <p>
                   En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de negocio,
-                  oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en muchos
-                  casos, confidencial. Aquí encontrarás alternativas que no compiten en el mercado masivo: novaciones
-                  hipotecarias, oportunidades de flipping con fundamento técnico, propiedades con valor de mercado bajo y
-                  activos con potencial de densificación o desarrollo. Cada oportunidad es previamente analizada desde su
-                  viabilidad normativa, potencial constructivo, escenario de valorización y riesgo asociado. El acceso a
-                  esta sección es limitado y su disponibilidad cambia constantemente según oportunidades reales detectadas,
-                  gestionadas e identificadas por nuestro equipo.
+                  oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en
+                  muchos casos, confidencial. Aquí encontrarás alternativas que no compiten en el mercado masivo:
+                  novaciones hipotecarias, oportunidades de flipping con fundamento técnico, propiedades con valor de
+                  mercado bajo y activos con potencial de densificación o desarrollo. Cada oportunidad es previamente
+                  analizada desde su viabilidad normativa, potencial constructivo, escenario de valorización y riesgo
+                  asociado. El acceso a esta sección es limitado y su disponibilidad cambia constantemente según
+                  oportunidades reales detectadas, gestionadas e identificadas por nuestro equipo.
                 </p>
 
-                <p>Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y decisión.</p>
+                <p>
+                  Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y
+                  decisión.
+                </p>
               </div>
             </div>
           </div>
@@ -862,7 +861,12 @@ export default function ProyectosExclusivosPage() {
             {advancedMode === 'rapida' && (
               <>
                 <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
+                  <SmartSelect
+                    options={['Venta', 'Arriendo']}
+                    value={operacion}
+                    onChange={setOperacion}
+                    placeholder="Operación"
+                  />
                   <SmartSelect
                     options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
                     value={tipo}
@@ -948,7 +952,12 @@ export default function ProyectosExclusivosPage() {
                 </div>
 
                 <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
+                  <SmartSelect
+                    options={['Venta', 'Arriendo']}
+                    value={operacion}
+                    onChange={setOperacion}
+                    placeholder="Operación"
+                  />
                   <SmartSelect
                     options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
                     value={tipo}
