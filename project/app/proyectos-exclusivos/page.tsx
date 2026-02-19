@@ -217,7 +217,7 @@ function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
   );
 }
 
-/** Flipping: casa + flecha “plusvalía” (sin superposición fea) */
+/** Flipping: ✅ SOLO CAMBIO -> flecha simple en alza (como tu foto 1) */
 function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg
@@ -225,20 +225,13 @@ function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) 
       className={className}
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* Casa */}
-      <path d="M4 11.5L12 5l8 6.5" />
-      <path d="M6.5 10.8V19h7.2" />
-      <path d="M10 19v-4.2h3V19" />
-
-      {/* Flecha de valorización (separada a la derecha/arriba) */}
-      <path d="M14.8 12.8l3.7-3.7" />
-      <path d="M18.5 9.1h-3.1" />
-      <path d="M18.5 9.1v3.1" />
+      <path d="M4 16l6-6 4 4 6-6" />
+      <path d="M14 8h6v6" />
     </svg>
   );
 }
