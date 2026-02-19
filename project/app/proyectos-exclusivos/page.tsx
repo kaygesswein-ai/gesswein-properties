@@ -245,13 +245,7 @@ function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) 
 
 /* ===== SELLOS: “ICONO CHICO EN ESQUINA” ===== */
 
-function SmallCornerBadge({
-  children,
-  size = 38,
-}: {
-  children: React.ReactNode;
-  size?: number;
-}) {
+function SmallCornerBadge({ children, size = 38 }: { children: React.ReactNode; size?: number }) {
   return (
     <div className="absolute top-3 right-3 z-10">
       <div
@@ -307,12 +301,7 @@ function NovacionBadgeSquare({
       </div>
 
       {/* 3/4 abajo: tasa centrada */}
-      <div
-        className="flex items-center justify-center"
-        style={{
-          height: size - Math.round(size * 0.28),
-        }}
-      >
+      <div className="flex items-center justify-center" style={{ height: size - Math.round(size * 0.28) }}>
         <div className="font-semibold" style={{ color: BRAND_BLUE, fontSize: 12, lineHeight: 1 }}>
           {tasaTxt}
         </div>
@@ -507,6 +496,14 @@ export default function ProyectosExclusivosPage() {
   /* Portadas hidratadas */
   const [portadasById, setPortadasById] = useState<Record<string, string>>({});
 
+  /* ✅ Detalles hidratados (para que el listado muestre dormitorios/baños/etc. aunque el endpoint de lista no los traiga) */
+  const [detallesById, setDetallesById] = useState<
+    Record<
+      string,
+      Pick<Proyecto, 'dormitorios' | 'banos' | 'estacionamientos' | 'superficie_util_m2' | 'superficie_terreno_m2'>
+    >
+  >({});
+
   /* Orden + filtro sello */
   const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | ''>('');
   const [selloFilter, setSelloFilter] = useState<'novacion' | 'bajo_mercado' | 'flipping' | 'densificacion' | ''>(
@@ -565,7 +562,7 @@ export default function ProyectosExclusivosPage() {
     return () => {
       cancel = true;
     };
-  }, [trigger]);
+  }, [trigger, aOperacion, aTipo, aComuna]);
 
   /* Hidratación portadas */
   useEffect(() => {
@@ -605,6 +602,63 @@ export default function ProyectosExclusivosPage() {
       cancel = true;
     };
   }, [items, portadasById]);
+
+  /* ✅ Hidratación detalles para cards (dormitorios/baños/estac/m2) */
+  useEffect(() => {
+    const need = (items || [])
+      .filter((p) => p.id)
+      .filter((p) => {
+        const id = p.id!;
+        if (detallesById[id]) return false;
+
+        const missing =
+          p.dormitorios == null ||
+          p.banos == null ||
+          p.estacionamientos == null ||
+          p.superficie_util_m2 == null ||
+          p.superficie_terreno_m2 == null;
+
+        return missing;
+      })
+      .map((p) => p.id!);
+
+    if (need.length === 0) return;
+
+    let cancel = false;
+    (async () => {
+      const nextEntries: [string, any][] = [];
+      for (const id of need) {
+        try {
+          const r = await fetch(`/api/proyectos/${encodeURIComponent(id)}`, { cache: 'no-store' });
+          const j = await r.json();
+          const data = j?.data || j;
+
+          nextEntries.push([
+            id,
+            {
+              dormitorios: data?.dormitorios ?? null,
+              banos: data?.banos ?? null,
+              estacionamientos: data?.estacionamientos ?? null,
+              superficie_util_m2: data?.superficie_util_m2 ?? null,
+              superficie_terreno_m2: data?.superficie_terreno_m2 ?? null,
+            },
+          ]);
+        } catch {}
+      }
+
+      if (!cancel && nextEntries.length) {
+        setDetallesById((prev) => {
+          const next = { ...prev };
+          for (const [id, payload] of nextEntries) next[id] = payload;
+          return next;
+        });
+      }
+    })();
+
+    return () => {
+      cancel = true;
+    };
+  }, [items, detallesById]);
 
   const applyAndSearch = () => {
     setAOperacion(operacion);
@@ -792,9 +846,7 @@ export default function ProyectosExclusivosPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="pl-2 sm:pl-4">
               <div className="max-w-3xl">
-                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
-                  PROYECTOS EXCLUSIVOS
-                </h1>
+                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">PROYECTOS EXCLUSIVOS</h1>
                 <p className="text-white/85 mt-2">Activos fuera del circuito tradicional.</p>
               </div>
             </div>
@@ -825,17 +877,14 @@ export default function ProyectosExclusivosPage() {
                   oportunidades reales detectadas, gestionadas e identificadas por nuestro equipo.
                 </p>
 
-                <p>
-                  Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y
-                  decisión.
-                </p>
+                <p>Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y decisión.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* BLOQUE 2 (gris) — BÚSQUEDA (idéntica a Propiedades; solo título distinto) */}
+      {/* BLOQUE 2 (gris) — BÚSQUEDA */}
       <section className="bg-slate-50" onKeyDown={handleKeyDownSearch}>
         <SectionTitleWithIcon title="Búsqueda" icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />} />
 
@@ -871,12 +920,7 @@ export default function ProyectosExclusivosPage() {
             {advancedMode === 'rapida' && (
               <>
                 <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  <SmartSelect
-                    options={['Venta', 'Arriendo']}
-                    value={operacion}
-                    onChange={setOperacion}
-                    placeholder="Operación"
-                  />
+                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
                   <SmartSelect
                     options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
                     value={tipo}
@@ -962,12 +1006,7 @@ export default function ProyectosExclusivosPage() {
                 </div>
 
                 <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  <SmartSelect
-                    options={['Venta', 'Arriendo']}
-                    value={operacion}
-                    onChange={setOperacion}
-                    placeholder="Operación"
-                  />
+                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
                   <SmartSelect
                     options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
                     value={tipo}
@@ -1004,7 +1043,6 @@ export default function ProyectosExclusivosPage() {
                 </div>
 
                 <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  {/* ✅ SOLO 2 opciones: UF y CLP$ (sin CLP redundante) */}
                   <SmartSelect
                     options={['UF', 'CLP$']}
                     value={moneda}
@@ -1217,6 +1255,13 @@ export default function ProyectosExclusivosPage() {
 
                   const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
 
+                  const d = p.id ? detallesById[p.id] : undefined;
+                  const dormitorios = d?.dormitorios ?? p.dormitorios;
+                  const banos = d?.banos ?? p.banos;
+                  const estacionamientos = d?.estacionamientos ?? p.estacionamientos;
+                  const util = d?.superficie_util_m2 ?? p.superficie_util_m2;
+                  const terr = d?.superficie_terreno_m2 ?? p.superficie_terreno_m2;
+
                   const terreno =
                     (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
                   const bodega = (p.tipo || '').toLowerCase().includes('bodega');
@@ -1241,49 +1286,45 @@ export default function ProyectosExclusivosPage() {
                       <div className="p-4 flex flex-col">
                         <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">{p.titulo || 'Proyecto'}</h3>
 
-                        {/* Orden: Operación · Tipo · Comuna · Barrio */}
+                        {/* ✅ fija altura como si fuera 2 líneas siempre */}
                         <p className="mt-1 text-sm text-slate-600 line-clamp-2 min-h-[40px]">
                           {[p.operacion ? capFirst(String(p.operacion)) : '', tipoCap, p.comuna || '', p.barrio || '']
                             .filter(Boolean)
                             .join(' · ')}
                         </p>
 
-                        {/* DETALLES (IGUAL A PROPIEDADES) */}
+                        {/* ✅ Detalles (igual a Propiedades) */}
                         {!terreno && !bodega ? (
                           <div className="mt-3 grid grid-cols-5 text-center">
                             <div className="border border-slate-200 p-2">
                               <div className="flex items-center justify-center">
                                 <Bed className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                              <div className="text-sm">{dormitorios ?? '—'}</div>
                             </div>
                             <div className="border border-slate-200 p-2">
                               <div className="flex items-center justify-center">
                                 <ShowerHead className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">{p.banos ?? '—'}</div>
+                              <div className="text-sm">{banos ?? '—'}</div>
                             </div>
                             <div className="border border-slate-200 p-2">
                               <div className="flex items-center justify-center">
                                 <Car className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">{p.estacionamientos ?? '—'}</div>
+                              <div className="text-sm">{estacionamientos ?? '—'}</div>
                             </div>
                             <div className="border border-slate-200 p-2">
                               <div className="flex items-center justify-center">
                                 <Ruler className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">
-                                {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                              </div>
+                              <div className="text-sm">{util != null ? nfINT.format(util) : '—'}</div>
                             </div>
                             <div className="border border-slate-200 p-2">
                               <div className="flex items-center justify-center">
                                 <Square className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">
-                                {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                              </div>
+                              <div className="text-sm">{terr != null ? nfINT.format(terr) : '—'}</div>
                             </div>
                           </div>
                         ) : terreno ? (
@@ -1316,9 +1357,7 @@ export default function ProyectosExclusivosPage() {
                               <div className="flex items-center justify-center">
                                 <Square className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">
-                                {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
-                              </div>
+                              <div className="text-sm">{terr != null ? nfINT.format(terr) : '—'}</div>
                             </div>
                           </div>
                         ) : (
@@ -1327,27 +1366,25 @@ export default function ProyectosExclusivosPage() {
                               <div className="flex items-center justify-center">
                                 <Bed className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                              <div className="text-sm">{dormitorios ?? '—'}</div>
                             </div>
                             <div className="border border-slate-200 p-2">
                               <div className="flex items-center justify-center">
                                 <ShowerHead className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">{p.banos ?? '—'}</div>
+                              <div className="text-sm">{banos ?? '—'}</div>
                             </div>
                             <div className="border border-slate-200 p-2">
                               <div className="flex items-center justify-center">
                                 <Ruler className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">
-                                {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
-                              </div>
+                              <div className="text-sm">{util != null ? nfINT.format(util) : '—'}</div>
                             </div>
                             <div className="border border-slate-200 p-2">
                               <div className="flex items-center justify-center">
                                 <Car className="h-4 w-4 text-slate-500" />
                               </div>
-                              <div className="text-sm">{p.estacionamientos ?? '—'}</div>
+                              <div className="text-sm">{estacionamientos ?? '—'}</div>
                             </div>
                           </div>
                         )}
