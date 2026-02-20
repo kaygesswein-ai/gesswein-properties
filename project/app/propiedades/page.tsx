@@ -1,7 +1,9 @@
+// project/app/propiedades/page.tsx
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Bed,
   ShowerHead,
@@ -435,9 +437,13 @@ export default function PropiedadesPage() {
     <main className="bg-white">
       {/* HERO */}
       <section className="relative min-h-[100svh]">
-        <img
+        <Image
           src={HERO_IMG}
           alt="Portada"
+          fill
+          priority
+          fetchPriority="high"
+          sizes="100vw"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: '50% 35%' }}
         />
