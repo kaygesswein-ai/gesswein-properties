@@ -21,7 +21,7 @@ export default function ServiciosPage() {
       {/* ================= HERO (igual a Propiedades) ================= */}
       <section className="relative min-h-[100svh]">
         <img
-          src="https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Servicios%20-%20ORIGINAL.jpeg"
+          src="/images/portadas/servicios.jpg"
           alt="Portada Servicios"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: '50% 35%' }}
