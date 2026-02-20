@@ -81,22 +81,22 @@ const SEAL_GLOSSARY: Record<Exclude<ProjectSeal, '' | null>, { title: string; de
   bajo_mercado: {
     title: 'Bajo mercado',
     desc:
-      'Activo ofrecido a un precio inferior a referencias comparables verificables para su micro-mercado, considerando atributos, condición, emplazamiento, normativa y liquidez. Implica una asimetría de precio que, de materializarse, puede traducirse en mayor margen de seguridad para el comprador.',
+      'Se consideran activos bajo precio de mercado aquellas propiedades cuya valorización de publicación se sitúa por debajo de su valor económico estimado, determinado mediante análisis comparativo de transacciones recientes, condiciones constructivas, normativa aplicable, emplazamiento y potencial de desarrollo. Estas oportunidades surgen generalmente por asimetrías de información, urgencia del vendedor, estructuras de propiedad complejas, desalineación entre el uso actual y su mejor uso posible (highest and best use), o por deficiencias en la estrategia de comercialización. En este contexto, corresponden a activos que permiten capturar valor en el corto o mediano plazo mediante su adquisición anticipada respecto del ajuste natural del mercado, ya sea a través de plusvalía por reposicionamiento, optimización comercial, transformación física o reestructuración jurídica del inmueble.',
   },
   novacion: {
-    title: 'Novación hipotecaria (Tasa de Novación)',
+    title: 'Novación hipotecaria',
     desc:
-      'Operación por la cual se sustituye una obligación por otra (novación) vinculada al financiamiento hipotecario, típicamente para modificar condiciones del crédito (p. ej., tasa, plazo o estructura) mediante un nuevo acuerdo con la entidad financiera. En esta ficha, “Tasa de Novación” representa la tasa estimada/aplicable asociada a dicha reestructuración, expresada como porcentaje.',
+      'La tasa de novación corresponde a la tasa de interés asociada a un crédito hipotecario vigente que puede ser transferido a un nuevo adquirente mediante un proceso de novación de deuda, permitiendo mantener las condiciones financieras originales del financiamiento al momento de la compraventa. Este mecanismo —conocido como novación hipotecaria— posibilita que el comprador acceda a tasas históricamente más favorables que las disponibles en el mercado al momento de la transacción, impactando directamente en la carga financiera mensual y en el costo total del crédito. En escenarios de tasas de interés elevadas, la existencia de una tasa de novación inferior a mercado constituye un atributo económico relevante del activo, al permitir mejorar la asequibilidad de la inversión o incrementar su rentabilidad financiera efectiva.',
   },
   flipping: {
     title: 'Flipping',
     desc:
-      'Estrategia de inversión orientada a capturar valor mediante compra, mejora (remodelación/puesta en valor) y venta en un horizonte de corto a mediano plazo. El retorno depende de costos totales (obra, permisos, transacción), tiempos y capacidad de vender al precio objetivo en condiciones de mercado.',
+      'Se consideran oportunidades de flipping aquellos activos inmobiliarios que presentan condiciones favorables para su adquisición, intervención y posterior enajenación en un horizonte de corto plazo, mediante estrategias de mejora física, funcional o comercial que permitan reposicionar la propiedad en el mercado. Estas oportunidades suelen generarse a partir de obsolescencia material, deterioro estético, subutilización de espacios, configuraciones programáticas ineficientes o ausencia de puesta en valor arquitectónica. A través de intervenciones de remodelación, actualización o redefinición de uso, es posible alinear el activo con las expectativas del mercado objetivo, capturando la diferencia entre el precio de adquisición y el valor posterior a la mejora.',
   },
   densificacion: {
     title: 'Densificación',
     desc:
-      'Potencial de incrementar superficie vendible o unidades mediante ampliación, subdivisión, cambio de destino u otra intervención posible según normativa aplicable, cabidas y restricciones del predio. Requiere evaluación técnica, normativa y económica (costos, plazos, permisos y demanda).',
+      'El potencial de densificación corresponde a la capacidad normativa y física de un inmueble para aumentar su intensidad de uso mediante la incorporación de nuevas unidades habitacionales o superficies edificadas adicionales dentro de un mismo predio. Este tipo de oportunidades se fundamenta en disposiciones de los instrumentos de planificación territorial vigentes —tales como coeficientes de constructibilidad, ocupación de suelo, alturas máximas, subdivisión predial o regímenes de copropiedad— que permiten optimizar el rendimiento del terreno a través de ampliaciones, subdivisiones, desarrollo de unidades accesorias (ADU), condominios tipo B o proyectos de microdesarrollo inmobiliario. La correcta identificación de este potencial permite transformar un activo subutilizado en una operación de mayor escala económica, incrementando significativamente su valor por metro cuadrado de suelo.',
   },
 };
 
