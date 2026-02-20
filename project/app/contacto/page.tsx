@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 }
 
 const HERO_IMG =
-  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Contacto.jpeg'
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Contacto%20-%20OPTIMIZADA.jpg'
 // Puedes cambiarlo por tu imagen real después.
 
 const SOCIALS = [
