@@ -44,7 +44,7 @@ const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
 
 /* HERO exacto */
-const HERO_IMG = 'project/public/images/portadas/propiedades.jpg';
+const HERO_IMG = '/images/portadas/propiedades.jpg';
 
 /* Fallback card */
 const CARD_FALLBACK =
