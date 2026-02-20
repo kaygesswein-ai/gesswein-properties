@@ -375,7 +375,7 @@ function GlosarioSellosCompacto() {
         </GlossIconBox>
       ),
       text:
-        'Activo ofrecido por debajo de comparables relevantes por condición excepcional, urgencia o asimetría de información. Es una señal para revisar fundamentos, no reemplaza el análisis.',
+        'Se consideran activos bajo precio de mercado aquellas propiedades cuya valorización de publicación se sitúa por debajo de su valor económico estimado, determinado mediante análisis comparativo de transacciones recientes, condiciones constructivas, normativa aplicable, emplazamiento y potencial de desarrollo. Estas oportunidades surgen generalmente por asimetrías de información, urgencia del vendedor, estructuras de propiedad complejas, desalineación entre el uso actual y su mejor uso posible (highest and best use), o por deficiencias en la estrategia de comercialización. En este contexto, corresponden a activos que permiten capturar valor en el corto o mediano plazo mediante su adquisición anticipada respecto del ajuste natural del mercado, ya sea a través de plusvalía por reposicionamiento, optimización comercial, transformación física o reestructuración jurídica del inmueble.',
     },
     {
       key: 'novacion',
@@ -386,7 +386,7 @@ function GlosarioSellosCompacto() {
         </div>
       ),
       text:
-        'Novación hipotecaria: modificación o reemplazo de la obligación crediticia asociada al inmueble, ajustando tasa, plazo o estructura para capturar una condición financiera más conveniente.',
+        'La tasa de novación corresponde a la tasa de interés asociada a un crédito hipotecario vigente que puede ser transferido a un nuevo adquirente mediante un proceso de novación de deuda, permitiendo mantener las condiciones financieras originales del financiamiento al momento de la compraventa. Este mecanismo —conocido como novación hipotecaria— posibilita que el comprador acceda a tasas históricamente más favorables que las disponibles en el mercado al momento de la transacción, impactando directamente en la carga financiera mensual y en el costo total del crédito. En escenarios de tasas de interés elevadas, la existencia de una tasa de novación inferior a mercado constituye un atributo económico relevante del activo, al permitir mejorar la asequibilidad de la inversión o incrementar su rentabilidad financiera efectiva.',
     },
     {
       key: 'flipping',
@@ -399,7 +399,7 @@ function GlosarioSellosCompacto() {
         </GlossIconBox>
       ),
       text:
-        'Estrategia de compra con potencial de creación de valor (mejoras, regularización, reposicionamiento) para vender con valorización en el corto/mediano plazo.',
+        'Se consideran oportunidades de flipping aquellos activos inmobiliarios que presentan condiciones favorables para su adquisición, intervención y posterior enajenación en un horizonte de corto plazo, mediante estrategias de mejora física, funcional o comercial que permitan reposicionar la propiedad en el mercado. Estas oportunidades suelen generarse a partir de obsolescencia material, deterioro estético, subutilización de espacios, configuraciones programáticas ineficientes o ausencia de puesta en valor arquitectónica. A través de intervenciones de remodelación, actualización o redefinición de uso, es posible alinear el activo con las expectativas del mercado objetivo, capturando la diferencia entre el precio de adquisición y el valor posterior a la mejora.',
     },
     {
       key: 'densificacion',
@@ -410,7 +410,7 @@ function GlosarioSellosCompacto() {
         </GlossIconBox>
       ),
       text:
-        'Potencial normativo y/o físico para aumentar unidades o superficie vendible: subdivisión, condominio, ampliación, cabida o mayor intensidad de uso según normativa y factibilidad técnica.',
+        'El potencial de densificación corresponde a la capacidad normativa y física de un inmueble para aumentar su intensidad de uso mediante la incorporación de nuevas unidades habitacionales o superficies edificadas adicionales dentro de un mismo predio. Este tipo de oportunidades se fundamenta en disposiciones de los instrumentos de planificación territorial vigentes —tales como coeficientes de constructibilidad, ocupación de suelo, alturas máximas, subdivisión predial o regímenes de copropiedad— que permiten optimizar el rendimiento del terreno a través de ampliaciones, subdivisiones, desarrollo de unidades accesorias (ADU), condominios tipo B o proyectos de microdesarrollo inmobiliario. La correcta identificación de este potencial permite transformar un activo subutilizado en una operación de mayor escala económica, incrementando significativamente su valor por metro cuadrado de suelo.',
     },
   ];
 
