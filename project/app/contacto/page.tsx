@@ -14,8 +14,7 @@ export const metadata: Metadata = {
   description: 'Escríbenos y cuéntanos qué necesitas. Te responderemos a la brevedad.',
 }
 
-const HERO_IMG =
-  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Contacto%20-%20OPTIMIZADA.jpg'
+const HERO_IMG = '/images/portadas/contacto.jpg'
 // Puedes cambiarlo por tu imagen real después.
 
 const SOCIALS = [
