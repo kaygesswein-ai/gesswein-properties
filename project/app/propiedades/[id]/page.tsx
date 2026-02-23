@@ -57,7 +57,7 @@ const HERO_FALLBACK =
 const wordsCap = (s?: string | null) =>
   (s ?? '').toLowerCase().split(' ').map(w => (w ? w[0].toUpperCase() + w.slice(1) : '')).join(' ').trim();
 
-/* ✅ CAMBIO #2: UF igual que Home (usa /api/uf) */
+/* ✅ UF igual que Home (usa /api/uf) */
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
   useEffect(() => {
@@ -158,12 +158,10 @@ function Lightbox(props: {
 
 /* ---------------- helpers hero ---------------- */
 function addCacheBuster(url: string) {
-  // evita caché agresivo sin romper URLs con query ya existente
   const sep = url.includes('?') ? '&' : '?';
   return `${url}${sep}cb=${Date.now()}`;
 }
 
-/* ✅ CAMBIO #1: getHeroImage clonado de Home (prioridad idéntica) */
 function getHeroImage(p?: Partial<Property> | null, fotos?: FotoRow[]) {
   if (!p) return HERO_FALLBACK;
   const anyP: any = p;
@@ -184,7 +182,6 @@ function getHeroImage(p?: Partial<Property> | null, fotos?: FotoRow[]) {
   const src = cand.find((s) => typeof s === 'string' && s.trim().length > 4);
   const out = (src as string) || HERO_FALLBACK;
 
-  // solo devolvemos URLs http(s); si no, fallback
   return /^https?:\/\//i.test(out) ? out : HERO_FALLBACK;
 }
 
@@ -194,7 +191,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [fotos, setFotos] = useState<FotoRow[]>([]);
   const uf = useUf();
 
-  // NO CACHE + cache-buster
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -219,17 +215,13 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     return () => { alive = false; };
   }, [params.id]);
 
-  /* ✅ CAMBIO #1 aplicado: candidatos salen de la misma lógica que Home */
   const heroCandidates = useMemo(() => {
     const first = getHeroImage(prop, fotos);
-
-    // mantenemos tu fallback por onError (probamos alternativas si algo falla)
     const extras: string[] = [];
     const push = (u?: string | null) => {
       if (typeof u === 'string' && u.trim() && /^https?:\/\//i.test(u.trim())) extras.push(u.trim());
     };
 
-    // armamos lista, pero sin duplicar el first
     push(prop?.portada_url);
     push(prop?.portada_fija_url);
     push(prop?.coverImage);
@@ -242,25 +234,22 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     push(fotos.find(f => f.url)?.url || null);
 
     const all = [first, ...extras].filter(Boolean);
-    // dedupe manteniendo orden
     const seen = new Set<string>();
     const uniq = all.filter((u) => (seen.has(u) ? false : (seen.add(u), true)));
     return uniq.length ? uniq : [HERO_FALLBACK];
   }, [prop, fotos]);
 
-  // 👇 fallback controlado con onError (sin preloader)
   const [heroIndex, setHeroIndex] = useState(0);
-  useEffect(() => {
-    // cuando cambia la propiedad/candidatos, partimos desde el primero
-    setHeroIndex(0);
-  }, [heroCandidates]);
+  useEffect(() => { setHeroIndex(0); }, [heroCandidates]);
 
   const heroUrlSafe = heroCandidates[Math.min(heroIndex, heroCandidates.length - 1)] || HERO_FALLBACK;
 
+  // ✅ CAMBIO PUNTUAL: Venta · Casa · La Reina · Barrio
   const linea = [
-    wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
-    wordsCap(prop?.tipo),
     wordsCap(prop?.operacion),
+    wordsCap(prop?.tipo),
+    wordsCap(prop?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
+    wordsCap(prop?.barrio),
   ].filter(Boolean).join(' · ');
 
   const precioUfHero =
@@ -295,14 +284,11 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       {/* HERO */}
       <section className="relative w-full overflow-hidden isolate">
         <img
-          key={heroUrlSafe} // fuerza re-render cuando cambia
+          key={heroUrlSafe}
           src={addCacheBuster(heroUrlSafe)}
           alt=""
           className="absolute inset-0 -z-10 h-full w-full object-cover"
-          onError={() => {
-            // si falla, probamos el siguiente candidato
-            setHeroIndex((i) => Math.min(i + 1, heroCandidates.length - 1));
-          }}
+          onError={() => setHeroIndex((i) => Math.min(i + 1, heroCandidates.length - 1))}
         />
         <div className="absolute inset-0 -z-10 bg-black/35" />
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
@@ -310,6 +296,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
             <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{prop?.titulo ?? 'Propiedad'}</h1>
               <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
+
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
@@ -325,6 +312,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                   ))}
                 </div>
               </div>
+
               <div className="mt-4 flex items-end gap-3">
                 <Link ref={btnRef} href="/contacto"
                       className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
@@ -338,6 +326,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                   {precioClpHero && <div className="text-sm md:text-base text-slate-600 mt-[2px]">$ {nfCLP.format(precioClpHero)}</div>}
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -428,7 +417,7 @@ function GalleryAndDetails({ prop, fotos }: { prop: Property | null; fotos: Foto
       {/* Separador */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
-      {/* Características destacadas (SIEMPRE visible; usa tu array tags) */}
+      {/* Características destacadas */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">Características destacadas</h2>
         <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
