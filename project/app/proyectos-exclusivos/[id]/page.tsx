@@ -225,26 +225,31 @@ function getHeroImage(p?: Partial<Proyecto> | null, fotos?: FotoRow[]) {
   return /^https?:\/\//i.test(out) ? out : HERO_FALLBACK;
 }
 
-function SealChip({ proj }: { proj: Proyecto | null }) {
-  // ✅ FIX TS: no comparar '' después de !tipo; usa null y check simple
+/** ✅ NUEVO: sello tipo “chip” igual a la grilla (icono + texto, estilo cuadrado) */
+function SealBadge({ proj }: { proj: Proyecto | null }) {
   const tipo = (proj?.sello_tipo ?? null) as ProjectSeal | null;
   if (!tipo) return null;
 
   const key = tipo as Exclude<ProjectSeal, '' | null>;
   const label = SEAL_LABEL[key] ?? 'Sello';
 
-  // Novación: mostrar 1 decimal
   const extra =
     key === 'novacion' && typeof proj?.tasa_novacion === 'number'
-      ? ` ${nf1.format(proj.tasa_novacion)}%`
+      ? `${nf1.format(proj.tasa_novacion)}%`
       : '';
 
+  const Icon =
+    key === 'bajo_mercado' ? TrendingUp :
+    key === 'novacion' ? Ruler :
+    key === 'flipping' ? Home :
+    MapIcon;
+
   return (
-    <div className="mt-3 flex flex-wrap gap-2">
-      <span className="inline-flex items-center gap-2 px-3 py-1 text-[12px] tracking-wide uppercase border border-slate-200 bg-white/80 text-slate-800">
-        {label}{extra}
-      </span>
-    </div>
+    <span className="inline-flex items-center gap-2 px-3 py-1 border border-slate-200 bg-white/80 text-slate-800 text-[12px] tracking-wide uppercase">
+      <Icon className="h-4 w-4 text-[#6C819B]" />
+      <span>{label}</span>
+      {extra ? <span className="ml-1">{extra}</span> : null}
+    </span>
   );
 }
 
@@ -306,10 +311,12 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
 
   const heroUrlSafe = heroCandidates[Math.min(heroIndex, heroCandidates.length - 1)] || HERO_FALLBACK;
 
+  /** ✅ CAMBIO: orden del “subline” = operacion · tipo · comuna · barrio */
   const linea = [
-    wordsCap(proj?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
-    wordsCap(proj?.tipo),
     wordsCap(proj?.operacion),
+    wordsCap(proj?.tipo),
+    wordsCap(proj?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
+    wordsCap(proj?.barrio),
   ].filter(Boolean).join(' · ');
 
   const precioUfHero =
@@ -355,10 +362,12 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
           <div className="w-full">
             <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[520px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{proj?.titulo ?? 'Proyecto'}</h1>
-              <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
 
-              {/* SELLO (si existe) */}
-              <SealChip proj={proj} />
+              {/* ✅ Subline + ✅ sello al lado (misma fila, “cuadrado” y balanceado) */}
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <p className="text-sm text-gray-600">{linea || '—'}</p>
+                <SealBadge proj={proj} />
+              </div>
 
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
@@ -410,7 +419,6 @@ function normalizeTag(row?: FotoRow): 'exterior'|'interior'|'planos'|'portada'|'
 }
 
 function GlossarioSellos({ proj }: { proj: Proyecto | null }) {
-  // ✅ mismo fix (consistente)
   const tipo = (proj?.sello_tipo ?? null) as ProjectSeal | null;
   if (!tipo) return null;
 
@@ -473,6 +481,7 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
 
   return (
     <>
+      {/* ✅ ORDEN NUEVO: Galería → Glosario Sellos → Descripción */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">Galería</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -493,15 +502,16 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
         </div>
       </section>
 
+      {/* ✅ Glosario Sellos sube aquí */}
+      <GlossarioSellos proj={proj} />
+
+      {/* ✅ Descripción baja aquí */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">Descripción</h2>
         {normalizedParagraphs.length ? normalizedParagraphs.map((p,i)=>(
           <p key={i} className="text-slate-700 leading-relaxed whitespace-pre-wrap mb-3 last:mb-0">{p}</p>
         )) : <p className="text-slate-700 leading-relaxed">Descripción no disponible por el momento.</p>}
       </section>
-
-      {/* Glosario de sellos (solo si el proyecto trae sello_tipo) */}
-      <GlossarioSellos proj={proj} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
