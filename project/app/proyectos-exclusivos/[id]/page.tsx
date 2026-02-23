@@ -225,34 +225,6 @@ function getHeroImage(p?: Partial<Proyecto> | null, fotos?: FotoRow[]) {
   return /^https?:\/\//i.test(out) ? out : HERO_FALLBACK;
 }
 
-/** ✅ NUEVO: sello tipo “chip” igual a la grilla (icono + texto, estilo cuadrado) */
-function SealBadge({ proj }: { proj: Proyecto | null }) {
-  const tipo = (proj?.sello_tipo ?? null) as ProjectSeal | null;
-  if (!tipo) return null;
-
-  const key = tipo as Exclude<ProjectSeal, '' | null>;
-  const label = SEAL_LABEL[key] ?? 'Sello';
-
-  const extra =
-    key === 'novacion' && typeof proj?.tasa_novacion === 'number'
-      ? `${nf1.format(proj.tasa_novacion)}%`
-      : '';
-
-  const Icon =
-    key === 'bajo_mercado' ? TrendingUp :
-    key === 'novacion' ? Ruler :
-    key === 'flipping' ? Home :
-    MapIcon;
-
-  return (
-    <span className="inline-flex items-center gap-2 px-3 py-1 border border-slate-200 bg-white/80 text-slate-800 text-[12px] tracking-wide uppercase">
-      <Icon className="h-4 w-4 text-[#6C819B]" />
-      <span>{label}</span>
-      {extra ? <span className="ml-1">{extra}</span> : null}
-    </span>
-  );
-}
-
 export default function ProyectoExclusivoDetailPage({ params }: { params: { id: string } }) {
   const [proj, setProj] = useState<Proyecto | null>(null);
   const [fotos, setFotos] = useState<FotoRow[]>([]);
@@ -311,7 +283,7 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
 
   const heroUrlSafe = heroCandidates[Math.min(heroIndex, heroCandidates.length - 1)] || HERO_FALLBACK;
 
-  /** ✅ CAMBIO: orden del “subline” = operacion · tipo · comuna · barrio */
+  // ✅ Orden: operacion · tipo · comuna · barrio
   const linea = [
     wordsCap(proj?.operacion),
     wordsCap(proj?.tipo),
@@ -339,7 +311,10 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
     };
     sync();
     let ro:ResizeObserver|null=null;
-    if ('ResizeObserver' in window) { ro=new ResizeObserver(sync); if (priceBoxRef.current) ro.observe(priceBoxRef.current); }
+    if ('ResizeObserver' in window) {
+      ro = new ResizeObserver(sync);
+      if (priceBoxRef.current) ro.observe(priceBoxRef.current);
+    }
     return () => { try { ro?.disconnect(); } catch {} };
   }, [proj]);
 
@@ -363,11 +338,8 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
             <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[520px]">
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{proj?.titulo ?? 'Proyecto'}</h1>
 
-              {/* ✅ Subline + ✅ sello al lado (misma fila, “cuadrado” y balanceado) */}
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
-                <p className="text-sm text-gray-600">{linea || '—'}</p>
-                <SealBadge proj={proj} />
-              </div>
+              {/* ✅ SOLO SUBLINE (sin sello en el recuadro, como pediste) */}
+              <p className="mt-1 text-sm text-gray-600">{linea || '—'}</p>
 
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
@@ -378,26 +350,41 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
                     { icon:<Ruler className="h-5 w-5 text-[#6C819B]" />,       v: fmtInt(proj?.superficie_util_m2) },
                     { icon:<Square className="h-5 w-5 text-[#6C819B]" />,      v: fmtInt(proj?.superficie_terreno_m2) },
                   ].map((t, idx) => (
-                    <div key={idx} className={cls('flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]', idx<4 && 'border-r border-slate-200')}>
-                      {t.icon}<span className="text-sm text-slate-800 leading-none">{t.v ?? dash}</span>
+                    <div
+                      key={idx}
+                      className={cls(
+                        'flex flex-col items-center justify-center gap-1 py-2 md:py-[10px]',
+                        idx < 4 && 'border-r border-slate-200'
+                      )}
+                    >
+                      {t.icon}
+                      <span className="text-sm text-slate-800 leading-none">{t.v ?? dash}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="mt-4 flex items-end gap-3">
-                <Link ref={btnRef} href="/contacto"
-                      className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
-                      style={{ boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95)' }}>
+                <Link
+                  ref={btnRef}
+                  href="/contacto"
+                  className="inline-flex text-sm tracking-wide rounded-none border border-[#0A2E57] text-[#0A2E57] bg-white"
+                  style={{ boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.95)' }}
+                >
                   Solicitar información
                 </Link>
                 <div ref={priceBoxRef} className="ml-auto text-right">
                   <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
                     {precioUfHero ? `UF ${nfUF.format(precioUfHero)}` : 'Consultar'}
                   </div>
-                  {precioClpHero && <div className="text-sm md:text-base text-slate-600 mt-[2px]">$ {nfCLP.format(precioClpHero)}</div>}
+                  {precioClpHero && (
+                    <div className="text-sm md:text-base text-slate-600 mt-[2px]">
+                      $ {nfCLP.format(precioClpHero)}
+                    </div>
+                  )}
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -406,16 +393,6 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
       <GalleryAndDetails proj={proj} fotos={fotos} />
     </main>
   );
-}
-
-function normalizeTag(row?: FotoRow): 'exterior'|'interior'|'planos'|'portada'|'todas' {
-  const raw = (row?.categoria ?? row?.tag ?? '')?.toString().toLowerCase();
-  if (!raw) return 'todas';
-  if (raw.includes('portada')) return 'portada';
-  if (raw.includes('plan')) return 'planos';
-  if (raw.includes('exterior') || /(fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/.test(raw)) return 'exterior';
-  if (raw.includes('interior') || /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio)/.test(raw)) return 'interior';
-  return 'todas';
 }
 
 function GlossarioSellos({ proj }: { proj: Proyecto | null }) {
@@ -461,7 +438,7 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
   }, [fotos]);
 
   const tiles = useMemo(() => ([
-    { key:'todas' as const,    label:'Photos',     icon:<Images className="h-6 w-6"/>,   count:groups.todas.length,    preview:undefined },
+    { key:'todas' as const,    label:'Photos',     icon:<Images className="h-6 w-6"/>,   count:groups.todas.length,     preview:undefined },
     { key:'exterior' as const, label:'Exterior',   icon:<Home className="h-6 w-6"/>,     count:groups.exterior.length,  preview:groups.exterior[0] },
     { key:'interior' as const, label:'Interior',   icon:<DoorOpen className="h-6 w-6"/>, count:groups.interior.length,  preview:groups.interior[0] },
     { key:'planos' as const,   label:'Floor Plan', icon:<MapIcon className="h-6 w-6"/>,  count:groups.planos.length,    preview:groups.planos[0] },
@@ -481,19 +458,30 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
 
   return (
     <>
-      {/* ✅ ORDEN NUEVO: Galería → Glosario Sellos → Descripción */}
+      {/* ✅ ORDEN: Galería → Glosario Sellos → Descripción */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">Galería</h2>
+        <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
+          Galería
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {tiles.map(t => {
             const list = t.key==='todas'?groups.todas : t.key==='exterior'?groups.exterior : t.key==='interior'?groups.interior : groups.planos;
             const withImg = !!t.preview;
             return (
-              <button key={t.key} onClick={() => openLbFor(list,0)} className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left">
-                {withImg ? <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" /> :
-                  <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />}
+              <button
+                key={t.key}
+                onClick={() => openLbFor(list,0)}
+                className="group relative aspect-[4/3] overflow-hidden border border-slate-200 text-left"
+              >
+                {withImg ? (
+                  <img src={t.preview!} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
+                )}
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white">
-                  <div className="flex items-center gap-2">{t.icon}<span className="font-semibold">{t.label}</span></div>
+                  <div className="flex items-center gap-2">
+                    {t.icon}<span className="font-semibold">{t.label}</span>
+                  </div>
                   <span className="text-xs opacity-90">{t.count} {t.count===1?'foto':'fotos'}</span>
                 </div>
               </button>
@@ -502,12 +490,12 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
         </div>
       </section>
 
-      {/* ✅ Glosario Sellos sube aquí */}
       <GlossarioSellos proj={proj} />
 
-      {/* ✅ Descripción baja aquí */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">Descripción</h2>
+        <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
+          Descripción
+        </h2>
         {normalizedParagraphs.length ? normalizedParagraphs.map((p,i)=>(
           <p key={i} className="text-slate-700 leading-relaxed whitespace-pre-wrap mb-3 last:mb-0">{p}</p>
         )) : <p className="text-slate-700 leading-relaxed">Descripción no disponible por el momento.</p>}
@@ -516,7 +504,9 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">Características destacadas</h2>
+        <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
+          Características destacadas
+        </h2>
         <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
           {hasTags ? featureTags.map((t,i)=>(
             <li key={`${t}-${i}`} className="flex items-center gap-2">
@@ -527,8 +517,18 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
             </li>
           )) : (
             <>
-              <li className="flex items-center gap-2"><span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300"><Compass className="h-4 w-4 text-slate-600"/></span><span>Orientación norte</span></li>
-              <li className="flex items-center gap-2"><span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300"><TrendingUp className="h-4 w-4 text-slate-600"/></span><span>Potencial de plusvalía</span></li>
+              <li className="flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300">
+                  <Compass className="h-4 w-4 text-slate-600"/>
+                </span>
+                <span>Orientación norte</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300">
+                  <TrendingUp className="h-4 w-4 text-slate-600"/>
+                </span>
+                <span>Potencial de plusvalía</span>
+              </li>
             </>
           )}
         </ul>
@@ -537,7 +537,9 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-        <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">Explora el sector</h2>
+        <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
+          Explora el sector
+        </h2>
         <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden rounded">
           {(() => {
             const lat  = typeof proj?.map_lat  === 'number' ? proj!.map_lat  : -33.437;
@@ -549,10 +551,24 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
         </div>
       </section>
 
-      <Lightbox open={lbOpen} images={dynamicList} index={lbIndex}
-                onClose={()=>setLbOpen(false)}
-                onPrev={()=>setLbIndex(i=>(i-1+dynamicList.length)%dynamicList.length)}
-                onNext={()=>setLbIndex(i=>(i+1)%dynamicList.length)} />
+      <Lightbox
+        open={lbOpen}
+        images={dynamicList}
+        index={lbIndex}
+        onClose={()=>setLbOpen(false)}
+        onPrev={()=>setLbIndex(i=>(i-1+dynamicList.length)%dynamicList.length)}
+        onNext={()=>setLbIndex(i=>(i+1)%dynamicList.length)}
+      />
     </>
   );
+}
+
+function normalizeTag(row?: FotoRow): 'exterior'|'interior'|'planos'|'portada'|'todas' {
+  const raw = (row?.categoria ?? row?.tag ?? '')?.toString().toLowerCase();
+  if (!raw) return 'todas';
+  if (raw.includes('portada')) return 'portada';
+  if (raw.includes('plan')) return 'planos';
+  if (raw.includes('exterior') || /(fachada|jard|patio|piscina|quincho|terraza|vista|balc[oó]n)/.test(raw)) return 'exterior';
+  if (raw.includes('interior') || /(living|estar|comedor|cocina|bañ|ban|dorm|pasillo|hall|escritorio)/.test(raw)) return 'interior';
+  return 'todas';
 }
