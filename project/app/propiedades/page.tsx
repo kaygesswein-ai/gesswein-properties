@@ -1,7 +1,7 @@
 // project/app/propiedades/page.tsx
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -13,6 +13,7 @@ import {
   Square,
   SlidersHorizontal,
   Trash2,
+  Star,
 } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
 
@@ -35,9 +36,10 @@ type Property = {
   coverImage?: string;
   imagenes?: string[] | null;
   createdAt?: string;
-
   portada_url?: string | null;
   portada_fija_url?: string | null;
+
+  es_proyecto_exclusivo?: boolean | null;
 };
 
 const BRAND_BLUE = '#0A2E57';
@@ -53,7 +55,9 @@ const CARD_FALLBACK =
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
 const capFirst = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+
 const fmtMiles = (raw: string) => {
   const digits = (raw || '').replace(/\D+/g, '');
   if (!digits) return '';
@@ -63,8 +67,10 @@ const fmtMiles = (raw: string) => {
 /* ==== Hook UF ==== */
 function useUfValue() {
   const [uf, setUf] = useState<number | null>(null);
+
   useEffect(() => {
     let cancel = false;
+
     (async () => {
       try {
         const r = await fetch('/api/uf', { cache: 'no-store' });
@@ -75,10 +81,12 @@ function useUfValue() {
         if (!cancel) setUf(null);
       }
     })();
+
     return () => {
       cancel = true;
     };
   }, []);
+
   return uf;
 }
 
@@ -105,7 +113,7 @@ const COMUNAS: Record<string, string[]> = {
     'Macul',
   ],
   Valparaíso: [
-    'Casablanca', // Tunquén pertenece a Casablanca
+    'Casablanca',
     'Viña del Mar',
     'Valparaíso',
     'Concón',
@@ -154,7 +162,6 @@ const BARRIOS: Record<string, string[]> = {
   'Villa Alemana': ['Peñablanca', 'El Álamo', 'El Carmen'],
   Quilpué: ['El Sol', 'Belloto', 'Los Pinos'],
   Olmué: ['Olmué Centro', 'Lo Narváez'],
-  // Solo “Tunquén” para Casablanca (el filtro acepta variantes)
   Casablanca: ['Tunquén'],
 };
 
@@ -162,9 +169,7 @@ const BARRIOS: Record<string, string[]> = {
 const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalize = (s?: string) => stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
 
-/** Resuelve región a partir de comuna y, si es necesario, por barrio.
- *  Casos especiales: Tunquén -> Casablanca -> Valparaíso
- */
+/** Resuelve región a partir de comuna y, si es necesario, por barrio. */
 function inferRegion(comuna?: string, barrio?: string): string | undefined {
   const cNorm = normalize(comuna);
   const bNorm = normalize(barrio);
@@ -180,6 +185,52 @@ function inferRegion(comuna?: string, barrio?: string): string | undefined {
   return undefined;
 }
 
+/* ===== TÍTULOS ESTILO PROYECTOS EXCLUSIVOS ===== */
+function SectionTitle({ title }: { title: string }) {
+  return (
+    <div className="pt-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="pl-2 sm:pl-4">
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">{title}</h2>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SectionTitleWithIcon({ title, icon }: { title: string; icon: React.ReactNode }) {
+  return (
+    <div className="pt-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="pl-2 sm:pl-4 flex items-center gap-3">
+          <span className="shrink-0">{icon}</span>
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">{title}</h2>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ===== SELLO ESTRELLA ELEGANTE ===== */
+function ProyectoExclusivoBadge() {
+  return (
+    <div className="absolute top-3 right-3 z-10">
+      <div
+        className="flex items-center justify-center rounded-md shadow-sm"
+        style={{
+          width: 38,
+          height: 38,
+          background: 'rgba(255,255,255,0.95)',
+          border: '1px solid rgba(0,0,0,.12)',
+          backdropFilter: 'blur(6px)',
+        }}
+      >
+        <Star className="h-5 w-5" color={BRAND_BLUE} />
+      </div>
+    </div>
+  );
+}
+
 export default function PropiedadesPage() {
   /* — Filtros UI — */
   const [operacion, setOperacion] = useState('');
@@ -189,7 +240,7 @@ export default function PropiedadesPage() {
   const [barrio, setBarrio] = useState('');
 
   /* — UF / CLP UI — */
-  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
+  const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
@@ -208,7 +259,7 @@ export default function PropiedadesPage() {
   const [aComuna, setAComuna] = useState('');
   const [aBarrio, setABarrio] = useState('');
 
-  const [aMoneda, setAMoneda] = useState<'' | 'UF' | 'CLP$' | 'CLP'>('');
+  const [aMoneda, setAMoneda] = useState<'' | 'UF' | 'CLP$'>('');
   const [aMinValor, setAMinValor] = useState('');
   const [aMaxValor, setAMaxValor] = useState('');
 
@@ -226,13 +277,28 @@ export default function PropiedadesPage() {
   /* Portadas “hidratadas” por id cuando la lista no las trae */
   const [portadasById, setPortadasById] = useState<Record<string, string>>({});
 
-  /* Orden */
-  const [sortMode, setSortMode] = useState<
-    'price-desc' | 'price-asc' | 'hipoteca' | 'flipping' | 'subdivision' | ''
-  >('');
+  /* Orden + filtro */
+  const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | ''>('');
+  const [soloProyectoExclusivo, setSoloProyectoExclusivo] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
+  const menuWrapRef = useRef<HTMLDivElement | null>(null);
+
   const ufValue = useUfValue();
+
+  /* Cerrar menú al click afuera */
+  useEffect(() => {
+    if (!sortOpen) return;
+
+    const onDown = (e: MouseEvent) => {
+      const el = menuWrapRef.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) setSortOpen(false);
+    };
+
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [sortOpen]);
 
   /* Carga inicial */
   useEffect(() => {
@@ -246,16 +312,18 @@ export default function PropiedadesPage() {
     if (aOperacion) p.set('operacion', aOperacion);
     if (aTipo) p.set('tipo', aTipo);
     if (aComuna) p.set('comuna', aComuna);
-    // NO enviamos 'barrio' al backend; se filtra en cliente.
 
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(aMinValor);
     const maxN = toInt(aMaxValor);
+
     if (!Number.isNaN(minN) || !Number.isNaN(maxN)) {
-      const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
+      const isCLP = aMoneda === 'CLP$';
+
       if (isCLP && typeof ufValue === 'number' && ufValue > 0) {
         const minUF = !Number.isNaN(minN) ? Math.round(minN / ufValue) : NaN;
         const maxUF = !Number.isNaN(maxN) ? Math.round(maxN / ufValue) : NaN;
+
         if (!Number.isNaN(minUF)) p.set('minUF', String(minUF));
         if (!Number.isNaN(maxUF)) p.set('maxUF', String(maxUF));
       } else {
@@ -306,21 +374,26 @@ export default function PropiedadesPage() {
     if (need.length === 0) return;
 
     let cancel = false;
+
     (async () => {
       const entries: [string, string][] = [];
+
       for (const id of need) {
         try {
           const r = await fetch(`/api/propiedades/${encodeURIComponent(id)}`, { cache: 'no-store' });
           const j = await r.json();
           const data = j?.data || j;
+
           const img =
             (data?.portada_url && String(data.portada_url).trim()) ||
             (data?.portada_fija_url && String(data.portada_fija_url).trim()) ||
             (Array.isArray(data?.imagenes) && data.imagenes[0]) ||
             '';
+
           if (img) entries.push([id, img]);
         } catch {}
       }
+
       if (!cancel && entries.length) {
         setPortadasById((prev) => {
           const next = { ...prev };
@@ -342,13 +415,11 @@ export default function PropiedadesPage() {
     const toInt = (s: string) => (s ? parseInt(s.replace(/\./g, ''), 10) : NaN);
     const minN = toInt(aMinValor);
     const maxN = toInt(aMaxValor);
-    const isCLP = aMoneda === 'CLP' || aMoneda === 'CLP$';
+    const isCLP = aMoneda === 'CLP$';
     const rate = ufValue || null;
 
-    const minUF =
-      Number.isNaN(minN) ? -Infinity : isCLP ? (rate ? minN / rate : -Infinity) : minN;
-    const maxUF =
-      Number.isNaN(maxN) ? Infinity : isCLP ? (rate ? maxN / rate : Infinity) : maxN;
+    const minUF = Number.isNaN(minN) ? -Infinity : isCLP ? (rate ? minN / rate : -Infinity) : minN;
+    const maxUF = Number.isNaN(maxN) ? Infinity : isCLP ? (rate ? maxN / rate : Infinity) : maxN;
 
     const ge = (val: number | null | undefined, min: number) => (val == null ? false : val >= min);
 
@@ -361,26 +432,25 @@ export default function PropiedadesPage() {
         if (!xt.startsWith(ft)) return false;
       }
 
-      // Región por comuna o por barrio (Tunquén -> Casablanca -> Valparaíso)
       if (aRegion) {
         const r = inferRegion(x.comuna, x.barrio);
         if (norm(r) !== norm(aRegion)) return false;
       }
 
       if (aComuna) {
-        // Si p.comuna viene “Tunquén” y pediste Casablanca, lo aceptamos
         const cItem = normalize(normalize(x.comuna) === 'tunquen' ? 'Casablanca' : x.comuna || '');
         if (cItem !== norm(aComuna)) return false;
       }
 
-      // >>> AJUSTE BARRIO: tolerante a datos vacíos o variantes “El Rosario de Tunquén”
       if (aBarrio) {
-        const sel = norm(aBarrio); // tunquen
-        const bx = norm(x.barrio); // barrio normalizado (puede venir vacío)
-        const cx = norm(x.comuna); // por si la comuna viene “tunquen”
-        const passBarrio = (bx && bx.includes(sel)) || (!bx && cx === 'tunquen'); // sin barrio, pero comuna = Tunquén
+        const sel = norm(aBarrio);
+        const bx = norm(x.barrio);
+        const cx = norm(x.comuna);
+        const passBarrio = (bx && bx.includes(sel)) || (!bx && cx === 'tunquen');
         if (!passBarrio) return false;
       }
+
+      if (soloProyectoExclusivo && !x.es_proyecto_exclusivo) return false;
 
       let vUF: number | null = null;
       if (x.precio_uf && x.precio_uf > 0) vUF = x.precio_uf;
@@ -394,14 +464,17 @@ export default function PropiedadesPage() {
 
       if (aMinDorm && !ge(x.dormitorios, parseInt(aMinDorm, 10))) return false;
       if (aMinBanos && !ge(x.banos, parseInt(aMinBanos, 10))) return false;
+
       if (aMinM2Const) {
         const m = parseInt(aMinM2Const.replace(/\./g, ''), 10);
         if (!ge(x.superficie_util_m2, m)) return false;
       }
+
       if (aMinM2Terreno) {
         const m = parseInt(aMinM2Terreno.replace(/\./g, ''), 10);
         if (!ge(x.superficie_terreno_m2, m)) return false;
       }
+
       if (aEstac && !ge(x.estacionamientos, parseInt(aEstac, 10))) return false;
 
       return true;
@@ -422,15 +495,18 @@ export default function PropiedadesPage() {
     aMinM2Terreno,
     aEstac,
     ufValue,
+    soloProyectoExclusivo,
   ]);
 
   /* Ordenamiento */
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
+
   const getComparablePriceUF = (p: Property) => {
     if (p.precio_uf && p.precio_uf > 0) return p.precio_uf;
     if (p.precio_clp && p.precio_clp > 0 && CLPfromUF) return p.precio_clp / CLPfromUF;
     return -Infinity;
   };
+
   const displayedItems = useMemo(() => {
     const arr = filteredItems.slice();
     if (sortMode === 'price-desc') arr.sort((a, b) => getComparablePriceUF(b) - getComparablePriceUF(a));
@@ -468,6 +544,10 @@ export default function PropiedadesPage() {
     setAMinM2Terreno('');
     setAEstac('');
 
+    setSortMode('');
+    setSoloProyectoExclusivo(false);
+    setSortOpen(false);
+
     setTrigger((v) => v + 1);
   };
 
@@ -492,7 +572,7 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  /* ENTER -> Buscar (atajo) */
+  /* ENTER -> Buscar */
   const handleKeyDownSearch = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -533,239 +613,511 @@ export default function PropiedadesPage() {
       </section>
 
       {/* BÚSQUEDA */}
-      <section className="bg-white border-b border-slate-200" onKeyDown={handleKeyDownSearch}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-2 text-slate-800 mb-4 pl-2 sm:pl-4">
-            <Filter className="h-5 w-5" color={BRAND_BLUE} />
-            <span className="text-lg md:text-xl uppercase tracking-[0.25em]">BÚSQUEDA</span>
+      <section className="bg-slate-50" onKeyDown={handleKeyDownSearch}>
+        <SectionTitleWithIcon title="Búsqueda" icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />} />
+
+        <div className="py-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* modo */}
+            <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAdvancedMode('rapida')}
+                className={`px-3 py-2 text-sm rounded-none border ${
+                  advancedMode === 'rapida'
+                    ? 'bg-gray-200 border-gray-300 text-slate-900'
+                    : 'bg-gray-50 border-gray-300 text-slate-700'
+                }`}
+              >
+                Búsqueda rápida
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdvancedMode('avanzada')}
+                className={`px-3 py-2 text-sm rounded-none border ${
+                  advancedMode === 'avanzada'
+                    ? 'bg-gray-200 border-gray-300 text-slate-900'
+                    : 'bg-gray-50 border-gray-300 text-slate-700'
+                }`}
+              >
+                Búsqueda avanzada
+              </button>
+            </div>
+
+            {/* === RÁPIDA === */}
+            {advancedMode === 'rapida' && (
+              <>
+                <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
+                  <SmartSelect
+                    options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
+                    value={tipo}
+                    onChange={setTipo}
+                    placeholder="Tipo de propiedad"
+                  />
+                  <SmartSelect
+                    options={regionOptions}
+                    value={region}
+                    onChange={(v) => {
+                      setRegion(v);
+                      setComuna('');
+                      setBarrio('');
+                    }}
+                    placeholder="Región"
+                  />
+                  <SmartSelect
+                    options={comunaOptions}
+                    value={comuna}
+                    onChange={(v) => {
+                      setComuna(v);
+                      setBarrio('');
+                    }}
+                    placeholder="Comuna"
+                    disabled={!region}
+                  />
+                  <SmartSelect
+                    options={barrioOptions}
+                    value={barrio}
+                    onChange={setBarrio}
+                    placeholder="Barrio"
+                    disabled={!comuna || !barrioOptions.length}
+                  />
+                </div>
+
+                <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                  <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v) => setMoneda((v as any) || '')} placeholder="UF/CLP$" />
+                  <input
+                    value={minValor}
+                    onChange={(e) => setMinValor(fmtMiles(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="Mín"
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  />
+                  <input
+                    value={maxValor}
+                    onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="Máx"
+                    className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400"
+                  />
+                  <button
+                    onClick={handleClear}
+                    className="w-full px-5 py-2 text-sm rounded-none border"
+                    style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                  >
+                    Limpiar
+                  </button>
+                  <button
+                    onClick={applyAndSearch}
+                    className="w-full px-5 py-2 text-sm text-white rounded-none"
+                    style={{
+                      background: BRAND_BLUE,
+                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+                    }}
+                  >
+                    Buscar
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* === AVANZADA === */}
+            {advancedMode === 'avanzada' && (
+              <>
+                <div className="pl-2 sm:pl-4">
+                  <div className="h-px bg-slate-200 my-4" />
+                </div>
+
+                <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                  <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
+                  <SmartSelect
+                    options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']}
+                    value={tipo}
+                    onChange={setTipo}
+                    placeholder="Tipo de propiedad"
+                  />
+                  <SmartSelect
+                    options={regionOptions}
+                    value={region}
+                    onChange={(v) => {
+                      setRegion(v);
+                      setComuna('');
+                      setBarrio('');
+                    }}
+                    placeholder="Región"
+                  />
+                  <SmartSelect
+                    options={comunaOptions}
+                    value={comuna}
+                    onChange={(v) => {
+                      setComuna(v);
+                      setBarrio('');
+                    }}
+                    placeholder="Comuna"
+                    disabled={!region}
+                  />
+                  <SmartSelect
+                    options={barrioOptions}
+                    value={barrio}
+                    onChange={setBarrio}
+                    placeholder="Barrio"
+                    disabled={!comuna || !barrioOptions.length}
+                  />
+                </div>
+
+                <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
+                  {/* ✅ eliminado CLP; solo UF y CLP$ */}
+                  <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v) => setMoneda((v as any) || '')} placeholder="UF/CLP$" />
+                  <input
+                    value={minValor}
+                    onChange={(e) => setMinValor(fmtMiles(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="Mín"
+                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                  />
+                  <input
+                    value={maxValor}
+                    onChange={(e) => setMaxValor(fmtMiles(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="Máx"
+                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                  />
+                  <input
+                    value={minDorm}
+                    onChange={(e) => setMinDorm((e.target.value || '').replace(/\D+/g, ''))}
+                    inputMode="numeric"
+                    placeholder="Mín. dormitorios"
+                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                  />
+                  <input
+                    value={minBanos}
+                    onChange={(e) => setMinBanos((e.target.value || '').replace(/\D+/g, ''))}
+                    inputMode="numeric"
+                    placeholder="Mín. baños"
+                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                  />
+                  <input
+                    value={estac}
+                    onChange={(e) => setEstac((e.target.value || '').replace(/\D+/g, ''))}
+                    inputMode="numeric"
+                    placeholder="Estacionamientos"
+                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                  />
+                  <input
+                    value={minM2Const}
+                    onChange={(e) => setMinM2Const(fmtMiles(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="Mín. m² construidos"
+                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                  />
+                  <input
+                    value={minM2Terreno}
+                    onChange={(e) => setMinM2Terreno(fmtMiles(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="Mín. m² terreno"
+                    className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500"
+                  />
+                  <button
+                    onClick={handleClear}
+                    className="w-full px-5 py-2 text-sm rounded-none border"
+                    style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                  >
+                    Limpiar
+                  </button>
+                  <button
+                    onClick={applyAndSearch}
+                    className="w-full px-5 py-2 text-sm text-white rounded-none"
+                    style={{
+                      background: BRAND_BLUE,
+                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+                    }}
+                  >
+                    Buscar
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-
-          {/* modo */}
-          <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setAdvancedMode('rapida')}
-              className={`px-3 py-2 text-sm rounded-none border ${
-                advancedMode === 'rapida'
-                  ? 'bg-gray-200 border-gray-300 text-slate-900'
-                  : 'bg-gray-50 border-gray-300 text-slate-700'
-              }`}
-            >
-              Búsqueda rápida
-            </button>
-            <button
-              type="button"
-              onClick={() => setAdvancedMode('avanzada')}
-              className={`px-3 py-2 text-sm rounded-none border ${
-                advancedMode === 'avanzada'
-                  ? 'bg-gray-200 border-gray-300 text-slate-900'
-                  : 'bg-gray-50 border-gray-300 text-slate-700'
-              }`}
-            >
-              Búsqueda avanzada
-            </button>
-          </div>
-
-          {/* === RÁPIDA === */}
-          {advancedMode === 'rapida' && (
-            <>
-              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
-                <SmartSelect options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']} value={tipo} onChange={setTipo} placeholder="Tipo de propiedad" />
-                <SmartSelect options={regionOptions} value={region} onChange={(v) => { setRegion(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
-                <SmartSelect options={comunaOptions} value={comuna} onChange={(v) => { setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
-                <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
-              </div>
-
-              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v) => setMoneda((v as any) || '')} placeholder="UF/CLP$" />
-                <input value={minValor} onChange={(e) => setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                <input value={maxValor} onChange={(e) => setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-50 px-3 py-2 text-slate-700 placeholder-slate-400" />
-                <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>
-                  Limpiar
-                </button>
-                <button onClick={applyAndSearch} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>
-                  Buscar
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* === AVANZADA === */}
-          {advancedMode === 'avanzada' && (
-            <>
-              <div className="pl-2 sm:pl-4">
-                <div className="h-px bg-slate-200 my-4" />
-              </div>
-
-              <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect options={['Venta', 'Arriendo']} value={operacion} onChange={setOperacion} placeholder="Operación" />
-                <SmartSelect options={['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno']} value={tipo} onChange={setTipo} placeholder="Tipo de propiedad" />
-                <SmartSelect options={regionOptions} value={region} onChange={(v) => { setRegion(v); setComuna(''); setBarrio(''); }} placeholder="Región" />
-                <SmartSelect options={comunaOptions} value={comuna} onChange={(v) => { setComuna(v); setBarrio(''); }} placeholder="Comuna" disabled={!region} />
-                <SmartSelect options={barrioOptions} value={barrio} onChange={setBarrio} placeholder="Barrio" disabled={!comuna || !barrioOptions.length} />
-              </div>
-
-              <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <SmartSelect options={['UF', 'CLP', 'CLP$']} value={moneda} onChange={(v) => setMoneda((v as any) || '')} placeholder="UF/CLP$" />
-                <input value={minValor} onChange={(e) => setMinValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <input value={maxValor} onChange={(e) => setMaxValor(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Máx" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <input value={minDorm} onChange={(e) => setMinDorm((e.target.value || '').replace(/\D+/g, ''))} inputMode="numeric" placeholder="Mín. dormitorios" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <input value={minBanos} onChange={(e) => setMinBanos((e.target.value || '').replace(/\D+/g, ''))} inputMode="numeric" placeholder="Mín. baños" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <input value={estac} onChange={(e) => setEstac((e.target.value || '').replace(/\D+/g, ''))} inputMode="numeric" placeholder="Estacionamientos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <input value={minM2Const} onChange={(e) => setMinM2Const(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² construidos" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <input value={minM2Terreno} onChange={(e) => setMinM2Terreno(fmtMiles(e.target.value))} inputMode="numeric" placeholder="Mín. m² terreno" className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-slate-700 placeholder-slate-500" />
-                <button onClick={handleClear} className="w-full px-5 py-2 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>
-                  Limpiar
-                </button>
-                <button onClick={applyAndSearch} className="w-full px-5 py-2 text-sm text-white rounded-none" style={{ background: BRAND_BLUE, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)' }}>
-                  Buscar
-                </button>
-              </div>
-            </>
-          )}
         </div>
       </section>
 
       {/* LISTADO */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-4 relative">
-          <h2 className="text-xl md:text-2xl text-slate-900 uppercase tracking-[0.25em]">PROPIEDADES DISPONIBLES</h2>
+      <section className="bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="flex items-center justify-between mb-2 relative" ref={menuWrapRef}>
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">Propiedades disponibles</h2>
 
-          {/* Acciones de orden */}
-          <div className="relative flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Limpiar orden"
-              onClick={() => { setSortMode(''); setSortOpen(false); }}
-              className="inline-flex items-center justify-center px-3 py-2 rounded-none"
-              style={{ background: '#fff', border: '1px solid #000', color: '#000' }}
-              title="Limpiar orden"
-            >
-              <Trash2 className="h-5 w-5" />
-            </button>
+            <div className="relative flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Limpiar orden y filtros"
+                onClick={() => {
+                  setSortMode('');
+                  setSoloProyectoExclusivo(false);
+                  setSortOpen(false);
+                }}
+                className="inline-flex items-center justify-center px-3 py-2 rounded-none"
+                style={{ background: '#fff', border: '1px solid #000', color: '#000' }}
+                title="Limpiar"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setSortOpen((s) => !s)}
-              className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
-              style={{ background: BRAND_BLUE, border: `1px solid ${BTN_GRAY_BORDER}` }}
-              aria-haspopup="menu"
-              aria-expanded={sortOpen}
-              title="Filtrar / ordenar"
-            >
-              <SlidersHorizontal className="h-5 w-5" />
-            </button>
+              <button
+                type="button"
+                onClick={() => setSortOpen((s) => !s)}
+                className="inline-flex items-center justify-center px-3 py-2 rounded-none text-white"
+                style={{ background: BRAND_BLUE, border: `1px solid ${BTN_GRAY_BORDER}` }}
+                aria-haspopup="menu"
+                aria-expanded={sortOpen}
+                title="Filtrar / ordenar"
+              >
+                <SlidersHorizontal className="h-5 w-5" />
+              </button>
 
-            {sortOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 shadow-lg z-10" role="menu">
-                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-desc'); setSortOpen(false); }}>
-                  Precio: mayor a menor
-                </button>
-                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('price-asc'); setSortOpen(false); }}>
-                  Precio: menor a mayor
-                </button>
-                <div className="h-px bg-slate-200 my-1" />
-                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('hipoteca'); setSortOpen(false); }}>
-                  Novación hipotecaria
-                </button>
-                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('flipping'); setSortOpen(false); }}>
-                  Oportunidad de flipping
-                </button>
-                <button className="w-full text-left px-4 py-2 hover:bg-slate-50" onClick={() => { setSortMode('subdivision'); setSortOpen(false); }}>
-                  Oportunidad de subdivisión
-                </button>
+              {sortOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 shadow-lg z-10" role="menu">
+                  <div className="px-4 pt-3 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">Orden</div>
+
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                    onClick={() => {
+                      setSortMode('price-desc');
+                      setSortOpen(false);
+                    }}
+                  >
+                    Precio: mayor a menor
+                  </button>
+
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                    onClick={() => {
+                      setSortMode('price-asc');
+                      setSortOpen(false);
+                    }}
+                  >
+                    Precio: menor a mayor
+                  </button>
+
+                  <div className="h-px bg-slate-200 my-1" />
+
+                  <div className="px-4 pt-2 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">Filtro</div>
+
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                    onClick={() => {
+                      setSoloProyectoExclusivo(true);
+                      setSortOpen(false);
+                    }}
+                  >
+                    Proyecto Exclusivos
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-10">
+            {loading ? (
+              <p className="text-slate-600">Cargando propiedades…</p>
+            ) : (displayedItems ?? []).length === 0 ? (
+              <p className="text-slate-600">No se encontraron propiedades.</p>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {(displayedItems ?? []).map((p) => {
+                  const showUF = !!(p.precio_uf && p.precio_uf > 0);
+
+                  const clp = (() => {
+                    if (p.precio_clp && p.precio_clp > 0) return p.precio_clp;
+                    if (showUF && CLPfromUF) return Math.round((p.precio_uf as number) * CLPfromUF);
+                    return null;
+                  })();
+
+                  const terreno =
+                    (p.tipo || '').toLowerCase().includes('terreno') ||
+                    (p.tipo || '').toLowerCase().includes('sitio');
+
+                  const bodega = (p.tipo || '').toLowerCase().includes('bodega');
+
+                  const linkId = (p.id || p.slug || '').toString();
+
+                  const portadaHidratada = p.id ? portadasById[p.id] : '';
+
+                  const cardImage =
+                    (p.portada_url && String(p.portada_url).trim()) ||
+                    (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
+                    (portadaHidratada && String(portadaHidratada).trim()) ||
+                    (p.coverImage && String(p.coverImage).trim()) ||
+                    (Array.isArray(p.imagenes) && p.imagenes[0]) ||
+                    CARD_FALLBACK;
+
+                  const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
+
+                  return (
+                    <Link
+                      key={p.id ?? p.slug ?? Math.random().toString(36).slice(2)}
+                      href={`/propiedades/${encodeURIComponent(linkId)}`}
+                      className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
+                    >
+                      <div className="relative aspect-[4/3] bg-slate-100">
+                        <img
+                          src={cardImage}
+                          alt={p.titulo || 'Propiedad'}
+                          className="w-full h-full object-cover group-hover:opacity-95 transition"
+                        />
+
+                        {p.es_proyecto_exclusivo ? <ProyectoExclusivoBadge /> : null}
+                      </div>
+
+                      <div className="p-4 flex flex-col">
+                        <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">
+                          {p.titulo || 'Propiedad'}
+                        </h3>
+
+                        {/* ✅ mismo formato que Proyectos Exclusivos */}
+                        <p className="mt-1 text-sm text-slate-600 line-clamp-2 min-h-[40px]">
+                          {[p.operacion ? capFirst(String(p.operacion)) : '', tipoCap, p.comuna || '', p.barrio || '']
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+
+                        {!terreno && !bodega ? (
+                          <div className="mt-3 grid grid-cols-5 text-center">
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Bed className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <ShowerHead className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.banos ?? '—'}</div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Car className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.estacionamientos ?? '—'}</div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Ruler className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">
+                                {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
+                              </div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Square className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">
+                                {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
+                              </div>
+                            </div>
+                          </div>
+                        ) : terreno ? (
+                          <div className="mt-3 grid grid-cols-5 text-center">
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Bed className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">—</div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <ShowerHead className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">—</div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Car className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">—</div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Ruler className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">—</div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Square className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">
+                                {p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-3 grid grid-cols-4 text-center">
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Bed className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.dormitorios ?? '—'}</div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <ShowerHead className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.banos ?? '—'}</div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Ruler className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">
+                                {p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}
+                              </div>
+                            </div>
+
+                            <div className="border border-slate-200 p-2">
+                              <div className="flex items-center justify-center">
+                                <Car className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="text-sm">{p.estacionamientos ?? '—'}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="mt-4 flex items-center justify-between">
+                          <span
+                            className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border"
+                            style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}
+                          >
+                            Ver más
+                          </span>
+
+                          <div className="text-right">
+                            <div className="font-semibold" style={{ color: BRAND_BLUE }}>
+                              {showUF ? `UF ${nfUF.format(p.precio_uf as number)}` : 'Consultar'}
+                            </div>
+                            <div className="text-xs text-slate-500">{clp ? `$ ${nfCLP.format(clp)}` : ''}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
         </div>
-
-        {loading ? (
-          <p className="text-slate-600">Cargando propiedades…</p>
-        ) : (displayedItems ?? []).length === 0 ? (
-          <p className="text-slate-600">No se encontraron propiedades.</p>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {(displayedItems ?? []).map((p) => {
-              const showUF = !!(p.precio_uf && p.precio_uf > 0);
-              const clp = (() => {
-                if (p.precio_clp && p.precio_clp > 0) return p.precio_clp;
-                if (showUF && CLPfromUF) return Math.round((p.precio_uf as number) * CLPfromUF);
-                return null;
-              })();
-
-              const terreno = (p.tipo || '').toLowerCase().includes('terreno') || (p.tipo || '').toLowerCase().includes('sitio');
-              const bodega = (p.tipo || '').toLowerCase().includes('bodega');
-              const linkId = (p.id || p.slug || '').toString();
-
-              const portadaHidratada = p.id ? portadasById[p.id] : '';
-              const cardImage =
-                (p.portada_url && String(p.portada_url).trim()) ||
-                (p.portada_fija_url && String(p.portada_fija_url).trim()) ||
-                (portadaHidratada && String(portadaHidratada).trim()) ||
-                (p.coverImage && String(p.coverImage).trim()) ||
-                (Array.isArray(p.imagenes) && p.imagenes[0]) ||
-                CARD_FALLBACK;
-
-              const tipoCap = p.tipo ? capFirst(String(p.tipo)) : '';
-
-              return (
-                <Link
-                  key={p.id ?? p.slug ?? Math.random().toString(36).slice(2)}
-                  href={`/propiedades/${encodeURIComponent(linkId)}`}
-                  className="group block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
-                >
-                  <div className="aspect-[4/3] bg-slate-100">
-                    <img src={cardImage} alt={p.titulo || 'Propiedad'} className="w-full h-full object-cover group-hover:opacity-95 transition" />
-                  </div>
-                  <div className="p-4 flex flex-col">
-                    <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">{p.titulo || 'Propiedad'}</h3>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {[p.comuna || '', tipoCap, p.operacion ? capFirst(String(p.operacion)) : ''].filter(Boolean).join(' · ')}
-                    </p>
-
-                    {!terreno && !bodega ? (
-                      <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
-                      </div>
-                    ) : terreno ? (
-                      <div className="mt-3 grid grid-cols-5 text-center">
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">—</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Square className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_terreno_m2 != null ? nfINT.format(p.superficie_terreno_m2) : '—'}</div></div>
-                      </div>
-                    ) : (
-                      <div className="mt-3 grid grid-cols-4 text-center">
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Bed className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.dormitorios ?? '—'}</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><ShowerHead className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.banos ?? '—'}</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Ruler className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.superficie_util_m2 != null ? nfINT.format(p.superficie_util_m2) : '—'}</div></div>
-                        <div className="border border-slate-200 p-2"><div className="flex items-center justify-center"><Car className="h-4 w-4 text-slate-500" /></div><div className="text-sm">{p.estacionamientos ?? '—'}</div></div>
-                      </div>
-                    )}
-
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className="inline-flex items-center px-3 py-1.5 text-sm rounded-none border" style={{ color: '#0f172a', borderColor: BRAND_BLUE, background: '#fff' }}>
-                        Ver más
-                      </span>
-                      <div className="text-right">
-                        <div className="font-semibold" style={{ color: BRAND_BLUE }}>
-                          {showUF ? `UF ${nfUF.format(p.precio_uf as number)}` : 'Consultar'}
-                        </div>
-                        <div className="text-xs text-slate-500">{clp ? `$ ${nfCLP.format(clp)}` : ''}</div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
       </section>
     </main>
   );
