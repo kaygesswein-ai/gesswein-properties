@@ -51,6 +51,8 @@ type RawProp = {
   tags: string[] | null;
   features_highlight: string[] | null;
   features: any;
+
+  es_proyecto_exclusivo: boolean | null;
 };
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -64,7 +66,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       created_at, descripcion, imagenes, barrio,
       map_lat, map_lng, map_zoom,
       tags, features_highlight, features,
-      portada_url, portada_fija_url, portada_preferencia
+      portada_url, portada_fija_url, portada_preferencia,
+      es_proyecto_exclusivo
     `;
 
     const { data, error } = await supabase
@@ -145,6 +148,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       map_zoom: typeof data.map_zoom === 'number' ? data.map_zoom : null,
 
       tags: tags.length ? tags : null,
+      es_proyecto_exclusivo: Boolean(data.es_proyecto_exclusivo),
     };
 
     return NextResponse.json(
@@ -159,4 +163,3 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     );
   }
 }
-
