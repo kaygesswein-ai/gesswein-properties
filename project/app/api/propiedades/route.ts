@@ -27,7 +27,10 @@ export async function GET() {
   }
 
   // 2) Detecta cuáles no traen coverImage
-  const sinCover = props.filter(p => !p.coverImage).map(p => p.id as string);
+  const sinCover = props
+    .filter((p) => !p.coverImage)
+    .map((p) => p.id as string);
+
   let covers: Record<string, string> = {};
 
   if (sinCover.length > 0) {
@@ -44,15 +47,16 @@ export async function GET() {
       // Nos quedamos con el primer url por propiedad_id
       for (const f of fotos ?? []) {
         const pid = f.propiedad_id as string;
-        if (!covers[pid]) covers[pid] = f.url; // solo la primera
+        if (!covers[pid]) covers[pid] = f.url;
       }
     }
   }
 
   // 3) Merge: si no hay coverImage, usar el de "covers"
-  const merged = props.map(p => ({
+  const merged = props.map((p) => ({
     ...p,
-    coverImage: p.coverImage || covers[p.id as string] || null
+    coverImage: p.coverImage || covers[p.id as string] || null,
+    es_proyecto_exclusivo: Boolean(p.es_proyecto_exclusivo),
   }));
 
   return NextResponse.json({ success: true, data: merged });
