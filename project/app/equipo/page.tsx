@@ -25,6 +25,10 @@ import {
 const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20portada%20-%20Equipo%20-%20OPTIMIZADA.JPG';
 
+/* === NUEVO: portada específica para smartphones / mobile vertical === */
+const HERO_IMG_MOBILE =
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Portada%20Equipo(para%20Moviles)%20-%20Optimizada.JPG';
+
 const HISTORIA_IMG =
   'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
 
@@ -336,12 +340,22 @@ export default function EquipoPage() {
     <main className="bg-white">
       {/* HERO */}
       <section className="relative min-h-[100svh]">
+        {/* MOBILE HERO */}
+        <img
+          src={HERO_IMG_MOBILE}
+          alt="Portada Equipo Mobile"
+          className="absolute inset-0 w-full h-full object-cover md:hidden"
+          style={{ objectPosition: '50% 50%' }}
+        />
+
+        {/* DESKTOP / TABLET HERO */}
         <img
           src={HERO_IMG}
           alt="Portada Equipo"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover hidden md:block"
           style={{ objectPosition: '50% 35%' }}
         />
+
         <div className="absolute inset-0 bg-black/35" />
         <div className="absolute bottom-6 left-0 right-0">
           <div className="max-w-7xl mx-auto px-6">
@@ -557,8 +571,8 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 3) NUESTRA CULTURA — BLANCO */}
-      <section className="py-16 bg-white">
+      {/* 3) NUESTRA CULTURA — GRIS PARA SEPARAR VISUALMENTE */}
+      <section className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-12">
             Nuestra Cultura
@@ -834,7 +848,7 @@ function TeamOgilvy() {
   const DURATION = 450;
   const EASING = 'cubic-bezier(.22,.61,.36,1)';
 
-  const [panelDims, setPanelDims] = useState<{ left: number; width: number; height: number }>({
+  const [panelDims, setPanelDims] = useState<{ left: number; width: number; height: number }>( {
     left: 0,
     width: 0,
     height: 0,
