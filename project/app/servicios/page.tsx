@@ -96,23 +96,23 @@ function ProcesoSection() {
                       onClick={() => toggle(i)}
                       className={[
                         'w-full border border-black/10 bg-[#f8f9fb] shadow-sm',
-                        'px-4 py-4 text-left transition',
+                        'px-4 py-3 text-left transition',
                         'hover:bg-[#f2f5f9]',
                         isOpen ? 'border-black/20' : '',
                       ].join(' ')}
                       aria-expanded={isOpen}
                     >
-                      <div className="min-h-[74px] flex items-center gap-3">
-                        <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center shrink-0">
-                          <Icon className="h-5 w-5 text-[#0A2E57]" />
+                      <div className="flex items-center gap-3 min-h-[40px]">
+                        <div className="w-9 h-9 border border-black/10 bg-white flex items-center justify-center shrink-0">
+                          <Icon className="h-4 w-4 text-[#0A2E57]" />
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="text-[#0A2E57] text-[11px] tracking-[.18em] uppercase font-medium">
-                            {i + 1}
-                          </div>
-                          <h3 className="mt-1 text-[14px] text-black/90 leading-snug">
-                            {p.title}
+                          <h3 className="text-[14px] text-black/90 leading-none flex items-center gap-2">
+                            <span className="text-[#0A2E57] text-[12px] font-medium shrink-0">
+                              {i + 1}.
+                            </span>
+                            <span className="truncate">{p.title}</span>
                           </h3>
                         </div>
                       </div>
@@ -155,23 +155,23 @@ function ProcesoSection() {
                     onClick={() => toggle(i)}
                     className={[
                       'w-full border border-black/10 bg-[#f8f9fb] shadow-sm',
-                      'px-4 py-4 text-left transition',
+                      'px-4 py-3 text-left transition',
                       'hover:bg-[#f2f5f9]',
                       isOpen ? 'border-black/20' : '',
                     ].join(' ')}
                     aria-expanded={isOpen}
                   >
-                    <div className="min-h-[66px] flex items-center gap-3">
-                      <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center shrink-0">
-                        <Icon className="h-5 w-5 text-[#0A2E57]" />
+                    <div className="flex items-center gap-3 min-h-[40px]">
+                      <div className="w-9 h-9 border border-black/10 bg-white flex items-center justify-center shrink-0">
+                        <Icon className="h-4 w-4 text-[#0A2E57]" />
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-[#0A2E57] text-[11px] tracking-[.18em] uppercase font-medium">
-                          {i + 1}
-                        </div>
-                        <h3 className="mt-1 text-[14px] text-black/90 leading-snug">
-                          {p.title}
+                        <h3 className="text-[14px] text-black/90 leading-none flex items-center gap-2">
+                          <span className="text-[#0A2E57] text-[12px] font-medium shrink-0">
+                            {i + 1}.
+                          </span>
+                          <span>{p.title}</span>
                         </h3>
                       </div>
                     </div>
