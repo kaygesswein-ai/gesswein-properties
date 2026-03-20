@@ -1,6 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import {
+  ClipboardCheck,
+  Play,
+  ChartNoAxesGantt,
+  ShieldCheck,
+} from 'lucide-react';
 
 /** =========================================================
  *  Página de Servicios — coherente con Inicio y Propiedades
@@ -74,6 +80,7 @@ function ProcesoSection() {
           <div className="grid grid-cols-4 gap-8 xl:gap-10 items-start">
             {PROCESO.map((p, i) => {
               const isOpen = openIdx === i;
+              const Icon = p.icon;
 
               return (
                 <div key={p.title} className="pt-10 flex flex-col items-center">
@@ -89,16 +96,25 @@ function ProcesoSection() {
                       onClick={() => toggle(i)}
                       className={[
                         'w-full border border-black/10 bg-[#f8f9fb] shadow-sm',
-                        'px-5 py-5 text-left transition',
+                        'px-4 py-4 text-left transition',
                         'hover:bg-[#f2f5f9]',
                         isOpen ? 'border-black/20' : '',
                       ].join(' ')}
                       aria-expanded={isOpen}
                     >
-                      <div className="min-h-[66px] flex items-center">
-                        <h3 className="text-[14px] text-black/90 leading-snug">
-                          {p.title}
-                        </h3>
+                      <div className="min-h-[74px] flex items-center gap-3">
+                        <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center shrink-0">
+                          <Icon className="h-5 w-5 text-[#0A2E57]" />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[#0A2E57] text-[11px] tracking-[.18em] uppercase font-medium">
+                            {i + 1}
+                          </div>
+                          <h3 className="mt-1 text-[14px] text-black/90 leading-snug">
+                            {p.title}
+                          </h3>
+                        </div>
                       </div>
                     </button>
 
@@ -125,6 +141,7 @@ function ProcesoSection() {
         <div className="md:hidden flex flex-col gap-5">
           {PROCESO.map((p, i) => {
             const isOpen = openIdx === i;
+            const Icon = p.icon;
 
             return (
               <div key={p.title}>
@@ -138,16 +155,25 @@ function ProcesoSection() {
                     onClick={() => toggle(i)}
                     className={[
                       'w-full border border-black/10 bg-[#f8f9fb] shadow-sm',
-                      'px-5 py-5 text-left transition',
+                      'px-4 py-4 text-left transition',
                       'hover:bg-[#f2f5f9]',
                       isOpen ? 'border-black/20' : '',
                     ].join(' ')}
                     aria-expanded={isOpen}
                   >
-                    <div className="min-h-[58px] flex items-center">
-                      <h3 className="text-[14px] text-black/90 leading-snug">
-                        {p.title}
-                      </h3>
+                    <div className="min-h-[66px] flex items-center gap-3">
+                      <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center shrink-0">
+                        <Icon className="h-5 w-5 text-[#0A2E57]" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[#0A2E57] text-[11px] tracking-[.18em] uppercase font-medium">
+                          {i + 1}
+                        </div>
+                        <h3 className="mt-1 text-[14px] text-black/90 leading-snug">
+                          {p.title}
+                        </h3>
+                      </div>
                     </div>
                   </button>
 
@@ -523,19 +549,23 @@ const PATRIMONIAL_CARDS: ServiceCard[] = [
 /* ================= PROCESO ================= */
 const PROCESO = [
   {
-    title: 'Alcance del Trabajo & Propuesta de servicios',
+    title: 'Alcance & Propuesta',
     text: 'Iniciamos con una reunión personalizada y una evaluación detallada de los requerimientos, para luego presentar una propuesta de valor a medida, diseñada para reflejar las verdaderas necesidades y aspiraciones del cliente.',
+    icon: ClipboardCheck,
   },
   {
     title: 'Puesta en Marcha',
     text: 'Transformamos los objetivos del cliente en un plan de acción concreto, definiendo cada etapa con precisión y poniendo en movimiento las gestiones necesarias para materializar su visión.',
+    icon: Play,
   },
   {
     title: 'Ejecución & Seguimiento',
     text: 'Llevamos a cabo el plan definido, supervisando los avances y asegurando una comunicación constante con el cliente para garantizar alineación y resultados coherentes con sus expectativas.',
+    icon: ChartNoAxesGantt,
   },
   {
     title: 'Cierre & Satisfacción',
     text: 'Consolidamos los resultados, verificamos el cumplimiento de cada detalle y nos aseguramos de que la experiencia final refleje plenamente la calidad y excelencia que distinguen a nuestra firma.',
+    icon: ShieldCheck,
   },
 ] as const;
