@@ -1,15 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import {
-  Megaphone,
-  LineChart,
-  Building2,
-  Gavel,
-  Ruler,
-  ClipboardList,
-  TrendingUp,
-} from 'lucide-react';
 
 /** =========================================================
  *  Página de Servicios — coherente con Inicio y Propiedades
@@ -17,7 +8,6 @@ import {
 export default function ServiciosPage() {
   return (
     <main className="bg-white">
-
       {/* ================= HERO (igual a Propiedades) ================= */}
       <section className="relative min-h-[100svh]">
         <img
@@ -44,77 +34,150 @@ export default function ServiciosPage() {
         </div>
       </section>
 
-      {/* ================= (MOVIDO AL INICIO) PROCESO — LÍNEA DE TIEMPO ================= */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="pl-2 sm:pl-4 max-w-4xl mb-12">
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-              Un proceso claro y transparente
-            </h2>
-            <p className="text-black/70 text-[14px] leading-relaxed">
-              Estructuramos nuestro proceso en etapas cuidadosamente diseñadas, aplicables de manera transversal a cada servicio, garantizando una experiencia coherente, transparente y de excelencia en todos nuestros proyectos.
-            </p>
-          </div>
+      {/* ================= PROCESO ================= */}
+      <ProcesoSection />
 
-          {/* DESKTOP / TABLET */}
-          <div className="hidden sm:block relative">
-            <div className="absolute left-[5%] right-[5%] top-8 h-px bg-[#0A2E57]/30" />
-            <div className="grid grid-cols-4 gap-8">
-              {PROCESO.map((p, i) => (
-                <div key={p.title} className="pt-10 flex flex-col items-center">
-                  <span className="mx-auto -mt-7 mb-5 block h-2 w-2 bg-[#0A2E57] ring-2 ring-[#0A2E57]/25" />
-                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase text-center">
-                    Paso {i + 1}
-                  </div>
-                  <h3 className="mt-1 text-[14px] text-black/90 text-center min-h-[44px] flex items-center justify-center">
-                    {p.title}
-                  </h3>
-                  <div className="mt-4 w-full max-w-[280px] min-h-[220px] border border-[#0A2E57]/12 bg-[#F9FAFB] px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-                    <p className="text-[13px] text-black/70 leading-relaxed text-justify">
-                      {p.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* MÓVIL — sin puntos, misma línea vertical y tipografía */}
-          <div className="sm:hidden relative pl-8">
-            <div className="absolute left-3 top-0 bottom-0 w-px bg-[#0A2E57]/25" />
-            <ol className="flex flex-col gap-8">
-              {PROCESO.map((p, i) => (
-                <li key={p.title} className="relative">
-                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase ml-1">
-                    Paso {i + 1}
-                  </div>
-                  <h3 className="mt-1 text-[14px] text-black/90">{p.title}</h3>
-                  <p className="mt-1 text-[13px] text-black/70 leading-relaxed">
-                    {p.text}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= NUEVA SECCIÓN: SERVICIOS GESSWEIN PROPERTIES ================= */}
+      {/* ================= SERVICIOS GESSWEIN PROPERTIES ================= */}
       <ServiciosEtapasSeccion />
     </main>
   );
 }
 
 /* ============================================================================
+ *  SECCIÓN PROCESO
+ * ========================================================================== */
+function ProcesoSection() {
+  const [openIdx, setOpenIdx] = useState<number | null>(0);
+
+  const toggle = (idx: number) => {
+    setOpenIdx((prev) => (prev === idx ? null : idx));
+  };
+
+  return (
+    <section className="py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="pl-2 sm:pl-4 max-w-4xl mb-12">
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
+            Un proceso claro y transparente
+          </h2>
+          <p className="text-black/70 text-[14px] leading-relaxed">
+            Estructuramos nuestro proceso en etapas cuidadosamente diseñadas, aplicables de manera
+            transversal a cada servicio, garantizando una experiencia coherente, transparente y de
+            excelencia en todos nuestros proyectos.
+          </p>
+        </div>
+
+        {/* DESKTOP / TABLET */}
+        <div className="hidden md:grid grid-cols-4 gap-6">
+          {PROCESO.map((p, i) => {
+            const isOpen = openIdx === i;
+
+            return (
+              <article
+                key={p.title}
+                className="border border-black/10 bg-white shadow-sm overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() => toggle(i)}
+                  className="w-full text-left px-6 py-5 hover:bg-[#f8f9fb] transition"
+                  aria-expanded={isOpen}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                        Paso {i + 1}
+                      </div>
+                      <h3 className="mt-2 text-[15px] text-black/90 leading-snug">{p.title}</h3>
+                    </div>
+
+                    <div className="shrink-0 pt-1">
+                      <span className="inline-flex items-center justify-center w-8 h-8 border border-black/10 text-[#0A2E57] text-[16px]">
+                        {isOpen ? '−' : '+'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 h-px bg-[#0A2E57]/12" />
+                </button>
+
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-out ${
+                    isOpen ? 'max-h-[320px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  <div className="px-6 pb-6">
+                    <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                      {p.text}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        {/* MOBILE */}
+        <div className="md:hidden flex flex-col gap-4">
+          {PROCESO.map((p, i) => {
+            const isOpen = openIdx === i;
+
+            return (
+              <article
+                key={p.title}
+                className="border border-black/10 bg-white shadow-sm overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() => toggle(i)}
+                  className="w-full text-left px-5 py-5 hover:bg-[#f8f9fb] transition"
+                  aria-expanded={isOpen}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                        Paso {i + 1}
+                      </div>
+                      <h3 className="mt-2 text-[15px] text-black/90 leading-snug">{p.title}</h3>
+                    </div>
+
+                    <div className="shrink-0 pt-1">
+                      <span className="inline-flex items-center justify-center w-8 h-8 border border-black/10 text-[#0A2E57] text-[16px]">
+                        {isOpen ? '−' : '+'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 h-px bg-[#0A2E57]/12" />
+                </button>
+
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-out ${
+                    isOpen ? 'max-h-[360px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  <div className="px-5 pb-5">
+                    <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                      {p.text}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================================
  *  SECCIÓN “Servicios Gesswein Properties”
- *  - Dos bloques con cards interactivas
- *  - Overlay que sube desde abajo y, al clic, EXPANDE a toda la foto con el detalle
  * ========================================================================== */
 function ServiciosEtapasSeccion() {
   const [expandedActivoIdx, setExpandedActivoIdx] = useState<number | null>(null);
   const [expandedPatrimonialIdx, setExpandedPatrimonialIdx] = useState<number | null>(null);
 
-  // cerrar al presionar Escape (accesibilidad)
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -127,33 +190,30 @@ function ServiciosEtapasSeccion() {
   }, []);
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-[#f8f9fb]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
         {/* Header sección */}
         <header className="pl-2 sm:pl-4 max-w-4xl">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
             Servicios Gesswein Properties
           </h2>
 
-          {/* Línea 1 */}
           <p className="text-black/70 text-[14px] leading-relaxed mt-3">
-            Dominamos cada etapa del proceso inmobiliario — desde la estrategia patrimonial hasta la gestión y
-            valorización del activo, con el fin de acompañarte en cada decisión y ser el sustento que necesitas
-            para llevar a cabo tu inversión y tu proyecto de vida.
+            Dominamos cada etapa del proceso inmobiliario — desde la estrategia patrimonial hasta la
+            gestión y valorización del activo, con el fin de acompañarte en cada decisión y ser el
+            sustento que necesitas para llevar a cabo tu inversión y tu proyecto de vida.
           </p>
 
-          {/* Línea 2 */}
           <p className="text-black/70 text-[14px] leading-relaxed mt-2">
-            Nuestros servicios se agrupan en dos áreas complementarias: Gestión del Activo Inmobiliario y
-            Gestión Patrimonial & Familiar.
+            Nuestros servicios se agrupan en dos áreas complementarias: Gestión del Activo
+            Inmobiliario y Gestión Patrimonial & Familiar.
           </p>
 
-          {/* Nota editorial */}
-          <div className="mt-6 border border-black/10 bg-[#F9FAFB] text-black/70 text-[13px] leading-relaxed p-4 italic">
-            Cada servicio forma parte de una cadena integral que cubre todo el ciclo inmobiliario.<br />
-            Podemos ejecutarlos de manera independiente o combinada, diseñando la solución que mejor se adapta a tus
-            objetivos, tu momento y tu inversión.
+          <div className="mt-6 border border-black/10 bg-white text-black/70 text-[13px] leading-relaxed p-4 italic">
+            Cada servicio forma parte de una cadena integral que cubre todo el ciclo inmobiliario.
+            <br />
+            Podemos ejecutarlos de manera independiente o combinada, diseñando la solución que mejor
+            se adapta a tus objetivos, tu momento y tu inversión.
           </div>
         </header>
 
@@ -163,7 +223,8 @@ function ServiciosEtapasSeccion() {
             Gestión del Activo Inmobiliario
           </div>
           <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
-            Cuidamos cada detalle del activo físico: su valor, su potencial y su expresión arquitectónica.
+            Cuidamos cada detalle del activo físico: su valor, su potencial y su expresión
+            arquitectónica.
           </p>
         </div>
 
@@ -181,7 +242,8 @@ function ServiciosEtapasSeccion() {
             Gestión Patrimonial & Familiar
           </div>
           <p className="mt-2 text-[13px] text-black/70 italic max-w-3xl">
-            Acompañamos a las personas y familias detrás de cada inversión, con visión financiera, legal y humana.
+            Acompañamos a las personas y familias detrás de cada inversión, con visión financiera,
+            legal y humana.
           </p>
         </div>
 
@@ -197,7 +259,7 @@ function ServiciosEtapasSeccion() {
   );
 }
 
-/* ====== GRID DE CARDS (overlay desde abajo → full overlay al clic) ====== */
+/* ====== GRID DE CARDS ====== */
 function CardsGrid({
   cards,
   expandedIdx,
@@ -214,7 +276,6 @@ function CardsGrid({
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<boolean[]>(Array(cards.length).fill(false));
 
-  // reveal on scroll
   useEffect(() => {
     const nodes = containerRef.current?.querySelectorAll('[data-card]') ?? [];
     const io = new IntersectionObserver(
@@ -247,7 +308,6 @@ function CardsGrid({
     <div ref={containerRef} className={`${gridClass} ${className}`}>
       {cards.map((c, i) => {
         const isExpanded = expandedIdx === i;
-
         const toggle = () => setExpandedIdx(isExpanded ? null : i);
 
         return (
@@ -263,40 +323,29 @@ function CardsGrid({
             ].join(' ')}
             style={{ transitionDuration: '600ms', transitionTimingFunction: 'ease-out' }}
           >
-            {/* Imagen + click en cualquier parte */}
-            <div
-              className="relative aspect-[4/3] cursor-pointer"
-              onClick={toggle}
-            >
+            <div className="relative aspect-[4/3] cursor-pointer" onClick={toggle}>
               <img
                 src={c.img}
                 alt={c.title}
                 className="absolute inset-0 w-full h-full object-cover"
               />
 
-              {/* Overlay: bottom sheet en hover → FULL overlay al clic */}
               <div
                 className={[
-                  // base
                   'absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-[1px] border-t border-black/10',
-                  // animación de entrada tipo "desde abajo"
                   'translate-y-full opacity-0',
                   'group-hover:translate-y-0 group-hover:opacity-100',
                   'transition-[transform,opacity] duration-300 ease-out',
-                  // estado expandido: cubrir toda la foto
                   isExpanded ? 'inset-0 !translate-y-0 !opacity-100 overflow-auto' : '',
                 ].join(' ')}
               >
                 <div className="p-5 sm:p-6">
-                  {/* Título tipo kicker (se mantiene el mismo formato) */}
                   <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                     {c.title}
                   </div>
 
-                  {/* Resumen */}
                   <p className="mt-2 text-[13px] text-black/70 leading-relaxed">{c.summary}</p>
 
-                  {/* Detalle: SOLO visible cuando está expandido (dentro de la misma card) */}
                   <div
                     className={[
                       'overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
@@ -313,11 +362,13 @@ function CardsGrid({
                     </ul>
                   </div>
 
-                  {/* CTA: Ver más → Cerrar (toggle) */}
                   <div className="mt-4">
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); toggle(); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggle();
+                      }}
                       className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
                     >
                       {isExpanded ? 'Cerrar' : 'Ver más'}
@@ -342,7 +393,7 @@ type ServiceCard = {
   img: string;
 };
 
-/* BLOQUE I — Gestión del Activo Inmobiliario (5 cards) */
+/* BLOQUE I — Gestión del Activo Inmobiliario */
 const ACTIVO_CARDS: ServiceCard[] = [
   {
     kicker: 'Compra-Venta',
@@ -419,7 +470,7 @@ const ACTIVO_CARDS: ServiceCard[] = [
   },
 ];
 
-/* BLOQUE II — Gestión Patrimonial & Familiar (3 cards) */
+/* BLOQUE II — Gestión Patrimonial & Familiar */
 const PATRIMONIAL_CARDS: ServiceCard[] = [
   {
     kicker: 'Asesoría integral',
@@ -467,7 +518,7 @@ const PATRIMONIAL_CARDS: ServiceCard[] = [
   },
 ];
 
-/* ================= PROCESO (SE MANTIENE, SOLO SE MOVIÓ ARRIBA) ================= */
+/* ================= PROCESO ================= */
 const PROCESO = [
   {
     title: 'Alcance del Trabajo & Propuesta de servicios',
