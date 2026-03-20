@@ -76,45 +76,35 @@ function ProcesoSection() {
               const isOpen = openIdx === i;
 
               return (
-                <div key={p.title} className="pt-10">
+                <div key={p.title} className="pt-10 flex flex-col items-center">
                   <span className="mx-auto -mt-7 mb-5 block h-2 w-2 bg-[#0A2E57] ring-2 ring-[#0A2E57]/25" />
 
-                  <div className="mx-auto w-full max-w-[280px]">
-                    <div className="text-center text-[#0A2E57] text-[11px] tracking-[.25em] uppercase mb-3">
-                      Paso {i + 1}
-                    </div>
+                  <div className="text-center text-[#0A2E57] text-[11px] tracking-[.25em] uppercase mb-3">
+                    Paso {i + 1}
+                  </div>
 
-                    <div className="border border-black/10 bg-[#f8f9fb] shadow-sm overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => toggle(i)}
-                        className="w-full text-center px-5 py-5 hover:bg-[#f2f5f9] transition"
-                        aria-expanded={isOpen}
-                      >
-                        <div className="min-h-[48px] flex items-center justify-center">
-                          <h3 className="text-[14px] text-black/90 leading-snug">{p.title}</h3>
-                        </div>
+                  <button
+                    type="button"
+                    onClick={() => toggle(i)}
+                    className={[
+                      'border border-black/10 bg-[#f8f9fb] shadow-sm overflow-hidden',
+                      'px-7 py-7 text-center hover:bg-[#f2f5f9] transition',
+                      isOpen ? 'border-black/30' : '',
+                    ].join(' ')}
+                    aria-expanded={isOpen}
+                  >
+                    <h3 className="text-[14px] text-black/90 leading-snug">{p.title}</h3>
+                  </button>
 
-                        <div className="mt-4 h-px w-full bg-[#0A2E57]/12" />
-
-                        <div className="mt-4 flex justify-center">
-                          <span className="inline-flex items-center justify-center w-8 h-8 border border-black/10 bg-white text-[#0A2E57] text-[16px] leading-none">
-                            {isOpen ? '−' : '+'}
-                          </span>
-                        </div>
-                      </button>
-
-                      <div
-                        className={`overflow-hidden transition-all duration-300 ease-out ${
-                          isOpen ? 'max-h-[260px] opacity-100' : 'max-h-0 opacity-0'
-                        }`}
-                      >
-                        <div className="border-t border-black/10 bg-white px-5 py-5">
-                          <p className="text-[13px] text-black/70 leading-relaxed text-justify">
-                            {p.text}
-                          </p>
-                        </div>
-                      </div>
+                  <div
+                    className={`w-[280px] overflow-hidden transition-all duration-300 ease-out ${
+                      isOpen ? 'max-h-[260px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
+                    }`}
+                  >
+                    <div className="border border-black/10 bg-white px-5 py-5">
+                      <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                        {p.text}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -134,34 +124,30 @@ function ProcesoSection() {
                   Paso {i + 1}
                 </div>
 
-                <article className="border border-black/10 bg-[#f8f9fb] shadow-sm overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => toggle(i)}
-                    className="w-full text-left px-5 py-5 hover:bg-[#f2f5f9] transition"
-                    aria-expanded={isOpen}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <h3 className="text-[14px] text-black/90 leading-snug">{p.title}</h3>
+                <button
+                  type="button"
+                  onClick={() => toggle(i)}
+                  className={[
+                    'border border-black/10 bg-[#f8f9fb] shadow-sm overflow-hidden',
+                    'px-5 py-5 text-left hover:bg-[#f2f5f9] transition w-full',
+                    isOpen ? 'border-black/30' : '',
+                  ].join(' ')}
+                  aria-expanded={isOpen}
+                >
+                  <h3 className="text-[14px] text-black/90 leading-snug">{p.title}</h3>
+                </button>
 
-                      <span className="inline-flex items-center justify-center w-8 h-8 border border-black/10 bg-white text-[#0A2E57] text-[16px] leading-none shrink-0">
-                        {isOpen ? '−' : '+'}
-                      </span>
-                    </div>
-                  </button>
-
-                  <div
-                    className={`overflow-hidden transition-all duration-300 ease-out ${
-                      isOpen ? 'max-h-[320px] opacity-100' : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    <div className="border-t border-black/10 bg-white px-5 py-5">
-                      <p className="text-[13px] text-black/70 leading-relaxed text-justify">
-                        {p.text}
-                      </p>
-                    </div>
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-out ${
+                    isOpen ? 'max-h-[320px] opacity-100 mt-3' : 'max-h-0 opacity-0 mt-0'
+                  }`}
+                >
+                  <div className="border border-black/10 bg-white px-5 py-5">
+                    <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                      {p.text}
+                    </p>
                   </div>
-                </article>
+                </div>
               </div>
             );
           })}
