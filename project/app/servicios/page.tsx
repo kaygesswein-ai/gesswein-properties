@@ -67,11 +67,11 @@ function ProcesoSection() {
           </p>
         </div>
 
-        {/* DESKTOP / TABLET — mantiene línea de tiempo */}
+        {/* DESKTOP / TABLET */}
         <div className="hidden md:block relative">
-          <div className="absolute left-[5%] right-[5%] top-8 h-px bg-[#0A2E57]/30" />
+          <div className="absolute left-[6%] right-[6%] top-8 h-px bg-[#0A2E57]/30" />
 
-          <div className="grid grid-cols-4 gap-8">
+          <div className="grid grid-cols-4 gap-8 xl:gap-10 items-start">
             {PROCESO.map((p, i) => {
               const isOpen = openIdx === i;
 
@@ -79,32 +79,40 @@ function ProcesoSection() {
                 <div key={p.title} className="pt-10 flex flex-col items-center">
                   <span className="mx-auto -mt-7 mb-5 block h-2 w-2 bg-[#0A2E57] ring-2 ring-[#0A2E57]/25" />
 
-                  <div className="text-center text-[#0A2E57] text-[11px] tracking-[.25em] uppercase mb-3">
+                  <div className="text-center text-[#0A2E57] text-[11px] tracking-[.25em] uppercase mb-4">
                     Paso {i + 1}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => toggle(i)}
-                    className={[
-                      'border border-black/10 bg-[#f8f9fb] shadow-sm overflow-hidden',
-                      'px-7 py-7 text-center hover:bg-[#f2f5f9] transition',
-                      isOpen ? 'border-black/30' : '',
-                    ].join(' ')}
-                    aria-expanded={isOpen}
-                  >
-                    <h3 className="text-[14px] text-black/90 leading-snug">{p.title}</h3>
-                  </button>
+                  <div className="w-full max-w-[272px]">
+                    <button
+                      type="button"
+                      onClick={() => toggle(i)}
+                      className={[
+                        'w-full border border-black/10 bg-[#f8f9fb] shadow-sm',
+                        'px-5 py-5 text-left transition',
+                        'hover:bg-[#f2f5f9]',
+                        isOpen ? 'border-black/20' : '',
+                      ].join(' ')}
+                      aria-expanded={isOpen}
+                    >
+                      <div className="min-h-[66px] flex items-center">
+                        <h3 className="text-[14px] text-black/90 leading-snug">
+                          {p.title}
+                        </h3>
+                      </div>
+                    </button>
 
-                  <div
-                    className={`w-[280px] overflow-hidden transition-all duration-300 ease-out ${
-                      isOpen ? 'max-h-[260px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
-                    }`}
-                  >
-                    <div className="border border-black/10 bg-white px-5 py-5">
-                      <p className="text-[13px] text-black/70 leading-relaxed text-justify">
-                        {p.text}
-                      </p>
+                    <div
+                      className={[
+                        'overflow-hidden transition-all duration-300 ease-out',
+                        isOpen ? 'max-h-[320px] opacity-100' : 'max-h-0 opacity-0',
+                      ].join(' ')}
+                    >
+                      <div className="border-x border-b border-black/10 bg-white px-5 py-5 shadow-sm">
+                        <p className="text-[13px] text-black/70 leading-relaxed text-left">
+                          {p.text}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -124,28 +132,36 @@ function ProcesoSection() {
                   Paso {i + 1}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => toggle(i)}
-                  className={[
-                    'border border-black/10 bg-[#f8f9fb] shadow-sm overflow-hidden',
-                    'px-5 py-5 text-left hover:bg-[#f2f5f9] transition w-full',
-                    isOpen ? 'border-black/30' : '',
-                  ].join(' ')}
-                  aria-expanded={isOpen}
-                >
-                  <h3 className="text-[14px] text-black/90 leading-snug">{p.title}</h3>
-                </button>
+                <div className="w-full">
+                  <button
+                    type="button"
+                    onClick={() => toggle(i)}
+                    className={[
+                      'w-full border border-black/10 bg-[#f8f9fb] shadow-sm',
+                      'px-5 py-5 text-left transition',
+                      'hover:bg-[#f2f5f9]',
+                      isOpen ? 'border-black/20' : '',
+                    ].join(' ')}
+                    aria-expanded={isOpen}
+                  >
+                    <div className="min-h-[58px] flex items-center">
+                      <h3 className="text-[14px] text-black/90 leading-snug">
+                        {p.title}
+                      </h3>
+                    </div>
+                  </button>
 
-                <div
-                  className={`overflow-hidden transition-all duration-300 ease-out ${
-                    isOpen ? 'max-h-[320px] opacity-100 mt-3' : 'max-h-0 opacity-0 mt-0'
-                  }`}
-                >
-                  <div className="border border-black/10 bg-white px-5 py-5">
-                    <p className="text-[13px] text-black/70 leading-relaxed text-justify">
-                      {p.text}
-                    </p>
+                  <div
+                    className={[
+                      'overflow-hidden transition-all duration-300 ease-out',
+                      isOpen ? 'max-h-[320px] opacity-100' : 'max-h-0 opacity-0',
+                    ].join(' ')}
+                  >
+                    <div className="border-x border-b border-black/10 bg-white px-5 py-5 shadow-sm">
+                      <p className="text-[13px] text-black/70 leading-relaxed text-left">
+                        {p.text}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
