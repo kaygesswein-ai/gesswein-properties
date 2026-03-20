@@ -47,7 +47,7 @@ export default function ServiciosPage() {
  *  SECCIÓN PROCESO
  * ========================================================================== */
 function ProcesoSection() {
-  const [openIdx, setOpenIdx] = useState<number | null>(0);
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
 
   const toggle = (idx: number) => {
     setOpenIdx((prev) => (prev === idx ? null : idx));
@@ -67,58 +67,62 @@ function ProcesoSection() {
           </p>
         </div>
 
-        {/* DESKTOP / TABLET */}
-        <div className="hidden md:grid grid-cols-4 gap-6">
-          {PROCESO.map((p, i) => {
-            const isOpen = openIdx === i;
+        {/* DESKTOP / TABLET — mantiene línea de tiempo */}
+        <div className="hidden md:block relative">
+          <div className="absolute left-[5%] right-[5%] top-8 h-px bg-[#0A2E57]/30" />
 
-            return (
-              <article
-                key={p.title}
-                className="border border-black/10 bg-white shadow-sm overflow-hidden"
-              >
-                <button
-                  type="button"
-                  onClick={() => toggle(i)}
-                  className="w-full text-left px-6 py-5 hover:bg-[#f8f9fb] transition"
-                  aria-expanded={isOpen}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                        Paso {i + 1}
+          <div className="grid grid-cols-4 gap-8">
+            {PROCESO.map((p, i) => {
+              const isOpen = openIdx === i;
+
+              return (
+                <div key={p.title} className="pt-10">
+                  <span className="mx-auto -mt-7 mb-5 block h-2 w-2 bg-[#0A2E57] ring-2 ring-[#0A2E57]/25" />
+
+                  <div className="text-center">
+                    <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                      Paso {i + 1}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => toggle(i)}
+                      className="mt-2 w-full max-w-[280px] mx-auto text-center"
+                      aria-expanded={isOpen}
+                    >
+                      <div className="min-h-[44px] flex items-center justify-center">
+                        <h3 className="text-[14px] text-black/90 leading-snug">{p.title}</h3>
                       </div>
-                      <h3 className="mt-2 text-[15px] text-black/90 leading-snug">{p.title}</h3>
+
+                      <div className="mt-3 h-px w-full bg-[#0A2E57]/12" />
+
+                      <div className="mt-3 flex justify-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 border border-black/10 text-[#0A2E57] text-[16px] bg-white hover:bg-[#f8f9fb] transition">
+                          {isOpen ? '−' : '+'}
+                        </span>
+                      </div>
+                    </button>
+
+                    <div
+                      className={`mx-auto w-full max-w-[280px] overflow-hidden transition-all duration-300 ease-out ${
+                        isOpen ? 'max-h-[260px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
+                      }`}
+                    >
+                      <div className="border border-black/10 bg-[#F9FAFB] px-5 py-5 text-left">
+                        <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                          {p.text}
+                        </p>
+                      </div>
                     </div>
-
-                    <div className="shrink-0 pt-1">
-                      <span className="inline-flex items-center justify-center w-8 h-8 border border-black/10 text-[#0A2E57] text-[16px]">
-                        {isOpen ? '−' : '+'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 h-px bg-[#0A2E57]/12" />
-                </button>
-
-                <div
-                  className={`overflow-hidden transition-all duration-300 ease-out ${
-                    isOpen ? 'max-h-[320px] opacity-100' : 'max-h-0 opacity-0'
-                  }`}
-                >
-                  <div className="px-6 pb-6">
-                    <p className="text-[13px] text-black/70 leading-relaxed text-justify">
-                      {p.text}
-                    </p>
                   </div>
                 </div>
-              </article>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {/* MOBILE */}
-        <div className="md:hidden flex flex-col gap-4">
+        <div className="md:hidden flex flex-col gap-5">
           {PROCESO.map((p, i) => {
             const isOpen = openIdx === i;
 
@@ -133,31 +137,28 @@ function ProcesoSection() {
                   className="w-full text-left px-5 py-5 hover:bg-[#f8f9fb] transition"
                   aria-expanded={isOpen}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                        Paso {i + 1}
-                      </div>
-                      <h3 className="mt-2 text-[15px] text-black/90 leading-snug">{p.title}</h3>
-                    </div>
-
-                    <div className="shrink-0 pt-1">
-                      <span className="inline-flex items-center justify-center w-8 h-8 border border-black/10 text-[#0A2E57] text-[16px]">
-                        {isOpen ? '−' : '+'}
-                      </span>
-                    </div>
+                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                    Paso {i + 1}
                   </div>
 
-                  <div className="mt-4 h-px bg-[#0A2E57]/12" />
+                  <div className="mt-2 flex items-start justify-between gap-4">
+                    <h3 className="text-[14px] text-black/90 leading-snug">{p.title}</h3>
+
+                    <span className="inline-flex items-center justify-center w-8 h-8 border border-black/10 text-[#0A2E57] text-[16px] bg-white shrink-0">
+                      {isOpen ? '−' : '+'}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 h-px w-full bg-[#0A2E57]/12" />
                 </button>
 
                 <div
                   className={`overflow-hidden transition-all duration-300 ease-out ${
-                    isOpen ? 'max-h-[360px] opacity-100' : 'max-h-0 opacity-0'
+                    isOpen ? 'max-h-[320px] opacity-100' : 'max-h-0 opacity-0'
                   }`}
                 >
-                  <div className="px-5 pb-5">
-                    <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                  <div className="px-5 pb-5 bg-[#F9FAFB]">
+                    <p className="text-[13px] text-black/70 leading-relaxed text-justify pt-4">
                       {p.text}
                     </p>
                   </div>
