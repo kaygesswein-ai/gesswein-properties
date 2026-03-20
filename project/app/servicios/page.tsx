@@ -56,20 +56,24 @@ export default function ServiciosPage() {
             </p>
           </div>
 
-          {/* DESKTOP / TABLET — NO TOCAR */}
+          {/* DESKTOP / TABLET */}
           <div className="hidden sm:block relative">
             <div className="absolute left-[5%] right-[5%] top-8 h-px bg-[#0A2E57]/30" />
-            <div className="grid grid-cols-4 gap-8 text-center">
+            <div className="grid grid-cols-4 gap-8">
               {PROCESO.map((p, i) => (
-                <div key={p.title} className="pt-10">
+                <div key={p.title} className="pt-10 flex flex-col items-center">
                   <span className="mx-auto -mt-7 mb-5 block h-2 w-2 bg-[#0A2E57] ring-2 ring-[#0A2E57]/25" />
-                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
+                  <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase text-center">
                     Paso {i + 1}
                   </div>
-                  <h3 className="mt-1 text-[14px] text-black/90">{p.title}</h3>
-                  <p className="mt-2 text-[13px] text-black/70 leading-relaxed max-w-[260px] mx-auto">
-                    {p.text}
-                  </p>
+                  <h3 className="mt-1 text-[14px] text-black/90 text-center min-h-[44px] flex items-center justify-center">
+                    {p.title}
+                  </h3>
+                  <div className="mt-4 w-full max-w-[280px] min-h-[220px] border border-[#0A2E57]/12 bg-[#F9FAFB] px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                    <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                      {p.text}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -107,12 +111,17 @@ export default function ServiciosPage() {
  *  - Overlay que sube desde abajo y, al clic, EXPANDE a toda la foto con el detalle
  * ========================================================================== */
 function ServiciosEtapasSeccion() {
-  // índice de card expandida (full overlay). null = ninguna
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [expandedActivoIdx, setExpandedActivoIdx] = useState<number | null>(null);
+  const [expandedPatrimonialIdx, setExpandedPatrimonialIdx] = useState<number | null>(null);
 
   // cerrar al presionar Escape (accesibilidad)
   useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setExpandedIdx(null); };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setExpandedActivoIdx(null);
+        setExpandedPatrimonialIdx(null);
+      }
+    };
     window.addEventListener('keydown', onEsc);
     return () => window.removeEventListener('keydown', onEsc);
   }, []);
@@ -160,8 +169,8 @@ function ServiciosEtapasSeccion() {
 
         <CardsGrid
           cards={ACTIVO_CARDS}
-          expandedIdx={expandedIdx}
-          setExpandedIdx={setExpandedIdx}
+          expandedIdx={expandedActivoIdx}
+          setExpandedIdx={setExpandedActivoIdx}
           cols={{ md: 2, xl: 3 }}
           className="mt-8"
         />
@@ -178,8 +187,8 @@ function ServiciosEtapasSeccion() {
 
         <CardsGrid
           cards={PATRIMONIAL_CARDS}
-          expandedIdx={expandedIdx}
-          setExpandedIdx={setExpandedIdx}
+          expandedIdx={expandedPatrimonialIdx}
+          setExpandedIdx={setExpandedPatrimonialIdx}
           cols={{ md: 2, xl: 3 }}
           className="mt-8"
         />
