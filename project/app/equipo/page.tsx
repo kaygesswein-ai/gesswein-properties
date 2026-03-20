@@ -15,6 +15,7 @@ import {
   Search,
   Handshake,
   Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 
 /* =========================
@@ -114,7 +115,8 @@ const TEAM_PRINCIPAL: Member[] = [
       'Especialista en análisis financiero, valoración de activos y estructuración de modelos de inversión, con experiencia en asesoría financiera, due diligence y modelación en múltiples industrias a nivel nacional e internacional. Integra rigurosidad técnica y visión comercial para analizar oportunidades inmobiliarias con foco en rentabilidad, riesgo y proyección de valor en el largo plazo.',
     ],
     education: 'Ingeniería Comercial, Magíster en Finanzas, Universidad Adolfo Ibáñez.',
-    specialties: 'Análisis y valoración de activos · Due diligence · Estructuración de modelos de inversión',
+    specialties:
+      'Análisis y valoración de activos · Due diligence · Estructuración de modelos de inversión',
     email: 'kaygesswein@gmail.com',
     phone: '+56 9 9334 5413',
     linkedin: 'https://www.linkedin.com/in/kay-gesswein-san-martin/',
@@ -156,11 +158,180 @@ const CULTURE = [
   },
 ];
 
+const COMPARISON_ITEMS = [
+  {
+    id: 'analisis',
+    icon: ClipboardCheck,
+    title: '1) Análisis técnico previo',
+    subtitle: 'Antes de publicar',
+    tradicionalTitle: 'Corredora tradicional',
+    tradicionalBody: (
+      <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+        Toma la propiedad, estima un precio por comparables y la publica.
+      </p>
+    ),
+    gpTitle: 'Gesswein Properties',
+    gpBody: (
+      <>
+        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+          Inicia con diagnóstico:
+        </p>
+        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
+          <li>Lectura normativa y restricciones (qué se puede / qué no se puede hacer)</li>
+          <li>
+            Evaluación de potencial: ampliaciones, remodelación, proyecto nuevo,
+            subdivisión o fusión
+          </li>
+          <li>
+            Identificación de riesgos: constructivos, regulatorios, comerciales y
+            documentales
+          </li>
+          <li>Coherencia financiera: costo/beneficio de intervenir o vender “tal cual”</li>
+        </ul>
+        <p className="mt-4 text-[13px] text-black/70 leading-relaxed text-justify">
+          Resultado: el cliente entiende el activo como inversión patrimonial, no como
+          improvisación de mercado.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'estrategia',
+    icon: Target,
+    title: '2) Estrategia comercial',
+    subtitle: 'Basada en valor verificable',
+    tradicionalTitle: 'Corredora tradicional',
+    tradicionalBody: (
+      <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+        Publica “bonita” y negocia sobre percepciones.
+      </p>
+    ),
+    gpTitle: 'Gesswein Properties',
+    gpBody: (
+      <>
+        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+          Posiciona la propiedad con argumentos sólidos:
+        </p>
+        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
+          <li>Atributos técnicos y comparables bien construidos</li>
+          <li>Segmentación del comprador correcto (no visitas indiscriminadas)</li>
+          <li>Storytelling premium sustentado (no promesas genéricas)</li>
+          <li>Timing y plan de salida a mercado (cuándo conviene, cuándo perjudica)</li>
+        </ul>
+        <div className="mt-5 border-l-2 border-[#0A2E57]/60 pl-5">
+          <p className="text-black/75 text-[13px] leading-relaxed text-justify">
+            <span className="text-[#0A2E57] font-medium">Ejemplo práctico:</span> Una casa
+            en sector prime puede venderse mal si se comunica como “casa antigua” cuando
+            su valor real está en su terreno, cabida o posibilidad de remodelación de
+            alto estándar. Nosotros definimos qué historia es verdadera y rentable:
+            casa para actualizar, terreno para proyecto, o activo mixto con plan de
+            valorización.
+          </p>
+        </div>
+      </>
+    ),
+  },
+  {
+    id: 'valorizacion',
+    icon: Sparkles,
+    title: '3) Valorización real',
+    subtitle: 'Vender mejor, no solo vender',
+    tradicionalTitle: 'Corredora tradicional',
+    tradicionalBody: (
+      <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+        Propone ajustes de precio cuando “no hay interés”.
+      </p>
+    ),
+    gpTitle: 'Gesswein Properties',
+    gpBody: (
+      <>
+        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+          Propone acciones de valorización cuando hacen sentido:
+        </p>
+        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
+          <li>Home Staging y preparación técnica de presentación</li>
+          <li>
+            Ajustes concretos de layout, iluminación, paisajismo o materialidad (si aporta
+            retorno)
+          </li>
+          <li>
+            Proyección arquitectónica simple para mostrar “posible futuro” (cuando agrega
+            valor)
+          </li>
+          <li>
+            Corrección de puntos friccionantes: orden documental, claridad normativa, etc.
+          </li>
+        </ul>
+      </>
+    ),
+  },
+  {
+    id: 'barrido',
+    icon: Search,
+    title: '4) Barrido de mercado',
+    subtitle: 'Incluso fuera de cartera',
+    tradicionalTitle: 'Corredora tradicional',
+    tradicionalBody: (
+      <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+        Ofrece lo que tiene publicado.
+      </p>
+    ),
+    gpTitle: 'Gesswein Properties',
+    gpBody: (
+      <>
+        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+          Busca lo que el cliente realmente necesita:
+        </p>
+        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
+          <li>Barridos de mercado por zona, tipología, potencial y restricciones</li>
+          <li>Oportunidades fuera de portales o con baja visibilidad</li>
+          <li>
+            Identificación de terrenos escasos o activos que requieren gestión para liberarse
+          </li>
+        </ul>
+        <p className="mt-4 text-[13px] text-black/70 leading-relaxed text-justify">
+          Esto es clave en clientes exigentes: la operación no se define por “lo que apareció”,
+          sino por lo que calza con el objetivo.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'acompanamiento',
+    icon: Handshake,
+    title: '5) Acompañamiento integral',
+    subtitle: 'Gestión de fricciones',
+    tradicionalTitle: 'Corredora tradicional',
+    tradicionalBody: (
+      <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+        Coordina y deriva (abogado, banco, tasador).
+      </p>
+    ),
+    gpTitle: 'Gesswein Properties',
+    gpBody: (
+      <>
+        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
+          Acompaña y gestiona:
+        </p>
+        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
+          <li>Revisión y estudios de títulos (enfoque preventivo)</li>
+          <li>Coordinación de tasaciones profesionales con criterios correctos</li>
+          <li>Asesoría de financiamiento y estructura de compra/venta</li>
+          <li>Gestión de riesgos y obstáculos antes de firmar</li>
+        </ul>
+      </>
+    ),
+  },
+] as const;
+
 /* =========================
    PAGE
    ========================= */
 
 export default function EquipoPage() {
+  const [misionOpen, setMisionOpen] = useState(false);
+  const [visionOpen, setVisionOpen] = useState(false);
+
   return (
     <main className="bg-white">
       {/* HERO */}
@@ -189,7 +360,6 @@ export default function EquipoPage() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-8 md:grid-cols-2 items-stretch">
-            {/* Texto */}
             <div className="md:order-1 order-2">
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
                 Nuestra Historia
@@ -217,7 +387,6 @@ export default function EquipoPage() {
               </div>
             </div>
 
-            {/* Imagen */}
             <div className="md:order-2 order-1">
               <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
                 <img
@@ -257,46 +426,100 @@ export default function EquipoPage() {
               <p className="text-[#0E2C4A] text-[14px] leading-relaxed">
                 No vendemos propiedades como están.
                 <br />
-                <span className="text-[#0A2E57] font-medium">Las posicionamos como pueden llegar a ser.</span>
+                <span className="text-[#0A2E57] font-medium">
+                  Las posicionamos como pueden llegar a ser.
+                </span>
               </p>
             </div>
           </div>
 
-          {/* === CAMBIO: MISIÓN + VISIÓN AQUÍ (ANTES DE "POR QUÉ") === */}
           <div className="mt-10 grid md:grid-cols-2 gap-6">
-            <article className="group border border-black/10 bg-white p-7 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between gap-6">
-                <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57]">Misión</h3>
-                <div className="h-[2px] w-16 bg-[#0A2E57]/70 mt-2" />
+            <article className="border border-black/10 bg-white shadow-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMisionOpen((v) => !v)}
+                className="w-full p-7 text-left"
+                aria-expanded={misionOpen}
+              >
+                <div className="flex items-start justify-between gap-6">
+                  <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57]">
+                    Misión
+                  </h3>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="h-[2px] w-16 bg-[#0A2E57]/70 mt-2" />
+                    <ChevronDown
+                      className={`h-4 w-4 text-[#0A2E57] transition-transform duration-300 ${
+                        misionOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </div>
+                </div>
+              </button>
+
+              <div
+                className={`overflow-hidden transition-all duration-300 ${
+                  misionOpen ? 'max-h-[240px] opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="px-7 pb-7">
+                  <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                    Gestionar propiedades como activos inmobiliarios, integrando arquitectura, análisis
+                    normativo y estrategia comercial para maximizar su valor real, reducir riesgos y
+                    acompañar a nuestros clientes con un estándar profesional superior en cada etapa del
+                    proceso.
+                  </p>
+                </div>
               </div>
-              <p className="mt-4 text-[13px] text-black/70 leading-relaxed text-justify">
-                Gestionar propiedades como activos inmobiliarios, integrando arquitectura, análisis
-                normativo y estrategia comercial para maximizar su valor real, reducir riesgos y
-                acompañar a nuestros clientes con un estándar profesional superior en cada etapa del
-                proceso.
-              </p>
             </article>
 
-            <article className="group border border-black/10 bg-white p-7 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between gap-6">
-                <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57]">Visión</h3>
-                <div className="h-[2px] w-16 bg-[#0A2E57]/70 mt-2" />
+            <article className="border border-black/10 bg-white shadow-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setVisionOpen((v) => !v)}
+                className="w-full p-7 text-left"
+                aria-expanded={visionOpen}
+              >
+                <div className="flex items-start justify-between gap-6">
+                  <h3 className="text-[15px] uppercase tracking-[.25em] text-[#0A2E57]">
+                    Visión
+                  </h3>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="h-[2px] w-16 bg-[#0A2E57]/70 mt-2" />
+                    <ChevronDown
+                      className={`h-4 w-4 text-[#0A2E57] transition-transform duration-300 ${
+                        visionOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </div>
+                </div>
+              </button>
+
+              <div
+                className={`overflow-hidden transition-all duration-300 ${
+                  visionOpen ? 'max-h-[240px] opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="px-7 pb-7">
+                  <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                    Ser la firma boutique de real estate referente en el segmento premium, reconocida
+                    por elevar el estándar del mercado inmobiliario chileno mediante un enfoque técnico,
+                    estratégico y orientado a decisiones patrimoniales informadas.
+                  </p>
+                </div>
               </div>
-              <p className="mt-4 text-[13px] text-black/70 leading-relaxed text-justify">
-                Ser la firma boutique de real estate referente en el segmento premium, reconocida
-                por elevar el estándar del mercado inmobiliario chileno mediante un enfoque técnico,
-                estratégico y orientado a decisiones patrimoniales informadas.
-              </p>
             </article>
           </div>
+        </div>
+      </section>
 
-          {/* === CAMBIO: POR QUÉ GP (ANCHO COMPLETO + "AFICHES" VISUALES) === */}
-          <div className="mt-14">
+      {/* 2B) POR QUÉ GP — BLANCO, SEPARADO VISUALMENTE */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="mt-0">
             <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
               Por qué Gesswein Properties
             </h3>
 
-            {/* ancho completo (sin max-w) */}
             <div className="w-full">
               <p className="text-black/80 text-[14px] leading-relaxed text-justify">
                 Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.
@@ -321,294 +544,12 @@ export default function EquipoPage() {
                   Nosotros vs. corredora tradicional
                 </div>
 
-                {/* Afiches / mini-segmentos */}
                 <div className="mt-6 grid gap-6">
-                  {/* 1 */}
-                  <article className="border border-black/10 bg-white shadow-sm overflow-hidden">
-                    <div className="px-7 py-5 bg-slate-50 border-b border-black/10 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
-                          <ClipboardCheck className="h-5 w-5 text-[#0A2E57]" />
-                        </div>
-                        <div>
-                          <div className="text-[#0A2E57] text-[12px] tracking-[.22em] uppercase font-semibold">
-                            1) Análisis técnico previo
-                          </div>
-                          <div className="text-black/60 text-[12px]">Antes de publicar</div>
-                        </div>
-                      </div>
-                      <div className="hidden md:block h-[2px] w-20 bg-[#0A2E57]/60" />
-                    </div>
+                  {COMPARISON_ITEMS.map((item) => (
+                    <ComparisonAccordion key={item.id} item={item} />
+                  ))}
 
-                    <div className="p-7 grid md:grid-cols-2 gap-6">
-                      <div className="border border-black/10 bg-white p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-black/60 font-semibold">
-                          Corredora tradicional
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Toma la propiedad, estima un precio por comparables y la publica.
-                        </p>
-                      </div>
-
-                      <div className="border border-[#0A2E57]/20 bg-[#F3F7FB] p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-[#0A2E57] font-semibold">
-                          Gesswein Properties
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Inicia con diagnóstico:
-                        </p>
-                        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
-                          <li>Lectura normativa y restricciones (qué se puede / qué no se puede hacer)</li>
-                          <li>
-                            Evaluación de potencial: ampliaciones, remodelación, proyecto nuevo,
-                            subdivisión o fusión
-                          </li>
-                          <li>
-                            Identificación de riesgos: constructivos, regulatorios, comerciales y
-                            documentales
-                          </li>
-                          <li>Coherencia financiera: costo/beneficio de intervenir o vender “tal cual”</li>
-                        </ul>
-                        <p className="mt-4 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Resultado: el cliente entiende el activo como inversión patrimonial, no como
-                          improvisación de mercado.
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-
-                  {/* 2 */}
-                  <article className="border border-black/10 bg-white shadow-sm overflow-hidden">
-                    <div className="px-7 py-5 bg-slate-50 border-b border-black/10 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
-                          <Target className="h-5 w-5 text-[#0A2E57]" />
-                        </div>
-                        <div>
-                          <div className="text-[#0A2E57] text-[12px] tracking-[.22em] uppercase font-semibold">
-                            2) Estrategia comercial
-                          </div>
-                          <div className="text-black/60 text-[12px]">Basada en valor verificable</div>
-                        </div>
-                      </div>
-                      <div className="hidden md:block h-[2px] w-20 bg-[#0A2E57]/60" />
-                    </div>
-
-                    <div className="p-7 grid md:grid-cols-2 gap-6">
-                      <div className="border border-black/10 bg-white p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-black/60 font-semibold">
-                          Corredora tradicional
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Publica “bonita” y negocia sobre percepciones.
-                        </p>
-                      </div>
-
-                      <div className="border border-[#0A2E57]/20 bg-[#F3F7FB] p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-[#0A2E57] font-semibold">
-                          Gesswein Properties
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Posiciona la propiedad con argumentos sólidos:
-                        </p>
-                        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
-                          <li>Atributos técnicos y comparables bien construidos</li>
-                          <li>Segmentación del comprador correcto (no visitas indiscriminadas)</li>
-                          <li>Storytelling premium sustentado (no promesas genéricas)</li>
-                          <li>Timing y plan de salida a mercado (cuándo conviene, cuándo perjudica)</li>
-                        </ul>
-
-                        <div className="mt-5 border-l-2 border-[#0A2E57]/60 pl-5">
-                          <p className="text-black/75 text-[13px] leading-relaxed text-justify">
-                            <span className="text-[#0A2E57] font-medium">Ejemplo práctico:</span> Una casa
-                            en sector prime puede venderse mal si se comunica como “casa antigua” cuando
-                            su valor real está en su terreno, cabida o posibilidad de remodelación de
-                            alto estándar. Nosotros definimos qué historia es verdadera y rentable:
-                            casa para actualizar, terreno para proyecto, o activo mixto con plan de
-                            valorización.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-
-                  {/* 3 */}
-                  <article className="border border-black/10 bg-white shadow-sm overflow-hidden">
-                    <div className="px-7 py-5 bg-slate-50 border-b border-black/10 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
-                          <Sparkles className="h-5 w-5 text-[#0A2E57]" />
-                        </div>
-                        <div>
-                          <div className="text-[#0A2E57] text-[12px] tracking-[.22em] uppercase font-semibold">
-                            3) Valorización real
-                          </div>
-                          <div className="text-black/60 text-[12px]">Vender mejor, no solo vender</div>
-                        </div>
-                      </div>
-                      <div className="hidden md:block h-[2px] w-20 bg-[#0A2E57]/60" />
-                    </div>
-
-                    <div className="p-7 grid md:grid-cols-2 gap-6">
-                      <div className="border border-black/10 bg-white p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-black/60 font-semibold">
-                          Corredora tradicional
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Propone ajustes de precio cuando “no hay interés”.
-                        </p>
-                      </div>
-
-                      <div className="border border-[#0A2E57]/20 bg-[#F3F7FB] p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-[#0A2E57] font-semibold">
-                          Gesswein Properties
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Propone acciones de valorización cuando hacen sentido:
-                        </p>
-                        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
-                          <li>Home Staging y preparación técnica de presentación</li>
-                          <li>
-                            Ajustes concretos de layout, iluminación, paisajismo o materialidad (si aporta
-                            retorno)
-                          </li>
-                          <li>
-                            Proyección arquitectónica simple para mostrar “posible futuro” (cuando agrega
-                            valor)
-                          </li>
-                          <li>
-                            Corrección de puntos friccionantes: orden documental, claridad normativa, etc.
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </article>
-
-                  {/* 4 */}
-                  <article className="border border-black/10 bg-white shadow-sm overflow-hidden">
-                    <div className="px-7 py-5 bg-slate-50 border-b border-black/10 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
-                          <Search className="h-5 w-5 text-[#0A2E57]" />
-                        </div>
-                        <div>
-                          <div className="text-[#0A2E57] text-[12px] tracking-[.22em] uppercase font-semibold">
-                            4) Barrido de mercado
-                          </div>
-                          <div className="text-black/60 text-[12px]">Incluso fuera de cartera</div>
-                        </div>
-                      </div>
-                      <div className="hidden md:block h-[2px] w-20 bg-[#0A2E57]/60" />
-                    </div>
-
-                    <div className="p-7 grid md:grid-cols-2 gap-6">
-                      <div className="border border-black/10 bg-white p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-black/60 font-semibold">
-                          Corredora tradicional
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Ofrece lo que tiene publicado.
-                        </p>
-                      </div>
-
-                      <div className="border border-[#0A2E57]/20 bg-[#F3F7FB] p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-[#0A2E57] font-semibold">
-                          Gesswein Properties
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Busca lo que el cliente realmente necesita:
-                        </p>
-                        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
-                          <li>Barridos de mercado por zona, tipología, potencial y restricciones</li>
-                          <li>Oportunidades fuera de portales o con baja visibilidad</li>
-                          <li>
-                            Identificación de terrenos escasos o activos que requieren gestión para liberarse
-                          </li>
-                        </ul>
-                        <p className="mt-4 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Esto es clave en clientes exigentes: la operación no se define por “lo que apareció”,
-                          sino por lo que calza con el objetivo.
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-
-                  {/* 5 */}
-                  <article className="border border-black/10 bg-white shadow-sm overflow-hidden">
-                    <div className="px-7 py-5 bg-slate-50 border-b border-black/10 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
-                          <Handshake className="h-5 w-5 text-[#0A2E57]" />
-                        </div>
-                        <div>
-                          <div className="text-[#0A2E57] text-[12px] tracking-[.22em] uppercase font-semibold">
-                            5) Acompañamiento integral
-                          </div>
-                          <div className="text-black/60 text-[12px]">Gestión de fricciones</div>
-                        </div>
-                      </div>
-                      <div className="hidden md:block h-[2px] w-20 bg-[#0A2E57]/60" />
-                    </div>
-
-                    <div className="p-7 grid md:grid-cols-2 gap-6">
-                      <div className="border border-black/10 bg-white p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-black/60 font-semibold">
-                          Corredora tradicional
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Coordina y deriva (abogado, banco, tasador).
-                        </p>
-                      </div>
-
-                      <div className="border border-[#0A2E57]/20 bg-[#F3F7FB] p-6">
-                        <div className="text-[12px] tracking-[.18em] uppercase text-[#0A2E57] font-semibold">
-                          Gesswein Properties
-                        </div>
-                        <p className="mt-3 text-[13px] text-black/70 leading-relaxed text-justify">
-                          Acompaña y gestiona:
-                        </p>
-                        <ul className="mt-3 list-disc pl-6 text-black/75 text-[13px] leading-relaxed space-y-1">
-                          <li>Revisión y estudios de títulos (enfoque preventivo)</li>
-                          <li>Coordinación de tasaciones profesionales con criterios correctos</li>
-                          <li>Asesoría de financiamiento y estructura de compra/venta</li>
-                          <li>Gestión de riesgos y obstáculos antes de firmar</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </article>
-
-                  {/* Qué obtiene el cliente (separado) */}
-                  <article className="border border-black/10 bg-white shadow-sm overflow-hidden">
-                    <div className="px-7 py-5 bg-[#0A2E57] flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 border border-white/25 bg-white/10 flex items-center justify-center">
-                          <ShieldCheck className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <div className="text-white text-[12px] tracking-[.22em] uppercase font-semibold">
-                            Qué obtiene el cliente
-                          </div>
-                          <div className="text-white/80 text-[12px]">Resultados prácticos</div>
-                        </div>
-                      </div>
-                      <div className="hidden md:block h-[2px] w-20 bg-white/60" />
-                    </div>
-
-                    <div className="p-7">
-                      <ul className="list-disc pl-6 text-black/75 text-[14px] leading-relaxed space-y-1">
-                        <li>Mayor claridad y control del proceso</li>
-                        <li>Menos sorpresas normativas, técnicas o documentales</li>
-                        <li>Mejor estrategia de valorización y salida a mercado</li>
-                        <li>Negociación con fundamentos, no con presión</li>
-                        <li>Un socio técnico-comercial, no solo un intermediario</li>
-                      </ul>
-
-                      <p className="mt-5 text-black/80 text-[14px] leading-relaxed text-justify">
-                        Gesswein Properties es real estate con estándar profesional. <br />
-                        Para clientes que no compran ni venden “a ciegas”.
-                      </p>
-                    </div>
-                  </article>
+                  <ClientValueAccordion />
                 </div>
               </div>
             </div>
@@ -625,14 +566,13 @@ export default function EquipoPage() {
 
           <div className="max-w-4xl">
             <div className="text-[#0E2C4A] text-[14px] leading-relaxed space-y-4 text-justify">
-              {/* CAMBIO: eliminar "Arquitectura aplicada al Real Estate" */}
-
-              {/* CAMBIO: destacar frase como el bloque de Propuesta de Valor */}
               <div className="mt-2 border-l-2 border-[#0A2E57]/60 pl-5">
                 <p className="text-[#0E2C4A] text-[14px] leading-relaxed">
                   En real estate, la diferencia no está en “publicar bien”.
                   <br />
-                  <span className="text-[#0A2E57] font-medium">La diferencia está en entender el activo.</span>
+                  <span className="text-[#0A2E57] font-medium">
+                    La diferencia está en entender el activo.
+                  </span>
                 </p>
               </div>
 
@@ -651,7 +591,6 @@ export default function EquipoPage() {
                 un activo sea un proceso claro, controlado y profesional.
               </p>
 
-              {/* CAMBIO: "Lo que defendemos" con formato tipo "Por qué..." */}
               <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium pt-4">
                 Lo que defendemos
               </h3>
@@ -735,9 +674,140 @@ export default function EquipoPage() {
           </div>
         </div>
       </section>
-
-      {/* === CAMBIO PUNTUAL: eliminado el segmento "¿Quieres trabajar con nosotros?" === */}
     </main>
+  );
+}
+
+/* =========================
+   ACCORDIONS DE LA SECCIÓN COMPARATIVA
+   ========================= */
+
+function ComparisonAccordion({
+  item,
+}: {
+  item: {
+    id: string;
+    icon: any;
+    title: string;
+    subtitle: string;
+    tradicionalTitle: string;
+    tradicionalBody: React.ReactNode;
+    gpTitle: string;
+    gpBody: React.ReactNode;
+  };
+}) {
+  const [open, setOpen] = useState(false);
+  const Icon = item.icon;
+
+  return (
+    <article className="border border-black/10 bg-[#f8f9fb] shadow-sm overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full px-7 py-5 bg-slate-50 border-b border-black/10 flex items-center justify-between gap-4 text-left"
+        aria-expanded={open}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
+            <Icon className="h-5 w-5 text-[#0A2E57]" />
+          </div>
+          <div>
+            <div className="text-[#0A2E57] text-[12px] tracking-[.22em] uppercase font-semibold">
+              {item.title}
+            </div>
+            <div className="text-black/60 text-[12px]">{item.subtitle}</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="hidden md:block h-[2px] w-20 bg-[#0A2E57]/60" />
+          <ChevronDown
+            className={`h-4 w-4 text-[#0A2E57] transition-transform duration-300 ${
+              open ? 'rotate-180' : ''
+            }`}
+          />
+        </div>
+      </button>
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ${
+          open ? 'max-h-[1200px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="p-7 grid md:grid-cols-2 gap-6 bg-[#f8f9fb]">
+          <div className="border border-black/10 bg-white p-6">
+            <div className="text-[12px] tracking-[.18em] uppercase text-black/60 font-semibold">
+              {item.tradicionalTitle}
+            </div>
+            {item.tradicionalBody}
+          </div>
+
+          <div className="border border-[#0A2E57]/20 bg-[#F3F7FB] p-6">
+            <div className="text-[12px] tracking-[.18em] uppercase text-[#0A2E57] font-semibold">
+              {item.gpTitle}
+            </div>
+            {item.gpBody}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ClientValueAccordion() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <article className="border border-black/10 bg-[#f8f9fb] shadow-sm overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full px-7 py-5 bg-[#0A2E57] flex items-center justify-between gap-4 text-left"
+        aria-expanded={open}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 border border-white/25 bg-white/10 flex items-center justify-center">
+            <ShieldCheck className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <div className="text-white text-[12px] tracking-[.22em] uppercase font-semibold">
+              Qué obtiene el cliente
+            </div>
+            <div className="text-white/80 text-[12px]">Resultados prácticos</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="hidden md:block h-[2px] w-20 bg-white/60" />
+          <ChevronDown
+            className={`h-4 w-4 text-white transition-transform duration-300 ${
+              open ? 'rotate-180' : ''
+            }`}
+          />
+        </div>
+      </button>
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ${
+          open ? 'max-h-[520px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="p-7 bg-white">
+          <ul className="list-disc pl-6 text-black/75 text-[14px] leading-relaxed space-y-1">
+            <li>Mayor claridad y control del proceso</li>
+            <li>Menos sorpresas normativas, técnicas o documentales</li>
+            <li>Mejor estrategia de valorización y salida a mercado</li>
+            <li>Negociación con fundamentos, no con presión</li>
+            <li>Un socio técnico-comercial, no solo un intermediario</li>
+          </ul>
+
+          <p className="mt-5 text-black/80 text-[14px] leading-relaxed text-justify">
+            Gesswein Properties es real estate con estándar profesional. <br />
+            Para clientes que no compran ni venden “a ciegas”.
+          </p>
+        </div>
+      </div>
+    </article>
   );
 }
 
