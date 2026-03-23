@@ -15,7 +15,9 @@ export const metadata: Metadata = {
 }
 
 const HERO_IMG = '/images/portadas/contacto.jpg'
-// Puedes cambiarlo por tu imagen real después.
+
+/* === NUEVO: portada específica para smartphones / mobile vertical === */
+const HERO_IMG_MOBILE = 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Contacto%20(Opcion%201).jpeg'
 
 const SOCIALS = [
   {
@@ -74,12 +76,22 @@ export default function ContactoPage() {
     <main className="bg-white">
       {/* HERO (idéntico estilo Equipo/Servicios) */}
       <section className="relative min-h-[100svh]">
+        {/* MOBILE HERO */}
+        <img
+          src={HERO_IMG_MOBILE}
+          alt="Contacto Mobile"
+          className="absolute inset-0 w-full h-full object-cover md:hidden"
+          style={{ objectPosition: '50% 50%' }}
+        />
+
+        {/* DESKTOP / TABLET HERO */}
         <img
           src={HERO_IMG}
           alt="Contacto"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover hidden md:block"
           style={{ objectPosition: '50% 40%' }}
         />
+
         <div className="absolute inset-0 bg-black/35" />
         <div className="absolute bottom-6 left-0 right-0">
           <div className="max-w-7xl mx-auto px-6">
