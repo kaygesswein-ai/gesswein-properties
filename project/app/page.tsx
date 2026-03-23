@@ -372,9 +372,9 @@ export default function HomePage() {
 
   /* ================== IMÁGENES SECCIONES NUEVAS ================== */
   const WHY_IMG =
-    'https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?q=80&w=1600&auto=format&fit=crop';
+    'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Inicio/0100005.JPG';
   const OPPS_IMG =
-    'https://images.unsplash.com/photo-1511818966892-d7d671e672a2?q=80&w=1600&auto=format&fit=crop';
+    'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Inicio/0100034.JPG';
 
   /* ------------------------------------------------------------------ */
   return (
