@@ -526,7 +526,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 2B) POR QUÉ GP — BLANCO, SEPARADO VISUALMENTE */}
+      {/* 2B) POR QUÉ GP — BLANCO */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mt-0">
@@ -571,7 +571,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 3) NUESTRA CULTURA — GRIS PARA SEPARAR VISUALMENTE */}
+      {/* 3) NUESTRA CULTURA — GRIS */}
       <section className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-12">
@@ -633,8 +633,8 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — OGILVY */}
-      <section id="equipo" className="py-20 bg-[#f8f9fb]">
+      {/* 4) EQUIPO — BLANCO PARA SEPARAR DE CULTURA Y ALTERNAR CON ALIANZAS */}
+      <section id="equipo" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
             Equipo
@@ -648,8 +648,8 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 5) ALIANZAS — BLANCO */}
-      <section className="py-16 bg-white">
+      {/* 5) ALIANZAS — GRIS PARA SEPARAR DE EQUIPO */}
+      <section className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-4">
             Alianzas & Colaboradores
@@ -848,7 +848,7 @@ function TeamOgilvy() {
   const DURATION = 450;
   const EASING = 'cubic-bezier(.22,.61,.36,1)';
 
-  const [panelDims, setPanelDims] = useState<{ left: number; width: number; height: number }>( {
+  const [panelDims, setPanelDims] = useState<{ left: number; width: number; height: number }>({
     left: 0,
     width: 0,
     height: 0,
