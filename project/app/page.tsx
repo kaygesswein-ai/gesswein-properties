@@ -37,7 +37,6 @@ type Property = {
   coverImage?: string;
   destacada?: boolean;
 
-  // pueden venir o no en el listado
   portada_url?: string | null;
   portada_fija_url?: string | null;
 };
@@ -63,7 +62,6 @@ const capFirst = (s?: string | null) => {
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 };
 
-/* capitaliza cada palabra (“las condes” → “Las Condes”) */
 const capWords = (s?: string | null) =>
   (s ?? '')
     .split(' ')
@@ -74,7 +72,6 @@ const capWords = (s?: string | null) =>
 const HERO_FALLBACK =
   'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
-/* ✅ PRIORIDAD de portada */
 function getHeroImage(p?: Partial<Property>) {
   if (!p) return HERO_FALLBACK;
   const anyP: any = p;
@@ -114,7 +111,6 @@ const REGIONES_UI: readonly string[] = [
   'XII - Magallanes y la Antártica Chilena',
 ];
 
-/* 🔹 Comunas por región para habilitar el selector */
 const COMUNAS_UI: Record<string, string[]> = {
   'RM - Región Metropolitana de Santiago': [
     'Las Condes',
@@ -144,7 +140,6 @@ const COMUNAS_UI: Record<string, string[]> = {
     'Limache',
     'Olmué',
   ],
-  // Puedes ir agregando más regiones/comunas cuando quieras
 };
 
 const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
@@ -158,7 +153,6 @@ export default function HomePage() {
   const [i, setI] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // 🔹 cache con portadas traídas por id (hidratación)
   const [detailById, setDetailById] = useState<
     Record<string, { portada_url?: string | null; portada_fija_url?: string | null }>
   >({});
@@ -166,7 +160,32 @@ export default function HomePage() {
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const verMasRef = useRef<HTMLAnchorElement | null>(null);
 
-  /* ---------- fetch propiedades destacadas ---------- */
+  const [regionRef, setRegionRef] = useState('');
+  const [comunaRef, setComunaRef] = useState('');
+  const comunaOpts = regionRef ? COMUNAS_UI[regionRef] || [] : [];
+
+  const [refNombre, setRefNombre] = useState('');
+  const [refEmail, setRefEmail] = useState('');
+  const [refTelefono, setRefTelefono] = useState('');
+
+  const [cliNombre, setCliNombre] = useState('');
+  const [cliEmail, setCliEmail] = useState('');
+  const [cliTelefono, setCliTelefono] = useState('');
+
+  const [servicioNeed, setServicioNeed] = useState('');
+  const [tipoProp, setTipoProp] = useState('');
+
+  const [precioMinUf, setPrecioMinUf] = useState('');
+  const [precioMaxUf, setPrecioMaxUf] = useState('');
+  const [comentarios, setComentarios] = useState('');
+
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [sendingRef, setSendingRef] = useState(false);
+  const [refSuccess, setRefSuccess] = useState('');
+  const [refError, setRefError] = useState('');
+
+  const formRef = useRef<HTMLFormElement | null>(null);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -188,7 +207,6 @@ export default function HomePage() {
     };
   }, []);
 
-  /* ---------- HIDRATAR portadas por id si no vinieron en el listado ---------- */
   useEffect(() => {
     const need = destacadas
       .filter((p) => !(p.portada_url || p.portada_fija_url))
@@ -219,11 +237,11 @@ export default function HomePage() {
     };
   }, [destacadas, detailById]);
 
-  /* ---------- autoplay con “reset” al navegar manual ---------- */
   const startAutoplay = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setI((p) => (p + 1) % Math.max(destacadas.length, 1)), 5000);
   };
+
   useEffect(() => {
     if (!destacadas.length) return;
     startAutoplay();
@@ -238,11 +256,9 @@ export default function HomePage() {
       const n = destacadas.length;
       return ((p + dir) % n + n) % n;
     });
-    // reset del temporizador al navegar manual
     startAutoplay();
   };
 
-  /* ---------- teclado: flechas izquierda/derecha ---------- */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') go(1);
@@ -252,19 +268,21 @@ export default function HomePage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [destacadas.length]);
 
-  /* ---------- touch swipe ---------- */
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
+
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchDeltaX.current = 0;
     if (timerRef.current) clearInterval(timerRef.current);
   };
+
   const onTouchMove = (e: React.TouchEvent) => {
     if (touchStartX.current !== null) {
       touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
     }
   };
+
   const onTouchEnd = () => {
     const dx = touchDeltaX.current;
     if (Math.abs(dx) > 50) {
@@ -275,9 +293,7 @@ export default function HomePage() {
     if (destacadas.length) startAutoplay();
   };
 
-  /* ---------- hero data ---------- */
   const active = destacadas[i];
-  // mezcla el detalle hidratado si existe
   const enrichedActive = active ? { ...active, ...(detailById[active.id] || {}) } : undefined;
   const bg = useMemo(() => getHeroImage(enrichedActive), [enrichedActive]);
 
@@ -304,7 +320,6 @@ export default function HomePage() {
         ? Math.round(active.precio_uf * ufHoy)
         : 0;
 
-  /* ---------- sincronizar alto del botón ---------- */
   useEffect(() => {
     const sync = () => {
       const h = priceBoxRef.current?.offsetHeight;
@@ -333,53 +348,80 @@ export default function HomePage() {
   const fmtInt = (n: number | null | undefined) =>
     typeof n === 'number' ? new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n) : dash;
 
-  /* ================== ESTADO SOLO PARA REGION/COMUNA (FORM) ================== */
-  const [regionRef, setRegionRef] = useState('');
-  const [comunaRef, setComunaRef] = useState('');
-  const comunaOpts = regionRef ? COMUNAS_UI[regionRef] || [] : [];
-
-  /* ================== REFERIDOS (FORM STATE) ================== */
-  const [refNombre, setRefNombre] = useState('');
-  const [refEmail, setRefEmail] = useState('');
-  const [refTelefono, setRefTelefono] = useState('');
-
-  const [cliNombre, setCliNombre] = useState('');
-  const [cliEmail, setCliEmail] = useState('');
-  const [cliTelefono, setCliTelefono] = useState('');
-
-  const [servicioNeed, setServicioNeed] = useState('');
-  const [tipoProp, setTipoProp] = useState('');
-
-  const [precioMinUf, setPrecioMinUf] = useState('');
-  const [precioMaxUf, setPrecioMaxUf] = useState('');
-  const [comentarios, setComentarios] = useState('');
-
-  const formRef = useRef<HTMLFormElement | null>(null);
-
-  function onSubmitReferidos(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmitReferidos(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
 
-    // Validación nativa (incluye required de inputs + hidden required para SmartSelect)
+    setRefSuccess('');
+    setRefError('');
+
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
     }
 
-    // Aquí luego conectas tu endpoint.
-    // Por ahora no hacemos nada (solo mantenemos el formato y las validaciones).
+    setSendingRef(true);
+
+    try {
+      const payload = {
+        referente_nombre: refNombre.trim(),
+        referente_email: refEmail.trim(),
+        referente_telefono: refTelefono.trim(),
+        referido_nombre: cliNombre.trim(),
+        referido_email: cliEmail.trim(),
+        referido_telefono: cliTelefono.trim(),
+        servicio_necesita: servicioNeed.trim(),
+        tipo_propiedad: tipoProp.trim(),
+        region: regionRef.trim(),
+        comuna: comunaRef.trim(),
+        precio_min_uf: precioMinUf ? Number(precioMinUf) : null,
+        precio_max_uf: precioMaxUf ? Number(precioMaxUf) : null,
+        comentarios: comentarios.trim(),
+      };
+
+      const res = await fetch('/api/referidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.error || 'No fue posible enviar el referido.');
+      }
+
+      setRefNombre('');
+      setRefEmail('');
+      setRefTelefono('');
+      setCliNombre('');
+      setCliEmail('');
+      setCliTelefono('');
+      setServicioNeed('');
+      setTipoProp('');
+      setRegionRef('');
+      setComunaRef('');
+      setPrecioMinUf('');
+      setPrecioMaxUf('');
+      setComentarios('');
+
+      setRefSuccess('Tu referido fue enviado correctamente. Te contactaremos si necesitamos más información.');
+      formRef.current?.reset();
+    } catch (err: any) {
+      setRefError(err?.message || 'Ocurrió un error al enviar el referido.');
+    } finally {
+      setSendingRef(false);
+    }
   }
 
-  /* ================== IMÁGENES SECCIONES NUEVAS ================== */
   const WHY_IMG =
     'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Inicio/0100005.JPG';
   const OPPS_IMG =
     'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Inicio/0100034.JPG';
 
-  /* ------------------------------------------------------------------ */
   return (
     <main className="bg-white">
-      {/* ================= HERO (NO TOCAR) ================= */}
+      {/* ================= HERO ================= */}
       <section
         className="relative w-full overflow-hidden isolate"
         onTouchStart={onTouchStart}
@@ -395,7 +437,6 @@ export default function HomePage() {
               <h1 className="text-[1.4rem] md:text-2xl text-gray-900">{active?.titulo ?? 'Propiedad destacada'}</h1>
               <p className="mt-1 text-sm text-gray-600">{lineaSecundaria || '—'}</p>
 
-              {/* ---------- Tiles ---------- */}
               <div className="mt-4">
                 <div className="grid grid-cols-5 border border-slate-200 bg-white/70">
                   {[
@@ -416,7 +457,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* ---------- Botón + precio ---------- */}
               <div className="mt-4 flex items-end gap-3">
                 {active?.id && (
                   <Link
@@ -470,20 +510,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= ¿POR QUÉ GESSWEIN PROPERTIES? (VOLVER AL FORMATO “FOTO 2”) ================= */}
+      {/* ================= ¿POR QUÉ GESSWEIN PROPERTIES? ================= */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-10 md:grid-cols-2 items-stretch">
-            {/* Texto */}
             <div className="md:order-1 order-2">
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
                 ¿Por qué Gesswein Properties?
               </h2>
 
-              {/* Placeholder (tú lo cambias después) */}
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
                 <p>
-                Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.
+                  Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.
                 </p>
                 <p>
                   En Chile, la mayoría de las corredoras opera con un enfoque transaccional: captación, fotos, publicación, coordinación de visitas y negociación. Ese modelo funciona cuando la propiedad es simple y el mercado está “fácil”. Pero en propiedades premium —y especialmente en activos con complejidad normativa, potencial de transformación o alto valor patrimonial— ese enfoque deja valor en la mesa y eleva el riesgo.
@@ -506,7 +544,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Imagen */}
             <div className="md:order-2 order-1">
               <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10">
                 <img src={WHY_IMG} alt="¿Por qué Gesswein Properties?" className="w-full h-full object-cover" />
@@ -516,26 +553,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= PROYECTOS EXCLUSIVOS (MISMO FORMATO “FOTO 2” + FONDO GRIS) ================= */}
+      {/* ================= PROYECTOS EXCLUSIVOS ================= */}
       <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-10 md:grid-cols-2 items-stretch">
-            {/* Texto */}
             <div className="md:order-1 order-2">
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
                 Proyectos Exclusivos
               </h2>
 
-              {/* Placeholder (tú lo cambias después) */}
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
                 <p>
                   No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio técnico, red estratégica y capacidad de estructuración.
                 </p>
                 <p>
-                 En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de negocio, oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en muchos casos, confidencial. Aquí encontrarás alternativas que no compiten en el mercado masivo: novaciones hipotecarias, oportunidades de flipping con fundamento técnico, propiedades con valor de mercado bajo y activos con potencial de densificación o desarrollo. Cada oportunidad es previamente analizada desde su viabilidad normativa, potencial constructivo, escenario de valorización y riesgo asociado. El acceso a esta sección es limitado y su disponibilidad cambia constantemente según oportunidades reales detectadas, gestionadas e identificadas por nuestro equipo.
-                 </p>
+                  En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de negocio, oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en muchos casos, confidencial. Aquí encontrarás alternativas que no compiten en el mercado masivo: novaciones hipotecarias, oportunidades de flipping con fundamento técnico, propiedades con valor de mercado bajo y activos con potencial de densificación o desarrollo. Cada oportunidad es previamente analizada desde su viabilidad normativa, potencial constructivo, escenario de valorización y riesgo asociado. El acceso a esta sección es limitado y su disponibilidad cambia constantemente según oportunidades reales detectadas, gestionadas e identificadas por nuestro equipo.
+                </p>
                 <p>
-                Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y decisión.
+                  Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y decisión.
                 </p>
               </div>
 
@@ -549,7 +584,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Imagen */}
             <div className="md:order-2 order-1">
               <div className="w-full h-[260px] md:h-full overflow-hidden border border-black/10 bg-white">
                 <img src={OPPS_IMG} alt="Oportunidades Exclusivas" className="w-full h-full object-cover" />
@@ -559,10 +593,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= REFERIDOS (VOLVER AL FORMATO “FOTO 2” + ENVIAR COMO “FOTO 3”) ================= */}
+      {/* ================= REFERIDOS ================= */}
       <section id="referidos" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          {/* Header */}
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 border border-black/10 bg-white flex items-center justify-center">
               <Gift className="h-5 w-5 text-[#0A2E57]" />
@@ -579,9 +612,7 @@ export default function HomePage() {
           </div>
 
           <form ref={formRef} onSubmit={onSubmitReferidos} className="mt-10">
-            {/* TOP GRID (3 columnas) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Tus datos (Referente) */}
               <div className="border border-slate-200 bg-white shadow-sm p-6">
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                   Tus datos (Referente)
@@ -622,7 +653,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Datos del Referido */}
               <div className="border border-slate-200 bg-white shadow-sm p-6">
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                   Datos del Referido
@@ -663,7 +693,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Preferencias */}
               <div className="border border-slate-200 bg-white shadow-sm p-6">
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                   Preferencias
@@ -679,7 +708,6 @@ export default function HomePage() {
                       placeholder="Seleccionar o escribir…"
                       className="w-full"
                     />
-                    {/* required real (para SmartSelect) */}
                     <input required value={servicioNeed} onChange={() => {}} className="hidden" />
                   </div>
 
@@ -751,9 +779,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* BOTTOM GRID (2 columnas) */}
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Contexto adicional (2/3) */}
               <div className="lg:col-span-2 border border-slate-200 bg-white shadow-sm p-6">
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
                   Contexto adicional
@@ -771,33 +797,135 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Enviar (1/3) — ESTILO FOTO 3 */}
               <div className="border border-slate-200 bg-white shadow-sm p-6 flex flex-col">
                 <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">Enviar</div>
                 <div className="mt-1 text-[16px] text-black/90">Confirmación</div>
 
                 <p className="mt-4 text-[13px] text-black/70 leading-relaxed">
-                  Al enviar este formulario, aceptas nuestros términos del programa de referidos y política de
-                  privacidad.
+                  Al enviar este formulario, aceptas nuestros{' '}
+                  <button
+                    type="button"
+                    onClick={() => setTermsOpen(true)}
+                    className="underline underline-offset-2 hover:text-[#0A2E57]"
+                  >
+                    términos del programa de referidos y política de privacidad
+                  </button>.
                 </p>
 
                 <button
                   type="submit"
-                  className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-3 text-sm tracking-[.25em] uppercase text-white bg-[#0A2E57] rounded-none"
+                  disabled={sendingRef}
+                  className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-3 text-sm tracking-[.25em] uppercase text-white bg-[#0A2E57] rounded-none disabled:opacity-70"
                   style={{
                     boxShadow:
                       'inset 0 0 0 1px rgba(255,255,255,0.95), inset 0 0 0 3px rgba(255,255,255,0.35)',
                   }}
                 >
-                  <Gift className="h-4 w-4" /> Enviar referido
+                  <Gift className="h-4 w-4" />
+                  {sendingRef ? 'Enviando...' : 'Enviar referido'}
                 </button>
 
-                <div className="mt-3 text-center text-[12px] text-black/60">Responderemos a la brevedad.</div>
+                {refSuccess && (
+                  <div className="mt-4 text-[12px] text-green-700 text-center">
+                    {refSuccess}
+                  </div>
+                )}
+
+                {refError && (
+                  <div className="mt-4 text-[12px] text-red-700 text-center">
+                    {refError}
+                  </div>
+                )}
+
+                {!refSuccess && !refError && (
+                  <div className="mt-3 text-center text-[12px] text-black/60">Responderemos a la brevedad.</div>
+                )}
               </div>
             </div>
           </form>
         </div>
       </section>
+
+      {termsOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/45 flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl max-h-[85vh] overflow-y-auto bg-white border border-black/10 shadow-2xl">
+            <div className="sticky top-0 bg-white border-b border-black/10 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-[#0A2E57] text-[14px] tracking-[.22em] uppercase font-medium">
+                Términos del Programa de Referidos y Política de Privacidad
+              </h3>
+              <button
+                type="button"
+                onClick={() => setTermsOpen(false)}
+                className="text-sm border border-black/15 px-3 py-1 hover:bg-[#0A2E57] hover:text-white transition"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="px-6 py-6 text-[14px] text-black/75 leading-relaxed space-y-5">
+              <div>
+                <h4 className="text-[#0A2E57] font-medium mb-2">1. Finalidad del formulario</h4>
+                <p>
+                  Este formulario tiene por objeto recibir datos de contacto del referente y de la persona referida para evaluar una posible gestión comercial o asesoría inmobiliaria por parte de Gesswein Properties.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-[#0A2E57] font-medium mb-2">2. Autorización de contacto</h4>
+                <p>
+                  Al enviar este formulario, declaras que cuentas con autorización suficiente para compartir los datos del referido con el fin de que Gesswein Properties pueda contactarlo en relación con los servicios solicitados o con oportunidades inmobiliarias relacionadas.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-[#0A2E57] font-medium mb-2">3. Uso de los datos</h4>
+                <p>
+                  Los datos serán utilizados exclusivamente para fines de contacto comercial, seguimiento del referido, evaluación de necesidades inmobiliarias, coordinación de reuniones y gestión interna del programa de referidos. Gesswein Properties no vende esta información a terceros ni la utiliza para fines ajenos a la operación comercial propia de la empresa.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-[#0A2E57] font-medium mb-2">4. Resguardo de información</h4>
+                <p>
+                  Gesswein Properties adoptará medidas razonables de resguardo y seguridad sobre la información recibida. Sin perjuicio de lo anterior, ningún sistema tecnológico es completamente infalible, por lo que no puede garantizarse una seguridad absoluta frente a eventos externos, ataques informáticos u otras contingencias fuera de control razonable.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-[#0A2E57] font-medium mb-2">5. Exactitud de la información</h4>
+                <p>
+                  El usuario que envía el formulario es responsable de que la información proporcionada sea veraz, actualizada y pertinente. Gesswein Properties podrá abstenerse de gestionar referencias incompletas, inexactas o que no cumplan estándares mínimos de validación interna.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-[#0A2E57] font-medium mb-2">6. Beneficios del programa</h4>
+                <p>
+                  La recepción de un referido no implica, por sí sola, la generación automática de beneficios, pagos o contraprestaciones. Cualquier beneficio asociado al programa de referidos estará sujeto a validación interna, a la efectiva trazabilidad del referido y a las condiciones comerciales que Gesswein Properties determine en cada caso.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-[#0A2E57] font-medium mb-2">7. Solicitudes de eliminación o actualización</h4>
+                <p>
+                  Si deseas solicitar corrección, actualización o eliminación de los datos enviados, puedes escribir a contacto@gessweinproperties.cl indicando los datos involucrados y tu solicitud.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-[#0A2E57] font-medium mb-2">8. Modificaciones</h4>
+                <p>
+                  Gesswein Properties podrá actualizar estos términos cuando sea necesario para mejorar la operación del programa o adecuar sus procesos internos. La versión publicada al momento del envío será la aplicable al formulario respectivo.
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-black/10 text-[12px] text-black/55">
+                Texto base de uso comercial general. Para una versión legal definitiva y cerrada, conviene revisión por abogado.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
