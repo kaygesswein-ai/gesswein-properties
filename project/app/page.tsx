@@ -483,18 +483,22 @@ export default function HomePage() {
               {/* Placeholder (tú lo cambias después) */}
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
                 <p>
-                  (Texto placeholder) Aquí va tu discurso de venta: cómo trabajas, en qué te diferencias, por qué el
-                  estándar boutique, el rigor técnico y la experiencia integral cambian el resultado.
+                Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.
                 </p>
                 <p>
-                  (Texto placeholder) Puedes reforzar método, transparencia, estética y ejecución comercial — y explicar
-                  por qué eso genera mejor precio, mejor proceso y mejor experiencia.
+                  En Chile, la mayoría de las corredoras opera con un enfoque transaccional: captación, fotos, publicación, coordinación de visitas y negociación. Ese modelo funciona cuando la propiedad es simple y el mercado está “fácil”. Pero en propiedades premium —y especialmente en activos con complejidad normativa, potencial de transformación o alto valor patrimonial— ese enfoque deja valor en la mesa y eleva el riesgo.
+                </p>
+                <p>
+                  Gesswein Properties trabaja dstinto al integrar arquitectura, normativa y estrategia comercial para gestionar propiedades como verdaderos activos inmobiliarios. A diferencia del corretaje tradicional, no nos limitamos a intermediar: analizamos el potencial técnico, constructivo y normativo de cada propiedad antes de salir al mercado, anticipamos riesgos y diseñamos una estrategia que maximiza su valor real.
+                </p>
+                <p>
+                  Nuestro enfoque permite tomar decisiones inmobiliarias con claridad, respaldo profesional y control del proceso, reduciendo incertidumbre y elevando el estándar de la operación.
                 </p>
               </div>
 
               <div className="mt-8">
                 <Link
-                  href="/servicios"
+                  href="/equipo"
                   className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
                 >
                   Ver más
@@ -512,31 +516,32 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= OPORTUNIDADES EXCLUSIVAS (MISMO FORMATO “FOTO 2” + FONDO GRIS) ================= */}
+      {/* ================= PROYECTOS EXCLUSIVOS (MISMO FORMATO “FOTO 2” + FONDO GRIS) ================= */}
       <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-10 md:grid-cols-2 items-stretch">
             {/* Texto */}
             <div className="md:order-1 order-2">
               <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
-                Oportunidades Exclusivas
+                Proyectos Exclusivos
               </h2>
 
               {/* Placeholder (tú lo cambias después) */}
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
                 <p>
-                  (Texto placeholder) Explica qué son las oportunidades exclusivas: acceso temprano, propiedades curadas,
-                  condiciones especiales, oportunidades off-market, etc.
+                  No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio técnico, red estratégica y capacidad de estructuración.
                 </p>
                 <p>
-                  (Texto placeholder) Puedes agregar cómo se accede, qué tipo de activo incluye, y por qué esto le
-                  conviene al cliente.
+                 En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de negocio, oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en muchos casos, confidencial. Aquí encontrarás alternativas que no compiten en el mercado masivo: novaciones hipotecarias, oportunidades de flipping con fundamento técnico, propiedades con valor de mercado bajo y activos con potencial de densificación o desarrollo. Cada oportunidad es previamente analizada desde su viabilidad normativa, potencial constructivo, escenario de valorización y riesgo asociado. El acceso a esta sección es limitado y su disponibilidad cambia constantemente según oportunidades reales detectadas, gestionadas e identificadas por nuestro equipo.
+                 </p>
+                <p>
+                Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y decisión.
                 </p>
               </div>
 
               <div className="mt-8">
                 <Link
-                  href="/oportunidades-exclusivas"
+                  href="/proyectos-exclusivos"
                   className="inline-flex items-center justify-center px-4 py-2 border border-black/25 text-[12px] uppercase tracking-[.25em] hover:bg-[#0A2E57] hover:text-white transition"
                 >
                   Ver más
