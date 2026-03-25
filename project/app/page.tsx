@@ -434,6 +434,7 @@ export default function HomePage() {
           alt={active?.titulo || 'Propiedad destacada'}
           objectPosition="50% 50%"
           showInitialBrandOverlay
+          minInitialOverlayMs={900}
         />
 
         <div className="absolute inset-0 -z-10 bg-black/35" />
