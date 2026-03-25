@@ -1,23 +1,24 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import Image from "next/image";
-import { Mail, Phone, Instagram, Facebook, Linkedin, MessageCircle } from "lucide-react";
-
-const NAV = [
-  { href: "/", label: "INICIO" },
-  { href: "/proyectos-exclusivos", label: "PROYECTOS EXCLUSIVOS" },
-  { href: "/propiedades", label: "PROPIEDADES" },
-  { href: "/servicios", label: "SERVICIOS" },
-  { href: "/equipo", label: "EQUIPO" },
-  { href: "/contacto", label: "CONTACTO" },
-];
+import Link from 'next/link'
+import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import {
+  Mail,
+  Phone,
+  Instagram,
+  Facebook,
+  Linkedin,
+  MessageCircle,
+  Menu,
+  X,
+} from 'lucide-react'
 
 function TikTokIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-full w-full"
+      className="h-[18px] w-[18px]"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.6"
@@ -27,117 +28,239 @@ function TikTokIcon() {
       <path d="M14 3v10.2a4.8 4.8 0 1 1-4-4.73" />
       <path d="M14 6c1.1 2.6 3.3 4.2 6 4.5" />
     </svg>
-  );
+  )
 }
 
-function SocialIcons() {
+export default function Navbar() {
+  const [scrolled, setScrolled] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 768) setOpen(false)
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   const showInactiveAlert = (label: string) => {
-    window.alert(`${label} todavía no está activa. Estamos trabajando en ello.`);
-  };
+    window.alert(`${label} todavía no está activa. Estamos trabajando en ello.`)
+  }
+
+  const wrapper = 'fixed top-0 inset-x-0 z-50 transition-colors duration-300'
+  const bg = scrolled
+    ? 'bg-[#0A2E57]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,.06)]'
+    : 'bg-transparent'
+  const linkBase = 'text-white/90 hover:text-white transition-colors select-none'
 
   return (
-    <div className="mt-2 flex items-center justify-center gap-6 md:gap-8 text-white">
-      <Link
-        aria-label="WhatsApp"
-        href="https://wa.me/56993318039?text=Hola%2C%20quiero%20contactar%20a%20Gesswein%20Properties"
-        target="_blank"
-        rel="noreferrer"
-        className="relative inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
-      >
-        <MessageCircle className="absolute h-full w-full stroke-[1.6]" />
-        <Phone className="absolute h-3.5 w-3.5 md:h-4 md:w-4 stroke-[1.8]" />
-      </Link>
+    <>
+      <header data-no-transition className={`${wrapper} ${bg}`}>
+        <div className="mx-auto max-w-7xl pr-4 sm:pr-6 lg:pr-8 pl-6 md:pl-10 lg:pl-12 xl:pl-16">
+          <div className="h-16 md:h-18 flex items-center">
+            {/* LOGO */}
+            <Link href="/" aria-label="Gesswein Properties" className="shrink-0">
+              <Image
+                src="/logo-white.svg"
+                alt="Gesswein Properties"
+                width={120}
+                height={30}
+                priority
+                className="w-[105px] md:w-[120px] h-auto"
+              />
+            </Link>
 
-      <Link
-        aria-label="Email"
-        href="mailto:contacto@gessweinproperties.com"
-        className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
-      >
-        <Mail className="h-full w-full stroke-[1.6]" />
-      </Link>
+            {/* Menú + redes */}
+            <div className="ml-auto flex items-center gap-3 md:gap-4">
+              {/* MENÚ Desktop */}
+              <nav className="hidden md:flex items-center text-white">
+                <Link href="/" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Inicio
+                </Link>
 
-      <Link
-        aria-label="Teléfono"
-        href="tel:+56993318039"
-        className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
-      >
-        <Phone className="h-full w-full stroke-[1.6]" />
-      </Link>
+                <span className="mx-2 text-white/60">|</span>
 
-      <button
-        type="button"
-        aria-label="Instagram"
-        onClick={() => showInactiveAlert("Instagram")}
-        className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
-      >
-        <Instagram className="h-full w-full stroke-[1.6]" />
-      </button>
+                {/* PROYECTOS EXCLUSIVOS — destacado */}
+                <Link
+                  href="/proyectos-exclusivos"
+                  className="uppercase text-[11px] tracking-[.30em]
+                             px-3 py-1
+                             border border-white/40
+                             bg-white/10
+                             text-white
+                             hover:bg-white/20
+                             transition-colors"
+                >
+                  Proyectos exclusivos
+                </Link>
 
-      <button
-        type="button"
-        aria-label="TikTok"
-        onClick={() => showInactiveAlert("TikTok")}
-        className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
-      >
-        <TikTokIcon />
-      </button>
+                <span className="mx-2 text-white/60">|</span>
 
-      <button
-        type="button"
-        aria-label="Facebook"
-        onClick={() => showInactiveAlert("Facebook")}
-        className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
-      >
-        <Facebook className="h-full w-full stroke-[1.6]" />
-      </button>
+                <Link href="/propiedades" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Propiedades
+                </Link>
 
-      <button
-        type="button"
-        aria-label="LinkedIn"
-        onClick={() => showInactiveAlert("LinkedIn")}
-        className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
-      >
-        <Linkedin className="h-full w-full stroke-[1.6]" />
-      </button>
-    </div>
-  );
-}
+                <span className="mx-2 text-white/60">|</span>
 
-export default function Footer() {
-  return (
-    <footer className="bg-[#0E2C4A] text-white">
-      <div className="mx-auto w-full max-w-6xl px-4">
-        <div className="flex flex-col items-center pt-8 md:pt-10">
-          <Image
-            src="/logo-white.svg"
-            alt="Gesswein Properties"
-            width={260}
-            height={54}
-            priority
-            className="h-10 w-auto md:h-12"
-          />
+                <Link href="/servicios" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Servicios
+                </Link>
 
-          <nav className="mt-4 md:mt-5">
-            <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12.5px] tracking-[0.18em] md:text-[13.5px]">
-              {NAV.map((item) => (
-                <li key={item.href}>
-                  <Link href={item.href} className="text-white/90 transition-colors hover:text-white">
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+                <span className="mx-2 text-white/60">|</span>
 
-          <div className="mx-auto my-6 h-px w-full max-w-5xl bg-white/15 md:my-7" />
+                <Link href="/equipo" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Equipo
+                </Link>
 
-          <SocialIcons />
+                <span className="mx-2 text-white/60">|</span>
+
+                <Link href="/contacto" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                  Contacto
+                </Link>
+              </nav>
+
+              {/* Redes */}
+              <div className="flex items-center gap-3 text-white">
+                <Link
+                  href="https://wa.me/56993318039?text=Hola%2C%20quiero%20contactar%20a%20Gesswein%20Properties"
+                  aria-label="WhatsApp"
+                  className={linkBase}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span className="relative inline-flex h-[18px] w-[18px] items-center justify-center translate-y-[1px]">
+                    <MessageCircle className="absolute h-full w-full stroke-[1.6]" />
+                    <Phone className="absolute h-[11px] w-[11px] stroke-[1.8]" />
+                  </span>
+                </Link>
+
+                <Link
+                  href="mailto:contacto@gessweinproperties.com"
+                  aria-label="Email"
+                  className={linkBase}
+                >
+                  <Mail className="h-[18px] w-[18px]" />
+                </Link>
+
+                <Link
+                  href="tel:+56993318039"
+                  aria-label="Teléfono"
+                  className={linkBase}
+                >
+                  <Phone className="h-[18px] w-[18px]" />
+                </Link>
+
+                <button
+                  type="button"
+                  aria-label="Instagram"
+                  className={linkBase}
+                  onClick={() => showInactiveAlert('Instagram')}
+                >
+                  <Instagram className="h-[18px] w-[18px]" />
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="TikTok"
+                  className={linkBase}
+                  onClick={() => showInactiveAlert('TikTok')}
+                >
+                  <TikTokIcon />
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="Facebook"
+                  className={linkBase}
+                  onClick={() => showInactiveAlert('Facebook')}
+                >
+                  <Facebook className="h-[18px] w-[18px]" />
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="LinkedIn"
+                  className={linkBase}
+                  onClick={() => showInactiveAlert('LinkedIn')}
+                >
+                  <Linkedin className="h-[18px] w-[18px]" />
+                </button>
+              </div>
+
+              {/* Hamburguesa */}
+              <button
+                type="button"
+                aria-label="Abrir menú"
+                aria-expanded={open}
+                onClick={() => setOpen((v) => !v)}
+                className="md:hidden ml-1 text-white/90 hover:text-white p-2 -mr-1"
+              >
+                {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
+          </div>
         </div>
+      </header>
 
-        <p className="mt-6 pb-7 text-center text-xs text-white/70 md:text-[13px]">
-          © 2025 Gesswein Properties. Todos los derechos reservados.
-        </p>
+      {/* Menú móvil */}
+      <div
+        className={`md:hidden fixed inset-x-0 top-16 z-40
+          bg-white/80 backdrop-blur-sm border-t border-black/10
+          transition-all duration-200
+          ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      >
+        <nav className="flex flex-col py-3">
+          <Link
+            href="/"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Inicio
+          </Link>
+          <Link
+            href="/proyectos-exclusivos"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Proyectos exclusivos
+          </Link>
+          <Link
+            href="/propiedades"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Propiedades
+          </Link>
+          <Link
+            href="/servicios"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Servicios
+          </Link>
+          <Link
+            href="/equipo"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Equipo
+          </Link>
+          <Link
+            href="/contacto"
+            className="px-5 py-3 uppercase tracking-[.30em] text-[12px] text-black"
+            onClick={() => setOpen(false)}
+          >
+            Contacto
+          </Link>
+        </nav>
       </div>
-    </footer>
-  );
+    </>
+  )
 }
