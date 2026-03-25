@@ -435,11 +435,13 @@ export default function HomePage() {
           objectPosition="50% 50%"
           showInitialBrandOverlay
           minInitialOverlayMs={900}
+          persistAcrossRoutes={false}
+          mediaMode="all"
         />
 
-        <div className="absolute inset-0 -z-10 bg-black/35" />
+        <div className="absolute inset-0 bg-black/35" />
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
             {heroReady ? (
               <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
