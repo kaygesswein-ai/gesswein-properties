@@ -18,8 +18,8 @@ type HeroImageProps = {
   minInitialOverlayMs?: number;
 };
 
-function isValidSrc(value?: string | null) {
-  return !!value && !!value.trim();
+function isValidSrc(value?: string | null): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 function readLastHeroSrc(): string | null {
@@ -79,12 +79,12 @@ export default function HeroImage({
 
     const img = new window.Image();
     img.decoding = 'async';
-    img.src = src!;
+    img.src = src;
 
     const handleLoaded = () => {
       const currentDisplay = displaySrcRef.current;
 
-      // Caso 1: no hay imagen visible todavía (primera carga real del sitio)
+      // Primera carga real: no hay ninguna imagen visible aún
       if (!currentDisplay) {
         const elapsed = Date.now() - mountedAtRef.current;
         const remain = Math.max(0, minInitialOverlayMs - elapsed);
@@ -94,9 +94,9 @@ export default function HeroImage({
         }
 
         revealTimeoutRef.current = window.setTimeout(() => {
-          setDisplaySrc(src!);
-          displaySrcRef.current = src!;
-          writeLastHeroSrc(src!);
+          setDisplaySrc(src);
+          displaySrcRef.current = src;
+          writeLastHeroSrc(src);
           if (typeof window !== 'undefined') {
             window.__gpHeroBootDone = true;
           }
@@ -106,10 +106,9 @@ export default function HeroImage({
         return;
       }
 
-      // Caso 2: ya hay una hero visible (por ejemplo, la de la página anterior)
-      // => mantenerla hasta que la nueva entre con fade
+      // Ya existe una hero visible, mantenemos esa mientras entra la nueva
       if (currentDisplay === src) {
-        writeLastHeroSrc(src!);
+        writeLastHeroSrc(src);
         if (typeof window !== 'undefined') {
           window.__gpHeroBootDone = true;
         }
@@ -117,7 +116,7 @@ export default function HeroImage({
         return;
       }
 
-      setNextSrc(src!);
+      setNextSrc(src);
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -130,11 +129,11 @@ export default function HeroImage({
       }
 
       swapTimeoutRef.current = window.setTimeout(() => {
-        setDisplaySrc(src!);
-        displaySrcRef.current = src!;
+        setDisplaySrc(src);
+        displaySrcRef.current = src;
         setNextSrc(null);
         setShowNext(false);
-        writeLastHeroSrc(src!);
+        writeLastHeroSrc(src);
         if (typeof window !== 'undefined') {
           window.__gpHeroBootDone = true;
         }
@@ -157,7 +156,6 @@ export default function HeroImage({
 
   return (
     <>
-      {/* Imagen base visible: puede ser la hero actual o la última hero cargada en la navegación anterior */}
       {displaySrc ? (
         <img
           src={displaySrc}
@@ -168,7 +166,6 @@ export default function HeroImage({
         />
       ) : null}
 
-      {/* Nueva imagen precargada: entra con fade por encima */}
       {nextSrc ? (
         <img
           src={nextSrc}
@@ -181,7 +178,6 @@ export default function HeroImage({
         />
       ) : null}
 
-      {/* Overlay inicial solo para el primer boot real, no en cada navegación */}
       {showBrandOverlay ? (
         <div className="absolute inset-0 z-[1] bg-[#0A2E57] flex items-center justify-center">
           <img
