@@ -31,7 +31,7 @@ const SOCIALS = [
     key: 'email',
     label: 'Email',
     sub: 'Abrir',
-    href: 'mailto:contacto@gessweinproperties.cl',
+    href: 'mailto:contacto@gessweinproperties.com',
     Icon: Mail,
   },
   {
