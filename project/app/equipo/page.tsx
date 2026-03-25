@@ -17,6 +17,7 @@ import {
   Sparkles,
   ChevronDown,
 } from 'lucide-react';
+import HeroImage from '@/components/HeroImage';
 
 /* =========================
    DATOS
@@ -341,19 +342,21 @@ export default function EquipoPage() {
       {/* HERO */}
       <section className="relative min-h-[100svh]">
         {/* MOBILE HERO */}
-        <img
+        <HeroImage
           src={HERO_IMG_MOBILE}
           alt="Portada Equipo Mobile"
-          className="absolute inset-0 w-full h-full object-cover md:hidden"
-          style={{ objectPosition: '50% 50%' }}
+          className="md:hidden"
+          objectPosition="50% 50%"
+          showInitialBrandOverlay={false}
         />
 
         {/* DESKTOP / TABLET HERO */}
-        <img
+        <HeroImage
           src={HERO_IMG}
           alt="Portada Equipo"
-          className="absolute inset-0 w-full h-full object-cover hidden md:block"
-          style={{ objectPosition: '50% 35%' }}
+          className="hidden md:block"
+          objectPosition="50% 35%"
+          showInitialBrandOverlay={false}
         />
 
         <div className="absolute inset-0 bg-black/35" />
