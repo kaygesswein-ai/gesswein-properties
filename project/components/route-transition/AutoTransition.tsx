@@ -32,6 +32,15 @@ function isExternalProtocol(a: HTMLAnchorElement) {
   return href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('blob:');
 }
 
+function getPathnameFromHref(href: string) {
+  try {
+    const url = new URL(href, location.href);
+    return url.pathname;
+  } catch {
+    return '';
+  }
+}
+
 export default function AutoTransition() {
   const router = useRouter();
   const pathname = usePathname();
@@ -40,8 +49,8 @@ export default function AutoTransition() {
 
   useEffect(() => {
     if (isActive && pathname !== lastPath.current) {
-      const t = setTimeout(() => end(), 150);
-      return () => clearTimeout(t);
+      const t = window.setTimeout(() => end(), 130);
+      return () => window.clearTimeout(t);
     }
     lastPath.current = pathname;
   }, [pathname, isActive, end]);
@@ -55,29 +64,36 @@ export default function AutoTransition() {
 
       if (!a.href || isExternalProtocol(a) || (a.target && a.target !== '_self')) return;
       if (!isSameOrigin(a)) return;
-      if (a.dataset.transition === 'off') return;
 
-      const url = new URL(a.href);
+      if (a.dataset.transition === 'off') return;
+      if (a.closest('[data-no-transition]')) return;
+
+      const url = new URL(a.href, location.href);
       const next = url.pathname + url.search + url.hash;
       const curr = location.pathname + location.search + location.hash;
-
       if (next === curr) return;
 
-      const isHomeTarget = url.pathname === '/';
-      const insideBlockedContainer =
-        !!a.closest('[data-no-transition]') || !!a.closest('header') || !!a.closest('nav');
-
-      // Navbar / header siguen sin transición azul...
-      // ...salvo cuando el destino es Inicio, donde SÍ la queremos siempre.
-      if (insideBlockedContainer && !isHomeTarget) return;
+      const nextPathname = getPathnameFromHref(a.href);
+      const goingToHome = nextPathname === '/';
 
       e.preventDefault();
 
-      start({ minDurationMs: 900 });
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('gp-nav-target', nextPathname || '');
+        window.sessionStorage.setItem('gp-force-home-transition', goingToHome ? '1' : '0');
+      }
 
-      setTimeout(() => {
+      start({
+        minDurationMs: goingToHome ? 980 : 520,
+        variant: 'brand',
+      });
+
+      window.setTimeout(() => {
         router.push(next);
-        setTimeout(() => end(), 1800);
+
+        window.setTimeout(() => {
+          end();
+        }, goingToHome ? 2200 : 1400);
       }, 40);
     };
 
