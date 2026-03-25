@@ -8,6 +8,7 @@ type HeroImageProps = {
   className?: string;
   objectPosition?: string;
   showInitialBrandOverlay?: boolean;
+  minInitialOverlayMs?: number;
 };
 
 export default function HeroImage({
@@ -16,6 +17,7 @@ export default function HeroImage({
   className = '',
   objectPosition = '50% 50%',
   showInitialBrandOverlay = true,
+  minInitialOverlayMs = 900,
 }: HeroImageProps) {
   const [displaySrc, setDisplaySrc] = useState<string | null>(null);
   const [nextSrc, setNextSrc] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export default function HeroImage({
   const [initialReady, setInitialReady] = useState(false);
 
   const latestSrcRef = useRef<string | null>(null);
+  const mountedAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
     if (!src || !src.trim()) return;
@@ -35,14 +38,20 @@ export default function HeroImage({
     img.src = src;
 
     img.onload = () => {
-      // Primera carga
+      // Primera carga: respetar una duración mínima del overlay de marca
       if (!displaySrc) {
-        setDisplaySrc(src);
-        setInitialReady(true);
+        const elapsed = Date.now() - mountedAtRef.current;
+        const remain = Math.max(0, minInitialOverlayMs - elapsed);
+
+        window.setTimeout(() => {
+          setDisplaySrc(src);
+          setInitialReady(true);
+        }, remain);
+
         return;
       }
 
-      // Cambio posterior: mantener la actual hasta que la nueva ya esté lista
+      // Cambios posteriores: mantener imagen anterior hasta que la nueva esté lista
       setNextSrc(src);
       setShowNext(true);
 
@@ -52,7 +61,7 @@ export default function HeroImage({
         setShowNext(false);
       }, 260);
     };
-  }, [src, displaySrc]);
+  }, [src, displaySrc, minInitialOverlayMs]);
 
   const showBrandOverlay = showInitialBrandOverlay && !initialReady;
 
