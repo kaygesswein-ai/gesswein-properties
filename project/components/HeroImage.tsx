@@ -2,9 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+type HeroMediaMode = 'all' | 'mobile' | 'desktop';
+
+type HeroCacheEntry = {
+  src: string;
+  objectPosition: string;
+  mediaMode: HeroMediaMode;
+};
+
 declare global {
   interface Window {
-    __gpLastHeroSrc?: string | null;
+    __gpLastHero?: HeroCacheEntry | null;
     __gpHeroBootDone?: boolean;
   }
 }
@@ -16,20 +24,41 @@ type HeroImageProps = {
   objectPosition?: string;
   showInitialBrandOverlay?: boolean;
   minInitialOverlayMs?: number;
+  persistAcrossRoutes?: boolean;
+  mediaMode?: HeroMediaMode;
 };
 
 function isValidSrc(value?: string | null): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-function readLastHeroSrc(): string | null {
-  if (typeof window === 'undefined') return null;
-  return window.__gpLastHeroSrc || null;
+function isViewportMatch(mediaMode: HeroMediaMode) {
+  if (typeof window === 'undefined') return false;
+  if (mediaMode === 'all') return true;
+  if (mediaMode === 'mobile') return window.matchMedia('(max-width: 767px)').matches;
+  return window.matchMedia('(min-width: 768px)').matches;
 }
 
-function writeLastHeroSrc(value: string | null) {
-  if (typeof window === 'undefined') return;
-  window.__gpLastHeroSrc = value;
+function canReuseCachedHero(
+  currentMode: HeroMediaMode,
+  cached?: HeroCacheEntry | null
+): cached is HeroCacheEntry {
+  if (!cached?.src) return false;
+  if (currentMode === 'all') return true;
+  if (cached.mediaMode === 'all') return true;
+  return cached.mediaMode === currentMode;
+}
+
+function readLastHero(mediaMode: HeroMediaMode, persistAcrossRoutes: boolean) {
+  if (typeof window === 'undefined' || !persistAcrossRoutes) return null;
+  const cached = window.__gpLastHero || null;
+  return canReuseCachedHero(mediaMode, cached) ? cached : null;
+}
+
+function writeLastHero(entry: HeroCacheEntry, persistAcrossRoutes: boolean) {
+  if (typeof window === 'undefined' || !persistAcrossRoutes) return;
+  if (!isViewportMatch(entry.mediaMode)) return;
+  window.__gpLastHero = entry;
 }
 
 export default function HeroImage({
@@ -39,19 +68,26 @@ export default function HeroImage({
   objectPosition = '50% 50%',
   showInitialBrandOverlay = true,
   minInitialOverlayMs = 900,
+  persistAcrossRoutes = false,
+  mediaMode = 'all',
 }: HeroImageProps) {
-  const initialCachedSrc = readLastHeroSrc();
+  const initialCached = readLastHero(mediaMode, persistAcrossRoutes);
 
-  const [displaySrc, setDisplaySrc] = useState<string | null>(initialCachedSrc);
+  const [displaySrc, setDisplaySrc] = useState<string | null>(initialCached?.src || null);
+  const [displayObjectPosition, setDisplayObjectPosition] = useState<string>(
+    initialCached?.objectPosition || objectPosition
+  );
   const [nextSrc, setNextSrc] = useState<string | null>(null);
+  const [nextObjectPosition, setNextObjectPosition] = useState<string>(objectPosition);
   const [showNext, setShowNext] = useState(false);
   const [initialReady, setInitialReady] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return !!window.__gpHeroBootDone || !!initialCachedSrc;
+    return !!window.__gpHeroBootDone || !!initialCached?.src;
   });
 
+  const displaySrcRef = useRef<string | null>(initialCached?.src || null);
+  const displayObjectPositionRef = useRef<string>(initialCached?.objectPosition || objectPosition);
   const latestRequestedSrcRef = useRef<string | null>(null);
-  const displaySrcRef = useRef<string | null>(initialCachedSrc);
   const mountedAtRef = useRef<number>(Date.now());
   const revealTimeoutRef = useRef<number | null>(null);
   const swapTimeoutRef = useRef<number | null>(null);
@@ -61,13 +97,13 @@ export default function HeroImage({
   }, [displaySrc]);
 
   useEffect(() => {
+    displayObjectPositionRef.current = displayObjectPosition;
+  }, [displayObjectPosition]);
+
+  useEffect(() => {
     return () => {
-      if (revealTimeoutRef.current) {
-        window.clearTimeout(revealTimeoutRef.current);
-      }
-      if (swapTimeoutRef.current) {
-        window.clearTimeout(swapTimeoutRef.current);
-      }
+      if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
+      if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
     };
   }, []);
 
@@ -81,42 +117,61 @@ export default function HeroImage({
     img.decoding = 'async';
     img.src = src;
 
-    const handleLoaded = () => {
-      const currentDisplay = displaySrcRef.current;
+    const onLoaded = () => {
+      const currentDisplaySrc = displaySrcRef.current;
+      const currentDisplayObjectPosition = displayObjectPositionRef.current;
 
-      // Primera carga real: no hay ninguna imagen visible aún
-      if (!currentDisplay) {
+      if (!currentDisplaySrc) {
         const elapsed = Date.now() - mountedAtRef.current;
         const remain = Math.max(0, minInitialOverlayMs - elapsed);
 
-        if (revealTimeoutRef.current) {
-          window.clearTimeout(revealTimeoutRef.current);
-        }
+        if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
 
         revealTimeoutRef.current = window.setTimeout(() => {
           setDisplaySrc(src);
+          setDisplayObjectPosition(objectPosition);
           displaySrcRef.current = src;
-          writeLastHeroSrc(src);
+          displayObjectPositionRef.current = objectPosition;
+
+          writeLastHero(
+            {
+              src,
+              objectPosition,
+              mediaMode,
+            },
+            persistAcrossRoutes
+          );
+
           if (typeof window !== 'undefined') {
             window.__gpHeroBootDone = true;
           }
+
           setInitialReady(true);
         }, remain);
 
         return;
       }
 
-      // Ya existe una hero visible, mantenemos esa mientras entra la nueva
-      if (currentDisplay === src) {
-        writeLastHeroSrc(src);
+      if (currentDisplaySrc === src && currentDisplayObjectPosition === objectPosition) {
+        writeLastHero(
+          {
+            src,
+            objectPosition,
+            mediaMode,
+          },
+          persistAcrossRoutes
+        );
+
         if (typeof window !== 'undefined') {
           window.__gpHeroBootDone = true;
         }
+
         setInitialReady(true);
         return;
       }
 
       setNextSrc(src);
+      setNextObjectPosition(objectPosition);
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -124,33 +179,44 @@ export default function HeroImage({
         });
       });
 
-      if (swapTimeoutRef.current) {
-        window.clearTimeout(swapTimeoutRef.current);
-      }
+      if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
 
       swapTimeoutRef.current = window.setTimeout(() => {
         setDisplaySrc(src);
+        setDisplayObjectPosition(objectPosition);
         displaySrcRef.current = src;
+        displayObjectPositionRef.current = objectPosition;
+
         setNextSrc(null);
         setShowNext(false);
-        writeLastHeroSrc(src);
+
+        writeLastHero(
+          {
+            src,
+            objectPosition,
+            mediaMode,
+          },
+          persistAcrossRoutes
+        );
+
         if (typeof window !== 'undefined') {
           window.__gpHeroBootDone = true;
         }
+
         setInitialReady(true);
       }, 320);
     };
 
     if (img.complete) {
-      handleLoaded();
+      onLoaded();
     } else {
-      img.onload = handleLoaded;
+      img.onload = onLoaded;
     }
 
     return () => {
       img.onload = null;
     };
-  }, [src, minInitialOverlayMs]);
+  }, [src, objectPosition, minInitialOverlayMs, persistAcrossRoutes, mediaMode]);
 
   const showBrandOverlay = showInitialBrandOverlay && !initialReady;
 
@@ -161,7 +227,7 @@ export default function HeroImage({
           src={displaySrc}
           alt={alt}
           className={`absolute inset-0 w-full h-full object-cover ${className}`}
-          style={{ objectPosition }}
+          style={{ objectPosition: displayObjectPosition }}
           draggable={false}
         />
       ) : null}
@@ -173,7 +239,7 @@ export default function HeroImage({
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
             showNext ? 'opacity-100' : 'opacity-0'
           } ${className}`}
-          style={{ objectPosition }}
+          style={{ objectPosition: nextObjectPosition }}
           draggable={false}
         />
       ) : null}
