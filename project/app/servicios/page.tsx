@@ -7,6 +7,7 @@ import {
   ChartNoAxesGantt,
   ShieldCheck,
 } from 'lucide-react';
+import HeroImage from '@/components/HeroImage';
 
 /** =========================================================
  *  Página de Servicios — coherente con Inicio y Propiedades
@@ -16,11 +17,12 @@ export default function ServiciosPage() {
     <main className="bg-white">
       {/* ================= HERO (igual a Propiedades) ================= */}
       <section className="relative min-h-[100svh]">
-        <img
+        <HeroImage
           src="/images/portadas/servicios.jpg"
           alt="Portada Servicios"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '50% 35%' }}
+          className=""
+          objectPosition="50% 35%"
+          showInitialBrandOverlay={false}
         />
         <div className="absolute inset-0 bg-black/35" />
         <div className="absolute bottom-6 left-0 right-0">
