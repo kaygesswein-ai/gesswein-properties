@@ -31,40 +31,77 @@ function TikTokIcon() {
 }
 
 function SocialIcons() {
+  const showInactiveAlert = (label: string) => {
+    window.alert(`${label} todavía no está activa. Estamos trabajando en ello.`);
+  };
+
+  const iconClass =
+    "inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7 text-white/90 transition-colors hover:text-white";
+
   return (
     <div className="mt-2 flex items-center justify-center gap-6 md:gap-8 text-white">
-      <Link
+      <a
         aria-label="WhatsApp"
-        href="#"
-        className="relative inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7"
+        href="https://wa.me/56993318039?text=Hola%2C%20quiero%20contactar%20a%20Gesswein%20Properties"
+        target="_blank"
+        rel="noreferrer"
+        className={`${iconClass} relative`}
       >
         <MessageCircle className="absolute h-full w-full stroke-[1.6]" />
         <Phone className="absolute h-3.5 w-3.5 md:h-4 md:w-4 stroke-[1.8]" />
-      </Link>
+      </a>
 
-      <Link aria-label="Email" href="#" className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7">
+      <a
+        aria-label="Email"
+        href="mailto:contacto@gessweinproperties.com"
+        className={iconClass}
+      >
         <Mail className="h-full w-full stroke-[1.6]" />
-      </Link>
+      </a>
 
-      <Link aria-label="Teléfono" href="#" className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7">
+      <a
+        aria-label="Teléfono"
+        href="tel:+56993318039"
+        className={iconClass}
+      >
         <Phone className="h-full w-full stroke-[1.6]" />
-      </Link>
+      </a>
 
-      <Link aria-label="Instagram" href="#" className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7">
+      <button
+        type="button"
+        aria-label="Instagram"
+        onClick={() => showInactiveAlert("Instagram")}
+        className={iconClass}
+      >
         <Instagram className="h-full w-full stroke-[1.6]" />
-      </Link>
+      </button>
 
-      <Link aria-label="TikTok" href="#" className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7">
+      <button
+        type="button"
+        aria-label="TikTok"
+        onClick={() => showInactiveAlert("TikTok")}
+        className={iconClass}
+      >
         <TikTokIcon />
-      </Link>
+      </button>
 
-      <Link aria-label="Facebook" href="#" className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7">
+      <button
+        type="button"
+        aria-label="Facebook"
+        onClick={() => showInactiveAlert("Facebook")}
+        className={iconClass}
+      >
         <Facebook className="h-full w-full stroke-[1.6]" />
-      </Link>
+      </button>
 
-      <Link aria-label="LinkedIn" href="#" className="inline-flex h-6 w-6 items-center justify-center md:h-7 md:w-7">
+      <button
+        type="button"
+        aria-label="LinkedIn"
+        onClick={() => showInactiveAlert("LinkedIn")}
+        className={iconClass}
+      >
         <Linkedin className="h-full w-full stroke-[1.6]" />
-      </Link>
+      </button>
     </div>
   );
 }
@@ -74,14 +111,16 @@ export default function Footer() {
     <footer className="bg-[#0E2C4A] text-white">
       <div className="mx-auto w-full max-w-6xl px-4">
         <div className="flex flex-col items-center pt-8 md:pt-10">
-          <Image
-            src="/logo-white.svg"
-            alt="Gesswein Properties"
-            width={260}
-            height={54}
-            priority
-            className="h-10 w-auto md:h-12"
-          />
+          <Link href="/" aria-label="Gesswein Properties">
+            <Image
+              src="/logo-white.svg"
+              alt="Gesswein Properties"
+              width={260}
+              height={54}
+              priority
+              className="h-10 w-auto md:h-12"
+            />
+          </Link>
 
           <nav className="mt-4 md:mt-5">
             <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12.5px] tracking-[0.18em] md:text-[13.5px]">
