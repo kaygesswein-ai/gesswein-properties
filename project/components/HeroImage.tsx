@@ -18,6 +18,7 @@ type HeroImageProps = {
   minInitialOverlayMs?: number;
   persistAcrossRoutes?: boolean;
   mediaMode?: 'all' | 'mobile' | 'desktop';
+  onCurrentReadyChange?: (ready: boolean) => void;
 };
 
 function isValidSrc(value?: string | null): value is string {
@@ -49,6 +50,7 @@ export default function HeroImage({
   minInitialOverlayMs = 900,
   persistAcrossRoutes = true,
   mediaMode = 'all',
+  onCurrentReadyChange,
 }: HeroImageProps) {
   const initialCachedSrc = useMemo(() => {
     if (!persistAcrossRoutes) return null;
@@ -64,10 +66,10 @@ export default function HeroImage({
   });
 
   const displaySrcRef = useRef<string | null>(initialCachedSrc);
-  const mountedAtRef = useRef<number>(Date.now());
   const revealTimeoutRef = useRef<number | null>(null);
   const swapTimeoutRef = useRef<number | null>(null);
-  const latestRequestedSrcRef = useRef<string | null>(null);
+  const mountedAtRef = useRef<number>(Date.now());
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     displaySrcRef.current = displaySrc;
@@ -82,61 +84,73 @@ export default function HeroImage({
 
   useEffect(() => {
     if (!isValidSrc(src)) {
+      onCurrentReadyChange?.(false);
       return;
     }
 
-    if (latestRequestedSrcRef.current === src) return;
-    latestRequestedSrcRef.current = src;
+    onCurrentReadyChange?.(false);
+
+    const requestId = ++requestIdRef.current;
+    const currentDisplay = displaySrcRef.current;
+
+    if (currentDisplay === src && !nextSrc) {
+      setInitialReady(true);
+      onCurrentReadyChange?.(true);
+      if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
+      if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
+      return;
+    }
 
     const img = new window.Image();
     img.decoding = 'async';
     img.src = src;
 
     const onLoaded = () => {
-      const currentDisplay = displaySrcRef.current;
-      const effectiveMinOverlayMs = Math.min(Math.max(0, minInitialOverlayMs), 420);
+      if (requestId !== requestIdRef.current) return;
 
-      // Primera carga real del sitio: mostrar overlay azul, pero corto.
-      if (!currentDisplay && showInitialBrandOverlay && !window.__gpHeroBootDone) {
+      const visibleNow = displaySrcRef.current;
+      const effectiveMinOverlayMs = Math.min(Math.max(0, minInitialOverlayMs), 380);
+
+      // Primera carga real del sitio
+      if (!visibleNow && showInitialBrandOverlay && !window.__gpHeroBootDone) {
         const elapsed = Date.now() - mountedAtRef.current;
         const remain = Math.max(0, effectiveMinOverlayMs - elapsed);
 
         if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
 
         revealTimeoutRef.current = window.setTimeout(() => {
+          if (requestId !== requestIdRef.current) return;
+
           setDisplaySrc(src);
           displaySrcRef.current = src;
           setInitialReady(true);
+          onCurrentReadyChange?.(true);
+
           window.__gpHeroBootDone = true;
-          writeCachedHero(mediaMode, src);
+          if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
         }, remain);
 
         return;
       }
 
-      // Si no había base visible, mostrar directo.
-      if (!currentDisplay) {
+      // Si no hay nada visible todavía, mostrar directo
+      if (!visibleNow) {
         setDisplaySrc(src);
         displaySrcRef.current = src;
         setInitialReady(true);
-        window.__gpHeroBootDone = true;
-        writeCachedHero(mediaMode, src);
+        onCurrentReadyChange?.(true);
+
+        if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
+        if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
         return;
       }
 
-      // Si ya es la misma imagen, no animar.
-      if (currentDisplay === src) {
-        setInitialReady(true);
-        window.__gpHeroBootDone = true;
-        writeCachedHero(mediaMode, src);
-        return;
-      }
-
-      // Cambio entre páginas: mantener la anterior visible hasta que entre la nueva.
+      // Cambio entre rutas o cambio de hero interno
       setNextSrc(src);
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          if (requestId !== requestIdRef.current) return;
           setShowNext(true);
         });
       });
@@ -144,13 +158,17 @@ export default function HeroImage({
       if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
 
       swapTimeoutRef.current = window.setTimeout(() => {
+        if (requestId !== requestIdRef.current) return;
+
         setDisplaySrc(src);
         displaySrcRef.current = src;
         setNextSrc(null);
         setShowNext(false);
         setInitialReady(true);
-        window.__gpHeroBootDone = true;
-        writeCachedHero(mediaMode, src);
+        onCurrentReadyChange?.(true);
+
+        if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
+        if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
       }, 280);
     };
 
@@ -163,7 +181,15 @@ export default function HeroImage({
     return () => {
       img.onload = null;
     };
-  }, [src, showInitialBrandOverlay, minInitialOverlayMs, mediaMode]);
+  }, [
+    src,
+    showInitialBrandOverlay,
+    minInitialOverlayMs,
+    persistAcrossRoutes,
+    mediaMode,
+    onCurrentReadyChange,
+    nextSrc,
+  ]);
 
   const showBrandOverlay = showInitialBrandOverlay && !initialReady;
 
