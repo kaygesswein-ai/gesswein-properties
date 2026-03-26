@@ -62,7 +62,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header data-no-transition className={`${wrapper} ${bg}`}>
+      <header className={`${wrapper} ${bg}`}>
         <div className="mx-auto max-w-7xl pr-4 sm:pr-6 lg:pr-8 pl-6 md:pl-10 lg:pl-12 xl:pl-16">
           <div className="h-16 md:h-18 flex items-center">
             {/* LOGO */}
