@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useRouteTransition } from './TransitionProvider';
 
-/* Helpers -------------------------------------------------- */
 function findAnchor(el: Element | null): HTMLAnchorElement | null {
   let n: Element | null = el;
   while (n) {
@@ -32,15 +31,6 @@ function isExternalProtocol(a: HTMLAnchorElement) {
   return href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('blob:');
 }
 
-function getPathnameFromHref(href: string) {
-  try {
-    const url = new URL(href, location.href);
-    return url.pathname;
-  } catch {
-    return '';
-  }
-}
-
 export default function AutoTransition() {
   const router = useRouter();
   const pathname = usePathname();
@@ -49,7 +39,7 @@ export default function AutoTransition() {
 
   useEffect(() => {
     if (isActive && pathname !== lastPath.current) {
-      const t = window.setTimeout(() => end(), 130);
+      const t = window.setTimeout(() => end(), 120);
       return () => window.clearTimeout(t);
     }
     lastPath.current = pathname;
@@ -64,36 +54,30 @@ export default function AutoTransition() {
 
       if (!a.href || isExternalProtocol(a) || (a.target && a.target !== '_self')) return;
       if (!isSameOrigin(a)) return;
-
       if (a.dataset.transition === 'off') return;
       if (a.closest('[data-no-transition]')) return;
 
       const url = new URL(a.href, location.href);
       const next = url.pathname + url.search + url.hash;
       const curr = location.pathname + location.search + location.hash;
+
       if (next === curr) return;
 
-      const nextPathname = getPathnameFromHref(a.href);
-      const goingToHome = nextPathname === '/';
+      const goingToHome = url.pathname === '/';
 
       e.preventDefault();
 
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem('gp-nav-target', nextPathname || '');
-        window.sessionStorage.setItem('gp-force-home-transition', goingToHome ? '1' : '0');
-      }
-
       start({
-        minDurationMs: goingToHome ? 980 : 520,
-        variant: 'brand',
+        minDurationMs: goingToHome ? 900 : 480,
       });
 
       window.setTimeout(() => {
         router.push(next);
 
+        // fallback de seguridad
         window.setTimeout(() => {
           end();
-        }, goingToHome ? 2200 : 1400);
+        }, goingToHome ? 1700 : 1200);
       }, 40);
     };
 
