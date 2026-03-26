@@ -26,7 +26,6 @@ import HeroImage from '@/components/HeroImage';
 const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20portada%20-%20Equipo%20-%20OPTIMIZADA.JPG';
 
-/* === NUEVO: portada específica para smartphones / mobile vertical === */
 const HERO_IMG_MOBILE =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Portada%20Equipo(para%20Moviles)%20-%20Optimizada.JPG';
 
@@ -329,48 +328,63 @@ const COMPARISON_ITEMS = [
   },
 ] as const;
 
-/* =========================
-   PAGE
-   ========================= */
-
 export default function EquipoPage() {
   const [misionOpen, setMisionOpen] = useState(false);
   const [visionOpen, setVisionOpen] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
+  const [isMobileHero, setIsMobileHero] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 767px)').matches;
+  });
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    const sync = () => setIsMobileHero(media.matches);
+    sync();
+
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', sync);
+      return () => media.removeEventListener('change', sync);
+    }
+
+    media.addListener(sync);
+    return () => media.removeListener(sync);
+  }, []);
+
+  const heroSrc = isMobileHero ? HERO_IMG_MOBILE : HERO_IMG;
+  const heroAlt = isMobileHero ? 'Portada Equipo Mobile' : 'Portada Equipo';
+  const heroObjectPosition = isMobileHero ? '50% 50%' : '50% 35%';
+  const heroMediaMode = isMobileHero ? 'mobile' : 'desktop';
 
   return (
     <main className="bg-white">
       {/* HERO */}
-      <section className="relative min-h-[100svh]">
-        {/* MOBILE HERO */}
+      <section className="relative min-h-[100svh] overflow-hidden">
         <HeroImage
-          src={HERO_IMG_MOBILE}
-          alt="Portada Equipo Mobile"
-          className="md:hidden"
-          objectPosition="50% 50%"
+          src={heroSrc}
+          alt={heroAlt}
+          objectPosition={heroObjectPosition}
           showInitialBrandOverlay={false}
+          persistAcrossRoutes
+          mediaMode={heroMediaMode}
+          onCurrentReadyChange={setHeroReady}
         />
 
-        {/* DESKTOP / TABLET HERO */}
-        <HeroImage
-          src={HERO_IMG}
-          alt="Portada Equipo"
-          className="hidden md:block"
-          objectPosition="50% 35%"
-          showInitialBrandOverlay={false}
-        />
+        {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
 
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="absolute bottom-6 left-0 right-0">
-          <div className="max-w-7xl mx-auto px-6">
-            <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
-              NUESTRO EQUIPO
-            </h1>
-            <p className="text-white/85 mt-2 text-[14px] md:text-[15px] leading-relaxed">
-              Profesionales expertos unidos por la pasión de ayudarte a encontrar la propiedad
-              perfecta.
-            </p>
+        {heroReady ? (
+          <div className="absolute bottom-6 left-0 right-0">
+            <div className="max-w-7xl mx-auto px-6">
+              <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                NUESTRO EQUIPO
+              </h1>
+              <p className="text-white/85 mt-2 text-[14px] md:text-[15px] leading-relaxed">
+                Profesionales expertos unidos por la pasión de ayudarte a encontrar la propiedad
+                perfecta.
+              </p>
+            </div>
           </div>
-        </div>
+        ) : null}
       </section>
 
       {/* 1) NUESTRA HISTORIA — BLANCO */}
@@ -636,7 +650,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO — BLANCO PARA SEPARAR DE CULTURA Y ALTERNAR CON ALIANZAS */}
+      {/* 4) EQUIPO */}
       <section id="equipo" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
@@ -651,7 +665,7 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 5) ALIANZAS — GRIS PARA SEPARAR DE EQUIPO */}
+      {/* 5) ALIANZAS */}
       <section className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-4">
@@ -696,7 +710,7 @@ export default function EquipoPage() {
 }
 
 /* =========================
-   ACCORDIONS DE LA SECCIÓN COMPARATIVA
+   ACCORDIONS
    ========================= */
 
 function ComparisonAccordion({
@@ -829,7 +843,7 @@ function ClientValueAccordion() {
 }
 
 /* ===========================================================
-   EQUIPO — ESTILO OGILVY (FLIP DESKTOP + ACORDEÓN MOBILE)
+   EQUIPO — ESTILO OGILVY
    =========================================================== */
 
 function TeamOgilvy() {
