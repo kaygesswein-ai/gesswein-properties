@@ -39,7 +39,7 @@ export default function AutoTransition() {
 
   useEffect(() => {
     if (isActive && pathname !== lastPath.current) {
-      const t = window.setTimeout(() => end(), 120);
+      const t = window.setTimeout(() => end(), 150);
       return () => window.clearTimeout(t);
     }
     lastPath.current = pathname;
@@ -68,17 +68,16 @@ export default function AutoTransition() {
       e.preventDefault();
 
       start({
-        minDurationMs: goingToHome ? 900 : 480,
+        minDurationMs: goingToHome ? 1050 : 520,
       });
 
       window.setTimeout(() => {
         router.push(next);
 
-        // fallback de seguridad
         window.setTimeout(() => {
           end();
-        }, goingToHome ? 1700 : 1200);
-      }, 40);
+        }, goingToHome ? 1900 : 1300);
+      }, goingToHome ? 110 : 45);
     };
 
     window.addEventListener('click', onClick, true);
