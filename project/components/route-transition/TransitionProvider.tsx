@@ -9,10 +9,8 @@ import React, {
   useEffect,
 } from 'react';
 
-type TransitionVariant = 'brand';
-
 interface TransitionCtx {
-  start: (opts?: { minDurationMs?: number; variant?: TransitionVariant }) => void;
+  start: (opts?: { minDurationMs?: number }) => void;
   end: () => void;
   isActive: boolean;
 }
@@ -21,9 +19,7 @@ const Ctx = createContext<TransitionCtx | null>(null);
 
 export const useRouteTransition = () => {
   const ctx = useContext(Ctx);
-  if (!ctx) {
-    throw new Error('useRouteTransition must be used within <RouteTransitionProvider>');
-  }
+  if (!ctx) throw new Error('useRouteTransition must be used within <RouteTransitionProvider>');
   return ctx;
 };
 
@@ -33,8 +29,8 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
 
   const startedAtRef = useRef<number>(0);
   const minDurRef = useRef<number>(900);
-  const progressRef = useRef<HTMLDivElement | null>(null);
   const closingRef = useRef(false);
+  const progressRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -42,7 +38,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     return () => root.classList.remove('gp-lock');
   }, [isActive]);
 
-  const start = useCallback((opts?: { minDurationMs?: number; variant?: TransitionVariant }) => {
+  const start = useCallback((opts?: { minDurationMs?: number }) => {
     minDurRef.current = Math.max(250, opts?.minDurationMs ?? 900);
     startedAtRef.current = Date.now();
     closingRef.current = false;
@@ -50,7 +46,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
       requestAnimationFrame(() => {
-        if (progressRef.current) progressRef.current.style.width = '68%';
+        if (progressRef.current) progressRef.current.style.width = '66%';
       });
     }
 
