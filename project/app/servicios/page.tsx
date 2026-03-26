@@ -13,33 +13,42 @@ import HeroImage from '@/components/HeroImage';
  *  Página de Servicios — coherente con Inicio y Propiedades
  *  ========================================================= */
 export default function ServiciosPage() {
+  const [heroReady, setHeroReady] = useState(false);
+
   return (
     <main className="bg-white">
       {/* ================= HERO (igual a Propiedades) ================= */}
-      <section className="relative min-h-[100svh]">
+      <section className="relative min-h-[100svh] overflow-hidden">
         <HeroImage
           src="/images/portadas/servicios.jpg"
           alt="Portada Servicios"
           className=""
           objectPosition="50% 35%"
           showInitialBrandOverlay={false}
+          persistAcrossRoutes
+          mediaMode="all"
+          onCurrentReadyChange={setHeroReady}
         />
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="absolute bottom-6 left-0 right-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="pl-2 sm:pl-4">
-              <div className="max-w-3xl">
-                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
-                  SERVICIOS
-                </h1>
-                <p className="text-white/85 mt-2">
-                  Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
-                  con la mejor experiencia y resultados.
-                </p>
+
+        {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
+
+        {heroReady ? (
+          <div className="absolute bottom-6 left-0 right-0">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="pl-2 sm:pl-4">
+                <div className="max-w-3xl">
+                  <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                    SERVICIOS
+                  </h1>
+                  <p className="text-white/85 mt-2">
+                    Combinamos datos, diseño y marketing premium para vender o arrendar tu propiedad
+                    con la mejor experiencia y resultados.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : null}
       </section>
 
       {/* ================= PROCESO ================= */}
@@ -222,7 +231,6 @@ function ServiciosEtapasSeccion() {
   return (
     <section className="py-20 bg-[#f8f9fb]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header sección */}
         <header className="pl-2 sm:pl-4 max-w-4xl">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
             Servicios Gesswein Properties
@@ -247,7 +255,6 @@ function ServiciosEtapasSeccion() {
           </div>
         </header>
 
-        {/* ======= BLOQUE I ======= */}
         <div className="mt-12 pl-2 sm:pl-4">
           <div className="text-[#0A2E57] text-[13px] tracking-[.25em] uppercase">
             Gestión del Activo Inmobiliario
@@ -266,7 +273,6 @@ function ServiciosEtapasSeccion() {
           className="mt-8"
         />
 
-        {/* ======= BLOQUE II ======= */}
         <div className="mt-16 pl-2 sm:pl-4">
           <div className="text-[#0A2E57] text-[13px] tracking-[.25em] uppercase">
             Gestión Patrimonial & Familiar
@@ -289,7 +295,6 @@ function ServiciosEtapasSeccion() {
   );
 }
 
-/* ====== GRID DE CARDS ====== */
 function CardsGrid({
   cards,
   expandedIdx,
@@ -414,7 +419,6 @@ function CardsGrid({
   );
 }
 
-/* ====================== TIPOS Y DATOS ====================== */
 type ServiceCard = {
   kicker: string;
   title: string;
@@ -423,7 +427,6 @@ type ServiceCard = {
   img: string;
 };
 
-/* BLOQUE I — Gestión del Activo Inmobiliario */
 const ACTIVO_CARDS: ServiceCard[] = [
   {
     kicker: 'Compra-Venta',
@@ -500,7 +503,6 @@ const ACTIVO_CARDS: ServiceCard[] = [
   },
 ];
 
-/* BLOQUE II — Gestión Patrimonial & Familiar */
 const PATRIMONIAL_CARDS: ServiceCard[] = [
   {
     kicker: 'Asesoría integral',
@@ -548,7 +550,6 @@ const PATRIMONIAL_CARDS: ServiceCard[] = [
   },
 ];
 
-/* ================= PROCESO ================= */
 const PROCESO = [
   {
     title: 'Alcance & Propuesta',
