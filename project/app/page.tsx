@@ -435,7 +435,7 @@ export default function HomePage() {
           objectPosition="50% 50%"
           showInitialBrandOverlay
           minInitialOverlayMs={900}
-          persistAcrossRoutes={false}
+          persistAcrossRoutes={true}
           mediaMode="all"
         />
 
