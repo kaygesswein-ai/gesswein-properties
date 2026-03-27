@@ -39,7 +39,7 @@ export default function AutoTransition() {
 
   useEffect(() => {
     if (isActive && pathname !== lastPath.current) {
-      const t = window.setTimeout(() => end(), 150);
+      const t = window.setTimeout(() => end(), 180);
       return () => window.clearTimeout(t);
     }
     lastPath.current = pathname;
@@ -68,7 +68,7 @@ export default function AutoTransition() {
       e.preventDefault();
 
       start({
-        minDurationMs: goingToHome ? 1050 : 520,
+        minDurationMs: goingToHome ? 1100 : 560,
       });
 
       window.setTimeout(() => {
@@ -76,8 +76,8 @@ export default function AutoTransition() {
 
         window.setTimeout(() => {
           end();
-        }, goingToHome ? 1900 : 1300);
-      }, goingToHome ? 110 : 45);
+        }, goingToHome ? 2100 : 1500);
+      }, goingToHome ? 130 : 60);
     };
 
     window.addEventListener('click', onClick, true);
