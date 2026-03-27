@@ -68,14 +68,16 @@ export default function AutoTransition() {
       e.preventDefault();
 
       if (goingToHome) {
+        document.body.style.opacity = '0';
         start({ minDurationMs: 1050 });
 
         window.setTimeout(() => {
           router.push(next);
 
           window.setTimeout(() => {
+            document.body.style.opacity = '1';
             end();
-          }, 2100);
+          }, 2000);
         }, 120);
 
         return;
