@@ -9,26 +9,29 @@ import {
 } from 'lucide-react';
 import HeroImage from '@/components/HeroImage';
 
-/** =========================================================
- *  Página de Servicios — coherente con Inicio y Propiedades
- *  ========================================================= */
 export default function ServiciosPage() {
   const [heroReady, setHeroReady] = useState(false);
+  const [heroSrc, setHeroSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    setHeroReady(false);
+    setHeroSrc('/images/portadas/servicios.jpg');
+  }, []);
 
   return (
     <main className="bg-white">
-      {/* ================= HERO (igual a Propiedades) ================= */}
       <section className="relative min-h-[100svh] overflow-hidden">
-        <HeroImage
-          src="/images/portadas/servicios.jpg"
-          alt="Portada Servicios"
-          className=""
-          objectPosition="50% 35%"
-          showInitialBrandOverlay={false}
-          persistAcrossRoutes
-          mediaMode="all"
-          onCurrentReadyChange={setHeroReady}
-        />
+        {heroSrc && (
+          <HeroImage
+            src={heroSrc}
+            alt="Portada Servicios"
+            objectPosition="50% 35%"
+            showInitialBrandOverlay={false}
+            persistAcrossRoutes
+            mediaMode="all"
+            onCurrentReadyChange={setHeroReady}
+          />
+        )}
 
         {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
 
@@ -51,18 +54,12 @@ export default function ServiciosPage() {
         ) : null}
       </section>
 
-      {/* ================= PROCESO ================= */}
       <ProcesoSection />
-
-      {/* ================= SERVICIOS GESSWEIN PROPERTIES ================= */}
       <ServiciosEtapasSeccion />
     </main>
   );
 }
 
-/* ============================================================================
- *  SECCIÓN PROCESO
- * ========================================================================== */
 function ProcesoSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
 
@@ -84,7 +81,6 @@ function ProcesoSection() {
           </p>
         </div>
 
-        {/* DESKTOP / TABLET */}
         <div className="hidden md:block relative">
           <div className="absolute left-[6%] right-[6%] top-8 h-px bg-[#0A2E57]/30" />
 
@@ -148,7 +144,6 @@ function ProcesoSection() {
           </div>
         </div>
 
-        {/* MOBILE */}
         <div className="md:hidden flex flex-col gap-5">
           {PROCESO.map((p, i) => {
             const isOpen = openIdx === i;
@@ -210,9 +205,6 @@ function ProcesoSection() {
   );
 }
 
-/* ============================================================================
- *  SECCIÓN “Servicios Gesswein Properties”
- * ========================================================================== */
 function ServiciosEtapasSeccion() {
   const [expandedActivoIdx, setExpandedActivoIdx] = useState<number | null>(null);
   const [expandedPatrimonialIdx, setExpandedPatrimonialIdx] = useState<number | null>(null);
