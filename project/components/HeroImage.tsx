@@ -58,8 +58,8 @@ export default function HeroImage({
   }, [persistAcrossRoutes, mediaMode]);
 
   const [displaySrc, setDisplaySrc] = useState<string | null>(initialCachedSrc);
-  const [nextSrc, setNextSrc] = useState<string | null>(null);
-  const [showNext, setShowNext] = useState(false);
+  const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
+  const [incomingVisible, setIncomingVisible] = useState(false);
   const [initialReady, setInitialReady] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return !!window.__gpHeroBootDone || !!initialCachedSrc || !showInitialBrandOverlay;
@@ -88,18 +88,18 @@ export default function HeroImage({
       return;
     }
 
-    onCurrentReadyChange?.(false);
-
     const requestId = ++requestIdRef.current;
     const currentDisplay = displaySrcRef.current;
 
-    if (currentDisplay === src && !nextSrc) {
+    if (currentDisplay === src && !incomingSrc) {
       setInitialReady(true);
       onCurrentReadyChange?.(true);
       if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
       if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
       return;
     }
+
+    onCurrentReadyChange?.(false);
 
     const img = new window.Image();
     img.decoding = 'async';
@@ -109,7 +109,7 @@ export default function HeroImage({
       if (requestId !== requestIdRef.current) return;
 
       const visibleNow = displaySrcRef.current;
-      const effectiveMinOverlayMs = Math.min(Math.max(0, minInitialOverlayMs), 380);
+      const effectiveMinOverlayMs = Math.min(Math.max(0, minInitialOverlayMs), 320);
 
       if (!visibleNow && showInitialBrandOverlay && !window.__gpHeroBootDone) {
         const elapsed = Date.now() - mountedAtRef.current;
@@ -143,12 +143,13 @@ export default function HeroImage({
         return;
       }
 
-      setNextSrc(src);
+      setIncomingSrc(src);
+      setIncomingVisible(false);
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (requestId !== requestIdRef.current) return;
-          setShowNext(true);
+          setIncomingVisible(true);
         });
       });
 
@@ -159,14 +160,14 @@ export default function HeroImage({
 
         setDisplaySrc(src);
         displaySrcRef.current = src;
-        setNextSrc(null);
-        setShowNext(false);
+        setIncomingSrc(null);
+        setIncomingVisible(false);
         setInitialReady(true);
         onCurrentReadyChange?.(true);
 
         if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
         if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
-      }, 280);
+      }, 260);
     };
 
     if (img.complete) {
@@ -185,7 +186,7 @@ export default function HeroImage({
     persistAcrossRoutes,
     mediaMode,
     onCurrentReadyChange,
-    nextSrc,
+    incomingSrc,
   ]);
 
   const showBrandOverlay = showInitialBrandOverlay && !initialReady;
@@ -202,12 +203,12 @@ export default function HeroImage({
         />
       ) : null}
 
-      {nextSrc ? (
+      {incomingSrc ? (
         <img
-          src={nextSrc}
+          src={incomingSrc}
           alt={alt}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-            showNext ? 'opacity-100' : 'opacity-0'
+            incomingVisible ? 'opacity-100' : 'opacity-0'
           } ${className}`}
           style={{ objectPosition }}
           draggable={false}
