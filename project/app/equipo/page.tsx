@@ -332,43 +332,28 @@ export default function EquipoPage() {
   const [misionOpen, setMisionOpen] = useState(false);
   const [visionOpen, setVisionOpen] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
-  const [isMobileHero, setIsMobileHero] = useState<boolean>(false);
+  const [heroSrc, setHeroSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 767px)');
-    const sync = () => {
-      setHeroReady(false);
-      setIsMobileHero(media.matches);
-    };
-
-    sync();
-
-    if (typeof media.addEventListener === 'function') {
-      media.addEventListener('change', sync);
-      return () => media.removeEventListener('change', sync);
-    }
-
-    media.addListener(sync);
-    return () => media.removeListener(sync);
+    const isMobile = window.innerWidth < 768;
+    setHeroReady(false);
+    setHeroSrc(isMobile ? HERO_IMG_MOBILE : HERO_IMG);
   }, []);
-
-  const heroSrc = isMobileHero ? HERO_IMG_MOBILE : HERO_IMG;
-  const heroAlt = isMobileHero ? 'Portada Equipo Mobile' : 'Portada Equipo';
-  const heroObjectPosition = isMobileHero ? '50% 50%' : '50% 35%';
-  const heroMediaMode = isMobileHero ? 'mobile' : 'desktop';
 
   return (
     <main className="bg-white">
       <section className="relative min-h-[100svh] overflow-hidden">
-        <HeroImage
-          src={heroSrc}
-          alt={heroAlt}
-          objectPosition={heroObjectPosition}
-          showInitialBrandOverlay={false}
-          persistAcrossRoutes
-          mediaMode={heroMediaMode}
-          onCurrentReadyChange={setHeroReady}
-        />
+        {heroSrc && (
+          <HeroImage
+            src={heroSrc}
+            alt="Portada Equipo"
+            objectPosition="50% 40%"
+            showInitialBrandOverlay={false}
+            persistAcrossRoutes
+            mediaMode="all"
+            onCurrentReadyChange={setHeroReady}
+          />
+        )}
 
         {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
 
@@ -703,10 +688,6 @@ export default function EquipoPage() {
   );
 }
 
-/* =========================
-   ACCORDIONS
-   ========================= */
-
 function ComparisonAccordion({
   item,
 }: {
@@ -835,10 +816,6 @@ function ClientValueAccordion() {
     </article>
   );
 }
-
-/* ===========================================================
-   EQUIPO — ESTILO OGILVY
-   =========================================================== */
 
 function TeamOgilvy() {
   const team = TEAM_PRINCIPAL;
