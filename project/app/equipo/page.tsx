@@ -332,14 +332,15 @@ export default function EquipoPage() {
   const [misionOpen, setMisionOpen] = useState(false);
   const [visionOpen, setVisionOpen] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
-  const [isMobileHero, setIsMobileHero] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(max-width: 767px)').matches;
-  });
+  const [isMobileHero, setIsMobileHero] = useState<boolean>(false);
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 767px)');
-    const sync = () => setIsMobileHero(media.matches);
+    const sync = () => {
+      setHeroReady(false);
+      setIsMobileHero(media.matches);
+    };
+
     sync();
 
     if (typeof media.addEventListener === 'function') {
@@ -358,7 +359,6 @@ export default function EquipoPage() {
 
   return (
     <main className="bg-white">
-      {/* HERO */}
       <section className="relative min-h-[100svh] overflow-hidden">
         <HeroImage
           src={heroSrc}
@@ -387,7 +387,6 @@ export default function EquipoPage() {
         ) : null}
       </section>
 
-      {/* 1) NUESTRA HISTORIA — BLANCO */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-8 md:grid-cols-2 items-stretch">
@@ -431,7 +430,6 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 2) PROPUESTA DE VALOR — GRIS */}
       <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-6">
@@ -543,7 +541,6 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 2B) POR QUÉ GP — BLANCO */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mt-0">
@@ -588,7 +585,6 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 3) NUESTRA CULTURA — GRIS */}
       <section className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-12">
@@ -650,7 +646,6 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 4) EQUIPO */}
       <section id="equipo" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
@@ -665,7 +660,6 @@ export default function EquipoPage() {
         </div>
       </section>
 
-      {/* 5) ALIANZAS */}
       <section className="py-16 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <h3 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium mb-4">
