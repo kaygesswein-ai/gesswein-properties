@@ -239,6 +239,7 @@ export default function HomePage() {
 
   const go = (dir: -1 | 1) => {
     if (!destacadas.length) return;
+    setCurrentHeroReady(false);
     setI((p) => {
       const n = destacadas.length;
       return ((p + dir) % n + n) % n;
