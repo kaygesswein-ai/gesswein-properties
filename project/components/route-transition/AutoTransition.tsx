@@ -67,17 +67,21 @@ export default function AutoTransition() {
 
       e.preventDefault();
 
-      start({
-        minDurationMs: goingToHome ? 1100 : 560,
-      });
-
-      window.setTimeout(() => {
-        router.push(next);
+      if (goingToHome) {
+        start({ minDurationMs: 1050 });
 
         window.setTimeout(() => {
-          end();
-        }, goingToHome ? 2100 : 1500);
-      }, goingToHome ? 130 : 60);
+          router.push(next);
+
+          window.setTimeout(() => {
+            end();
+          }, 2100);
+        }, 120);
+
+        return;
+      }
+
+      router.push(next);
     };
 
     window.addEventListener('click', onClick, true);
