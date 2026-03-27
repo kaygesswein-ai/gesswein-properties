@@ -17,9 +17,6 @@ import useUf from '../hooks/useUf';
 import SmartSelect from '../components/SmartSelect';
 import HeroImage from '../components/HeroImage';
 
-/* ------------------------------------------------------------------ */
-/*                               TIPOS                                */
-/* ------------------------------------------------------------------ */
 type Property = {
   id: string;
   titulo?: string;
@@ -37,14 +34,10 @@ type Property = {
   images?: string[];
   coverImage?: string;
   destacada?: boolean;
-
   portada_url?: string | null;
   portada_fija_url?: string | null;
 };
 
-/* ------------------------------------------------------------------ */
-/*                             UTILIDADES                             */
-/* ------------------------------------------------------------------ */
 const fmtUF = (n: number) =>
   `UF ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`;
 const fmtCLP = (n: number) =>
@@ -70,7 +63,6 @@ const capWords = (s?: string | null) =>
     .join(' ')
     .trim();
 
-/* Sin fallback feo: si no hay imagen, no mostramos hero todavía */
 function getHeroImage(p?: Partial<Property>) {
   if (!p) return '';
   const anyP: any = p;
@@ -88,9 +80,6 @@ function getHeroImage(p?: Partial<Property>) {
   return (src as string) || '';
 }
 
-/* ------------------------------------------------------------------ */
-/*                 REGIONES (solo para el formulario)                  */
-/* ------------------------------------------------------------------ */
 const REGIONES_UI: readonly string[] = [
   'XV - Arica y Parinacota',
   'I - Tarapacá',
@@ -144,9 +133,6 @@ const COMUNAS_UI: Record<string, string[]> = {
 const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
 const TIPO_PROPIEDAD = ['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'];
 
-/* ------------------------------------------------------------------ */
-/*                              HOME PAGE                             */
-/* ------------------------------------------------------------------ */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
@@ -182,6 +168,8 @@ export default function HomePage() {
   const [sendingRef, setSendingRef] = useState(false);
   const [refSuccess, setRefSuccess] = useState('');
   const [refError, setRefError] = useState('');
+
+  const [currentHeroReady, setCurrentHeroReady] = useState(false);
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -296,7 +284,7 @@ export default function HomePage() {
   const enrichedActive = active ? { ...active, ...(detailById[active.id] || {}) } : undefined;
   const bg = useMemo(() => getHeroImage(enrichedActive), [enrichedActive]);
 
-  const heroReady = Boolean(active?.id && bg);
+  const heroReady = Boolean(active?.id && bg && currentHeroReady);
 
   const lineaSecundaria = [
     capWords(active?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
@@ -343,7 +331,7 @@ export default function HomePage() {
         ro?.disconnect();
       } catch {}
     };
-  }, [active]);
+  }, [active, currentHeroReady]);
 
   const dash = '—';
   const fmtInt = (n: number | null | undefined) =>
@@ -422,7 +410,6 @@ export default function HomePage() {
 
   return (
     <main className="bg-white">
-      {/* ================= HERO ================= */}
       <section
         className="relative w-full overflow-hidden isolate"
         onTouchStart={onTouchStart}
@@ -435,13 +422,14 @@ export default function HomePage() {
           objectPosition="50% 50%"
           showInitialBrandOverlay
           minInitialOverlayMs={900}
-          persistAcrossRoutes={true}
+          persistAcrossRoutes
           mediaMode="all"
+          onCurrentReadyChange={setCurrentHeroReady}
         />
 
-        <div className="absolute inset-0 bg-black/35" />
+        {heroReady ? <div className="absolute inset-0 -z-10 bg-black/35" /> : null}
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
             {heroReady ? (
               <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[480px]">
@@ -524,7 +512,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= ¿POR QUÉ GESSWEIN PROPERTIES? ================= */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-10 md:grid-cols-2 items-stretch">
@@ -534,9 +521,7 @@ export default function HomePage() {
               </h2>
 
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
-                <p>
-                  Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.
-                </p>
+                <p>Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.</p>
                 <p>
                   En Chile, la mayoría de las corredoras opera con un enfoque transaccional: captación, fotos, publicación, coordinación de visitas y negociación. Ese modelo funciona cuando la propiedad es simple y el mercado está “fácil”. Pero en propiedades premium —y especialmente en activos con complejidad normativa, potencial de transformación o alto valor patrimonial— ese enfoque deja valor en la mesa y eleva el riesgo.
                 </p>
@@ -567,7 +552,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= PROYECTOS EXCLUSIVOS ================= */}
       <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-10 md:grid-cols-2 items-stretch">
@@ -607,7 +591,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= REFERIDOS ================= */}
       <section id="referidos" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-start gap-4">
