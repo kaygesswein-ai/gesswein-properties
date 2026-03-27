@@ -39,14 +39,14 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   }, [isActive]);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(250, opts?.minDurationMs ?? 900);
+    minDurRef.current = Math.max(300, opts?.minDurationMs ?? 900);
     startedAtRef.current = Date.now();
     closingRef.current = false;
 
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
       requestAnimationFrame(() => {
-        if (progressRef.current) progressRef.current.style.width = '66%';
+        if (progressRef.current) progressRef.current.style.width = '64%';
       });
     }
 
