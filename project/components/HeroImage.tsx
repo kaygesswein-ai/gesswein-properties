@@ -111,7 +111,6 @@ export default function HeroImage({
       const visibleNow = displaySrcRef.current;
       const effectiveMinOverlayMs = Math.min(Math.max(0, minInitialOverlayMs), 380);
 
-      // Primera carga real del sitio
       if (!visibleNow && showInitialBrandOverlay && !window.__gpHeroBootDone) {
         const elapsed = Date.now() - mountedAtRef.current;
         const remain = Math.max(0, effectiveMinOverlayMs - elapsed);
@@ -133,7 +132,6 @@ export default function HeroImage({
         return;
       }
 
-      // Si no hay nada visible todavía, mostrar directo
       if (!visibleNow) {
         setDisplaySrc(src);
         displaySrcRef.current = src;
@@ -145,7 +143,6 @@ export default function HeroImage({
         return;
       }
 
-      // Cambio entre rutas o cambio de hero interno
       setNextSrc(src);
 
       requestAnimationFrame(() => {
