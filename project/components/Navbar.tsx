@@ -1,8 +1,8 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import Link from 'next/link';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import {
   Mail,
   Phone,
@@ -12,7 +12,7 @@ import {
   MessageCircle,
   Menu,
   X,
-} from 'lucide-react'
+} from 'lucide-react';
 
 function TikTokIcon() {
   return (
@@ -28,44 +28,43 @@ function TikTokIcon() {
       <path d="M14 3v10.2a4.8 4.8 0 1 1-4-4.73" />
       <path d="M14 6c1.1 2.6 3.3 4.2 6 4.5" />
     </svg>
-  )
+  );
 }
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
-  const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     const onResize = () => {
-      if (window.innerWidth >= 768) setOpen(false)
-    }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
+      if (window.innerWidth >= 768) setOpen(false);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const showInactiveAlert = (label: string) => {
-    window.alert(`${label} todavía no está activa. Estamos trabajando en ello.`)
-  }
+    window.alert(`${label} todavía no está activa. Estamos trabajando en ello.`);
+  };
 
-  const wrapper = 'fixed top-0 inset-x-0 z-50 transition-colors duration-300'
+  const wrapper = 'fixed top-0 inset-x-0 z-50 transition-colors duration-300';
   const bg = scrolled
     ? 'bg-[#0A2E57]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,.06)]'
-    : 'bg-transparent'
-  const linkBase = 'text-white/90 hover:text-white transition-colors select-none'
+    : 'bg-transparent';
+  const linkBase = 'text-white/90 hover:text-white transition-colors select-none';
 
   return (
     <>
       <header className={`${wrapper} ${bg}`}>
         <div className="mx-auto max-w-7xl pr-4 sm:pr-6 lg:pr-8 pl-6 md:pl-10 lg:pl-12 xl:pl-16">
           <div className="h-16 md:h-18 flex items-center">
-            {/* LOGO */}
             <Link href="/" aria-label="Gesswein Properties" className="shrink-0">
               <Image
                 src="/logo-white.svg"
@@ -77,9 +76,7 @@ export default function Navbar() {
               />
             </Link>
 
-            {/* Menú + redes */}
             <div className="ml-auto flex items-center gap-3 md:gap-4">
-              {/* MENÚ Desktop */}
               <nav className="hidden md:flex items-center text-white">
                 <Link href="/" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
                   Inicio
@@ -87,46 +84,50 @@ export default function Navbar() {
 
                 <span className="mx-2 text-white/60">|</span>
 
-                {/* PROYECTOS EXCLUSIVOS — destacado */}
                 <Link
                   href="/proyectos-exclusivos"
-                  className="uppercase text-[11px] tracking-[.30em]
-                             px-3 py-1
-                             border border-white/40
-                             bg-white/10
-                             text-white
-                             hover:bg-white/20
-                             transition-colors"
+                  className="uppercase text-[11px] tracking-[.30em] px-3 py-1 border border-white/40 bg-white/10 text-white hover:bg-white/20 transition-colors"
                 >
                   Proyectos exclusivos
                 </Link>
 
                 <span className="mx-2 text-white/60">|</span>
 
-                <Link href="/propiedades" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                <Link
+                  href="/propiedades"
+                  className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
+                >
                   Propiedades
                 </Link>
 
                 <span className="mx-2 text-white/60">|</span>
 
-                <Link href="/servicios" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                <Link
+                  href="/servicios"
+                  className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
+                >
                   Servicios
                 </Link>
 
                 <span className="mx-2 text-white/60">|</span>
 
-                <Link href="/equipo" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                <Link
+                  href="/equipo"
+                  className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
+                >
                   Equipo
                 </Link>
 
                 <span className="mx-2 text-white/60">|</span>
 
-                <Link href="/contacto" className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}>
+                <Link
+                  href="/contacto"
+                  className={`uppercase ${linkBase} text-[11px] tracking-[.30em]`}
+                >
                   Contacto
                 </Link>
               </nav>
 
-              {/* Redes */}
               <div className="flex items-center gap-3 text-white">
                 <Link
                   href="https://wa.me/56993318039?text=Hola%2C%20quiero%20contactar%20a%20Gesswein%20Properties"
@@ -149,11 +150,7 @@ export default function Navbar() {
                   <Mail className="h-[18px] w-[18px]" />
                 </Link>
 
-                <Link
-                  href="tel:+56993318039"
-                  aria-label="Teléfono"
-                  className={linkBase}
-                >
+                <Link href="tel:+56993318039" aria-label="Teléfono" className={linkBase}>
                   <Phone className="h-[18px] w-[18px]" />
                 </Link>
 
@@ -194,7 +191,6 @@ export default function Navbar() {
                 </button>
               </div>
 
-              {/* Hamburguesa */}
               <button
                 type="button"
                 aria-label="Abrir menú"
@@ -209,12 +205,10 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Menú móvil */}
       <div
-        className={`md:hidden fixed inset-x-0 top-16 z-40
-          bg-white/80 backdrop-blur-sm border-t border-black/10
-          transition-all duration-200
-          ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`md:hidden fixed inset-x-0 top-16 z-40 bg-white/80 backdrop-blur-sm border-t border-black/10 transition-all duration-200 ${
+          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
       >
         <nav className="flex flex-col py-3">
           <Link
@@ -262,5 +256,5 @@ export default function Navbar() {
         </nav>
       </div>
     </>
-  )
+  );
 }
