@@ -19,10 +19,6 @@ import {
 } from 'lucide-react';
 import HeroImage from '@/components/HeroImage';
 
-/* =========================
-   DATOS
-   ========================= */
-
 const HERO_IMG =
   'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20portada%20-%20Equipo%20-%20OPTIMIZADA.JPG';
 
@@ -349,7 +345,7 @@ export default function EquipoPage() {
             alt="Portada Equipo"
             objectPosition="50% 40%"
             showInitialBrandOverlay={false}
-            persistAcrossRoutes
+            persistAcrossRoutes={false}
             mediaMode="all"
             onCurrentReadyChange={setHeroReady}
           />
