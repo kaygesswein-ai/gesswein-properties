@@ -19,7 +19,9 @@ const Ctx = createContext<TransitionCtx | null>(null);
 
 export const useRouteTransition = () => {
   const ctx = useContext(Ctx);
-  if (!ctx) throw new Error('useRouteTransition must be used within <RouteTransitionProvider>');
+  if (!ctx) {
+    throw new Error('useRouteTransition must be used within <RouteTransitionProvider>');
+  }
   return ctx;
 };
 
@@ -28,7 +30,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const [fadeout, setFadeout] = useState(false);
 
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(900);
+  const minDurRef = useRef<number>(2000);
   const closingRef = useRef(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
@@ -39,14 +41,14 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   }, [isActive]);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(300, opts?.minDurationMs ?? 900);
+    minDurRef.current = Math.max(2000, opts?.minDurationMs ?? 2000);
     startedAtRef.current = Date.now();
     closingRef.current = false;
 
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
       requestAnimationFrame(() => {
-        if (progressRef.current) progressRef.current.style.width = '64%';
+        if (progressRef.current) progressRef.current.style.width = '65%';
       });
     }
 
@@ -93,11 +95,6 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
             className="gp-logo"
             draggable={false}
           />
-
-          <div className="gp-lasers" aria-hidden="true">
-            <span className="gp-laser l1" />
-            <span className="gp-laser l2" />
-          </div>
         </div>
       </div>
 
