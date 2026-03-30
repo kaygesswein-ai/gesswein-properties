@@ -1,94 +1,104 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useRouteTransition } from './TransitionProvider';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+} from 'react';
 
-function findAnchor(el: Element | null): HTMLAnchorElement | null {
-  let n: Element | null = el;
-  while (n) {
-    if (n instanceof HTMLAnchorElement) return n;
-    n = n.parentElement;
+interface TransitionCtx {
+  start: (opts?: { minDurationMs?: number }) => void;
+  end: () => void;
+  isActive: boolean;
+}
+
+const Ctx = createContext<TransitionCtx | null>(null);
+
+export const useRouteTransition = () => {
+  const ctx = useContext(Ctx);
+  if (!ctx) {
+    throw new Error('useRouteTransition must be used within <RouteTransitionProvider>');
   }
-  return null;
-}
+  return ctx;
+};
 
-function isModifiedClick(e: MouseEvent) {
-  return e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
-}
+export function RouteTransitionProvider({ children }: { children: React.ReactNode }) {
+  const [isActive, setActive] = useState(false);
+  const [fadeout, setFadeout] = useState(false);
 
-function isSameOrigin(a: HTMLAnchorElement) {
-  try {
-    const url = new URL(a.href, location.href);
-    return url.origin === location.origin;
-  } catch {
-    return false;
-  }
-}
-
-function isExternalProtocol(a: HTMLAnchorElement) {
-  const href = a.getAttribute('href') || '';
-  return href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('blob:');
-}
-
-export default function AutoTransition() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { start, end, isActive } = useRouteTransition();
-  const lastPath = useRef(pathname);
+  const startedAtRef = useRef<number>(0);
+  const minDurRef = useRef<number>(2000);
+  const closingRef = useRef(false);
+  const progressRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (isActive && pathname !== lastPath.current) {
-      const t = window.setTimeout(() => end(), 180);
-      return () => window.clearTimeout(t);
+    const root = document.documentElement;
+    root.classList.toggle('gp-lock', isActive);
+    return () => root.classList.remove('gp-lock');
+  }, [isActive]);
+
+  const start = useCallback((opts?: { minDurationMs?: number }) => {
+    minDurRef.current = Math.max(2000, opts?.minDurationMs ?? 2000);
+    startedAtRef.current = Date.now();
+    closingRef.current = false;
+
+    if (progressRef.current) {
+      progressRef.current.style.width = '0%';
+      requestAnimationFrame(() => {
+        if (progressRef.current) progressRef.current.style.width = '65%';
+      });
     }
-    lastPath.current = pathname;
-  }, [pathname, isActive, end]);
 
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (isModifiedClick(e)) return;
+    setFadeout(false);
+    setActive(true);
+  }, []);
 
-      const a = findAnchor(e.target as Element | null);
-      if (!a) return;
+  const end = useCallback(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
 
-      if (!a.href || isExternalProtocol(a) || (a.target && a.target !== '_self')) return;
-      if (!isSameOrigin(a)) return;
-      if (a.dataset.transition === 'off') return;
-      if (a.closest('[data-no-transition]')) return;
+    const elapsed = Date.now() - startedAtRef.current;
+    const remain = Math.max(0, minDurRef.current - elapsed);
 
-      const url = new URL(a.href, location.href);
-      const next = url.pathname + url.search + url.hash;
-      const curr = location.pathname + location.search + location.hash;
+    window.setTimeout(() => {
+      if (progressRef.current) progressRef.current.style.width = '100%';
 
-      if (next === curr) return;
+      setFadeout(true);
 
-      const goingToHome = url.pathname === '/';
+      window.setTimeout(() => {
+        setActive(false);
+        setFadeout(false);
+        closingRef.current = false;
+        if (progressRef.current) progressRef.current.style.width = '0%';
+      }, 260);
+    }, remain);
+  }, []);
 
-      e.preventDefault();
+  return (
+    <Ctx.Provider value={{ start, end, isActive }}>
+      <div ref={progressRef} className="gp-progress" />
 
-      if (goingToHome) {
-        document.body.style.opacity = '0';
-        start({ minDurationMs: 1050 });
+      <div
+        className={`gp-route-overlay ${fadeout ? 'fadeout' : ''}`}
+        hidden={!isActive}
+        aria-hidden={!isActive}
+        role="status"
+        aria-live="polite"
+      >
+        <div className="gp-logo-wrap" aria-label="Transición de página Gesswein Properties">
+          <img
+            src="/logo-white.svg"
+            alt="Gesswein Properties"
+            className="gp-logo"
+            draggable={false}
+          />
+        </div>
+      </div>
 
-        window.setTimeout(() => {
-          router.push(next);
-
-          window.setTimeout(() => {
-            document.body.style.opacity = '1';
-            end();
-          }, 2000);
-        }, 120);
-
-        return;
-      }
-
-      router.push(next);
-    };
-
-    window.addEventListener('click', onClick, true);
-    return () => window.removeEventListener('click', onClick, true);
-  }, [router, start, end]);
-
-  return null;
+      {children}
+    </Ctx.Provider>
+  );
 }
