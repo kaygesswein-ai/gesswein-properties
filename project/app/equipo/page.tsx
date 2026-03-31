@@ -122,7 +122,7 @@ const TEAM_PRINCIPAL: Member[] = [
     linkedin: 'https://www.linkedin.com/in/kay-gesswein-san-martin/',
     photo: PHOTOS.kay,
   },
-};
+];
 
 const ALLIES = [
   {
