@@ -97,8 +97,15 @@ export default function HeroImage({
 
     if (currentDisplay === src && !incomingSrc) {
       setInitialReady(true);
-      onCurrentReadyChange?.(true);
-      window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (reqId !== requestIdRef.current) return;
+          onCurrentReadyChange?.(true);
+          window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
+        });
+      });
+
       if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
       if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
       return;
@@ -110,19 +117,26 @@ export default function HeroImage({
     img.decoding = 'async';
     img.src = src;
 
-    const commitReady = () => {
-      if (reqId !== requestIdRef.current) return;
+    const fireReadyAfterPaint = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (reqId !== requestIdRef.current) return;
+          setInitialReady(true);
+          onCurrentReadyChange?.(true);
+          window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
 
-      setInitialReady(true);
-      onCurrentReadyChange?.(true);
-      window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
-
-      if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
-      if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
+          if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
+          if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
+        });
+      });
     };
 
-    const handleLoaded = () => {
+    const handleLoaded = async () => {
       if (reqId !== requestIdRef.current) return;
+
+      try {
+        await img.decode?.();
+      } catch {}
 
       const visibleNow = displaySrcRef.current;
 
@@ -136,7 +150,7 @@ export default function HeroImage({
           if (reqId !== requestIdRef.current) return;
           setDisplaySrc(src);
           displaySrcRef.current = src;
-          commitReady();
+          fireReadyAfterPaint();
         }, remain);
 
         return;
@@ -145,7 +159,7 @@ export default function HeroImage({
       if (!visibleNow) {
         setDisplaySrc(src);
         displaySrcRef.current = src;
-        commitReady();
+        fireReadyAfterPaint();
         return;
       }
 
@@ -170,14 +184,16 @@ export default function HeroImage({
         displaySrcRef.current = src;
         setIncomingSrc(null);
         setIncomingVisible(false);
-        commitReady();
-      }, 260);
+        fireReadyAfterPaint();
+      }, 220);
     };
 
     if (img.complete) {
       handleLoaded();
     } else {
-      img.onload = handleLoaded;
+      img.onload = () => {
+        handleLoaded();
+      };
     }
 
     return () => {
@@ -211,7 +227,7 @@ export default function HeroImage({
         <img
           src={incomingSrc}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
             incomingVisible ? 'opacity-100' : 'opacity-0'
           } ${className}`}
           style={{ objectPosition }}
