@@ -30,7 +30,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const [fadeout, setFadeout] = useState(false);
 
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(2000);
+  const minDurRef = useRef<number>(1100);
   const closingRef = useRef(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
@@ -41,14 +41,14 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   }, [isActive]);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(2000, opts?.minDurationMs ?? 2000);
+    minDurRef.current = Math.max(800, opts?.minDurationMs ?? 1100);
     startedAtRef.current = Date.now();
     closingRef.current = false;
 
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
       requestAnimationFrame(() => {
-        if (progressRef.current) progressRef.current.style.width = '65%';
+        if (progressRef.current) progressRef.current.style.width = '72%';
       });
     }
 
@@ -73,7 +73,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         setFadeout(false);
         closingRef.current = false;
         if (progressRef.current) progressRef.current.style.width = '0%';
-      }, 260);
+      }, 220);
     }, remain);
   }, []);
 
