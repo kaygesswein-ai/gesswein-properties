@@ -17,6 +17,9 @@ import useUf from '../hooks/useUf';
 import SmartSelect from '../components/SmartSelect';
 import HeroImage from '../components/HeroImage';
 
+/* ------------------------------------------------------------------ */
+/*                               TIPOS                                */
+/* ------------------------------------------------------------------ */
 type Property = {
   id: string;
   titulo?: string;
@@ -34,10 +37,14 @@ type Property = {
   images?: string[];
   coverImage?: string;
   destacada?: boolean;
+
   portada_url?: string | null;
   portada_fija_url?: string | null;
 };
 
+/* ------------------------------------------------------------------ */
+/*                             UTILIDADES                             */
+/* ------------------------------------------------------------------ */
 const fmtUF = (n: number) =>
   `UF ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`;
 const fmtCLP = (n: number) =>
@@ -63,6 +70,7 @@ const capWords = (s?: string | null) =>
     .join(' ')
     .trim();
 
+/* Sin fallback feo: si no hay imagen, no mostramos hero todavía */
 function getHeroImage(p?: Partial<Property>) {
   if (!p) return '';
   const anyP: any = p;
@@ -80,6 +88,9 @@ function getHeroImage(p?: Partial<Property>) {
   return (src as string) || '';
 }
 
+/* ------------------------------------------------------------------ */
+/*                 REGIONES (solo para el formulario)                  */
+/* ------------------------------------------------------------------ */
 const REGIONES_UI: readonly string[] = [
   'XV - Arica y Parinacota',
   'I - Tarapacá',
@@ -133,6 +144,9 @@ const COMUNAS_UI: Record<string, string[]> = {
 const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
 const TIPO_PROPIEDAD = ['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'];
 
+/* ------------------------------------------------------------------ */
+/*                              HOME PAGE                             */
+/* ------------------------------------------------------------------ */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
@@ -411,22 +425,25 @@ export default function HomePage() {
 
   return (
     <main className="bg-white">
+      {/* ================= HERO ================= */}
       <section
         className="relative w-full overflow-hidden isolate"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <HeroImage
-          src={bg}
-          alt={active?.titulo || 'Propiedad destacada'}
-          objectPosition="50% 50%"
-          showInitialBrandOverlay
-          minInitialOverlayMs={900}
-          persistAcrossRoutes
-          mediaMode="all"
-          onCurrentReadyChange={setCurrentHeroReady}
-        />
+        {bg ? (
+          <HeroImage
+            src={bg}
+            alt={active?.titulo || 'Propiedad destacada'}
+            objectPosition="50% 50%"
+            showInitialBrandOverlay
+            minInitialOverlayMs={900}
+            persistAcrossRoutes={false}
+            mediaMode="all"
+            onCurrentReadyChange={setCurrentHeroReady}
+          />
+        ) : null}
 
         {heroReady ? <div className="absolute inset-0 -z-10 bg-black/35" /> : null}
 
@@ -513,6 +530,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ================= ¿POR QUÉ GESSWEIN PROPERTIES? ================= */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-10 md:grid-cols-2 items-stretch">
@@ -522,7 +540,9 @@ export default function HomePage() {
               </h2>
 
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
-                <p>Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.</p>
+                <p>
+                  Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.
+                </p>
                 <p>
                   En Chile, la mayoría de las corredoras opera con un enfoque transaccional: captación, fotos, publicación, coordinación de visitas y negociación. Ese modelo funciona cuando la propiedad es simple y el mercado está “fácil”. Pero en propiedades premium —y especialmente en activos con complejidad normativa, potencial de transformación o alto valor patrimonial— ese enfoque deja valor en la mesa y eleva el riesgo.
                 </p>
@@ -553,6 +573,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ================= PROYECTOS EXCLUSIVOS ================= */}
       <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-10 md:grid-cols-2 items-stretch">
@@ -592,6 +613,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ================= REFERIDOS ================= */}
       <section id="referidos" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-start gap-4">
