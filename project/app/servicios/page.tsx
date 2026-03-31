@@ -11,27 +11,23 @@ import HeroImage from '@/components/HeroImage';
 
 export default function ServiciosPage() {
   const [heroReady, setHeroReady] = useState(false);
-  const [heroSrc, setHeroSrc] = useState<string | null>(null);
 
   useEffect(() => {
     setHeroReady(false);
-    setHeroSrc('/images/portadas/servicios.jpg');
   }, []);
 
   return (
     <main className="bg-white">
       <section className="relative min-h-[100svh] overflow-hidden">
-        {heroSrc && (
-          <HeroImage
-            src={heroSrc}
-            alt="Portada Servicios"
-            objectPosition="50% 35%"
-            showInitialBrandOverlay={false}
-            persistAcrossRoutes
-            mediaMode="all"
-            onCurrentReadyChange={setHeroReady}
-          />
-        )}
+        <HeroImage
+          src="/images/portadas/servicios.jpg"
+          alt="Portada Servicios"
+          objectPosition="50% 35%"
+          showInitialBrandOverlay={false}
+          persistAcrossRoutes={false}
+          mediaMode="all"
+          onCurrentReadyChange={setHeroReady}
+        />
 
         {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
 
