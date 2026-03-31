@@ -339,7 +339,7 @@ export default function EquipoPage() {
   return (
     <main className="bg-white">
       <section className="relative min-h-[100svh] overflow-hidden">
-        {heroSrc && (
+        {heroSrc ? (
           <HeroImage
             src={heroSrc}
             alt="Portada Equipo"
@@ -349,7 +349,7 @@ export default function EquipoPage() {
             mediaMode="all"
             onCurrentReadyChange={setHeroReady}
           />
-        )}
+        ) : null}
 
         {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
 
