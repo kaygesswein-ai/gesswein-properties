@@ -72,7 +72,7 @@ export default function HeroImage({
   const swapTimeoutRef = useRef<number | null>(null);
   const raf1Ref = useRef<number | null>(null);
   const raf2Ref = useRef<number | null>(null);
-  const readyTimeoutRef = useRef<number | null>(null);
+  const stableTimeoutRef = useRef<number | null>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function HeroImage({
     return () => {
       if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
       if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
-      if (readyTimeoutRef.current) window.clearTimeout(readyTimeoutRef.current);
+      if (stableTimeoutRef.current) window.clearTimeout(stableTimeoutRef.current);
       if (raf1Ref.current) window.cancelAnimationFrame(raf1Ref.current);
       if (raf2Ref.current) window.cancelAnimationFrame(raf2Ref.current);
     };
@@ -104,7 +104,7 @@ export default function HeroImage({
     const clearPending = () => {
       if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
       if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
-      if (readyTimeoutRef.current) window.clearTimeout(readyTimeoutRef.current);
+      if (stableTimeoutRef.current) window.clearTimeout(stableTimeoutRef.current);
       if (raf1Ref.current) window.cancelAnimationFrame(raf1Ref.current);
       if (raf2Ref.current) window.cancelAnimationFrame(raf2Ref.current);
     };
@@ -114,7 +114,7 @@ export default function HeroImage({
         raf2Ref.current = window.requestAnimationFrame(() => {
           if (reqId !== requestIdRef.current) return;
 
-          readyTimeoutRef.current = window.setTimeout(() => {
+          stableTimeoutRef.current = window.setTimeout(() => {
             if (reqId !== requestIdRef.current) return;
 
             setInitialReady(true);
@@ -124,7 +124,7 @@ export default function HeroImage({
 
             if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
             if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
-          }, 15);
+          }, 35);
         });
       });
     };
@@ -200,7 +200,7 @@ export default function HeroImage({
         setIncomingVisible(false);
         setCurrentVisible(true);
         fireReadyAfterStablePaint();
-      }, 90);
+      }, 110);
     };
 
     if (img.complete) {
@@ -242,7 +242,7 @@ export default function HeroImage({
         <img
           src={displaySrc}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-100 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-120 ${
             currentVisible ? 'opacity-100' : 'opacity-0'
           } ${className}`}
           style={{
@@ -260,7 +260,7 @@ export default function HeroImage({
         <img
           src={incomingSrc}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-90 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-110 ${
             incomingVisible ? 'opacity-100' : 'opacity-0'
           } ${className}`}
           style={{
