@@ -47,7 +47,7 @@ export default function HeroImage({
   className = '',
   objectPosition = '50% 50%',
   showInitialBrandOverlay = true,
-  minInitialOverlayMs = 900,
+  minInitialOverlayMs = 700,
   persistAcrossRoutes = false,
   mediaMode = 'all',
   onCurrentReadyChange,
@@ -124,7 +124,7 @@ export default function HeroImage({
 
             if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
             if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
-          }, 90);
+          }, 35);
         });
       });
     };
@@ -142,6 +142,7 @@ export default function HeroImage({
 
     const img = new window.Image();
     img.decoding = 'async';
+    img.fetchPriority = 'high';
     img.src = src;
 
     const handleLoaded = async () => {
@@ -199,7 +200,7 @@ export default function HeroImage({
         setIncomingVisible(false);
         setCurrentVisible(true);
         fireReadyAfterStablePaint();
-      }, 180);
+      }, 120);
     };
 
     if (img.complete) {
@@ -208,10 +209,20 @@ export default function HeroImage({
       img.onload = () => {
         handleLoaded();
       };
+      img.onerror = () => {
+        if (reqId !== requestIdRef.current) return;
+        setDisplaySrc(src);
+        displaySrcRef.current = src;
+        setIncomingSrc(null);
+        setIncomingVisible(false);
+        setCurrentVisible(true);
+        fireReadyAfterStablePaint();
+      };
     }
 
     return () => {
       img.onload = null;
+      img.onerror = null;
     };
   }, [
     src,
@@ -220,6 +231,7 @@ export default function HeroImage({
     persistAcrossRoutes,
     mediaMode,
     onCurrentReadyChange,
+    incomingSrc,
   ]);
 
   const showBrandOverlay = showInitialBrandOverlay && !initialReady;
@@ -230,10 +242,8 @@ export default function HeroImage({
         <img
           src={displaySrc}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
-            currentVisible ? 'opacity-100' : 'opacity-0'
-          } ${className}`}
-          style={{ objectPosition }}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-150 ${currentVisible ? 'opacity-100' : 'opacity-0'} ${className}`}
+          style={{ objectPosition, transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
           draggable={false}
           loading="eager"
           fetchPriority="high"
@@ -244,10 +254,10 @@ export default function HeroImage({
         <img
           src={incomingSrc}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-150 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-120 ${
             incomingVisible ? 'opacity-100' : 'opacity-0'
           } ${className}`}
-          style={{ objectPosition }}
+          style={{ objectPosition, transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
           draggable={false}
           loading="eager"
           fetchPriority="high"
