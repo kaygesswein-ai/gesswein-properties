@@ -1,9 +1,7 @@
-// project/app/propiedades/page.tsx
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   Bed,
   ShowerHead,
@@ -16,6 +14,7 @@ import {
   Star,
 } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
+import HeroImage from '@/components/HeroImage';
 
 type Property = {
   id?: string;
@@ -38,17 +37,12 @@ type Property = {
   createdAt?: string;
   portada_url?: string | null;
   portada_fija_url?: string | null;
-
   es_proyecto_exclusivo?: boolean | null;
 };
 
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
-
-/* HERO exacto */
 const HERO_IMG = '/images/portadas/propiedades.jpeg';
-
-/* Fallback card */
 const CARD_FALLBACK =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
 
@@ -64,7 +58,6 @@ const fmtMiles = (raw: string) => {
   return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(parseInt(digits, 10));
 };
 
-/* ==== Hook UF ==== */
 function useUfValue() {
   const [uf, setUf] = useState<number | null>(null);
 
@@ -90,7 +83,6 @@ function useUfValue() {
   return uf;
 }
 
-/* ==== SOLO RM y Valparaíso ==== */
 const REGIONES: string[] = ['Metropolitana de Santiago', 'Valparaíso'];
 
 const COMUNAS: Record<string, string[]> = {
@@ -165,17 +157,14 @@ const BARRIOS: Record<string, string[]> = {
   Casablanca: ['Tunquén'],
 };
 
-/* ==== Normalización y región ==== */
 const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalize = (s?: string) => stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
 
-/** Resuelve región a partir de comuna y, si es necesario, por barrio. */
 function inferRegion(comuna?: string, barrio?: string): string | undefined {
   const cNorm = normalize(comuna);
   const bNorm = normalize(barrio);
 
   const comunaEfectiva = cNorm === 'tunquen' || bNorm.includes('tunquen') ? 'Casablanca' : comuna || '';
-
   const c = normalize(comunaEfectiva);
   if (!c) return undefined;
 
@@ -185,33 +174,21 @@ function inferRegion(comuna?: string, barrio?: string): string | undefined {
   return undefined;
 }
 
-/* ===== TÍTULOS ESTILO PROYECTOS EXCLUSIVOS ===== */
-function SectionTitle({ title }: { title: string }) {
-  return (
-    <div className="pt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pl-2 sm:pl-4">
-          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">{title}</h2>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SectionTitleWithIcon({ title, icon }: { title: string; icon: React.ReactNode }) {
   return (
     <div className="pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pl-2 sm:pl-4 flex items-center gap-3">
           <span className="shrink-0">{icon}</span>
-          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">{title}</h2>
+          <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
+            {title}
+          </h2>
         </div>
       </div>
     </div>
   );
 }
 
-/* ===== SELLO ESTRELLA ELEGANTE ===== */
 function ProyectoExclusivoBadge() {
   return (
     <div className="absolute top-3 right-3 z-10">
@@ -232,19 +209,18 @@ function ProyectoExclusivoBadge() {
 }
 
 export default function PropiedadesPage() {
-  /* — Filtros UI — */
+  const [heroReady, setHeroReady] = useState(false);
+
   const [operacion, setOperacion] = useState('');
   const [tipo, setTipo] = useState('');
   const [region, setRegion] = useState<string>('');
   const [comuna, setComuna] = useState('');
   const [barrio, setBarrio] = useState('');
 
-  /* — UF / CLP UI — */
   const [moneda, setMoneda] = useState<'' | 'UF' | 'CLP$'>('');
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  /* — Avanzada UI — */
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
   const [minDorm, setMinDorm] = useState('');
   const [minBanos, setMinBanos] = useState('');
@@ -252,7 +228,6 @@ export default function PropiedadesPage() {
   const [minM2Terreno, setMinM2Terreno] = useState('');
   const [estac, setEstac] = useState('');
 
-  /* — APLICADOS — */
   const [aOperacion, setAOperacion] = useState('');
   const [aTipo, setATipo] = useState('');
   const [aRegion, setARegion] = useState<string>('');
@@ -269,15 +244,12 @@ export default function PropiedadesPage() {
   const [aMinM2Terreno, setAMinM2Terreno] = useState('');
   const [aEstac, setAEstac] = useState('');
 
-  /* — Resultados — */
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
   const [trigger, setTrigger] = useState(0);
 
-  /* Portadas “hidratadas” por id cuando la lista no las trae */
   const [portadasById, setPortadasById] = useState<Record<string, string>>({});
 
-  /* Orden + filtro */
   const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | ''>('');
   const [soloProyectoExclusivo, setSoloProyectoExclusivo] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
@@ -286,7 +258,6 @@ export default function PropiedadesPage() {
 
   const ufValue = useUfValue();
 
-  /* Cerrar menú al click afuera */
   useEffect(() => {
     if (!sortOpen) return;
 
@@ -300,12 +271,10 @@ export default function PropiedadesPage() {
     return () => document.removeEventListener('mousedown', onDown);
   }, [sortOpen]);
 
-  /* Carga inicial */
   useEffect(() => {
     setTrigger((v) => v + 1);
   }, []);
 
-  /* Fetch listado (SOLO al Buscar) */
   useEffect(() => {
     const p = new URLSearchParams();
 
@@ -362,9 +331,8 @@ export default function PropiedadesPage() {
     return () => {
       cancel = true;
     };
-  }, [trigger, ufValue]);
+  }, [trigger, ufValue, aOperacion, aTipo, aComuna, aMinValor, aMaxValor, aMoneda, aMinDorm, aMinBanos, aMinM2Const, aMinM2Terreno, aEstac]);
 
-  /* Hidratación de portadas por id cuando faltan en la lista */
   useEffect(() => {
     const need = (items || [])
       .filter((p) => p.id && !p.portada_url && !p.portada_fija_url)
@@ -408,7 +376,6 @@ export default function PropiedadesPage() {
     };
   }, [items, portadasById]);
 
-  /* ====== FILTRO EN CLIENTE ====== */
   const filteredItems = useMemo(() => {
     const norm = (s?: string) => normalize(s || '');
 
@@ -498,7 +465,6 @@ export default function PropiedadesPage() {
     soloProyectoExclusivo,
   ]);
 
-  /* Ordenamiento */
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
 
   const getComparablePriceUF = (p: Property) => {
@@ -514,7 +480,6 @@ export default function PropiedadesPage() {
     return arr;
   }, [filteredItems, sortMode, CLPfromUF]);
 
-  /* LIMPIAR */
   const handleClear = () => {
     setOperacion('');
     setTipo('');
@@ -551,7 +516,6 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  /* BUSCAR */
   const applyAndSearch = () => {
     setAOperacion(operacion);
     setATipo(tipo);
@@ -572,7 +536,6 @@ export default function PropiedadesPage() {
     setTrigger((v) => v + 1);
   };
 
-  /* ENTER -> Buscar */
   const handleKeyDownSearch = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -586,39 +549,45 @@ export default function PropiedadesPage() {
 
   return (
     <main className="bg-white">
-      {/* HERO */}
-      <section className="relative min-h-[100svh]">
-        <Image
+      <section className="relative min-h-[100svh] overflow-hidden bg-[#0A2E57]">
+        <HeroImage
           src={HERO_IMG}
-          alt="Portada"
-          fill
-          priority
-          fetchPriority="high"
-          unoptimized
-          sizes="100vw"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '50% 35%' }}
+          alt="Portada Propiedades"
+          objectPosition="50% 35%"
+          showInitialBrandOverlay={false}
+          persistAcrossRoutes={false}
+          mediaMode="all"
+          onCurrentReadyChange={setHeroReady}
         />
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="absolute bottom-6 left-0 right-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="pl-2 sm:pl-4">
-              <div className="max-w-3xl">
-                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">PROPIEDADES</h1>
-                <p className="text-white/85 mt-2">Encuentra tu próxima inversión o tu nuevo hogar.</p>
+
+        {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
+
+        {heroReady ? (
+          <div className="absolute bottom-6 left-0 right-0">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="pl-2 sm:pl-4">
+                <div className="max-w-3xl">
+                  <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                    PROPIEDADES
+                  </h1>
+                  <p className="text-white/85 mt-2">
+                    Encuentra tu próxima inversión o tu nuevo hogar.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : null}
       </section>
 
-      {/* BÚSQUEDA */}
       <section className="bg-slate-50" onKeyDown={handleKeyDownSearch}>
-        <SectionTitleWithIcon title="Búsqueda" icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />} />
+        <SectionTitleWithIcon
+          title="Búsqueda"
+          icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />}
+        />
 
         <div className="py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* modo */}
             <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
               <button
                 type="button"
@@ -644,7 +613,6 @@ export default function PropiedadesPage() {
               </button>
             </div>
 
-            {/* === RÁPIDA === */}
             {advancedMode === 'rapida' && (
               <>
                 <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
@@ -712,7 +680,8 @@ export default function PropiedadesPage() {
                     className="w-full px-5 py-2 text-sm text-white rounded-none"
                     style={{
                       background: BRAND_BLUE,
-                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+                      boxShadow:
+                        'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
                     }}
                   >
                     Buscar
@@ -721,7 +690,6 @@ export default function PropiedadesPage() {
               </>
             )}
 
-            {/* === AVANZADA === */}
             {advancedMode === 'avanzada' && (
               <>
                 <div className="pl-2 sm:pl-4">
@@ -766,7 +734,6 @@ export default function PropiedadesPage() {
                 </div>
 
                 <div className="pl-2 sm:pl-4 mt-3 grid grid-cols-1 lg:grid-cols-5 gap-3">
-                  {/* ✅ eliminado CLP; solo UF y CLP$ */}
                   <SmartSelect options={['UF', 'CLP$']} value={moneda} onChange={(v) => setMoneda((v as any) || '')} placeholder="UF/CLP$" />
                   <input
                     value={minValor}
@@ -829,7 +796,8 @@ export default function PropiedadesPage() {
                     className="w-full px-5 py-2 text-sm text-white rounded-none"
                     style={{
                       background: BRAND_BLUE,
-                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
+                      boxShadow:
+                        'inset 0 0 0 1px rgba(255,255,255,.95), inset 0 0 0 3px rgba(255,255,255,.35)',
                     }}
                   >
                     Buscar
@@ -841,11 +809,12 @@ export default function PropiedadesPage() {
         </div>
       </section>
 
-      {/* LISTADO */}
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="flex items-center justify-between mb-2 relative" ref={menuWrapRef}>
-            <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">Propiedades disponibles</h2>
+            <h2 className="text-[#0A2E57] text-[17px] tracking-[.30em] uppercase font-medium">
+              Propiedades disponibles
+            </h2>
 
             <div className="relative flex items-center gap-2">
               <button
@@ -876,8 +845,13 @@ export default function PropiedadesPage() {
               </button>
 
               {sortOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 shadow-lg z-10" role="menu">
-                  <div className="px-4 pt-3 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">Orden</div>
+                <div
+                  className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 shadow-lg z-10"
+                  role="menu"
+                >
+                  <div className="px-4 pt-3 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">
+                    Orden
+                  </div>
 
                   <button
                     className="w-full text-left px-4 py-2 hover:bg-slate-50"
@@ -901,7 +875,9 @@ export default function PropiedadesPage() {
 
                   <div className="h-px bg-slate-200 my-1" />
 
-                  <div className="px-4 pt-2 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">Filtro</div>
+                  <div className="px-4 pt-2 pb-1 text-[11px] tracking-[.22em] uppercase text-slate-500">
+                    Filtro
+                  </div>
 
                   <button
                     className="w-full text-left px-4 py-2 hover:bg-slate-50"
@@ -974,7 +950,6 @@ export default function PropiedadesPage() {
                           {p.titulo || 'Propiedad'}
                         </h3>
 
-                        {/* ✅ mismo formato que Proyectos Exclusivos */}
                         <p className="mt-1 text-sm text-slate-600 line-clamp-2 min-h-[40px]">
                           {[p.operacion ? capFirst(String(p.operacion)) : '', tipoCap, p.comuna || '', p.barrio || '']
                             .filter(Boolean)
