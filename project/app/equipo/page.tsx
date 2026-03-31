@@ -122,7 +122,7 @@ const TEAM_PRINCIPAL: Member[] = [
     linkedin: 'https://www.linkedin.com/in/kay-gesswein-san-martin/',
     photo: PHOTOS.kay,
   },
-];
+};
 
 const ALLIES = [
   {
@@ -338,7 +338,7 @@ export default function EquipoPage() {
 
   return (
     <main className="bg-white">
-      <section className="relative min-h-[100svh] overflow-hidden">
+      <section className="relative min-h-[100svh] overflow-hidden bg-[#0A2E57]">
         {heroSrc ? (
           <HeroImage
             src={heroSrc}
