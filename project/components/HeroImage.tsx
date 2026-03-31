@@ -60,6 +60,7 @@ export default function HeroImage({
   const [displaySrc, setDisplaySrc] = useState<string | null>(initialCachedSrc);
   const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
   const [incomingVisible, setIncomingVisible] = useState(false);
+  const [currentVisible, setCurrentVisible] = useState<boolean>(!!initialCachedSrc);
   const [initialReady, setInitialReady] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return !!window.__gpHeroBootDone || !!initialCachedSrc || !showInitialBrandOverlay;
@@ -71,6 +72,7 @@ export default function HeroImage({
   const swapTimeoutRef = useRef<number | null>(null);
   const raf1Ref = useRef<number | null>(null);
   const raf2Ref = useRef<number | null>(null);
+  const readyTimeoutRef = useRef<number | null>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -81,6 +83,7 @@ export default function HeroImage({
     return () => {
       if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
       if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
+      if (readyTimeoutRef.current) window.clearTimeout(readyTimeoutRef.current);
       if (raf1Ref.current) window.cancelAnimationFrame(raf1Ref.current);
       if (raf2Ref.current) window.cancelAnimationFrame(raf2Ref.current);
     };
@@ -88,6 +91,9 @@ export default function HeroImage({
 
   useEffect(() => {
     if (!isValidSrc(src)) {
+      setIncomingSrc(null);
+      setIncomingVisible(false);
+      setCurrentVisible(false);
       onCurrentReadyChange?.(false);
       return;
     }
@@ -95,41 +101,48 @@ export default function HeroImage({
     const reqId = ++requestIdRef.current;
     const currentDisplay = displaySrcRef.current;
 
-    if (currentDisplay === src && !incomingSrc) {
-      setInitialReady(true);
+    const clearPendingTimers = () => {
+      if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
+      if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
+      if (readyTimeoutRef.current) window.clearTimeout(readyTimeoutRef.current);
+      if (raf1Ref.current) window.cancelAnimationFrame(raf1Ref.current);
+      if (raf2Ref.current) window.cancelAnimationFrame(raf2Ref.current);
+    };
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
+    const fireReadyAfterStablePaint = () => {
+      raf1Ref.current = window.requestAnimationFrame(() => {
+        raf2Ref.current = window.requestAnimationFrame(() => {
           if (reqId !== requestIdRef.current) return;
-          onCurrentReadyChange?.(true);
-          window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
+
+          readyTimeoutRef.current = window.setTimeout(() => {
+            if (reqId !== requestIdRef.current) return;
+
+            setInitialReady(true);
+            setCurrentVisible(true);
+            onCurrentReadyChange?.(true);
+            window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
+
+            if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
+            if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
+          }, 90);
         });
       });
+    };
 
-      if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
-      if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
+    if (currentDisplay === src && !incomingSrc) {
+      setInitialReady(true);
+      setCurrentVisible(true);
+      onCurrentReadyChange?.(false);
+      fireReadyAfterStablePaint();
       return;
     }
 
+    clearPendingTimers();
     onCurrentReadyChange?.(false);
 
     const img = new window.Image();
     img.decoding = 'async';
     img.src = src;
-
-    const fireReadyAfterPaint = () => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (reqId !== requestIdRef.current) return;
-          setInitialReady(true);
-          onCurrentReadyChange?.(true);
-          window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
-
-          if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
-          if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
-        });
-      });
-    };
 
     const handleLoaded = async () => {
       if (reqId !== requestIdRef.current) return;
@@ -144,13 +157,14 @@ export default function HeroImage({
         const elapsed = Date.now() - mountedAtRef.current;
         const remain = Math.max(0, minInitialOverlayMs - elapsed);
 
-        if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
-
         revealTimeoutRef.current = window.setTimeout(() => {
           if (reqId !== requestIdRef.current) return;
           setDisplaySrc(src);
           displaySrcRef.current = src;
-          fireReadyAfterPaint();
+          setIncomingSrc(null);
+          setIncomingVisible(false);
+          setCurrentVisible(false);
+          fireReadyAfterStablePaint();
         }, remain);
 
         return;
@@ -159,15 +173,15 @@ export default function HeroImage({
       if (!visibleNow) {
         setDisplaySrc(src);
         displaySrcRef.current = src;
-        fireReadyAfterPaint();
+        setIncomingSrc(null);
+        setIncomingVisible(false);
+        setCurrentVisible(false);
+        fireReadyAfterStablePaint();
         return;
       }
 
       setIncomingSrc(src);
       setIncomingVisible(false);
-
-      if (raf1Ref.current) window.cancelAnimationFrame(raf1Ref.current);
-      if (raf2Ref.current) window.cancelAnimationFrame(raf2Ref.current);
 
       raf1Ref.current = window.requestAnimationFrame(() => {
         raf2Ref.current = window.requestAnimationFrame(() => {
@@ -176,15 +190,15 @@ export default function HeroImage({
         });
       });
 
-      if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
-
       swapTimeoutRef.current = window.setTimeout(() => {
         if (reqId !== requestIdRef.current) return;
+
         setDisplaySrc(src);
         displaySrcRef.current = src;
         setIncomingSrc(null);
         setIncomingVisible(false);
-        fireReadyAfterPaint();
+        setCurrentVisible(true);
+        fireReadyAfterStablePaint();
       }, 180);
     };
 
@@ -206,7 +220,6 @@ export default function HeroImage({
     persistAcrossRoutes,
     mediaMode,
     onCurrentReadyChange,
-    incomingSrc,
   ]);
 
   const showBrandOverlay = showInitialBrandOverlay && !initialReady;
@@ -217,9 +230,13 @@ export default function HeroImage({
         <img
           src={displaySrc}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover ${className}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
+            currentVisible ? 'opacity-100' : 'opacity-0'
+          } ${className}`}
           style={{ objectPosition }}
           draggable={false}
+          loading="eager"
+          fetchPriority="high"
         />
       ) : null}
 
@@ -232,6 +249,8 @@ export default function HeroImage({
           } ${className}`}
           style={{ objectPosition }}
           draggable={false}
+          loading="eager"
+          fetchPriority="high"
         />
       ) : null}
 
