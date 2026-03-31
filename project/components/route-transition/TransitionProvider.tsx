@@ -19,9 +19,7 @@ const Ctx = createContext<TransitionCtx | null>(null);
 
 export const useRouteTransition = () => {
   const ctx = useContext(Ctx);
-  if (!ctx) {
-    throw new Error('useRouteTransition must be used within <RouteTransitionProvider>');
-  }
+  if (!ctx) throw new Error('useRouteTransition must be used within <RouteTransitionProvider>');
   return ctx;
 };
 
@@ -30,7 +28,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const [fadeout, setFadeout] = useState(false);
 
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(1100);
+  const minDurRef = useRef<number>(700);
   const closingRef = useRef(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
@@ -41,14 +39,14 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   }, [isActive]);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(800, opts?.minDurationMs ?? 1100);
+    minDurRef.current = Math.max(450, opts?.minDurationMs ?? 700);
     startedAtRef.current = Date.now();
     closingRef.current = false;
 
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
       requestAnimationFrame(() => {
-        if (progressRef.current) progressRef.current.style.width = '72%';
+        if (progressRef.current) progressRef.current.style.width = '78%';
       });
     }
 
@@ -73,7 +71,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
         setFadeout(false);
         closingRef.current = false;
         if (progressRef.current) progressRef.current.style.width = '0%';
-      }, 220);
+      }, 160);
     }, remain);
   }, []);
 
