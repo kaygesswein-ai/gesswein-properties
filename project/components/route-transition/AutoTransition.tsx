@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useRouteTransition } from './TransitionProvider';
 
@@ -39,7 +39,7 @@ export default function AutoTransition() {
   const lastPathRef = useRef(pathname);
   const waitTokenRef = useRef(0);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isActive || pathname === lastPathRef.current) {
       lastPathRef.current = pathname;
       return;
@@ -48,15 +48,23 @@ export default function AutoTransition() {
     lastPathRef.current = pathname;
     const token = ++waitTokenRef.current;
 
-    const onReady = () => {
+    const finish = () => {
       if (waitTokenRef.current !== token) return;
       end();
     };
 
+    const onReady = () => {
+      if (waitTokenRef.current !== token) return;
+
+      window.setTimeout(() => {
+        finish();
+      }, 160);
+    };
+
     const safety = window.setTimeout(() => {
       if (waitTokenRef.current !== token) return;
-      end();
-    }, 1400);
+      finish();
+    }, 2200);
 
     window.addEventListener('gp:hero-ready', onReady, { once: true });
 
@@ -85,7 +93,7 @@ export default function AutoTransition() {
 
       e.preventDefault();
 
-      start({ minDurationMs: 700 });
+      start({ minDurationMs: 850 });
 
       window.setTimeout(() => {
         router.push(next);
