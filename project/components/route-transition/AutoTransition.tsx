@@ -61,9 +61,10 @@ function getHeroForPath(pathname: string): string | null {
   return null;
 }
 
-async function preloadImage(src: string, timeoutMs = 1200) {
+async function preloadImage(src: string, timeoutMs = 1000) {
   await new Promise<void>((resolve) => {
     let done = false;
+
     const finish = () => {
       if (done) return;
       done = true;
@@ -73,12 +74,14 @@ async function preloadImage(src: string, timeoutMs = 1200) {
     const img = new window.Image();
     img.decoding = 'async';
     img.fetchPriority = 'high';
+
     img.onload = async () => {
       try {
         await img.decode?.();
       } catch {}
       finish();
     };
+
     img.onerror = finish;
     img.src = src;
 
@@ -116,15 +119,13 @@ export default function AutoTransition() {
 
     const onReady = () => {
       if (waitTokenRef.current !== token) return;
-      window.setTimeout(() => {
-        finish();
-      }, 120);
+      finish();
     };
 
     const safety = window.setTimeout(() => {
       if (waitTokenRef.current !== token) return;
       finish();
-    }, 1800);
+    }, 1200);
 
     window.addEventListener('gp:hero-ready', onReady, { once: true });
 
@@ -180,12 +181,12 @@ export default function AutoTransition() {
 
       e.preventDefault();
 
-      start({ minDurationMs: 650 });
+      start({ minDurationMs: 450 });
 
       const hero = getHeroForPath(url.pathname);
       if (hero) {
         try {
-          await preloadImage(hero, 1200);
+          await preloadImage(hero, 1000);
         } catch {}
       }
 
