@@ -6,7 +6,6 @@ import React, {
   useState,
   useRef,
   useCallback,
-  useEffect,
 } from 'react';
 import { flushSync } from 'react-dom';
 
@@ -29,18 +28,12 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const [fadeout, setFadeout] = useState(false);
 
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(850);
+  const minDurRef = useRef<number>(650);
   const closingRef = useRef(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle('gp-lock', isActive);
-    return () => root.classList.remove('gp-lock');
-  }, [isActive]);
-
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(700, opts?.minDurationMs ?? 850);
+    minDurRef.current = Math.max(500, opts?.minDurationMs ?? 650);
     startedAtRef.current = Date.now();
     closingRef.current = false;
 
@@ -55,7 +48,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
 
     requestAnimationFrame(() => {
       if (progressRef.current) {
-        progressRef.current.style.width = '78%';
+        progressRef.current.style.width = '76%';
       }
     });
   }, []);
@@ -78,8 +71,8 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
           setFadeout(false);
           closingRef.current = false;
           if (progressRef.current) progressRef.current.style.width = '0%';
-        }, 180);
-      }, 80);
+        }, 150);
+      }, 50);
     }, remain);
   }, []);
 
