@@ -185,7 +185,7 @@ export default function HeroImage({
         setIncomingSrc(null);
         setIncomingVisible(false);
         fireReadyAfterPaint();
-      }, 220);
+      }, 180);
     };
 
     if (img.complete) {
@@ -227,7 +227,7 @@ export default function HeroImage({
         <img
           src={incomingSrc}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-150 ${
             incomingVisible ? 'opacity-100' : 'opacity-0'
           } ${className}`}
           style={{ objectPosition }}
