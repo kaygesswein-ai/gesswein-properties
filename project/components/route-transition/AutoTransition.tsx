@@ -56,7 +56,7 @@ export default function AutoTransition() {
     const safety = window.setTimeout(() => {
       if (waitTokenRef.current !== token) return;
       end();
-    }, 4500);
+    }, 1400);
 
     window.addEventListener('gp:hero-ready', onReady, { once: true });
 
@@ -85,11 +85,11 @@ export default function AutoTransition() {
 
       e.preventDefault();
 
-      start({ minDurationMs: 1100 });
+      start({ minDurationMs: 700 });
 
       window.setTimeout(() => {
         router.push(next);
-      }, 50);
+      }, 0);
     };
 
     window.addEventListener('click', onClick, true);
