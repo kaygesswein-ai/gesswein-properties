@@ -8,6 +8,7 @@ import React, {
   useCallback,
   useEffect,
 } from 'react';
+import { flushSync } from 'react-dom';
 
 interface TransitionCtx {
   start: (opts?: { minDurationMs?: number }) => void;
@@ -28,7 +29,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const [fadeout, setFadeout] = useState(false);
 
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(700);
+  const minDurRef = useRef<number>(850);
   const closingRef = useRef(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
@@ -39,19 +40,24 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   }, [isActive]);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(450, opts?.minDurationMs ?? 700);
+    minDurRef.current = Math.max(700, opts?.minDurationMs ?? 850);
     startedAtRef.current = Date.now();
     closingRef.current = false;
 
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
-      requestAnimationFrame(() => {
-        if (progressRef.current) progressRef.current.style.width = '78%';
-      });
     }
 
-    setFadeout(false);
-    setActive(true);
+    flushSync(() => {
+      setFadeout(false);
+      setActive(true);
+    });
+
+    requestAnimationFrame(() => {
+      if (progressRef.current) {
+        progressRef.current.style.width = '78%';
+      }
+    });
   }, []);
 
   const end = useCallback(() => {
@@ -64,14 +70,16 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     window.setTimeout(() => {
       if (progressRef.current) progressRef.current.style.width = '100%';
 
-      setFadeout(true);
-
       window.setTimeout(() => {
-        setActive(false);
-        setFadeout(false);
-        closingRef.current = false;
-        if (progressRef.current) progressRef.current.style.width = '0%';
-      }, 160);
+        setFadeout(true);
+
+        window.setTimeout(() => {
+          setActive(false);
+          setFadeout(false);
+          closingRef.current = false;
+          if (progressRef.current) progressRef.current.style.width = '0%';
+        }, 180);
+      }, 80);
     }, remain);
   }, []);
 
