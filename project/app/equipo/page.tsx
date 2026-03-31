@@ -328,28 +328,36 @@ export default function EquipoPage() {
   const [misionOpen, setMisionOpen] = useState(false);
   const [visionOpen, setVisionOpen] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
-  const [heroSrc, setHeroSrc] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768;
+  });
 
   useEffect(() => {
-    const isMobile = window.innerWidth < 768;
-    setHeroReady(false);
-    setHeroSrc(isMobile ? HERO_IMG_MOBILE : HERO_IMG);
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    setHeroReady(false);
+  }, [isMobile]);
+
+  const heroSrc = isMobile ? HERO_IMG_MOBILE : HERO_IMG;
 
   return (
     <main className="bg-white">
       <section className="relative min-h-[100svh] overflow-hidden bg-[#0A2E57]">
-        {heroSrc ? (
-          <HeroImage
-            src={heroSrc}
-            alt="Portada Equipo"
-            objectPosition="50% 40%"
-            showInitialBrandOverlay={false}
-            persistAcrossRoutes={false}
-            mediaMode="all"
-            onCurrentReadyChange={setHeroReady}
-          />
-        ) : null}
+        <HeroImage
+          src={heroSrc}
+          alt="Portada Equipo"
+          objectPosition={isMobile ? '50% 35%' : '50% 40%'}
+          showInitialBrandOverlay={false}
+          persistAcrossRoutes={false}
+          mediaMode={isMobile ? 'mobile' : 'desktop'}
+          onCurrentReadyChange={setHeroReady}
+        />
 
         {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
 
