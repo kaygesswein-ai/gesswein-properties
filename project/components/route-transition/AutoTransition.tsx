@@ -31,6 +31,66 @@ function isExternalProtocol(a: HTMLAnchorElement) {
   return href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('blob:');
 }
 
+function getHeroForPath(pathname: string): string | null {
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+
+  if (pathname === '/servicios') {
+    return '/images/portadas/servicios.jpg';
+  }
+
+  if (pathname === '/equipo') {
+    return isMobile
+      ? 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20Portada%20Equipo(para%20Moviles)%20-%20Optimizada.JPG'
+      : 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/equipo/Foto%20portada%20-%20Equipo%20-%20OPTIMIZADA.JPG';
+  }
+
+  if (pathname === '/contacto') {
+    return isMobile
+      ? 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Contacto%20(Opcion%201).jpeg'
+      : '/images/portadas/contacto.jpg';
+  }
+
+  if (pathname === '/propiedades') {
+    return '/images/portadas/propiedades.jpeg';
+  }
+
+  if (pathname === '/proyectos-exclusivos') {
+    return 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2400&auto=format&fit=crop';
+  }
+
+  return null;
+}
+
+async function preloadImage(src: string, timeoutMs = 1200) {
+  await new Promise<void>((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+
+    const img = new window.Image();
+    img.decoding = 'async';
+    img.fetchPriority = 'high';
+    img.onload = async () => {
+      try {
+        await img.decode?.();
+      } catch {}
+      finish();
+    };
+    img.onerror = finish;
+    img.src = src;
+
+    if (img.complete) {
+      finish();
+      return;
+    }
+
+    window.setTimeout(finish, timeoutMs);
+  });
+}
+
 export default function AutoTransition() {
   const router = useRouter();
   const pathname = usePathname();
@@ -38,6 +98,7 @@ export default function AutoTransition() {
 
   const lastPathRef = useRef(pathname);
   const waitTokenRef = useRef(0);
+  const prewarmedRef = useRef<Record<string, true>>({});
 
   useLayoutEffect(() => {
     if (!isActive || pathname === lastPathRef.current) {
@@ -55,16 +116,15 @@ export default function AutoTransition() {
 
     const onReady = () => {
       if (waitTokenRef.current !== token) return;
-
       window.setTimeout(() => {
         finish();
-      }, 160);
+      }, 120);
     };
 
     const safety = window.setTimeout(() => {
       if (waitTokenRef.current !== token) return;
       finish();
-    }, 2200);
+    }, 1800);
 
     window.addEventListener('gp:hero-ready', onReady, { once: true });
 
@@ -75,7 +135,34 @@ export default function AutoTransition() {
   }, [pathname, isActive, end]);
 
   useEffect(() => {
-    const onClick = (e: MouseEvent) => {
+    const prewarmAnchorHero = (a: HTMLAnchorElement | null) => {
+      if (!a || !a.href || isExternalProtocol(a) || !isSameOrigin(a)) return;
+
+      const url = new URL(a.href, location.href);
+      const hero = getHeroForPath(url.pathname);
+      if (!hero) return;
+      if (prewarmedRef.current[hero]) return;
+
+      prewarmedRef.current[hero] = true;
+      preloadImage(hero, 900).catch(() => {});
+    };
+
+    const onPointerEnter = (e: Event) => {
+      const a = findAnchor(e.target as Element | null);
+      prewarmAnchorHero(a);
+    };
+
+    const onFocusIn = (e: Event) => {
+      const a = findAnchor(e.target as Element | null);
+      prewarmAnchorHero(a);
+    };
+
+    const onTouchStart = (e: Event) => {
+      const a = findAnchor(e.target as Element | null);
+      prewarmAnchorHero(a);
+    };
+
+    const onClick = async (e: MouseEvent) => {
       if (isModifiedClick(e)) return;
 
       const a = findAnchor(e.target as Element | null);
@@ -93,15 +180,29 @@ export default function AutoTransition() {
 
       e.preventDefault();
 
-      start({ minDurationMs: 850 });
+      start({ minDurationMs: 650 });
 
-      window.setTimeout(() => {
-        router.push(next);
-      }, 0);
+      const hero = getHeroForPath(url.pathname);
+      if (hero) {
+        try {
+          await preloadImage(hero, 1200);
+        } catch {}
+      }
+
+      router.push(next);
     };
 
+    window.addEventListener('pointerenter', onPointerEnter, true);
+    window.addEventListener('focusin', onFocusIn, true);
+    window.addEventListener('touchstart', onTouchStart, true);
     window.addEventListener('click', onClick, true);
-    return () => window.removeEventListener('click', onClick, true);
+
+    return () => {
+      window.removeEventListener('pointerenter', onPointerEnter, true);
+      window.removeEventListener('focusin', onFocusIn, true);
+      window.removeEventListener('touchstart', onTouchStart, true);
+      window.removeEventListener('click', onClick, true);
+    };
   }, [router, start]);
 
   return null;
