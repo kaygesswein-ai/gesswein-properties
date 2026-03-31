@@ -14,6 +14,7 @@ import {
   Square,
 } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
+import HeroImage from '@/components/HeroImage';
 
 type Proyecto = {
   id?: string;
@@ -48,7 +49,6 @@ type Proyecto = {
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
 
-/** HERO (dron / vista aérea urbana) */
 const HERO_IMG =
   'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2400&auto=format&fit=crop';
 
@@ -67,9 +67,9 @@ const fmtMiles = (raw: string) => {
   return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(parseInt(digits, 10));
 };
 
-/* ==== Hook UF (igual Propiedades) ==== */
 function useUfValue() {
   const [uf, setUf] = useState<number | null>(null);
+
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -82,14 +82,15 @@ function useUfValue() {
         if (!cancel) setUf(null);
       }
     })();
+
     return () => {
       cancel = true;
     };
   }, []);
+
   return uf;
 }
 
-/* ==== SOLO RM y Valparaíso (igual Propiedades) ==== */
 const REGIONES: string[] = ['Metropolitana de Santiago', 'Valparaíso'];
 
 const COMUNAS: Record<string, string[]> = {
@@ -112,7 +113,7 @@ const COMUNAS: Record<string, string[]> = {
     'Macul',
   ],
   Valparaíso: [
-    'Casablanca', // Tunquén pertenece a Casablanca
+    'Casablanca',
     'Viña del Mar',
     'Valparaíso',
     'Concón',
@@ -153,7 +154,6 @@ const BARRIOS: Record<string, string[]> = {
 const stripDiacritics = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalize = (s?: string) => stripDiacritics((s || '').toLowerCase()).replace(/\s+/g, ' ').trim();
 
-/** Resuelve región a partir de comuna y, si es necesario, por barrio. */
 function inferRegion(comuna?: string, barrio?: string): string | undefined {
   const cNorm = normalize(comuna);
   const bNorm = normalize(barrio);
@@ -168,7 +168,6 @@ function inferRegion(comuna?: string, barrio?: string): string | undefined {
   return undefined;
 }
 
-/* ===== TÍTULOS (idénticos a Servicios) ===== */
 function SectionTitle({ title }: { title: string }) {
   return (
     <div className="pt-16">
@@ -194,9 +193,6 @@ function SectionTitleWithIcon({ title, icon }: { title: string; icon: React.Reac
   );
 }
 
-/* ===== ICONOS PROPIOS ===== */
-
-/** Bajo mercado: $ + flecha abajo */
 function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg
@@ -217,7 +213,6 @@ function BajoMercadoIcon({ className = 'h-5 w-5' }: { className?: string }) {
   );
 }
 
-/** Flipping: ✅ SOLO CAMBIO -> flecha simple en alza (como tu foto 1) */
 function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg
@@ -235,8 +230,6 @@ function FlippingValueUpIcon({ className = 'h-5 w-5' }: { className?: string }) 
     </svg>
   );
 }
-
-/* ===== SELLOS: “ICONO CHICO EN ESQUINA” ===== */
 
 function SmallCornerBadge({ children, size = 38 }: { children: React.ReactNode; size?: number }) {
   return (
@@ -257,7 +250,6 @@ function SmallCornerBadge({ children, size = 38 }: { children: React.ReactNode; 
   );
 }
 
-/** Badge NOVACIÓN: mismo porte que los otros (cuadrado) + centrado real */
 function NovacionBadgeSquare({
   tasa,
   size = 38,
@@ -280,7 +272,6 @@ function NovacionBadgeSquare({
         backdropFilter: 'blur(6px)',
       }}
     >
-      {/* 1/4 arriba: NOV */}
       <div
         className="text-[9px] uppercase tracking-[.22em] text-center flex items-center justify-center"
         style={{
@@ -293,7 +284,6 @@ function NovacionBadgeSquare({
         NOV
       </div>
 
-      {/* 3/4 abajo: tasa centrada */}
       <div className="flex items-center justify-center" style={{ height: size - Math.round(size * 0.28) }}>
         <div className="font-semibold" style={{ color: BRAND_BLUE, fontSize: 12, lineHeight: 1 }}>
           {tasaTxt}
@@ -303,7 +293,6 @@ function NovacionBadgeSquare({
   );
 
   if (!corner) return inner;
-
   return <div className="absolute top-3 right-3 z-10">{inner}</div>;
 }
 
@@ -336,7 +325,6 @@ function SealForProyecto(p: Proyecto) {
     );
   }
 
-  // densificación
   return (
     <SmallCornerBadge size={38}>
       <Layers className="h-5 w-5" color={BRAND_BLUE} />
@@ -344,11 +332,9 @@ function SealForProyecto(p: Proyecto) {
   );
 }
 
-/* ===== Glosario compacto ===== */
 function GlosarioSellosCompacto() {
   const [open, setOpen] = useState<string | null>(null);
 
-  // Iconos del glosario: mismo “peso visual” (28px)
   const GlossIconBox = ({ children }: { children: React.ReactNode }) => (
     <div
       className="flex items-center justify-center rounded-md"
@@ -444,7 +430,8 @@ function GlosarioSellosCompacto() {
 }
 
 export default function ProyectosExclusivosPage() {
-  /* ====== BÚSQUEDA (idéntica a Propiedades) ====== */
+  const [heroReady, setHeroReady] = useState(false);
+
   const [advancedMode, setAdvancedMode] = useState<'rapida' | 'avanzada'>('rapida');
 
   const [operacion, setOperacion] = useState('');
@@ -457,14 +444,12 @@ export default function ProyectosExclusivosPage() {
   const [minValor, setMinValor] = useState('');
   const [maxValor, setMaxValor] = useState('');
 
-  // Avanzada
   const [minDorm, setMinDorm] = useState('');
   const [minBanos, setMinBanos] = useState('');
   const [minM2Const, setMinM2Const] = useState('');
   const [minM2Terreno, setMinM2Terreno] = useState('');
   const [estac, setEstac] = useState('');
 
-  /* — APLICADOS — */
   const [aOperacion, setAOperacion] = useState('');
   const [aTipo, setATipo] = useState('');
   const [aRegion, setARegion] = useState<string>('');
@@ -481,15 +466,12 @@ export default function ProyectosExclusivosPage() {
   const [aMinM2Terreno, setAMinM2Terreno] = useState('');
   const [aEstac, setAEstac] = useState('');
 
-  /* — Resultados — */
   const [items, setItems] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(false);
   const [trigger, setTrigger] = useState(0);
 
-  /* Portadas hidratadas */
   const [portadasById, setPortadasById] = useState<Record<string, string>>({});
 
-  /* ✅ Detalles hidratados (para que el listado muestre dormitorios/baños/etc. aunque el endpoint de lista no los traiga) */
   const [detallesById, setDetallesById] = useState<
     Record<
       string,
@@ -497,7 +479,6 @@ export default function ProyectosExclusivosPage() {
     >
   >({});
 
-  /* Orden + filtro sello */
   const [sortMode, setSortMode] = useState<'price-desc' | 'price-asc' | ''>('');
   const [selloFilter, setSelloFilter] = useState<'novacion' | 'bajo_mercado' | 'flipping' | 'densificacion' | ''>(
     ''
@@ -508,12 +489,10 @@ export default function ProyectosExclusivosPage() {
 
   const ufValue = useUfValue();
 
-  /* Carga inicial */
   useEffect(() => {
     setTrigger((v) => v + 1);
   }, []);
 
-  /* Cerrar menú al click afuera */
   useEffect(() => {
     if (!menuOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -525,7 +504,6 @@ export default function ProyectosExclusivosPage() {
     return () => document.removeEventListener('mousedown', onDown);
   }, [menuOpen]);
 
-  /* Fetch listado (SOLO al Buscar) */
   useEffect(() => {
     const p = new URLSearchParams();
 
@@ -557,7 +535,6 @@ export default function ProyectosExclusivosPage() {
     };
   }, [trigger, aOperacion, aTipo, aComuna]);
 
-  /* Hidratación portadas */
   useEffect(() => {
     const need = (items || [])
       .filter((p) => p.id && !p.portada_url && !p.portada_fija_url)
@@ -596,7 +573,6 @@ export default function ProyectosExclusivosPage() {
     };
   }, [items, portadasById]);
 
-  /* ✅ Hidratación detalles para cards (dormitorios/baños/estac/m2) */
   useEffect(() => {
     const need = (items || [])
       .filter((p) => p.id)
@@ -724,7 +700,6 @@ export default function ProyectosExclusivosPage() {
   const comunaOptions = region ? COMUNAS[region] || [] : [];
   const barrioOptions = comuna && BARRIOS[comuna] ? BARRIOS[comuna] : [];
 
-  /* ===== FILTRO CLIENTE (idéntico lógica, adaptado a Proyectos: precio solo UF) ===== */
   const filteredItems = useMemo(() => {
     const norm = (s?: string) => normalize(s || '');
 
@@ -771,7 +746,6 @@ export default function ProyectosExclusivosPage() {
         if ((x.sello_tipo || '') !== selloFilter) return false;
       }
 
-      // Precio (UF) + conversión desde CLP$ (solo para filtrar)
       const puf = x.precio_uf && x.precio_uf > 0 ? x.precio_uf : null;
       if (puf != null) {
         if (puf < minUF || puf > maxUF) return false;
@@ -779,23 +753,32 @@ export default function ProyectosExclusivosPage() {
         return false;
       }
 
-      if (aMinDorm && !ge(x.dormitorios, parseInt(aMinDorm, 10))) return false;
-      if (aMinBanos && !ge(x.banos, parseInt(aMinBanos, 10))) return false;
+      const d = x.id ? detallesById[x.id] : undefined;
+
+      const dormitorios = d?.dormitorios ?? x.dormitorios;
+      const banos = d?.banos ?? x.banos;
+      const estacionamientos = d?.estacionamientos ?? x.estacionamientos;
+      const util = d?.superficie_util_m2 ?? x.superficie_util_m2;
+      const terr = d?.superficie_terreno_m2 ?? x.superficie_terreno_m2;
+
+      if (aMinDorm && !ge(dormitorios, parseInt(aMinDorm, 10))) return false;
+      if (aMinBanos && !ge(banos, parseInt(aMinBanos, 10))) return false;
 
       if (aMinM2Const) {
         const m = parseInt(aMinM2Const.replace(/\./g, ''), 10);
-        if (!ge(x.superficie_util_m2, m)) return false;
+        if (!ge(util, m)) return false;
       }
       if (aMinM2Terreno) {
         const m = parseInt(aMinM2Terreno.replace(/\./g, ''), 10);
-        if (!ge(x.superficie_terreno_m2, m)) return false;
+        if (!ge(terr, m)) return false;
       }
-      if (aEstac && !ge(x.estacionamientos, parseInt(aEstac, 10))) return false;
+      if (aEstac && !ge(estacionamientos, parseInt(aEstac, 10))) return false;
 
       return true;
     });
   }, [
     items,
+    detallesById,
     aOperacion,
     aTipo,
     aRegion,
@@ -821,33 +804,39 @@ export default function ProyectosExclusivosPage() {
     return arr;
   }, [filteredItems, sortMode]);
 
-  // CLP estimado (solo display) desde UF
   const CLPfromUF = useMemo(() => (ufValue && ufValue > 0 ? ufValue : null), [ufValue]);
 
   return (
     <main className="bg-white">
-      {/* HERO */}
-      <section className="relative min-h-[100svh]">
-        <img
+      <section className="relative min-h-[100svh] overflow-hidden bg-[#0A2E57]">
+        <HeroImage
           src={HERO_IMG}
-          alt="Portada"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '50% 45%' }}
+          alt="Portada Proyectos Exclusivos"
+          objectPosition="50% 45%"
+          showInitialBrandOverlay={false}
+          persistAcrossRoutes={false}
+          mediaMode="all"
+          onCurrentReadyChange={setHeroReady}
         />
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="absolute bottom-6 left-0 right-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="pl-2 sm:pl-4">
-              <div className="max-w-3xl">
-                <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">PROYECTOS EXCLUSIVOS</h1>
-                <p className="text-white/85 mt-2">Activos fuera del circuito tradicional.</p>
+
+        {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
+
+        {heroReady ? (
+          <div className="absolute bottom-6 left-0 right-0">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="pl-2 sm:pl-4">
+                <div className="max-w-3xl">
+                  <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                    PROYECTOS EXCLUSIVOS
+                  </h1>
+                  <p className="text-white/85 mt-2">Activos fuera del circuito tradicional.</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : null}
       </section>
 
-      {/* BLOQUE 1 */}
       <section className="bg-white">
         <SectionTitle title="Activos fuera del circuito tradicional" />
         <div className="py-12">
@@ -877,13 +866,11 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* BLOQUE 2 (gris) — BÚSQUEDA */}
       <section className="bg-slate-50" onKeyDown={handleKeyDownSearch}>
         <SectionTitleWithIcon title="Búsqueda" icon={<Filter className="h-5 w-5" color={BRAND_BLUE} />} />
 
         <div className="py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* modo */}
             <div className="pl-2 sm:pl-4 mb-4 flex gap-2">
               <button
                 type="button"
@@ -909,7 +896,6 @@ export default function ProyectosExclusivosPage() {
               </button>
             </div>
 
-            {/* === RÁPIDA === */}
             {advancedMode === 'rapida' && (
               <>
                 <div className="pl-2 sm:pl-4 grid grid-cols-1 lg:grid-cols-5 gap-3">
@@ -991,7 +977,6 @@ export default function ProyectosExclusivosPage() {
               </>
             )}
 
-            {/* === AVANZADA === */}
             {advancedMode === 'avanzada' && (
               <>
                 <div className="pl-2 sm:pl-4">
@@ -1015,6 +1000,7 @@ export default function ProyectosExclusivosPage() {
                       setBarrio('');
                     }}
                     placeholder="Región"
+                    disabled={!region && false}
                   />
                   <SmartSelect
                     options={comunaOptions}
@@ -1115,7 +1101,6 @@ export default function ProyectosExclusivosPage() {
         </div>
       </section>
 
-      {/* BLOQUE 3 */}
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="flex items-center justify-between mb-2 relative" ref={menuWrapRef}>
@@ -1217,7 +1202,6 @@ export default function ProyectosExclusivosPage() {
             </div>
           </div>
 
-          {/* Glosario */}
           <div className="pl-2 sm:pl-4">
             <GlosarioSellosCompacto />
           </div>
@@ -1272,21 +1256,18 @@ export default function ProyectosExclusivosPage() {
                           className="w-full h-full object-cover group-hover:opacity-95 transition"
                         />
 
-                        {/* 1 SOLO SELLO ARRIBA DERECHA */}
                         {SealForProyecto(p)}
                       </div>
 
                       <div className="p-4 flex flex-col">
                         <h3 className="text-lg text-slate-900 line-clamp-2 min-h-[48px]">{p.titulo || 'Proyecto'}</h3>
 
-                        {/* ✅ fija altura como si fuera 2 líneas siempre */}
                         <p className="mt-1 text-sm text-slate-600 line-clamp-2 min-h-[40px]">
                           {[p.operacion ? capFirst(String(p.operacion)) : '', tipoCap, p.comuna || '', p.barrio || '']
                             .filter(Boolean)
                             .join(' · ')}
                         </p>
 
-                        {/* ✅ Detalles (igual a Propiedades) */}
                         {!terreno && !bodega ? (
                           <div className="mt-3 grid grid-cols-5 text-center">
                             <div className="border border-slate-200 p-2">
