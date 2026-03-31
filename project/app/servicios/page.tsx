@@ -12,13 +12,9 @@ import HeroImage from '@/components/HeroImage';
 export default function ServiciosPage() {
   const [heroReady, setHeroReady] = useState(false);
 
-  useEffect(() => {
-    setHeroReady(false);
-  }, []);
-
   return (
     <main className="bg-white">
-      <section className="relative min-h-[100svh] overflow-hidden">
+      <section className="relative min-h-[100svh] overflow-hidden bg-[#0A2E57]">
         <HeroImage
           src="/images/portadas/servicios.jpg"
           alt="Portada Servicios"
