@@ -17,9 +17,6 @@ import useUf from '../hooks/useUf';
 import SmartSelect from '../components/SmartSelect';
 import HeroImage from '../components/HeroImage';
 
-/* ------------------------------------------------------------------ */
-/*                               TIPOS                                */
-/* ------------------------------------------------------------------ */
 type Property = {
   id: string;
   titulo?: string;
@@ -37,14 +34,10 @@ type Property = {
   images?: string[];
   coverImage?: string;
   destacada?: boolean;
-
   portada_url?: string | null;
   portada_fija_url?: string | null;
 };
 
-/* ------------------------------------------------------------------ */
-/*                             UTILIDADES                             */
-/* ------------------------------------------------------------------ */
 const fmtUF = (n: number) =>
   `UF ${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(n)}`;
 const fmtCLP = (n: number) =>
@@ -70,7 +63,6 @@ const capWords = (s?: string | null) =>
     .join(' ')
     .trim();
 
-/* Sin fallback feo: si no hay imagen, no mostramos hero todavía */
 function getHeroImage(p?: Partial<Property>) {
   if (!p) return '';
   const anyP: any = p;
@@ -88,9 +80,6 @@ function getHeroImage(p?: Partial<Property>) {
   return (src as string) || '';
 }
 
-/* ------------------------------------------------------------------ */
-/*                 REGIONES (solo para el formulario)                  */
-/* ------------------------------------------------------------------ */
 const REGIONES_UI: readonly string[] = [
   'XV - Arica y Parinacota',
   'I - Tarapacá',
@@ -144,9 +133,6 @@ const COMUNAS_UI: Record<string, string[]> = {
 const SERVICIOS = ['Comprar', 'Vender', 'Arrendar', 'Gestionar un arriendo', 'Consultoría específica'];
 const TIPO_PROPIEDAD = ['Casa', 'Departamento', 'Bodega', 'Oficina', 'Local comercial', 'Terreno'];
 
-/* ------------------------------------------------------------------ */
-/*                              HOME PAGE                             */
-/* ------------------------------------------------------------------ */
 export default function HomePage() {
   const [destacadas, setDestacadas] = useState<Property[]>([]);
   const [i, setI] = useState(0);
@@ -227,9 +213,7 @@ export default function HomePage() {
           const portada_fija_url = d?.portada_fija_url || null;
           if (cancel) return;
           setDetailById((prev) => ({ ...prev, [id]: { portada_url, portada_fija_url } }));
-        } catch {
-          /* ignore */
-        }
+        } catch {}
       }
     })();
 
@@ -425,7 +409,6 @@ export default function HomePage() {
 
   return (
     <main className="bg-white">
-      {/* ================= HERO ================= */}
       <section
         className="relative w-full overflow-hidden isolate"
         onTouchStart={onTouchStart}
@@ -530,7 +513,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= ¿POR QUÉ GESSWEIN PROPERTIES? ================= */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-10 md:grid-cols-2 items-stretch">
@@ -540,17 +522,24 @@ export default function HomePage() {
               </h2>
 
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
+                <p>Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.</p>
                 <p>
-                  Porque el corretaje tradicional intermedia. Nosotros gestionamos activos.
+                  En Chile, la mayoría de las corredoras opera con un enfoque transaccional: captación, fotos,
+                  publicación, coordinación de visitas y negociación. Ese modelo funciona cuando la propiedad es
+                  simple y el mercado está “fácil”. Pero en propiedades premium —y especialmente en activos con
+                  complejidad normativa, potencial de transformación o alto valor patrimonial— ese enfoque deja valor
+                  en la mesa y eleva el riesgo.
                 </p>
                 <p>
-                  En Chile, la mayoría de las corredoras opera con un enfoque transaccional: captación, fotos, publicación, coordinación de visitas y negociación. Ese modelo funciona cuando la propiedad es simple y el mercado está “fácil”. Pero en propiedades premium —y especialmente en activos con complejidad normativa, potencial de transformación o alto valor patrimonial— ese enfoque deja valor en la mesa y eleva el riesgo.
+                  Gesswein Properties trabaja distinto al integrar arquitectura, normativa y estrategia comercial para
+                  gestionar propiedades como verdaderos activos inmobiliarios. A diferencia del corretaje tradicional,
+                  no nos limitamos a intermediar: analizamos el potencial técnico, constructivo y normativo de cada
+                  propiedad antes de salir al mercado, anticipamos riesgos y diseñamos una estrategia que maximiza su
+                  valor real.
                 </p>
                 <p>
-                  Gesswein Properties trabaja dstinto al integrar arquitectura, normativa y estrategia comercial para gestionar propiedades como verdaderos activos inmobiliarios. A diferencia del corretaje tradicional, no nos limitamos a intermediar: analizamos el potencial técnico, constructivo y normativo de cada propiedad antes de salir al mercado, anticipamos riesgos y diseñamos una estrategia que maximiza su valor real.
-                </p>
-                <p>
-                  Nuestro enfoque permite tomar decisiones inmobiliarias con claridad, respaldo profesional y control del proceso, reduciendo incertidumbre y elevando el estándar de la operación.
+                  Nuestro enfoque permite tomar decisiones inmobiliarias con claridad, respaldo profesional y control
+                  del proceso, reduciendo incertidumbre y elevando el estándar de la operación.
                 </p>
               </div>
 
@@ -573,7 +562,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= PROYECTOS EXCLUSIVOS ================= */}
       <section className="py-20 bg-[#f8f9fb]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid gap-10 md:grid-cols-2 items-stretch">
@@ -584,13 +572,22 @@ export default function HomePage() {
 
               <div className="text-[14px] text-black/70 leading-relaxed space-y-4">
                 <p>
-                  No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio técnico, red estratégica y capacidad de estructuración.
+                  No todas las oportunidades inmobiliarias llegan al mercado abierto. Algunas requieren criterio
+                  técnico, red estratégica y capacidad de estructuración.
                 </p>
                 <p>
-                  En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de negocio, oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en muchos casos, confidencial. Aquí encontrarás alternativas que no compiten en el mercado masivo: novaciones hipotecarias, oportunidades de flipping con fundamento técnico, propiedades con valor de mercado bajo y activos con potencial de densificación o desarrollo. Cada oportunidad es previamente analizada desde su viabilidad normativa, potencial constructivo, escenario de valorización y riesgo asociado. El acceso a esta sección es limitado y su disponibilidad cambia constantemente según oportunidades reales detectadas, gestionadas e identificadas por nuestro equipo.
+                  En esta sección presentamos activos singulares y proyectos especiales que, por su modelo de negocio,
+                  oportunidad financiera o particularidad normativa, se gestionan bajo un esquema diferenciado y, en
+                  muchos casos, confidencial. Aquí encontrarás alternativas que no compiten en el mercado masivo:
+                  novaciones hipotecarias, oportunidades de flipping con fundamento técnico, propiedades con valor de
+                  mercado bajo y activos con potencial de densificación o desarrollo. Cada oportunidad es previamente
+                  analizada desde su viabilidad normativa, potencial constructivo, escenario de valorización y riesgo
+                  asociado. El acceso a esta sección es limitado y su disponibilidad cambia constantemente según
+                  oportunidades reales detectadas, gestionadas e identificadas por nuestro equipo.
                 </p>
                 <p>
-                  Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y decisión.
+                  Gesswein Properties no publica volumen. Gestiona oportunidades que requieren visión, estructura y
+                  decisión.
                 </p>
               </div>
 
@@ -613,7 +610,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= REFERIDOS ================= */}
       <section id="referidos" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-start gap-4">
@@ -625,8 +621,8 @@ export default function HomePage() {
                 Programa de Referidos
               </h2>
               <p className="mt-2 text-[14px] text-black/70 leading-relaxed">
-                ¿Conoces a alguien que busca propiedad? Refiérelo y accede a beneficios exclusivos. Completa los datos y
-                nuestro equipo hará el seguimiento con el estándar Gesswein Properties.
+                ¿Conoces a alguien que busca propiedad? Refiérelo y accede a beneficios exclusivos. Completa los
+                datos y nuestro equipo hará el seguimiento con el estándar Gesswein Properties.
               </p>
             </div>
           </div>
@@ -634,9 +630,7 @@ export default function HomePage() {
           <form ref={formRef} onSubmit={onSubmitReferidos} className="mt-10">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="border border-slate-200 bg-white shadow-sm p-6">
-                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                  Tus datos (Referente)
-                </div>
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">Tus datos (Referente)</div>
 
                 <div className="mt-5 grid gap-4">
                   <div>
@@ -674,9 +668,7 @@ export default function HomePage() {
               </div>
 
               <div className="border border-slate-200 bg-white shadow-sm p-6">
-                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                  Datos del Referido
-                </div>
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">Datos del Referido</div>
 
                 <div className="mt-5 grid gap-4">
                   <div>
@@ -714,9 +706,7 @@ export default function HomePage() {
               </div>
 
               <div className="border border-slate-200 bg-white shadow-sm p-6">
-                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                  Preferencias
-                </div>
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">Preferencias</div>
 
                 <div className="mt-5 grid gap-4">
                   <div>
@@ -801,9 +791,7 @@ export default function HomePage() {
 
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 border border-slate-200 bg-white shadow-sm p-6">
-                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">
-                  Contexto adicional
-                </div>
+                <div className="text-[#0A2E57] text-[11px] tracking-[.25em] uppercase">Contexto adicional</div>
 
                 <div className="mt-5">
                   <label className="block text-sm text-slate-700 mb-1">Comentarios</label>
@@ -829,7 +817,8 @@ export default function HomePage() {
                     className="underline underline-offset-2 hover:text-[#0A2E57]"
                   >
                     términos del programa de referidos y política de privacidad
-                  </button>.
+                  </button>
+                  .
                 </p>
 
                 <button
@@ -845,17 +834,9 @@ export default function HomePage() {
                   {sendingRef ? 'Enviando...' : 'Enviar referido'}
                 </button>
 
-                {refSuccess && (
-                  <div className="mt-4 text-[12px] text-green-700 text-center">
-                    {refSuccess}
-                  </div>
-                )}
+                {refSuccess && <div className="mt-4 text-[12px] text-green-700 text-center">{refSuccess}</div>}
 
-                {refError && (
-                  <div className="mt-4 text-[12px] text-red-700 text-center">
-                    {refError}
-                  </div>
-                )}
+                {refError && <div className="mt-4 text-[12px] text-red-700 text-center">{refError}</div>}
 
                 {!refSuccess && !refError && (
                   <div className="mt-3 text-center text-[12px] text-black/60">Responderemos a la brevedad.</div>
@@ -886,61 +867,79 @@ export default function HomePage() {
               <div>
                 <h4 className="text-[#0A2E57] font-medium mb-2">1. Finalidad del formulario</h4>
                 <p>
-                  Este formulario tiene por objeto recibir datos de contacto del referente y de la persona referida para evaluar una posible gestión comercial o asesoría inmobiliaria por parte de Gesswein Properties.
+                  Este formulario tiene por objeto recibir datos de contacto del referente y de la persona referida
+                  para evaluar una posible gestión comercial o asesoría inmobiliaria por parte de Gesswein Properties.
                 </p>
               </div>
 
               <div>
                 <h4 className="text-[#0A2E57] font-medium mb-2">2. Autorización de contacto</h4>
                 <p>
-                  Al enviar este formulario, declaras que cuentas con autorización suficiente para compartir los datos del referido con el fin de que Gesswein Properties pueda contactarlo en relación con los servicios solicitados o con oportunidades inmobiliarias relacionadas.
+                  Al enviar este formulario, declaras que cuentas con autorización suficiente para compartir los datos
+                  del referido con el fin de que Gesswein Properties pueda contactarlo en relación con los servicios
+                  solicitados o con oportunidades inmobiliarias relacionadas.
                 </p>
               </div>
 
               <div>
                 <h4 className="text-[#0A2E57] font-medium mb-2">3. Uso de los datos</h4>
                 <p>
-                  Los datos serán utilizados exclusivamente para fines de contacto comercial, seguimiento del referido, evaluación de necesidades inmobiliarias, coordinación de reuniones y gestión interna del programa de referidos. Gesswein Properties no vende esta información a terceros ni la utiliza para fines ajenos a la operación comercial propia de la empresa.
+                  Los datos serán utilizados exclusivamente para fines de contacto comercial, seguimiento del referido,
+                  evaluación de necesidades inmobiliarias, coordinación de reuniones y gestión interna del programa de
+                  referidos. Gesswein Properties no vende esta información a terceros ni la utiliza para fines ajenos a
+                  la operación comercial propia de la empresa.
                 </p>
               </div>
 
               <div>
                 <h4 className="text-[#0A2E57] font-medium mb-2">4. Resguardo de información</h4>
                 <p>
-                  Gesswein Properties adoptará medidas razonables de resguardo y seguridad sobre la información recibida. Sin perjuicio de lo anterior, ningún sistema tecnológico es completamente infalible, por lo que no puede garantizarse una seguridad absoluta frente a eventos externos, ataques informáticos u otras contingencias fuera de control razonable.
+                  Gesswein Properties adoptará medidas razonables de resguardo y seguridad sobre la información
+                  recibida. Sin perjuicio de lo anterior, ningún sistema tecnológico es completamente infalible, por lo
+                  que no puede garantizarse una seguridad absoluta frente a eventos externos, ataques informáticos u
+                  otras contingencias fuera de control razonable.
                 </p>
               </div>
 
               <div>
                 <h4 className="text-[#0A2E57] font-medium mb-2">5. Exactitud de la información</h4>
                 <p>
-                  El usuario que envía el formulario es responsable de que la información proporcionada sea veraz, actualizada y pertinente. Gesswein Properties podrá abstenerse de gestionar referencias incompletas, inexactas o que no cumplan estándares mínimos de validación interna.
+                  El usuario que envía el formulario es responsable de que la información proporcionada sea veraz,
+                  actualizada y pertinente. Gesswein Properties podrá abstenerse de gestionar referencias incompletas,
+                  inexactas o que no cumplan estándares mínimos de validación interna.
                 </p>
               </div>
 
               <div>
                 <h4 className="text-[#0A2E57] font-medium mb-2">6. Beneficios del programa</h4>
                 <p>
-                  La recepción de un referido no implica, por sí sola, la generación automática de beneficios, pagos o contraprestaciones. Cualquier beneficio asociado al programa de referidos estará sujeto a validación interna, a la efectiva trazabilidad del referido y a las condiciones comerciales que Gesswein Properties determine en cada caso.
+                  La recepción de un referido no implica, por sí sola, la generación automática de beneficios, pagos o
+                  contraprestaciones. Cualquier beneficio asociado al programa de referidos estará sujeto a validación
+                  interna, a la efectiva trazabilidad del referido y a las condiciones comerciales que Gesswein
+                  Properties determine en cada caso.
                 </p>
               </div>
 
               <div>
                 <h4 className="text-[#0A2E57] font-medium mb-2">7. Solicitudes de eliminación o actualización</h4>
                 <p>
-                  Si deseas solicitar corrección, actualización o eliminación de los datos enviados, puedes escribir a contacto@gessweinproperties.cl indicando los datos involucrados y tu solicitud.
+                  Si deseas solicitar corrección, actualización o eliminación de los datos enviados, puedes escribir a
+                  contacto@gessweinproperties.cl indicando los datos involucrados y tu solicitud.
                 </p>
               </div>
 
               <div>
                 <h4 className="text-[#0A2E57] font-medium mb-2">8. Modificaciones</h4>
                 <p>
-                  Gesswein Properties podrá actualizar estos términos cuando sea necesario para mejorar la operación del programa o adecuar sus procesos internos. La versión publicada al momento del envío será la aplicable al formulario respectivo.
+                  Gesswein Properties podrá actualizar estos términos cuando sea necesario para mejorar la operación del
+                  programa o adecuar sus procesos internos. La versión publicada al momento del envío será la aplicable
+                  al formulario respectivo.
                 </p>
               </div>
 
               <div className="pt-2 border-t border-black/10 text-[12px] text-black/55">
-                Texto base de uso comercial general. Para una versión legal definitiva y cerrada, conviene revisión por abogado.
+                Texto base de uso comercial general. Para una versión legal definitiva y cerrada, conviene revisión por
+                abogado.
               </div>
             </div>
           </div>
