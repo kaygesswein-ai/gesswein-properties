@@ -28,12 +28,12 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const [fadeout, setFadeout] = useState(false);
 
   const startedAtRef = useRef<number>(0);
-  const minDurRef = useRef<number>(650);
+  const minDurRef = useRef<number>(450);
   const closingRef = useRef(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
-    minDurRef.current = Math.max(500, opts?.minDurationMs ?? 650);
+    minDurRef.current = opts?.minDurationMs ?? 450;
     startedAtRef.current = Date.now();
     closingRef.current = false;
 
@@ -48,7 +48,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
 
     requestAnimationFrame(() => {
       if (progressRef.current) {
-        progressRef.current.style.width = '76%';
+        progressRef.current.style.width = '74%';
       }
     });
   }, []);
@@ -58,7 +58,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
     closingRef.current = true;
 
     const elapsed = Date.now() - startedAtRef.current;
-    const remain = Math.max(0, minDurRef.current - elapsed);
+    const remain = elapsed < 250 ? 250 - elapsed : 0;
 
     window.setTimeout(() => {
       if (progressRef.current) progressRef.current.style.width = '100%';
@@ -71,8 +71,8 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
           setFadeout(false);
           closingRef.current = false;
           if (progressRef.current) progressRef.current.style.width = '0%';
-        }, 150);
-      }, 50);
+        }, 130);
+      }, 35);
     }, remain);
   }, []);
 
