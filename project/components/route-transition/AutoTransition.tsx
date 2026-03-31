@@ -61,7 +61,7 @@ function getHeroForPath(pathname: string): string | null {
   return null;
 }
 
-async function preloadImage(src: string, timeoutMs = 1000) {
+async function preloadImage(src: string, timeoutMs = 1200) {
   await new Promise<void>((resolve) => {
     let done = false;
 
@@ -125,7 +125,7 @@ export default function AutoTransition() {
     const safety = window.setTimeout(() => {
       if (waitTokenRef.current !== token) return;
       finish();
-    }, 1200);
+    }, 3000);
 
     window.addEventListener('gp:hero-ready', onReady, { once: true });
 
@@ -145,7 +145,7 @@ export default function AutoTransition() {
       if (prewarmedRef.current[hero]) return;
 
       prewarmedRef.current[hero] = true;
-      preloadImage(hero, 900).catch(() => {});
+      preloadImage(hero, 1000).catch(() => {});
     };
 
     const onPointerEnter = (e: Event) => {
@@ -181,12 +181,12 @@ export default function AutoTransition() {
 
       e.preventDefault();
 
-      start({ minDurationMs: 450 });
+      start({ minDurationMs: 1000 });
 
       const hero = getHeroForPath(url.pathname);
       if (hero) {
         try {
-          await preloadImage(hero, 1000);
+          await preloadImage(hero, 1200);
         } catch {}
       }
 
