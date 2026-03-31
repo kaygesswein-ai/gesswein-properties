@@ -1,4 +1,5 @@
-import type { Metadata } from 'next'
+'use client';
+
 import {
   MessageCircle,
   Mail,
@@ -7,17 +8,14 @@ import {
   Music2,
   Facebook,
   Linkedin,
-} from 'lucide-react'
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import HeroImage from '@/components/HeroImage';
 
-export const metadata: Metadata = {
-  title: 'Contacto - Gesswein Properties',
-  description: 'Escríbenos y cuéntanos qué necesitas. Te responderemos a la brevedad.',
-}
+const HERO_IMG = '/images/portadas/contacto.jpg';
 
-const HERO_IMG = '/images/portadas/contacto.jpg'
-
-/* === NUEVO: portada específica para smartphones / mobile vertical === */
-const HERO_IMG_MOBILE = 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Contacto%20(Opcion%201).jpeg'
+const HERO_IMG_MOBILE =
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/propiedades/Portada/Foto%20portada%20-%20Contacto%20(Opcion%201).jpeg';
 
 const SOCIALS = [
   {
@@ -69,43 +67,57 @@ const SOCIALS = [
     href: '#',
     Icon: Linkedin,
   },
-]
+];
 
 export default function ContactoPage() {
+  const [heroReady, setHeroReady] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768;
+  });
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    setHeroReady(false);
+  }, [isMobile]);
+
+  const heroSrc = isMobile ? HERO_IMG_MOBILE : HERO_IMG;
+
   return (
     <main className="bg-white">
-      {/* HERO (idéntico estilo Equipo/Servicios) */}
-      <section className="relative min-h-[100svh]">
-        {/* MOBILE HERO */}
-        <img
-          src={HERO_IMG_MOBILE}
-          alt="Contacto Mobile"
-          className="absolute inset-0 w-full h-full object-cover md:hidden"
-          style={{ objectPosition: '50% 50%' }}
-        />
-
-        {/* DESKTOP / TABLET HERO */}
-        <img
-          src={HERO_IMG}
+      <section className="relative min-h-[100svh] overflow-hidden bg-[#0A2E57]">
+        <HeroImage
+          src={heroSrc}
           alt="Contacto"
-          className="absolute inset-0 w-full h-full object-cover hidden md:block"
-          style={{ objectPosition: '50% 40%' }}
+          objectPosition={isMobile ? '50% 50%' : '50% 40%'}
+          showInitialBrandOverlay={false}
+          persistAcrossRoutes={false}
+          mediaMode={isMobile ? 'mobile' : 'desktop'}
+          onCurrentReadyChange={setHeroReady}
         />
 
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="absolute bottom-6 left-0 right-0">
-          <div className="max-w-7xl mx-auto px-6">
-            <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
-              CONTACTO
-            </h1>
-            <p className="text-white/85 mt-2 text-[14px] md:text-[15px] leading-relaxed">
-              Escríbenos y cuéntanos qué necesitas.
-            </p>
+        {heroReady ? <div className="absolute inset-0 bg-black/35" /> : null}
+
+        {heroReady ? (
+          <div className="absolute bottom-6 left-0 right-0">
+            <div className="max-w-7xl mx-auto px-6">
+              <h1 className="text-white text-3xl md:text-4xl uppercase tracking-[0.25em]">
+                CONTACTO
+              </h1>
+              <p className="text-white/85 mt-2 text-[14px] md:text-[15px] leading-relaxed">
+                Escríbenos y cuéntanos qué necesitas.
+              </p>
+            </div>
           </div>
-        </div>
+        ) : null}
       </section>
 
-      {/* REDES SOCIALES (solo esto, estética tipo “Servicios”) */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-[#0A2E57] text-[17px] tracking-[.28em] uppercase font-medium">
@@ -139,5 +151,5 @@ export default function ContactoPage() {
         </div>
       </section>
     </main>
-  )
+  );
 }
