@@ -55,7 +55,7 @@ function getHeroForPath(pathname: string): string | null {
   }
 
   if (pathname === '/proyectos-exclusivos') {
-    return 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2400&auto=format&fit=crop';
+    return 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Proyectos%20Exclusivos/terufilm_japan-building-9682225_1920.jpg';
   }
 
   return null;
@@ -91,6 +91,16 @@ async function preloadImage(src: string, timeoutMs = 1200) {
     }
 
     window.setTimeout(finish, timeoutMs);
+  });
+}
+
+async function afterTwoPaints() {
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
   });
 }
 
@@ -182,6 +192,8 @@ export default function AutoTransition() {
       e.preventDefault();
 
       start({ minDurationMs: 1000 });
+
+      await afterTwoPaints();
 
       const hero = getHeroForPath(url.pathname);
       if (hero) {
