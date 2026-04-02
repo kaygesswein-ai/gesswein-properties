@@ -6,6 +6,7 @@ import React, {
   useState,
   useRef,
   useCallback,
+  useEffect,
 } from 'react';
 import { flushSync } from 'react-dom';
 
@@ -31,6 +32,24 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
   const minDurRef = useRef<number>(1000);
   const closingRef = useRef(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+
+    if (isActive) {
+      root.classList.add('gp-transition-active');
+      body.classList.add('gp-transition-active');
+    } else {
+      root.classList.remove('gp-transition-active');
+      body.classList.remove('gp-transition-active');
+    }
+
+    return () => {
+      root.classList.remove('gp-transition-active');
+      body.classList.remove('gp-transition-active');
+    };
+  }, [isActive]);
 
   const start = useCallback((opts?: { minDurationMs?: number }) => {
     minDurRef.current = Math.max(1000, opts?.minDurationMs ?? 1000);
@@ -82,10 +101,7 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
 
       <div
         className={`gp-route-overlay ${fadeout ? 'fadeout' : ''}`}
-        hidden={!isActive}
         aria-hidden={!isActive}
-        role="status"
-        aria-live="polite"
       >
         <div className="gp-logo-wrap" aria-label="Transición de página Gesswein Properties">
           <img
