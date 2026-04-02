@@ -14,7 +14,9 @@ import {
   Square,
 } from 'lucide-react';
 import SmartSelect from '../../components/SmartSelect';
-import HeroImage from 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Proyectos%20Exclusivos/terufilm_japan-building-9682225_1920.jpg';
+import HeroImage from '@/components/HeroImage';
+
+const HERO_IMG = 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Proyectos%20Exclusivos/terufilm_japan-building-9682225_1920.jpg';
 
 type Proyecto = {
   id?: string;
