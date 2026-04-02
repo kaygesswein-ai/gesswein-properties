@@ -13,9 +13,12 @@ import {
   Car,
   Square,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import HeroImage from '@/components/HeroImage';
-const HERO_IMG = 'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Proyectos%20Exclusivos/terufilm_japan-building-9682225_1920.jpg';
+import SmartSelect from '../../components/SmartSelect';
+
+const HERO_IMG =
+  'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Proyectos%20Exclusivos/terufilm_japan-building-9682225_1920.jpg';
+
 type Proyecto = {
   id?: string;
   slug?: string;
@@ -48,9 +51,6 @@ type Proyecto = {
 
 const BRAND_BLUE = '#0A2E57';
 const BTN_GRAY_BORDER = '#e2e8f0';
-
-const HERO_IMG =
-  'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2400&auto=format&fit=crop';
 
 const CARD_FALLBACK =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop';
@@ -1000,7 +1000,6 @@ export default function ProyectosExclusivosPage() {
                       setBarrio('');
                     }}
                     placeholder="Región"
-                    disabled={!region && false}
                   />
                   <SmartSelect
                     options={comunaOptions}
