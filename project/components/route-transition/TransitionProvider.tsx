@@ -101,7 +101,10 @@ export function RouteTransitionProvider({ children }: { children: React.ReactNod
 
       <div
         className={`gp-route-overlay ${fadeout ? 'fadeout' : ''}`}
+        hidden={!isActive}
         aria-hidden={!isActive}
+        role="status"
+        aria-live="polite"
       >
         <div className="gp-logo-wrap" aria-label="Transición de página Gesswein Properties">
           <img
