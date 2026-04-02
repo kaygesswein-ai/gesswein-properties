@@ -29,8 +29,11 @@ html, body {
    GP Route Transition – logo estático + DOS láseres sutiles
    =========================================================== */
 
-/* Bloquea scroll bajo overlay */
-.gp-lock{ overflow:hidden; }
+/* Durante transición, el canvas base también queda azul para evitar flash blanco */
+html.gp-transition-active,
+body.gp-transition-active{
+  background:#0A2E57;
+}
 
 /* Animaciones de overlay */
 @keyframes gpIn{ 0%{opacity:0; transform:scale(.985)} 100%{opacity:1; transform:scale(1)} }
@@ -41,17 +44,27 @@ html, body {
   position:fixed; inset:0; z-index:110;
   display:grid; place-items:center;
   background:#0A2E57;
-  animation: gpIn 300ms ease forwards;
+  opacity:0;
+  pointer-events:none;
+  animation: gpIn 220ms ease forwards;
+}
+
+html.gp-transition-active .gp-route-overlay,
+body.gp-transition-active .gp-route-overlay{
+  opacity:1;
   pointer-events:all;
 }
-.gp-route-overlay[hidden]{ display:none; }
-.gp-route-overlay.fadeout{ animation: gpOut 260ms ease forwards; }
+
+.gp-route-overlay.fadeout{
+  animation: gpOut 180ms ease forwards;
+}
 
 /* Barra superior opcional */
 .gp-progress{
   position:fixed; z-index:120; top:0; left:0; height:2px; width:0%;
   background: linear-gradient(to right, #93c5fd 0%, #22d3ee 100%);
-  transition: width 280ms ease;
+  transition: width 220ms ease;
+  pointer-events:none;
 }
 
 /* Contenedor y logo */
@@ -91,22 +104,22 @@ html, body {
      rgba(255,255,255,0) 0%,
      rgba(255,255,255,.95) 50%,
      rgba(125,211,252,.85) 100%);
-  filter: blur(1px);                 /* sutil */
-  animation: gpLaserSweep 850ms ease-in-out 1 both;  /* 1 sola pasada */
-  mix-blend-mode: normal;            /* sin virajes de color */
+  filter: blur(1px);
+  animation: gpLaserSweep 850ms ease-in-out 1 both;
+  mix-blend-mode: normal;
 }
 
 /* Alturas/retardos para que calcen con tu logo */
-.gp-laser.l1{ top:50%; height:5px; }         /* justo sobre la “línea del techo” */
+.gp-laser.l1{ top:50%; height:5px; }
 .gp-laser.l2{
   top:58%; height:4px;
   animation-duration: 1000ms;
-  animation-delay: 120ms;                     /* segunda pasada un poco después */
+  animation-delay: 120ms;
 }
 
 /* Accesibilidad */
 @media (prefers-reduced-motion: reduce){
-  .gp-route-overlay{ animation:none }
-  .gp-route-overlay.fadeout{ animation:none }
+  .gp-route-overlay{ animation:none; opacity:1; }
+  .gp-route-overlay.fadeout{ animation:none; opacity:0; }
   .gp-laser{ animation:none }
 }
