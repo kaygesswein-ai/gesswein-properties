@@ -121,21 +121,22 @@ export default function AutoTransition() {
 
     lastPathRef.current = pathname;
     const token = ++waitTokenRef.current;
+    let finished = false;
 
     const finish = () => {
+      if (finished) return;
       if (waitTokenRef.current !== token) return;
+      finished = true;
       end();
     };
 
     const onReady = () => {
-      if (waitTokenRef.current !== token) return;
       finish();
     };
 
     const safety = window.setTimeout(() => {
-      if (waitTokenRef.current !== token) return;
       finish();
-    }, 3000);
+    }, 2200);
 
     window.addEventListener('gp:hero-ready', onReady, { once: true });
 
