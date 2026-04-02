@@ -44,20 +44,11 @@ body.gp-transition-active{
   position:fixed; inset:0; z-index:110;
   display:grid; place-items:center;
   background:#0A2E57;
-  opacity:0;
-  pointer-events:none;
   animation: gpIn 220ms ease forwards;
-}
-
-html.gp-transition-active .gp-route-overlay,
-body.gp-transition-active .gp-route-overlay{
-  opacity:1;
   pointer-events:all;
 }
-
-.gp-route-overlay.fadeout{
-  animation: gpOut 180ms ease forwards;
-}
+.gp-route-overlay[hidden]{ display:none; }
+.gp-route-overlay.fadeout{ animation: gpOut 180ms ease forwards; }
 
 /* Barra superior opcional */
 .gp-progress{
@@ -119,7 +110,7 @@ body.gp-transition-active .gp-route-overlay{
 
 /* Accesibilidad */
 @media (prefers-reduced-motion: reduce){
-  .gp-route-overlay{ animation:none; opacity:1; }
-  .gp-route-overlay.fadeout{ animation:none; opacity:0; }
+  .gp-route-overlay{ animation:none }
+  .gp-route-overlay.fadeout{ animation:none }
   .gp-laser{ animation:none }
 }
