@@ -403,9 +403,9 @@ export default function HomePage() {
   }
 
   const WHY_IMG =
-    'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Inicio/0100005.JPG';
+    'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Inicio/0100002.JPG';
   const OPPS_IMG =
-    'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Inicio/0100034.JPG';
+    'https://oubddjjpwpjtsprulpjr.supabase.co/storage/v1/object/public/Inicio/0100005.JPG';
 
   return (
     <main className="bg-white">
