@@ -47,9 +47,8 @@ type Proyecto = {
 
   tags?: string[] | null;
 
-  // sellos
   sello_tipo?: ProjectSeal;
-  tasa_novacion?: number | null; // % ej 3.4
+  tasa_novacion?: number | null;
 };
 
 const nfUF = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
@@ -58,14 +57,12 @@ const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nf1 = new Intl.NumberFormat('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 const cls = (...s: (string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
-const HERO_FALLBACK =
-  'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
 const wordsCap = (s?: string | null) =>
   (s ?? '')
     .toLowerCase()
     .split(' ')
-    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : ''))
     .join(' ')
     .trim();
 
@@ -102,10 +99,8 @@ const SEAL_GLOSSARY: Record<Exclude<ProjectSeal, '' | null>, { title: string; de
 
 function useUf() {
   const [uf, setUf] = useState<number | null>(null);
-
   useEffect(() => {
     let alive = true;
-
     (async () => {
       try {
         const r = await fetch('/api/uf', { cache: 'no-store' });
@@ -116,27 +111,18 @@ function useUf() {
         if (alive) setUf(null);
       }
     })();
-
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, []);
-
   return uf;
 }
 
 function Lightbox(props: {
-  open: boolean;
-  images: string[];
-  index: number;
-  onClose: () => void;
-  onPrev: () => void;
-  onNext: () => void;
+  open: boolean; images: string[]; index: number;
+  onClose: () => void; onPrev: () => void; onNext: () => void;
 }) {
   const { open, images, index, onClose, onPrev, onNext } = props;
   const [scale, setScale] = useState(1);
   const boxRef = useRef<HTMLDivElement | null>(null);
-
   type P = { x: number; y: number };
   const pt = (t: Touch | React.Touch): P => ({ x: t.clientX, y: t.clientY });
   const dist2 = (a: P, b: P) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -145,40 +131,29 @@ function Lightbox(props: {
 
   useEffect(() => {
     if (!open) return;
-
     const h = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft') onPrev();
       if (e.key === 'ArrowRight') onNext();
     };
-
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, [open, onClose, onPrev, onNext]);
 
   useEffect(() => setScale(1), [index, open]);
+  const zoomIn = () => setScale(v => Math.min(3, Math.round((v + 0.25) * 100) / 100));
+  const zoomOut = () => setScale(v => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
 
-  const zoomIn = () => setScale((v) => Math.min(3, Math.round((v + 0.25) * 100) / 100));
-  const zoomOut = () => setScale((v) => Math.max(0.5, Math.round((v - 0.25) * 100) / 100));
-
-  const onWheel = (e: React.WheelEvent) => {
-    if (!open) return;
-    e.preventDefault();
-    Math.sign(e.deltaY) > 0 ? zoomOut() : zoomIn();
-  };
+  const onWheel = (e: React.WheelEvent) => { if (!open) return; e.preventDefault(); Math.sign(e.deltaY) > 0 ? zoomOut() : zoomIn(); };
 
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 1) {
-      touch.current.x0 = e.touches[0].clientX;
-      touch.current.y0 = e.touches[0].clientY;
-      touch.current.swiping = true;
+      touch.current.x0 = e.touches[0].clientX; touch.current.y0 = e.touches[0].clientY; touch.current.swiping = true;
     } else if (e.touches.length === 2) {
       touch.current.pinchStartDist = dist2(pt(e.touches[0]), pt(e.touches[1]));
-      touch.current.startScale = scale;
-      touch.current.swiping = false;
+      touch.current.startScale = scale; touch.current.swiping = false;
     }
   };
-
   const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 2) {
       const d = dist2(pt(e.touches[0]), pt(e.touches[1]));
@@ -187,63 +162,33 @@ function Lightbox(props: {
       e.preventDefault();
     }
   };
-
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!touch.current.swiping) return;
-    const ch = e.changedTouches?.[0];
-    if (!ch) return;
-    const dx = ch.clientX - touch.current.x0;
-    const dy = ch.clientY - touch.current.y0;
+    const ch = e.changedTouches?.[0]; if (!ch) return;
+    const dx = ch.clientX - touch.current.x0, dy = ch.clientY - touch.current.y0;
     if (Math.abs(dx) > 40 && Math.abs(dy) < 60) dx < 0 ? onNext() : onPrev();
     touch.current.swiping = false;
   };
 
   if (!open) return null;
-
   return (
-    <div
-      ref={boxRef}
-      className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
-      onWheel={onWheel}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
+    <div ref={boxRef} className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
+      onWheel={onWheel} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       <div className="absolute top-3 left-3 md:left-1/2 md:-translate-x-1/2 px-3 py-1 rounded text-white/90 text-sm bg-white/10 z-40">
         {index + 1} / {images.length}
       </div>
-
       <div className="absolute top-3 right-4 flex items-center gap-2 text-white z-40">
-        <button onClick={zoomOut} className="p-2 bg-white/10 hover:bg-white/20 rounded">
-          <Minus className="h-5 w-5" />
-        </button>
+        <button onClick={zoomOut} className="p-2 bg-white/10 hover:bg-white/20 rounded"><Minus className="h-5 w-5" /></button>
         <span className="px-2 text-sm">{Math.round(scale * 100)}%</span>
-        <button onClick={zoomIn} className="p-2 bg-white/10 hover:bg-white/20 rounded">
-          <Plus className="h-5 w-5" />
-        </button>
-        <button onClick={onClose} className="p-2 bg-white/10 hover:bg-white/20 rounded">
-          <X className="h-5 w-5" />
-        </button>
+        <button onClick={zoomIn} className="p-2 bg-white/10 hover:bg-white/20 rounded"><Plus className="h-5 w-5" /></button>
+        <button onClick={onClose} className="p-2 bg-white/10 hover:bg-white/20 rounded"><X className="h-5 w-5" /></button>
       </div>
-
-      <button
-        onClick={onPrev}
-        className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
-      >
+      <button onClick={onPrev} className="absolute left-3 md:left-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronLeft className="h-8 w-8 text-white" />
       </button>
-
-      <img
-        src={images[index]}
-        alt=""
-        className="max-h-[90vh] max-w-[92vw] object-contain transition-transform z-20"
-        style={{ transform: `scale(${scale})` }}
-      />
-
-      <button
-        onClick={onNext}
-        className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30"
-      >
+      <img src={images[index]} alt="" className="max-h-[90vh] max-w-[92vw] object-contain transition-transform z-20"
+        style={{ transform: `scale(${scale})` }} />
+      <button onClick={onNext} className="absolute right-3 md:right-6 p-2 bg-white/10 hover:bg-white/20 rounded z-30">
         <ChevronRight className="h-8 w-8 text-white" />
       </button>
     </div>
@@ -256,7 +201,7 @@ function addCacheBuster(url: string) {
 }
 
 function getHeroImage(p?: Partial<Proyecto> | null, fotos?: FotoRow[]) {
-  if (!p) return HERO_FALLBACK;
+  if (!p) return '';
   const anyP: any = p;
 
   const cand: (string | undefined | null)[] = [
@@ -268,38 +213,28 @@ function getHeroImage(p?: Partial<Proyecto> | null, fotos?: FotoRow[]) {
     anyP.foto,
     anyP.images?.[0],
     p.imagenes?.[0],
-    fotos?.find((f) => (f?.categoria ?? f?.tag ?? '').toString().toLowerCase() === 'portada')?.url,
-    fotos?.find((f) => f?.url)?.url,
+    fotos?.find(f => (f?.categoria ?? f?.tag ?? '').toString().toLowerCase() === 'portada')?.url,
+    fotos?.find(f => f?.url)?.url,
   ];
 
   const src = cand.find((s) => typeof s === 'string' && s.trim().length > 4);
-  const out = (src as string) || HERO_FALLBACK;
-  return /^https?:\/\//i.test(out) ? out : HERO_FALLBACK;
+  const out = (src as string) || '';
+  return /^https?:\/\//i.test(out) ? out : '';
 }
 
 function toFiniteNumber(value: unknown): number | null {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null;
-  }
-
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
   if (typeof value === 'string') {
     const normalized = value.trim().replace(',', '.');
     if (!normalized) return null;
     const parsed = Number(normalized);
     return Number.isFinite(parsed) ? parsed : null;
   }
-
   return null;
 }
 
 function getMapData(proj: Proyecto | null) {
-  if (!proj) {
-    return {
-      isReady: false,
-      hasCoords: false,
-      src: '',
-    };
-  }
+  if (!proj) return { isReady: false, hasCoords: false, src: '' };
 
   const lat = toFiniteNumber(proj.map_lat);
   const lng = toFiniteNumber(proj.map_lng);
@@ -315,21 +250,10 @@ function getMapData(proj: Proyecto | null) {
 
   const zoom = zoomRaw !== null ? Math.min(20, Math.max(10, Math.round(zoomRaw))) : 15;
 
-  if (!hasCoords) {
-    return {
-      isReady: true,
-      hasCoords: false,
-      src: '',
-    };
-  }
+  if (!hasCoords) return { isReady: true, hasCoords: false, src: '' };
 
   const src = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&hl=es&output=embed`;
-
-  return {
-    isReady: true,
-    hasCoords: true,
-    src,
-  };
+  return { isReady: true, hasCoords: true, src };
 }
 
 export default function ProyectoExclusivoDetailPage({ params }: { params: { id: string } }) {
@@ -339,48 +263,31 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
 
   useEffect(() => {
     let alive = true;
-
     (async () => {
       try {
-        const r = await fetch(`/api/proyectos/${encodeURIComponent(params.id)}?ts=${Date.now()}`, {
-          cache: 'no-store',
-        });
+        const r = await fetch(`/api/proyectos/${encodeURIComponent(params.id)}?ts=${Date.now()}`, { cache: 'no-store' });
         const j = r.ok ? await r.json().catch(() => null) : null;
         if (alive) setProj(j?.data ?? null);
-      } catch {
-        if (alive) setProj(null);
-      }
+      } catch { if (alive) setProj(null); }
     })();
-
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [params.id]);
 
   useEffect(() => {
     let alive = true;
-
     (async () => {
       try {
-        const r = await fetch(`/api/proyectos/${encodeURIComponent(params.id)}/fotos?ts=${Date.now()}`, {
-          cache: 'no-store',
-        });
+        const r = await fetch(`/api/proyectos/${encodeURIComponent(params.id)}/fotos?ts=${Date.now()}`, { cache: 'no-store' });
         const j = r.ok ? await r.json().catch(() => null) : null;
         if (alive) setFotos(j?.data ?? []);
-      } catch {
-        if (alive) setFotos([]);
-      }
+      } catch { if (alive) setFotos([]); }
     })();
-
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [params.id]);
 
   const heroCandidates = useMemo(() => {
     const first = getHeroImage(proj, fotos);
     const extras: string[] = [];
-
     const push = (u?: string | null) => {
       if (typeof u === 'string' && u.trim() && /^https?:\/\//i.test(u.trim())) extras.push(u.trim());
     };
@@ -392,93 +299,72 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
     push((proj as any)?.image);
     push((proj as any)?.foto);
     push((proj as any)?.images?.[0]);
-    push((proj?.imagenes ?? [])?.find((u) => (u ?? '').trim().length) || null);
-    push(fotos.find((f) => (f.categoria ?? f.tag ?? '').toString().toLowerCase() === 'portada')?.url || null);
-    push(fotos.find((f) => f.url)?.url || null);
+    push((proj?.imagenes ?? [])?.find(u => (u ?? '').trim().length) || null);
+    push(fotos.find(f => (f.categoria ?? f.tag ?? '').toString().toLowerCase() === 'portada')?.url || null);
+    push(fotos.find(f => f.url)?.url || null);
 
     const all = [first, ...extras].filter(Boolean);
     const seen = new Set<string>();
     const uniq = all.filter((u) => (seen.has(u) ? false : (seen.add(u), true)));
-    return uniq.length ? uniq : [HERO_FALLBACK];
+    return uniq.length ? uniq : [];
   }, [proj, fotos]);
 
   const [heroIndex, setHeroIndex] = useState(0);
-  useEffect(() => {
-    setHeroIndex(0);
-  }, [heroCandidates]);
+  useEffect(() => { setHeroIndex(0); }, [heroCandidates]);
 
-  const heroUrlSafe = heroCandidates[Math.min(heroIndex, heroCandidates.length - 1)] || HERO_FALLBACK;
+  const heroUrlSafe = heroCandidates[Math.min(heroIndex, heroCandidates.length - 1)] || '';
 
   const linea = [
     wordsCap(proj?.operacion),
     wordsCap(proj?.tipo),
     wordsCap(proj?.comuna?.replace(/^lo barnechea/i, 'Lo Barnechea')),
     wordsCap(proj?.barrio),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  ].filter(Boolean).join(' · ');
 
   const precioUfHero =
-    typeof proj?.precio_uf === 'number' && proj.precio_uf > 0
-      ? proj.precio_uf
-      : proj?.precio_clp && uf
-        ? Math.round(proj.precio_clp / uf)
-        : null;
+    typeof proj?.precio_uf === 'number' && proj.precio_uf > 0 ? proj.precio_uf :
+    proj?.precio_clp && uf ? Math.round(proj.precio_clp / uf) : null;
 
   const precioClpHero =
-    typeof proj?.precio_clp === 'number' && proj.precio_clp > 0
-      ? proj.precio_clp
-      : proj?.precio_uf && uf
-        ? Math.round(proj.precio_uf * uf)
-        : null;
+    typeof proj?.precio_clp === 'number' && proj.precio_clp > 0 ? proj.precio_clp :
+    proj?.precio_uf && uf ? Math.round(proj.precio_uf * uf) : null;
 
   const priceBoxRef = useRef<HTMLDivElement | null>(null);
   const btnRef = useRef<HTMLAnchorElement | null>(null);
-
   useEffect(() => {
     const sync = () => {
       const h = priceBoxRef.current?.offsetHeight;
       if (!h || !btnRef.current) return;
       Object.assign(btnRef.current.style, {
-        height: `${h}px`,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0 16px',
+        height: `${h}px`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px'
       } as CSSStyleDeclaration);
     };
-
     sync();
-
     let ro: ResizeObserver | null = null;
     if ('ResizeObserver' in window) {
       ro = new ResizeObserver(sync);
       if (priceBoxRef.current) ro.observe(priceBoxRef.current);
     }
-
-    return () => {
-      try {
-        ro?.disconnect();
-      } catch {}
-    };
+    return () => { try { ro?.disconnect(); } catch {} };
   }, [proj]);
 
   const dash = '—';
-  const fmtInt = (n: number | null | undefined) => (typeof n === 'number' ? nfINT.format(n) : dash);
+  const fmtInt = (n: number | null | undefined) => typeof n === 'number' ? nfINT.format(n) : dash;
 
   return (
     <main className="bg-white">
-      {/* HERO */}
       <section className="relative w-full overflow-hidden isolate">
-        <img
-          key={heroUrlSafe}
-          src={addCacheBuster(heroUrlSafe)}
-          alt=""
-          className="absolute inset-0 -z-10 h-full w-full object-cover"
-          onError={() => setHeroIndex((i) => Math.min(i + 1, heroCandidates.length - 1))}
-        />
-        <div className="absolute inset-0 -z-10 bg-black/35" />
+        {heroUrlSafe ? (
+          <img
+            key={heroUrlSafe}
+            src={addCacheBuster(heroUrlSafe)}
+            alt=""
+            className="absolute inset-0 -z-10 h-full w-full object-cover"
+            onError={() => setHeroIndex((i) => Math.min(i + 1, heroCandidates.length - 1))}
+          />
+        ) : null}
 
+        <div className="absolute inset-0 -z-10 bg-black/35" />
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-12 xl:px-16 min-h-[100svh] flex items-end pb-16 md:pb-20">
           <div className="w-full">
             <div className="bg-white/70 backdrop-blur-sm shadow-xl p-4 md:p-5 w-full md:max-w-[520px]">
@@ -518,7 +404,6 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
                 >
                   Solicitar información
                 </Link>
-
                 <div ref={priceBoxRef} className="ml-auto text-right">
                   <div className="text-[1.15rem] md:text-[1.25rem] font-semibold text-[#0A2E57] leading-none">
                     {precioUfHero ? `UF ${nfUF.format(precioUfHero)}` : 'Consultar'}
@@ -530,6 +415,7 @@ export default function ProyectoExclusivoDetailPage({ params }: { params: { id: 
                   )}
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -559,10 +445,7 @@ function GlossarioSellos({ proj }: { proj: Proyecto | null }) {
         Glosario — Sellos
       </h2>
       <div className="border border-slate-200 bg-white p-5">
-        <div className="text-slate-900 font-semibold">
-          {item.title}
-          {novacionExtra}
-        </div>
+        <div className="text-slate-900 font-semibold">{item.title}{novacionExtra}</div>
         <p className="mt-2 text-slate-700 leading-relaxed">{item.desc}</p>
       </div>
     </section>
@@ -574,103 +457,47 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
   const [lbIndex, setLbIndex] = useState(0);
 
   const groups = useMemo(() => {
-    const map = {
-      todas: [] as string[],
-      exterior: [] as string[],
-      interior: [] as string[],
-      planos: [] as string[],
-    };
-
-    (fotos ?? [])
-      .filter((f) => f?.url)
-      .forEach((r) => {
-        const k = normalizeTag(r);
-        map.todas.push(r.url);
-        if (k === 'exterior') map.exterior.push(r.url);
-        if (k === 'interior') map.interior.push(r.url);
-        if (k === 'planos') map.planos.push(r.url);
-      });
-
+    const map = { todas: [] as string[], exterior: [] as string[], interior: [] as string[], planos: [] as string[] };
+    (fotos ?? []).filter(f => f?.url).forEach(r => {
+      const k = normalizeTag(r);
+      map.todas.push(r.url);
+      if (k === 'exterior') map.exterior.push(r.url);
+      if (k === 'interior') map.interior.push(r.url);
+      if (k === 'planos') map.planos.push(r.url);
+    });
     return map;
   }, [fotos]);
 
-  const tiles = useMemo(
-    () => [
-      {
-        key: 'todas' as const,
-        label: 'Photos',
-        icon: <Images className="h-6 w-6" />,
-        count: groups.todas.length,
-        preview: undefined,
-      },
-      {
-        key: 'exterior' as const,
-        label: 'Exterior',
-        icon: <Home className="h-6 w-6" />,
-        count: groups.exterior.length,
-        preview: groups.exterior[0],
-      },
-      {
-        key: 'interior' as const,
-        label: 'Interior',
-        icon: <DoorOpen className="h-6 w-6" />,
-        count: groups.interior.length,
-        preview: groups.interior[0],
-      },
-      {
-        key: 'planos' as const,
-        label: 'Floor Plan',
-        icon: <MapIcon className="h-6 w-6" />,
-        count: groups.planos.length,
-        preview: groups.planos[0],
-      },
-    ],
-    [groups]
-  );
+  const tiles = useMemo(() => ([
+    { key: 'todas' as const, label: 'Photos', icon: <Images className="h-6 w-6" />, count: groups.todas.length, preview: undefined },
+    { key: 'exterior' as const, label: 'Exterior', icon: <Home className="h-6 w-6" />, count: groups.exterior.length, preview: groups.exterior[0] },
+    { key: 'interior' as const, label: 'Interior', icon: <DoorOpen className="h-6 w-6" />, count: groups.interior.length, preview: groups.interior[0] },
+    { key: 'planos' as const, label: 'Floor Plan', icon: <MapIcon className="h-6 w-6" />, count: groups.planos.length, preview: groups.planos[0] },
+  ]), [groups]);
 
   const [dynamicList, setDynamicList] = useState<string[]>([]);
-  const openLbFor = (arr: string[], start = 0) => {
-    if (!arr.length) return;
-    setLbIndex(start);
-    setDynamicList(arr);
-    setLbOpen(true);
-  };
-
-  useEffect(() => {
-    if (groups.todas.length && !dynamicList.length) setDynamicList(groups.todas);
-  }, [groups.todas, dynamicList.length]);
+  const openLbFor = (arr: string[], start = 0) => { if (!arr.length) return; setLbIndex(start); setDynamicList(arr); setLbOpen(true); };
+  useEffect(() => { if (groups.todas.length && !dynamicList.length) setDynamicList(groups.todas); }, [groups.todas, dynamicList.length]);
 
   const normalizedParagraphs = useMemo(() => {
     const raw = (proj?.descripcion ?? '').replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
     return raw ? raw.split('\n\n') : [];
   }, [proj?.descripcion]);
 
-  const featureTags = (proj?.tags ?? []).filter((t) => (t ?? '').trim().length);
+  const featureTags = (proj?.tags ?? []).filter(t => (t ?? '').trim().length);
   const hasTags = featureTags.length > 0;
-
   const mapData = useMemo(() => getMapData(proj), [proj]);
 
   return (
     <>
-      {/* ✅ ORDEN: Galería → Glosario Sellos → Descripción */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
           Galería
         </h2>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {tiles.map((t) => {
-            const list =
-              t.key === 'todas'
-                ? groups.todas
-                : t.key === 'exterior'
-                  ? groups.exterior
-                  : t.key === 'interior'
-                    ? groups.interior
-                    : groups.planos;
-
+          {tiles.map(t => {
+            const list = t.key === 'todas' ? groups.todas : t.key === 'exterior' ? groups.exterior : t.key === 'interior' ? groups.interior : groups.planos;
             const withImg = !!t.preview;
-
             return (
               <button
                 key={t.key}
@@ -682,11 +509,9 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
                 ) : (
                   <div className="absolute inset-0 bg-[rgba(15,40,80,0.55)]" />
                 )}
-
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[rgba(15,40,80,0.55)] group-hover:bg-[rgba(15,40,80,0.40)] text-white">
                   <div className="flex items-center gap-2">
-                    {t.icon}
-                    <span className="font-semibold">{t.label}</span>
+                    {t.icon}<span className="font-semibold">{t.label}</span>
                   </div>
                   <span className="text-xs opacity-90">{t.count} {t.count === 1 ? 'foto' : 'fotos'}</span>
                 </div>
@@ -702,37 +527,26 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
         <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
           Descripción
         </h2>
-        {normalizedParagraphs.length ? (
-          normalizedParagraphs.map((p, i) => (
-            <p key={i} className="text-slate-700 leading-relaxed whitespace-pre-wrap mb-3 last:mb-0">
-              {p}
-            </p>
-          ))
-        ) : (
-          <p className="text-slate-700 leading-relaxed">Descripción no disponible por el momento.</p>
-        )}
+        {normalizedParagraphs.length ? normalizedParagraphs.map((p, i) => (
+          <p key={i} className="text-slate-700 leading-relaxed whitespace-pre-wrap mb-3 last:mb-0">{p}</p>
+        )) : <p className="text-slate-700 leading-relaxed">Descripción no disponible por el momento.</p>}
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
           Características destacadas
         </h2>
-
         <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-slate-800">
-          {hasTags ? (
-            featureTags.map((t, i) => (
-              <li key={`${t}-${i}`} className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
-                  <Compass className="h-4 w-4 text-slate-600" />
-                </span>
-                <span>{t}</span>
-              </li>
-            ))
-          ) : (
+          {hasTags ? featureTags.map((t, i) => (
+            <li key={`${t}-${i}`} className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-slate-300">
+                <Compass className="h-4 w-4 text-slate-600" />
+              </span>
+              <span>{t}</span>
+            </li>
+          )) : (
             <>
               <li className="flex items-center gap-2">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300">
@@ -751,15 +565,12 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
         </ul>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-slate-200 my-10" />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="h-px bg-slate-200 my-10" /></div>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <h2 className="mt-10 mb-4 text-[18px] md:text-[20px] uppercase tracking-[0.25em] text-slate-700">
           Explora el sector
         </h2>
-
         <div className="relative w-full h-[420px] border border-slate-200 overflow-hidden rounded bg-slate-100">
           {!mapData.isReady ? (
             <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-500">
@@ -787,8 +598,8 @@ function GalleryAndDetails({ proj, fotos }: { proj: Proyecto | null; fotos: Foto
         images={dynamicList}
         index={lbIndex}
         onClose={() => setLbOpen(false)}
-        onPrev={() => setLbIndex((i) => (i - 1 + dynamicList.length) % dynamicList.length)}
-        onNext={() => setLbIndex((i) => (i + 1) % dynamicList.length)}
+        onPrev={() => setLbIndex(i => (i - 1 + dynamicList.length) % dynamicList.length)}
+        onNext={() => setLbIndex(i => (i + 1) % dynamicList.length)}
       />
     </>
   );
