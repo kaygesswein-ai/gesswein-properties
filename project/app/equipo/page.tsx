@@ -1162,7 +1162,7 @@ function TeamOgilvy() {
 
               <div
                 className={`md:hidden overflow-hidden transition-all duration-300 ${
-                  active === i ? 'max-h-[800px] opacity-100 mt-3' : 'max-h-0 opacity-0'
+                  active === i ? 'max-h-[2000px] opacity-100 mt-3' : 'max-h-0 opacity-0'
                 }`}
               >
                 <div className="w-full bg-[#EAEAEA] p-5 border border-black/10">
