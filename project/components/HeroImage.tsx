@@ -47,7 +47,7 @@ export default function HeroImage({
   className = '',
   objectPosition = '50% 50%',
   showInitialBrandOverlay = true,
-  minInitialOverlayMs = 550,
+  minInitialOverlayMs = 900,
   persistAcrossRoutes = false,
   mediaMode = 'all',
   onCurrentReadyChange,
@@ -60,7 +60,6 @@ export default function HeroImage({
   const [displaySrc, setDisplaySrc] = useState<string | null>(initialCachedSrc);
   const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
   const [incomingVisible, setIncomingVisible] = useState(false);
-  const [currentVisible, setCurrentVisible] = useState<boolean>(!!initialCachedSrc);
   const [initialReady, setInitialReady] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return !!window.__gpHeroBootDone || !!initialCachedSrc || !showInitialBrandOverlay;
@@ -72,7 +71,6 @@ export default function HeroImage({
   const swapTimeoutRef = useRef<number | null>(null);
   const raf1Ref = useRef<number | null>(null);
   const raf2Ref = useRef<number | null>(null);
-  const stableTimeoutRef = useRef<number | null>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -83,7 +81,6 @@ export default function HeroImage({
     return () => {
       if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
       if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
-      if (stableTimeoutRef.current) window.clearTimeout(stableTimeoutRef.current);
       if (raf1Ref.current) window.cancelAnimationFrame(raf1Ref.current);
       if (raf2Ref.current) window.cancelAnimationFrame(raf2Ref.current);
     };
@@ -91,9 +88,6 @@ export default function HeroImage({
 
   useEffect(() => {
     if (!isValidSrc(src)) {
-      setIncomingSrc(null);
-      setIncomingVisible(false);
-      setCurrentVisible(false);
       onCurrentReadyChange?.(false);
       return;
     }
@@ -101,49 +95,41 @@ export default function HeroImage({
     const reqId = ++requestIdRef.current;
     const currentDisplay = displaySrcRef.current;
 
-    const clearPending = () => {
-      if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
-      if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
-      if (stableTimeoutRef.current) window.clearTimeout(stableTimeoutRef.current);
-      if (raf1Ref.current) window.cancelAnimationFrame(raf1Ref.current);
-      if (raf2Ref.current) window.cancelAnimationFrame(raf2Ref.current);
-    };
-
-    const fireReadyAfterStablePaint = () => {
-      raf1Ref.current = window.requestAnimationFrame(() => {
-        raf2Ref.current = window.requestAnimationFrame(() => {
-          if (reqId !== requestIdRef.current) return;
-
-          stableTimeoutRef.current = window.setTimeout(() => {
-            if (reqId !== requestIdRef.current) return;
-
-            setInitialReady(true);
-            setCurrentVisible(true);
-            onCurrentReadyChange?.(true);
-            window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
-
-            if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
-            if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
-          }, 35);
-        });
-      });
-    };
-
     if (currentDisplay === src && !incomingSrc) {
       setInitialReady(true);
-      setCurrentVisible(true);
-      onCurrentReadyChange?.(false);
-      fireReadyAfterStablePaint();
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (reqId !== requestIdRef.current) return;
+          onCurrentReadyChange?.(true);
+          window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
+        });
+      });
+
+      if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
+      if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
       return;
     }
 
-    clearPending();
     onCurrentReadyChange?.(false);
 
     const img = new window.Image();
     img.decoding = 'async';
-    img.fetchPriority = 'high';
     img.src = src;
+
+    const fireReadyAfterPaint = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (reqId !== requestIdRef.current) return;
+          setInitialReady(true);
+          onCurrentReadyChange?.(true);
+          window.dispatchEvent(new CustomEvent('gp:hero-ready', { detail: { src } }));
+
+          if (typeof window !== 'undefined') window.__gpHeroBootDone = true;
+          if (persistAcrossRoutes) writeCachedHero(mediaMode, src);
+        });
+      });
+    };
 
     const handleLoaded = async () => {
       if (reqId !== requestIdRef.current) return;
@@ -158,14 +144,13 @@ export default function HeroImage({
         const elapsed = Date.now() - mountedAtRef.current;
         const remain = Math.max(0, minInitialOverlayMs - elapsed);
 
+        if (revealTimeoutRef.current) window.clearTimeout(revealTimeoutRef.current);
+
         revealTimeoutRef.current = window.setTimeout(() => {
           if (reqId !== requestIdRef.current) return;
           setDisplaySrc(src);
           displaySrcRef.current = src;
-          setIncomingSrc(null);
-          setIncomingVisible(false);
-          setCurrentVisible(false);
-          fireReadyAfterStablePaint();
+          fireReadyAfterPaint();
         }, remain);
 
         return;
@@ -174,15 +159,15 @@ export default function HeroImage({
       if (!visibleNow) {
         setDisplaySrc(src);
         displaySrcRef.current = src;
-        setIncomingSrc(null);
-        setIncomingVisible(false);
-        setCurrentVisible(false);
-        fireReadyAfterStablePaint();
+        fireReadyAfterPaint();
         return;
       }
 
       setIncomingSrc(src);
       setIncomingVisible(false);
+
+      if (raf1Ref.current) window.cancelAnimationFrame(raf1Ref.current);
+      if (raf2Ref.current) window.cancelAnimationFrame(raf2Ref.current);
 
       raf1Ref.current = window.requestAnimationFrame(() => {
         raf2Ref.current = window.requestAnimationFrame(() => {
@@ -191,16 +176,16 @@ export default function HeroImage({
         });
       });
 
+      if (swapTimeoutRef.current) window.clearTimeout(swapTimeoutRef.current);
+
       swapTimeoutRef.current = window.setTimeout(() => {
         if (reqId !== requestIdRef.current) return;
-
         setDisplaySrc(src);
         displaySrcRef.current = src;
         setIncomingSrc(null);
         setIncomingVisible(false);
-        setCurrentVisible(true);
-        fireReadyAfterStablePaint();
-      }, 110);
+        fireReadyAfterPaint();
+      }, 180);
     };
 
     if (img.complete) {
@@ -209,20 +194,10 @@ export default function HeroImage({
       img.onload = () => {
         handleLoaded();
       };
-      img.onerror = () => {
-        if (reqId !== requestIdRef.current) return;
-        setDisplaySrc(src);
-        displaySrcRef.current = src;
-        setIncomingSrc(null);
-        setIncomingVisible(false);
-        setCurrentVisible(true);
-        fireReadyAfterStablePaint();
-      };
     }
 
     return () => {
       img.onload = null;
-      img.onerror = null;
     };
   }, [
     src,
@@ -242,17 +217,9 @@ export default function HeroImage({
         <img
           src={displaySrc}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-120 ${
-            currentVisible ? 'opacity-100' : 'opacity-0'
-          } ${className}`}
-          style={{
-            objectPosition,
-            transform: 'translate3d(0,0,0)',
-            backfaceVisibility: 'hidden',
-          }}
+          className={`absolute inset-0 w-full h-full object-cover ${className}`}
+          style={{ objectPosition }}
           draggable={false}
-          loading="eager"
-          fetchPriority="high"
         />
       ) : null}
 
@@ -260,17 +227,11 @@ export default function HeroImage({
         <img
           src={incomingSrc}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-110 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-150 ${
             incomingVisible ? 'opacity-100' : 'opacity-0'
           } ${className}`}
-          style={{
-            objectPosition,
-            transform: 'translate3d(0,0,0)',
-            backfaceVisibility: 'hidden',
-          }}
+          style={{ objectPosition }}
           draggable={false}
-          loading="eager"
-          fetchPriority="high"
         />
       ) : null}
 
@@ -279,7 +240,11 @@ export default function HeroImage({
           <img
             src="/logo-white.svg"
             alt="Gesswein Properties"
-            className="w-[220px] max-w-[62vw] h-auto opacity-95"
+            className="h-auto w-[min(44vw,300px)] sm:w-[min(40vw,320px)] md:w-[min(34vw,300px)] lg:w-[min(30vw,295px)] opacity-95"
+            style={{
+              transform: 'translateX(14px)',
+              filter: 'drop-shadow(0 2px 8px rgba(0,0,0,.22))',
+            }}
             draggable={false}
           />
         </div>
