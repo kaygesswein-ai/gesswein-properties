@@ -236,15 +236,11 @@ export default function HeroImage({
       ) : null}
 
       {showBrandOverlay ? (
-        <div className="absolute inset-0 z-[30] bg-[#0A2E57] flex items-center justify-center">
+        <div className="fixed inset-0 z-[140] bg-[#0A2E57] flex items-center justify-center">
           <img
             src="/logo-white.svg"
             alt="Gesswein Properties"
-            className="h-auto w-[min(44vw,300px)] sm:w-[min(40vw,320px)] md:w-[min(34vw,300px)] lg:w-[min(30vw,295px)] opacity-95"
-            style={{
-              transform: 'translateX(14px)',
-              filter: 'drop-shadow(0 2px 8px rgba(0,0,0,.22))',
-            }}
+            className="w-[220px] max-w-[62vw] h-auto opacity-95"
             draggable={false}
           />
         </div>
