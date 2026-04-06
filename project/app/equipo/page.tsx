@@ -998,7 +998,7 @@ function TeamOgilvy() {
     clone.style.top = `${Math.round(srcRect.top - gridRect.top)}px`;
     clone.style.width = `${w}px`;
     clone.style.height = `${h}px`;
-    clone.style.zIndex = '50';
+    clone.style.zIndex = '20';
     clone.style.cursor = 'pointer';
     (clone.querySelector('[data-overlay]') as HTMLDivElement | null)?.style.setProperty(
       'opacity',
@@ -1114,8 +1114,8 @@ function TeamOgilvy() {
   }
 
   return (
-    <div ref={containerRef} className="relative mt-10">
-      <div ref={gridRef} className="relative grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div ref={containerRef} className="relative z-0 mt-10">
+      <div ref={gridRef} className="relative z-0 grid grid-cols-1 md:grid-cols-4 gap-6">
         {team.map((m, i) => {
           const r = splitRole(m.roleLine);
           return (
@@ -1223,7 +1223,7 @@ function TeamOgilvy() {
                   transition: `transform ${DURATION}ms ${EASING}, opacity 220ms ease`,
                   transform: 'translateX(0)',
                   opacity: 1,
-                  zIndex: 40,
+                  zIndex: 20,
                 }}
                 onClick={onPanelClick}
                 role="dialog"
