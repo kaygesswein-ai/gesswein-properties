@@ -87,6 +87,24 @@ export default function HeroImage({
   }, []);
 
   useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+
+    if (showInitialBrandOverlay && !initialReady) {
+      root.classList.add('gp-transition-active');
+      body.classList.add('gp-transition-active');
+    } else {
+      root.classList.remove('gp-transition-active');
+      body.classList.remove('gp-transition-active');
+    }
+
+    return () => {
+      root.classList.remove('gp-transition-active');
+      body.classList.remove('gp-transition-active');
+    };
+  }, [showInitialBrandOverlay, initialReady]);
+
+  useEffect(() => {
     if (!isValidSrc(src)) {
       onCurrentReadyChange?.(false);
       return;
@@ -236,13 +254,15 @@ export default function HeroImage({
       ) : null}
 
       {showBrandOverlay ? (
-        <div className="fixed inset-0 z-[140] bg-[#0A2E57] flex items-center justify-center">
-          <img
-            src="/logo-white.svg"
-            alt="Gesswein Properties"
-            className="w-[220px] max-w-[62vw] h-auto opacity-95"
-            draggable={false}
-          />
+        <div className="gp-route-overlay" aria-hidden="true">
+          <div className="gp-logo-wrap">
+            <img
+              src="/logo-white.svg"
+              alt="Gesswein Properties"
+              className="gp-logo"
+              draggable={false}
+            />
+          </div>
         </div>
       ) : null}
     </>
