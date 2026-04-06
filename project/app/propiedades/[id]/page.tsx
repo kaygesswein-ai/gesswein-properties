@@ -52,9 +52,6 @@ const nfCLP = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 const nfINT = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
 
 const cls = (...s: (string | false | null | undefined)[]) => s.filter(Boolean).join(' ');
-const HERO_FALLBACK =
-  'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1920';
-
 const wordsCap = (s?: string | null) =>
   (s ?? '')
     .toLowerCase()
