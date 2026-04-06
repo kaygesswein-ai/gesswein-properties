@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 declare global {
   interface Window {
@@ -64,6 +65,7 @@ export default function HeroImage({
     if (typeof window === 'undefined') return false;
     return !!window.__gpHeroBootDone || !!initialCachedSrc || !showInitialBrandOverlay;
   });
+  const [portalReady, setPortalReady] = useState(false);
 
   const displaySrcRef = useRef<string | null>(initialCachedSrc);
   const mountedAtRef = useRef<number>(Date.now());
@@ -72,6 +74,10 @@ export default function HeroImage({
   const raf1Ref = useRef<number | null>(null);
   const raf2Ref = useRef<number | null>(null);
   const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     displaySrcRef.current = displaySrc;
@@ -253,18 +259,21 @@ export default function HeroImage({
         />
       ) : null}
 
-      {showBrandOverlay ? (
-        <div className="gp-route-overlay" aria-hidden="true">
-          <div className="gp-logo-wrap">
-            <img
-              src="/logo-white.svg"
-              alt="Gesswein Properties"
-              className="gp-logo"
-              draggable={false}
-            />
-          </div>
-        </div>
-      ) : null}
+      {portalReady && showBrandOverlay
+        ? createPortal(
+            <div className="gp-route-overlay" aria-hidden="true">
+              <div className="gp-logo-wrap">
+                <img
+                  src="/logo-white.svg"
+                  alt="Gesswein Properties"
+                  className="gp-logo"
+                  draggable={false}
+                />
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </>
   );
 }
