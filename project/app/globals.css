@@ -70,6 +70,8 @@ body.gp-transition-active{
   height:auto;
   z-index:130;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,.22));
+  transform: translateX(14px);
+  transform-origin:center center;
 }
 
 /* ======== Láseres (dos pasadas, súper sutiles) ======== */
@@ -106,6 +108,13 @@ body.gp-transition-active{
   top:58%; height:4px;
   animation-duration: 1000ms;
   animation-delay: 120ms;
+}
+
+/* Ajuste fino mobile para compensar el mismo problema visual en menor ancho */
+@media (max-width: 640px){
+  .gp-logo{
+    transform: translateX(10px);
+  }
 }
 
 /* Accesibilidad */
